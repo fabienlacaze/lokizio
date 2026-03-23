@@ -25,32 +25,31 @@ function parseIcalDate(value) {
   return null;
 }
 
-const CORS_PROXIES = [
-  url => `https://corsproxy.io/?${encodeURIComponent(url)}`,
-  url => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
-];
-
 async function fetchIcalDirect(url, source) {
   const log = typeof dbg === 'function' ? dbg : console.log;
   if (!url) return '';
 
-  for (let i = 0; i < CORS_PROXIES.length; i++) {
-    const proxyUrl = CORS_PROXIES[i](url);
-    try {
-      log(`${source}: tentative proxy ${i + 1}...`, 'info');
-      const resp = await fetch(proxyUrl, { headers: { 'User-Agent': 'MenageManager/2.0' } });
-      if (resp.ok) {
-        const text = await resp.text();
-        if (text.includes('BEGIN:VCALENDAR')) {
-          log(`${source}: ${text.length} chars`, 'ok');
-          return text;
-        }
+  try {
+    log(`${source}: recuperation via Edge Function...`, 'info');
+    const resp = await fetch(`${SUPABASE_URL}/functions/v1/ical-proxy`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ url }),
+    });
+    if (resp.ok) {
+      const text = await resp.text();
+      if (text.includes('BEGIN:VCALENDAR')) {
+        log(`${source}: ${text.length} chars`, 'ok');
+        return text;
       }
-    } catch (e) {
-      log(`${source}: proxy ${i + 1} echoue: ${e.message}`, 'warn');
     }
+    log(`${source}: reponse invalide (HTTP ${resp.status})`, 'warn');
+  } catch (e) {
+    log(`${source}: erreur: ${e.message}`, 'err');
   }
-  log(`${source}: tous les proxies ont echoue`, 'err');
   return '';
 }
 
