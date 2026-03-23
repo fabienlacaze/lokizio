@@ -579,11 +579,17 @@
     <label style="display:block;font-size:12px;color:var(--text3);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.5px;">Email</label>
     <input id="authEmail" type="email" placeholder="votre@email.com" style="width:100%;padding:12px 14px;font-size:14px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;margin-bottom:14px;outline:none;box-sizing:border-box;" onkeydown="if(event.key==='Enter')authSubmit()">
     <label style="display:block;font-size:12px;color:var(--text3);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.5px;">Mot de passe</label>
-    <input id="authPass" type="password" placeholder="6 caracteres minimum" style="width:100%;padding:12px 14px;font-size:14px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;margin-bottom:8px;outline:none;box-sizing:border-box;" onkeydown="if(event.key==='Enter')authSubmit()">
+    <div style="position:relative;">
+      <input id="authPass" type="password" placeholder="6 caracteres minimum" style="width:100%;padding:12px 14px;padding-right:42px;font-size:14px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;margin-bottom:8px;outline:none;box-sizing:border-box;" onkeydown="if(event.key==='Enter')authSubmit()">
+      <span onclick="togglePassVisibility('authPass',this)" style="position:absolute;right:12px;top:12px;cursor:pointer;color:var(--text3);font-size:16px;user-select:none;">&#128065;</span>
+    </div>
     <!-- Confirm password (register only) -->
     <div id="authConfirmWrap" style="display:none;">
       <label style="display:block;font-size:12px;color:var(--text3);margin-bottom:6px;margin-top:6px;text-transform:uppercase;letter-spacing:0.5px;">Confirmer le mot de passe</label>
-      <input id="authPassConfirm" type="password" placeholder="Retapez le mot de passe" style="width:100%;padding:12px 14px;font-size:14px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;margin-bottom:8px;outline:none;box-sizing:border-box;" onkeydown="if(event.key==='Enter')authSubmit()">
+      <div style="position:relative;">
+        <input id="authPassConfirm" type="password" placeholder="Retapez le mot de passe" style="width:100%;padding:12px 14px;padding-right:42px;font-size:14px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;margin-bottom:8px;outline:none;box-sizing:border-box;" onkeydown="if(event.key==='Enter')authSubmit()">
+        <span onclick="togglePassVisibility('authPassConfirm',this)" style="position:absolute;right:12px;top:12px;cursor:pointer;color:var(--text3);font-size:16px;user-select:none;">&#128065;</span>
+      </div>
     </div>
     <button id="authSubmitBtn" onclick="authSubmit()" style="width:100%;padding:12px;background:linear-gradient(135deg,#e94560,#c73e54);color:#fff;border:none;font-size:14px;font-weight:600;cursor:pointer;border-radius:8px;margin-top:12px;">Se connecter</button>
   </div>
@@ -815,6 +821,11 @@ async function init() {
   checkReminders();
 }
 /* ── Auth ── */
+function togglePassVisibility(inputId, icon) {
+  const input = document.getElementById(inputId);
+  if (input.type === 'password') { input.type = 'text'; icon.style.opacity = '1'; }
+  else { input.type = 'password'; icon.style.opacity = '0.5'; }
+}
 let authMode = 'login';
 function switchAuthTab(mode) {
   authMode = mode;
