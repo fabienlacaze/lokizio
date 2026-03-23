@@ -102,6 +102,24 @@ const I18N = {
     'help.feature.notif': 'alertes 2 jours avant arrivee/depart.',
     'help.feature.link': 'partagez un lien read-only.',
 
+    // Premium
+    'premium.title': 'Passez a Premium',
+    'premium.subtitle': 'Prestataires illimites, pas de publicite',
+    'premium.btn': 'Voir les offres',
+    'premium.modal.title': 'Choisissez votre plan',
+    'premium.plan.free': 'Gratuit',
+    'premium.plan.current': 'Plan actuel',
+    'premium.feat.properties': 'Proprietes illimitees',
+    'premium.feat.providers': 'Prestataires illimites',
+    'premium.feat.noads': 'Aucune publicite',
+    'premium.feat.priority': 'Support prioritaire',
+    'premium.feat.export': 'Export PDF avance',
+    'premium.btn.upgrade': 'Passer a Premium',
+    'premium.cancel': 'Annulable a tout moment. Paiement securise par Stripe.',
+    'premium.stripe.pending': 'Le paiement sera bientot disponible. Contactez-nous pour un acces anticipe !',
+    'ad.label': 'Publicite',
+    'ad.remove': 'Supprimer les pubs',
+
     // Status
     'status.ready': 'Pret',
     'status.restored': 'Planning restaure',
@@ -207,6 +225,24 @@ const I18N = {
     'help.feature.link': 'share a read-only link.',
 
     // Status
+    // Premium
+    'premium.title': 'Upgrade to Premium',
+    'premium.subtitle': 'Unlimited providers, no ads',
+    'premium.btn': 'See plans',
+    'premium.modal.title': 'Choose your plan',
+    'premium.plan.free': 'Free',
+    'premium.plan.current': 'Current plan',
+    'premium.feat.properties': 'Unlimited properties',
+    'premium.feat.providers': 'Unlimited providers',
+    'premium.feat.noads': 'No ads',
+    'premium.feat.priority': 'Priority support',
+    'premium.feat.export': 'Advanced PDF export',
+    'premium.btn.upgrade': 'Upgrade to Premium',
+    'premium.cancel': 'Cancel anytime. Secure payment by Stripe.',
+    'premium.stripe.pending': 'Payment coming soon. Contact us for early access!',
+    'ad.label': 'Advertisement',
+    'ad.remove': 'Remove ads',
+
     'status.ready': 'Ready',
     'status.restored': 'Planning restored',
   }

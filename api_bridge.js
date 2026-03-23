@@ -1,7 +1,17 @@
 /**
  * api_bridge.js - Full client-side API bridge using Supabase.
  * All data stored in Supabase PostgreSQL + localStorage cache.
+ * Includes freemium plan management.
  */
+
+// Plan limits
+const PLAN_LIMITS = {
+  free: { maxProviders: 2, maxProperties: 1, ads: true },
+  premium: { maxProviders: Infinity, maxProperties: Infinity, ads: false },
+};
+
+let currentPlan = 'free';
+
 const API = (function() {
 
   async function getUserId() {
@@ -26,9 +36,8 @@ const API = (function() {
       }
       return defaultVal;
     } catch (e) {
-      // Fallback to cache
       const cached = localStorage.getItem('mm_cache_' + column);
-      if (cached) return JSON.parse(cached);
+      if (cached) { try { return JSON.parse(cached); } catch(e2) { return defaultVal; } }
       return defaultVal;
     }
   }
@@ -45,6 +54,33 @@ const API = (function() {
   }
 
   return {
+    // Plan management
+    async load_plan() {
+      try {
+        const userId = await getUserId();
+        const { data, error } = await sb
+          .from('subscriptions')
+          .select('plan, current_period_end')
+          .eq('user_id', userId)
+          .single();
+        if (error || !data) { currentPlan = 'free'; return 'free'; }
+        // Check if premium has expired
+        if (data.plan === 'premium' && data.current_period_end) {
+          const expiry = new Date(data.current_period_end);
+          if (expiry < new Date()) { currentPlan = 'free'; return 'free'; }
+        }
+        currentPlan = data.plan || 'free';
+        return currentPlan;
+      } catch (e) {
+        currentPlan = 'free';
+        return 'free';
+      }
+    },
+
+    getPlan() { return currentPlan; },
+    getLimits() { return PLAN_LIMITS[currentPlan] || PLAN_LIMITS.free; },
+    isPremium() { return currentPlan === 'premium'; },
+
     async load_config() {
       return await load('config', { airbnbIcalUrl: '', bookingIcalUrl: '', providers: [], property: 'Mon logement' });
     },
@@ -55,6 +91,13 @@ const API = (function() {
         if (!p.token) p.token = secureToken(4);
       }
       if (!config.readonlyToken) config.readonlyToken = secureToken(8);
+
+      // Enforce plan limits
+      const limits = this.getLimits();
+      if ((config.providers || []).length > limits.maxProviders) {
+        return { ok: false, error: 'limit', maxProviders: limits.maxProviders };
+      }
+
       await save('config', config);
       return { ok: true, config };
     },

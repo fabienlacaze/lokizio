@@ -559,6 +559,31 @@
   .installBanner .installText small { display:block; color:var(--text2); font-size:11px; margin-top:2px; }
   .installBanner .btnInstall { background:var(--accent); color:#fff; border:none; padding:8px 16px; border-radius:10px; font-size:12px; font-weight:600; cursor:pointer; white-space:nowrap; }
   .installBanner .btnDismiss { background:none; border:none; color:var(--text3); font-size:18px; cursor:pointer; padding:4px; }
+
+  /* Premium banner */
+  .premiumBanner { display:flex; align-items:center; gap:12px; padding:14px 18px; background:linear-gradient(135deg,#6c63ff,#5a52d5); border-radius:var(--radius); margin-bottom:12px; }
+  .btnPremium { background:#fff; color:#6c63ff; border:none; padding:8px 18px; border-radius:10px; font-size:12px; font-weight:700; cursor:pointer; white-space:nowrap; }
+  .btnPremium:hover { background:#f0f0f5; }
+
+  /* Ad banner */
+  .adBanner { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-sm); margin-bottom:12px; min-height:60px; }
+
+  /* Premium badge */
+  .premiumBadge { display:inline-block; background:linear-gradient(135deg,#fbbf24,#f59e0b); color:#000; font-size:10px; font-weight:700; padding:2px 8px; border-radius:20px; margin-left:8px; vertical-align:middle; }
+
+  /* Premium modal */
+  .pricingCards { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin:20px 0; }
+  .pricingCard { background:var(--surface2); border:1px solid var(--border2); border-radius:12px; padding:20px; text-align:center; }
+  .pricingCard.featured { border-color:var(--accent2); background:rgba(108,99,255,0.1); }
+  .pricingCard h3 { font-size:16px; margin-bottom:8px; }
+  .pricingCard .price { font-size:28px; font-weight:800; color:var(--accent); margin:12px 0; }
+  .pricingCard .price small { font-size:14px; font-weight:400; color:var(--text2); }
+  .pricingCard ul { list-style:none; text-align:left; font-size:13px; color:var(--text2); margin:16px 0; }
+  .pricingCard ul li { padding:4px 0; }
+  .pricingCard ul li::before { content:"✓ "; color:var(--success); font-weight:700; }
+  .pricingCard .limit::before { content:"✗ "; color:var(--danger); font-weight:700; }
+  .btnUpgrade { background:linear-gradient(135deg,#6c63ff,#5a52d5); color:#fff; border:none; padding:12px 24px; border-radius:8px; font-size:14px; font-weight:600; cursor:pointer; width:100%; }
+  .btnUpgrade:hover { opacity:0.9; }
 </style>
 </head>
 <body>
@@ -622,6 +647,23 @@
 </div>
 
 <div class="content">
+  <!-- Premium upgrade banner (shown for free users) -->
+  <div id="premiumBanner" class="premiumBanner" style="display:none;">
+    <div style="flex:1;">
+      <div style="font-weight:700;font-size:14px;color:#fff;">&#11088; <span data-i18n="premium.title">Passez a Premium</span></div>
+      <div style="font-size:12px;color:rgba(255,255,255,0.7);margin-top:2px;" data-i18n="premium.subtitle">Prestataires illimites, pas de publicite</div>
+    </div>
+    <button class="btnPremium" onclick="showPremiumModal()" data-i18n="premium.btn">Voir les offres</button>
+  </div>
+
+  <!-- Ad banner (shown for free users) -->
+  <div id="adBanner" class="adBanner" style="display:none;">
+    <div style="text-align:center;padding:12px;color:var(--text3);font-size:11px;">
+      <div id="adContainer"><!-- AdSense will be inserted here --></div>
+      <span data-i18n="ad.label">Publicite</span> &mdash; <a href="#" onclick="showPremiumModal();return false;" style="color:var(--accent);" data-i18n="ad.remove">Supprimer les pubs</a>
+    </div>
+  </div>
+
   <div id="notifBanner" class="notifBanner hidden"></div>
   <div id="installBanner" class="installBanner" style="display:none;">
     <div class="installText"><span data-i18n="install.title">Installer Menage Manager</span><small data-i18n="install.subtitle">Acces rapide depuis l'ecran d'accueil</small></div>
@@ -781,6 +823,38 @@
   </div>
   <div class="modalBtns"><button class="btn btnPrimary" style="padding:12px 32px;font-size:14px;" onclick="closeHelp()" data-i18n="modal.close">Fermer</button></div>
 </div>
+<div class="modal" id="premiumModal" style="max-width:520px;">
+  <div class="modalHeader" data-i18n="premium.modal.title">Choisissez votre plan</div>
+  <div class="modalBody">
+    <div class="pricingCards">
+      <div class="pricingCard">
+        <h3 data-i18n="premium.plan.free">Gratuit</h3>
+        <div class="price">0€</div>
+        <ul>
+          <li>1 propriete</li>
+          <li>2 prestataires max</li>
+          <li>Calendrier iCal</li>
+          <li>WhatsApp</li>
+          <li class="limit">Publicites</li>
+        </ul>
+        <button class="btn btnOutline" style="width:100%;padding:12px;" disabled data-i18n="premium.plan.current">Plan actuel</button>
+      </div>
+      <div class="pricingCard featured">
+        <h3>Premium <span class="premiumBadge">PRO</span></h3>
+        <div class="price">4.99€<small>/mois</small></div>
+        <ul>
+          <li data-i18n="premium.feat.properties">Proprietes illimitees</li>
+          <li data-i18n="premium.feat.providers">Prestataires illimites</li>
+          <li data-i18n="premium.feat.noads">Aucune publicite</li>
+          <li data-i18n="premium.feat.priority">Support prioritaire</li>
+          <li data-i18n="premium.feat.export">Export PDF avance</li>
+        </ul>
+        <button class="btnUpgrade" onclick="upgradeToPremium()" id="btnUpgrade" data-i18n="premium.btn.upgrade">Passer a Premium</button>
+      </div>
+    </div>
+    <div style="text-align:center;color:var(--text3);font-size:11px;" data-i18n="premium.cancel">Annulable a tout moment. Paiement securise par Stripe.</div>
+  </div>
+</div>
 <div class="toast" id="toast"></div>
 <div class="statusBar"><span id="statusText">Pret</span></div>
 
@@ -823,6 +897,9 @@ function togglePanel(id) {
 async function init() {
   // Init theme button icon
   if(document.documentElement.getAttribute('data-theme')==='light'&&document.getElementById('themeBtn'))document.getElementById('themeBtn').innerHTML='&#9790;';
+  // Load plan
+  await API.load_plan();
+  updatePlanUI();
   config = await API.load_config();
   transmittedDates = await API.load_transmitted();
   history = await API.load_history();
@@ -945,6 +1022,64 @@ async function authLogout() {
   localStorage.clear();
   checkAuth();
 }
+/* ── Premium / Freemium ── */
+function updatePlanUI() {
+  const isPremium = API.isPremium();
+  const banner = document.getElementById('premiumBanner');
+  const adBanner = document.getElementById('adBanner');
+  if (banner) banner.style.display = isPremium ? 'none' : 'flex';
+  if (adBanner) adBanner.style.display = isPremium ? 'none' : 'block';
+  // Update header with premium badge
+  const h1 = document.querySelector('.header h1');
+  if (h1) {
+    const existing = h1.querySelector('.premiumBadge');
+    if (isPremium && !existing) {
+      h1.insertAdjacentHTML('beforeend', ' <span class="premiumBadge">PRO</span>');
+    } else if (!isPremium && existing) {
+      existing.remove();
+    }
+  }
+}
+function showPremiumModal() {
+  document.getElementById('overlay').style.display = 'block';
+  document.getElementById('premiumModal').style.display = 'block';
+}
+function closePremiumModal() {
+  document.getElementById('overlay').style.display = 'none';
+  document.getElementById('premiumModal').style.display = 'none';
+}
+async function upgradeToPremium() {
+  const btn = document.getElementById('btnUpgrade');
+  btn.textContent = 'Redirection...';
+  btn.disabled = true;
+  // Stripe Checkout - will be configured with actual Stripe keys
+  if (typeof STRIPE_PRICE_ID !== 'undefined' && STRIPE_PRICE_ID) {
+    try {
+      const userId = await (async()=>{ const{data:{user}}=await sb.auth.getUser(); return user.id; })();
+      const resp = await fetch(`${SUPABASE_URL}/functions/v1/create-checkout`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${SUPABASE_ANON_KEY}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId, priceId: STRIPE_PRICE_ID })
+      });
+      const { url } = await resp.json();
+      if (url) { window.location.href = url; return; }
+    } catch(e) { console.error('Stripe error:', e); }
+  }
+  btn.textContent = t('premium.btn.upgrade');
+  btn.disabled = false;
+  showMsg(t('premium.stripe.pending') || 'Le paiement sera bientot disponible. Contactez-nous pour un acces anticipe !');
+  closePremiumModal();
+}
+function checkProviderLimit() {
+  const limits = API.getLimits();
+  const count = (config.providers || []).length;
+  if (count >= limits.maxProviders) {
+    showPremiumModal();
+    return false;
+  }
+  return true;
+}
+
 document.addEventListener('DOMContentLoaded', () => { setLang(currentLang); checkAuth(); });
 
 /* ── PWA Install ── */
@@ -1169,6 +1304,7 @@ function syncProviders() {
   });
 }
 function addProvider() {
+  if (!checkProviderLimit()) return;
   const name=document.getElementById('txtNewName').value.trim(), phone=document.getElementById('txtNewPhone').value.trim(), pct=parseInt(document.getElementById('txtNewPct').value)||0, price=parseFloat(document.getElementById('txtNewPrice').value)||0;
   if(!name){showMsg('Veuillez saisir un nom.');return;}
   syncProviders();
@@ -1673,7 +1809,7 @@ function showChangelog(){
   document.getElementById('msgBody').innerHTML=html;document.getElementById('overlay').style.display='block';document.getElementById('msgModal').style.display='block';
 }
 function closeHelp(){document.getElementById('overlay').style.display='none';document.getElementById('helpModal').style.display='none';}
-function closeAllModals(){closeMsg();closeVacModal();closeHelp();}
+function closeAllModals(){closeMsg();closeVacModal();closeHelp();closePremiumModal();}
 if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').catch(err=>console.log('SW:',err));}
 </script>
 </div><!-- /appMain -->
