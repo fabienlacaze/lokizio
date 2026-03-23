@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#1a1a2e">
+<title>Planning - Menage Manager</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="supabase_config.js?v=5"></script>
+<style>
+  :root { --bg:#0f0f1a; --surface:#1a1a2e; --surface2:#16213e; --border:rgba(255,255,255,0.06); --border2:rgba(255,255,255,0.1); --accent:#e94560; --text:#f0f0f5; --text2:#9ca3af; --text3:#6b7280; --success:#34d399; }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { font-family:'Inter',sans-serif; font-size:14px; background:var(--bg); color:var(--text); min-height:100vh; padding:20px; }
+  .container { max-width:700px; margin:0 auto; }
+  .header { background:linear-gradient(135deg,#1a1a2e,#0f3460); padding:20px 24px; border-radius:16px; margin-bottom:20px; text-align:center; }
+  .header h1 { color:#fff; font-size:20px; margin-bottom:4px; }
+  .header .sub { color:rgba(255,255,255,0.5); font-size:12px; }
+  .badge { display:inline-block; padding:3px 10px; border-radius:20px; font-size:11px; font-weight:600; color:#fff; }
+  .badge.airbnb { background:#e94560; }
+  .badge.booking { background:#003580; }
+  .card { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:16px; margin-bottom:10px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; }
+  .card .date { font-weight:700; font-size:15px; color:var(--accent); min-width:120px; }
+  .card .day { color:var(--text2); font-size:12px; }
+  .card .details { font-size:13px; color:var(--text2); }
+  .card .provider { background:var(--surface2); padding:4px 12px; border-radius:8px; font-size:12px; font-weight:600; color:var(--success); }
+  .empty { text-align:center; color:var(--text3); padding:40px; }
+  .loading { text-align:center; color:var(--text3); padding:40px; }
+  .error { text-align:center; color:var(--accent); padding:40px; }
+  .info { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:14px; margin-bottom:16px; text-align:center; color:var(--text2); font-size:13px; }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h1>Menage Manager</h1>
+    <div class="sub" id="subtitle">Chargement...</div>
+  </div>
+  <div id="content"><div class="loading">Chargement du planning...</div></div>
+</div>
+<script>
+const SUPABASE_URL_VIEW = 'https://mrvejwyvhuivmipfwlzz.supabase.co';
+const ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1ydmVqd3l2aHVpdm1pcGZ3bHp6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQyNjU0NTksImV4cCI6MjA4OTg0MTQ1OX0.1pi-KN5N6sNG6hIu6N0wDsR_g_G1TTf-uPecmWQ2ovU';
+
+const params = new URLSearchParams(window.location.search);
+const readonlyToken = params.get('readonly');
+const providerToken = params.get('provider');
+
+function fmtDate(iso) {
+  if (!iso) return '';
+  const [y,m,d] = iso.split('-');
+  return `${d}/${m}/${y}`;
+}
+
+async function loadData() {
+  const content = document.getElementById('content');
+  const subtitle = document.getElementById('subtitle');
+
+  if (!readonlyToken && !providerToken) {
+    content.innerHTML = '<div class="error">Lien invalide. Aucun token fourni.</div>';
+    subtitle.textContent = 'Erreur';
+    return;
+  }
+
+  try {
+    // Fetch all user_data rows (public read policy allows this)
+    const resp = await fetch(`${SUPABASE_URL_VIEW}/rest/v1/user_data?select=config,planning`, {
+      headers: { 'apikey': ANON_KEY }
+    });
+    const allData = await resp.json();
+
+    let found = null;
+    let providerName = null;
+
+    for (const row of allData) {
+      const cfg = row.config || {};
+      if (readonlyToken && cfg.readonlyToken === readonlyToken) {
+        found = row;
+        break;
+      }
+      if (providerToken) {
+        const prov = (cfg.providers || []).find(p => p.token === providerToken);
+        if (prov) {
+          found = row;
+          providerName = prov.name;
+          break;
+        }
+      }
+    }
+
+    if (!found) {
+      content.innerHTML = '<div class="error">Planning introuvable. Le lien est peut-etre expire.</div>';
+      subtitle.textContent = 'Non trouve';
+      return;
+    }
+
+    const config = found.config || {};
+    const planning = found.planning || [];
+    const property = config.property || 'Planning';
+
+    // Filter for provider view
+    let displayCleanings = planning;
+    if (providerName) {
+      displayCleanings = planning.filter(c => c.provider === providerName);
+      subtitle.textContent = `Planning de ${providerName} - ${property}`;
+      document.title = `Planning ${providerName} - Menage Manager`;
+    } else {
+      subtitle.textContent = `Planning complet - ${property}`;
+      document.title = `Planning ${property} - Menage Manager`;
+    }
+
+    // Sort by date
+    displayCleanings.sort((a, b) => (a.date || '').localeCompare(b.date || ''));
+
+    // Filter future only
+    const today = new Date().toISOString().split('T')[0];
+    displayCleanings = displayCleanings.filter(c => (c.date || '') >= today);
+
+    if (!displayCleanings.length) {
+      content.innerHTML = '<div class="empty">Aucun menage a venir.</div>';
+      return;
+    }
+
+    let html = `<div class="info">${displayCleanings.length} menage(s) a venir</div>`;
+    for (const c of displayCleanings) {
+      const source = (c.source || '').toLowerCase();
+      const badgeClass = source.includes('airbnb') ? 'airbnb' : source.includes('booking') ? 'booking' : '';
+      html += `
+        <div class="card">
+          <div>
+            <div class="date">${c.dayName || ''} ${fmtDate(c.date)}</div>
+            <div class="details">
+              <span class="badge ${badgeClass}">${c.source || ''}</span>
+              Arrivee: ${fmtDate(c.date)} &rarr; Depart: ${fmtDate(c.checkoutDate)}
+            </div>
+          </div>
+          <div class="provider">${c.provider || '?'}</div>
+        </div>`;
+    }
+    content.innerHTML = html;
+
+  } catch (e) {
+    content.innerHTML = `<div class="error">Erreur: ${e.message}</div>`;
+    subtitle.textContent = 'Erreur';
+  }
+}
+
+loadData();
+</script>
+</body>
+</html>

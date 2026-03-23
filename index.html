@@ -960,7 +960,8 @@ function dismissInstall() { document.getElementById('installBanner').style.displ
 function shareReadonly() {
   const token = config.readonlyToken;
   if (!token) { showMsg('Sauvegardez la configuration d\'abord pour generer le lien.'); return; }
-  const url = location.origin + '/readonly/' + token;
+  const base = location.href.replace(/\/[^\/]*$/, '');
+  const url = base + '/view.html?readonly=' + token;
   if (navigator.share) {
     navigator.share({ title: 'Planning Menage Manager', url: url });
   } else {
@@ -1141,7 +1142,7 @@ function renderProviders() {
   }
   document.getElementById('providerList').innerHTML = html;
 }
-function copyViewLink(token) { navigator.clipboard.writeText(`${window.location.origin}/view/${token}`).then(() => showToast('Lien prestataire copie !')); }
+function copyViewLink(token) { const base = location.href.replace(/\/[^\/]*$/, ''); navigator.clipboard.writeText(`${base}/view.html?provider=${token}`).then(() => showToast('Lien prestataire copie !')); }
 function syncProviders() {
   config.providers.forEach((p, i) => {
     const n=document.getElementById('pn_'+i), ph=document.getElementById('pp_'+i), pct=document.getElementById('ppct_'+i), pr=document.getElementById('pprice_'+i);
