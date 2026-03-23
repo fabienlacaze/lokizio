@@ -12,6 +12,7 @@
 <title>Menage Manager</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="supabase_config.js"></script>
+<script src="i18n.js"></script>
 <script src="ical_parser.js"></script>
 <script src="api_bridge.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
@@ -568,30 +569,35 @@
     <div style="text-align:center;margin-bottom:24px;">
       <div style="width:60px;height:60px;background:linear-gradient(135deg,#e94560,#6c63ff);border-radius:16px;display:inline-flex;align-items:center;justify-content:center;font-size:26px;font-weight:800;color:#fff;margin-bottom:12px;">M</div>
       <h1 style="color:#fff;font-size:22px;margin-bottom:4px;">Menage Manager</h1>
-      <p style="color:var(--text3);font-size:12px;">Gestion des menages locatifs</p>
+      <p style="color:var(--text3);font-size:12px;" data-i18n="auth.subtitle">Gestion des menages locatifs</p>
+    </div>
+    <!-- Language flags -->
+    <div style="display:flex;justify-content:center;gap:12px;margin-bottom:16px;">
+      <span class="lang-flag" data-lang="fr" onclick="setLang('fr')" style="cursor:pointer;font-size:24px;opacity:1;" title="Francais">&#127467;&#127479;</span>
+      <span class="lang-flag" data-lang="en" onclick="setLang('en')" style="cursor:pointer;font-size:24px;opacity:0.4;" title="English">&#127468;&#127463;</span>
     </div>
     <!-- Tabs -->
     <div style="display:flex;margin-bottom:20px;border-radius:8px;overflow:hidden;border:1px solid var(--border2);">
-      <button id="tabLogin" onclick="switchAuthTab('login')" style="flex:1;padding:10px;font-size:13px;font-weight:600;cursor:pointer;border:none;background:linear-gradient(135deg,#e94560,#c73e54);color:#fff;transition:all 0.2s;">Se connecter</button>
-      <button id="tabRegister" onclick="switchAuthTab('register')" style="flex:1;padding:10px;font-size:13px;font-weight:600;cursor:pointer;border:none;background:var(--surface2);color:var(--text3);transition:all 0.2s;">Creer un compte</button>
+      <button id="tabLogin" onclick="switchAuthTab('login')" data-i18n="auth.tab.login" style="flex:1;padding:10px;font-size:13px;font-weight:600;cursor:pointer;border:none;background:linear-gradient(135deg,#e94560,#c73e54);color:#fff;transition:all 0.2s;">Se connecter</button>
+      <button id="tabRegister" onclick="switchAuthTab('register')" data-i18n="auth.tab.register" style="flex:1;padding:10px;font-size:13px;font-weight:600;cursor:pointer;border:none;background:var(--surface2);color:var(--text3);transition:all 0.2s;">Creer un compte</button>
     </div>
     <div id="authError" style="color:#e94560;font-size:13px;text-align:center;margin-bottom:12px;min-height:18px;"></div>
-    <label style="display:block;font-size:12px;color:var(--text3);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.5px;">Email</label>
+    <label style="display:block;font-size:12px;color:var(--text3);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.5px;" data-i18n="auth.email">Email</label>
     <input id="authEmail" type="email" placeholder="votre@email.com" style="width:100%;padding:12px 14px;font-size:14px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;margin-bottom:14px;outline:none;box-sizing:border-box;" onkeydown="if(event.key==='Enter')authSubmit()">
-    <label style="display:block;font-size:12px;color:var(--text3);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.5px;">Mot de passe</label>
+    <label style="display:block;font-size:12px;color:var(--text3);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.5px;" data-i18n="auth.password">Mot de passe</label>
     <div style="position:relative;">
       <input id="authPass" type="password" placeholder="6 caracteres minimum" style="width:100%;padding:12px 14px;padding-right:42px;font-size:14px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;margin-bottom:8px;outline:none;box-sizing:border-box;" onkeydown="if(event.key==='Enter')authSubmit()">
       <span onclick="togglePassVisibility('authPass',this)" style="position:absolute;right:12px;top:12px;cursor:pointer;color:var(--text3);font-size:16px;user-select:none;">&#128065;</span>
     </div>
     <!-- Confirm password (register only) -->
     <div id="authConfirmWrap" style="display:none;">
-      <label style="display:block;font-size:12px;color:var(--text3);margin-bottom:6px;margin-top:6px;text-transform:uppercase;letter-spacing:0.5px;">Confirmer le mot de passe</label>
+      <label style="display:block;font-size:12px;color:var(--text3);margin-bottom:6px;margin-top:6px;text-transform:uppercase;letter-spacing:0.5px;" data-i18n="auth.confirm">Confirmer le mot de passe</label>
       <div style="position:relative;">
         <input id="authPassConfirm" type="password" placeholder="Retapez le mot de passe" style="width:100%;padding:12px 14px;padding-right:42px;font-size:14px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;margin-bottom:8px;outline:none;box-sizing:border-box;" onkeydown="if(event.key==='Enter')authSubmit()">
         <span onclick="togglePassVisibility('authPassConfirm',this)" style="position:absolute;right:12px;top:12px;cursor:pointer;color:var(--text3);font-size:16px;user-select:none;">&#128065;</span>
       </div>
     </div>
-    <button id="authSubmitBtn" onclick="authSubmit()" style="width:100%;padding:12px;background:linear-gradient(135deg,#e94560,#c73e54);color:#fff;border:none;font-size:14px;font-weight:600;cursor:pointer;border-radius:8px;margin-top:12px;">Se connecter</button>
+    <button id="authSubmitBtn" onclick="authSubmit()" data-i18n="auth.login.btn" style="width:100%;padding:12px;background:linear-gradient(135deg,#e94560,#c73e54);color:#fff;border:none;font-size:14px;font-weight:600;cursor:pointer;border-radius:8px;margin-top:12px;">Se connecter</button>
   </div>
 </div>
 
@@ -602,23 +608,25 @@
     <div class="header-logo"><svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M3 21V8l9-5 9 5v13H3z" stroke="#fff" stroke-width="1.5" fill="none"/><path d="M9 21v-6h6v6" stroke="#fff" stroke-width="1.5"/><path d="M7 11h2v2H7zM15 11h2v2h-2z" fill="#e94560"/></svg></div>
     <div>
       <h1>Menage Manager <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.35);vertical-align:middle;">v2.00</span></h1>
-      <div class="subtitle">Gestion des menages</div>
+      <div class="subtitle" data-i18n="header.subtitle">Gestion des menages</div>
     </div>
   </div>
   <div class="header-actions">
-    <button class="btnHelp" onclick="shareReadonly()" title="Partager en lecture seule" style="font-size:14px;">&#128279;</button>
-    <button class="btnHelp" onclick="showChangelog()" title="Historique modifications" style="font-size:13px;">&#128221;</button>
-    <button class="btnHelp" onclick="toggleTheme()" title="Theme clair/sombre" id="themeBtn" style="font-size:15px;">&#9788;</button>
-    <button class="btnHelp" onclick="showHelp()" title="Aide">?</button>
-    <button class="btnHelp" onclick="if(confirm('Se deconnecter ?'))authLogout()" title="Deconnexion" style="font-size:13px;">&#9211;</button>
+    <span class="lang-flag" data-lang="fr" onclick="setLang('fr')" style="cursor:pointer;font-size:16px;opacity:1;" title="Francais">&#127467;&#127479;</span>
+    <span class="lang-flag" data-lang="en" onclick="setLang('en')" style="cursor:pointer;font-size:16px;opacity:0.4;" title="English">&#127468;&#127463;</span>
+    <button class="btnHelp" onclick="shareReadonly()" data-i18n-attr="title" data-i18n="header.share" title="Partager en lecture seule" style="font-size:14px;">&#128279;</button>
+    <button class="btnHelp" onclick="showChangelog()" data-i18n-attr="title" data-i18n="header.changelog" title="Historique modifications" style="font-size:13px;">&#128221;</button>
+    <button class="btnHelp" onclick="toggleTheme()" data-i18n-attr="title" data-i18n="header.theme" title="Theme clair/sombre" id="themeBtn" style="font-size:15px;">&#9788;</button>
+    <button class="btnHelp" onclick="showHelp()" data-i18n-attr="title" data-i18n="header.help" title="Aide">?</button>
+    <button class="btnHelp" onclick="if(confirm(t('auth.logout.confirm')))authLogout()" data-i18n-attr="title" data-i18n="header.logout" title="Deconnexion" style="font-size:13px;">&#9211;</button>
   </div>
 </div>
 
 <div class="content">
   <div id="notifBanner" class="notifBanner hidden"></div>
   <div id="installBanner" class="installBanner" style="display:none;">
-    <div class="installText">Installer Menage Manager<small>Acces rapide depuis l'ecran d'accueil</small></div>
-    <button class="btnInstall" onclick="installPWA()">Installer</button>
+    <div class="installText"><span data-i18n="install.title">Installer Menage Manager</span><small data-i18n="install.subtitle">Acces rapide depuis l'ecran d'accueil</small></div>
+    <button class="btnInstall" onclick="installPWA()" data-i18n="install.btn">Installer</button>
     <button class="btnDismiss" onclick="dismissInstall()">&times;</button>
   </div>
 
@@ -627,12 +635,12 @@
     <div class="panelHeader" onclick="togglePanel('config')">
       <div class="panelLeft">
         <div class="stepBadge">1</div>
-        <div class="panelTitle">Configuration</div>
+        <div class="panelTitle" data-i18n="config.title">Configuration</div>
       </div>
       <span class="panelChevron open" id="chevConfig">&#9660;</span>
     </div>
     <div class="panelBody" id="bodyConfig">
-      <div class="lbl">Calendriers iCal</div>
+      <div class="lbl" data-i18n="config.ical">Calendriers iCal</div>
       <div class="urlRow">
         <span class="urlLabel airbnb">Airbnb</span>
         <input type="text" id="txtAirbnb" placeholder="URL iCal Airbnb...">
@@ -643,14 +651,14 @@
         <input type="text" id="txtBooking" placeholder="URL iCal Booking...">
         <button class="btnIcon" onclick="pasteField('txtBooking')" title="Coller">&#128203;</button>
       </div>
-      <div class="lbl" style="margin-top:14px;">Prestataires</div>
+      <div class="lbl" style="margin-top:14px;" data-i18n="config.providers">Prestataires</div>
       <div class="provTableWrap"><div id="providerList"></div></div>
       <div class="addRow">
-        <input type="text" class="provInput" id="txtNewName" placeholder="Nom">
-        <input type="text" class="provInput" id="txtNewPhone" placeholder="Telephone">
+        <input type="text" class="provInput" id="txtNewName" data-i18n="config.name" data-i18n-attr="placeholder" placeholder="Nom">
+        <input type="text" class="provInput" id="txtNewPhone" data-i18n="config.phone" data-i18n-attr="placeholder" placeholder="Telephone">
         <input type="text" class="provInput pctInput" id="txtNewPct" placeholder="%">
-        <input type="text" class="provInput pctInput" id="txtNewPrice" placeholder="Tarif">
-        <button class="btn btnSmall btnSuccess" onclick="addProvider()">+ Ajouter</button>
+        <input type="text" class="provInput pctInput" id="txtNewPrice" data-i18n="config.price" data-i18n-attr="placeholder" placeholder="Tarif">
+        <button class="btn btnSmall btnSuccess" onclick="addProvider()" data-i18n="config.add">+ Ajouter</button>
       </div>
     </div>
   </div>
@@ -658,9 +666,9 @@
   <!-- Panel 2: Generate -->
   <div class="panel">
     <div class="generateArea">
-      <button class="btn btnPrimary" onclick="generatePlanning()" id="btnGenerate">GENERER LE PLANNING</button>
+      <button class="btn btnPrimary" onclick="generatePlanning()" id="btnGenerate" data-i18n="generate.btn">GENERER LE PLANNING</button>
       <br><br>
-      <button class="btn btnOutline btnSmall" onclick="saveConfig()">Sauvegarder config</button>
+      <button class="btn btnOutline btnSmall" onclick="saveConfig()" data-i18n="generate.save">Sauvegarder config</button>
     </div>
   </div>
 
@@ -669,34 +677,34 @@
     <div class="panelHeader" onclick="togglePanel('results')">
       <div class="panelLeft">
         <div class="stepBadge">3</div>
-        <div class="panelTitle">Resultats</div>
+        <div class="panelTitle" data-i18n="results.title">Resultats</div>
       </div>
       <span class="panelChevron open" id="chevResults">&#9660;</span>
     </div>
     <div id="bodyResults">
       <div id="filterBar" class="filterBar" style="padding: 0 18px; margin-top: 4px;"></div>
       <div class="tabBar">
-        <button class="tabBtn active" id="tabList" onclick="switchTab('list')">&#128203; Liste</button>
-        <button class="tabBtn" id="tabCal" onclick="switchTab('calendar')">&#128197; Calendrier</button>
-        <button class="tabBtn" id="tabStats" onclick="switchTab('stats')">&#128200; Stats</button>
-        <button class="tabBtn" id="tabHist" onclick="switchTab('history')">&#128214; Historique</button>
-        <button class="tabBtn" id="tabPressing" onclick="switchTab('pressing')">&#128084; Pressing</button>
+        <button class="tabBtn active" id="tabList" onclick="switchTab('list')">&#128203; <span data-i18n="results.tab.list">Liste</span></button>
+        <button class="tabBtn" id="tabCal" onclick="switchTab('calendar')">&#128197; <span data-i18n="results.tab.calendar">Calendrier</span></button>
+        <button class="tabBtn" id="tabStats" onclick="switchTab('stats')">&#128200; <span data-i18n="results.tab.stats">Stats</span></button>
+        <button class="tabBtn" id="tabHist" onclick="switchTab('history')">&#128214; <span data-i18n="results.tab.history">Historique</span></button>
+        <button class="tabBtn" id="tabPressing" onclick="switchTab('pressing')">&#128084; <span data-i18n="results.tab.pressing">Pressing</span></button>
       </div>
       <div class="tabContent">
         <div id="tabListContent">
           <div id="resultDiv" class="resultScroll">
-            <div class="emptyState">Cliquez sur GENERER LE PLANNING pour afficher les menages</div>
+            <div class="emptyState" data-i18n="results.empty">Cliquez sur GENERER LE PLANNING pour afficher les menages</div>
           </div>
           <div id="summaryDiv" class="summaryBox hidden"></div>
           <div class="actionBar">
-            <button class="btn btnOutline" onclick="exportCSV()">&#128196; CSV</button>
-            <button class="btn btnOutline" onclick="exportPDF()">&#128462; PDF</button>
-            <button class="btn btnOutline" onclick="copyPlanning()">&#128203; Copier</button>
-            <button class="btn btnWA" onclick="sendWhatsAppAll()">&#128172; WhatsApp</button>
+            <button class="btn btnOutline" onclick="exportCSV()">&#128196; <span data-i18n="results.csv">CSV</span></button>
+            <button class="btn btnOutline" onclick="exportPDF()">&#128462; <span data-i18n="results.pdf">PDF</span></button>
+            <button class="btn btnOutline" onclick="copyPlanning()">&#128203; <span data-i18n="results.copy">Copier</span></button>
+            <button class="btn btnWA" onclick="sendWhatsAppAll()">&#128172; <span data-i18n="results.whatsapp">WhatsApp</span></button>
           </div>
         </div>
         <div id="tabCalContent" class="hidden"><div class="calView" id="calView"></div></div>
-        <div id="tabStatsContent" class="hidden"><div id="statsDiv"><div class="emptyState">Generez un planning pour voir les statistiques.</div></div></div>
+        <div id="tabStatsContent" class="hidden"><div id="statsDiv"><div class="emptyState" data-i18n="stats.empty">Generez un planning pour voir les statistiques.</div></div></div>
         <div id="tabHistContent" class="hidden">
           <div id="historyDiv" style="max-height:500px;overflow-y:auto;"></div>
           <div class="center mt10"><button class="btn btnDanger btnSmall" onclick="clearHistory()">Effacer l'historique</button></div>
@@ -839,12 +847,12 @@ function switchAuthTab(mode) {
     tabLogin.style.background = 'linear-gradient(135deg,#e94560,#c73e54)'; tabLogin.style.color = '#fff';
     tabRegister.style.background = 'var(--surface2)'; tabRegister.style.color = 'var(--text3)';
     confirmWrap.style.display = 'none';
-    submitBtn.textContent = 'Se connecter';
+    submitBtn.textContent = t('auth.login.btn');
   } else {
     tabRegister.style.background = 'linear-gradient(135deg,#6c63ff,#5a52d5)'; tabRegister.style.color = '#fff';
     tabLogin.style.background = 'var(--surface2)'; tabLogin.style.color = 'var(--text3)';
     confirmWrap.style.display = 'block';
-    submitBtn.textContent = 'Creer mon compte';
+    submitBtn.textContent = t('auth.register.btn');
   }
 }
 async function authSubmit() {
@@ -875,9 +883,9 @@ async function authLogin() {
   const pass = document.getElementById('authPass').value;
   const errEl = document.getElementById('authError');
   errEl.textContent = ''; errEl.style.color = '#e94560';
-  if (!email || !pass) { errEl.textContent = 'Remplissez tous les champs'; return; }
+  if (!email || !pass) { errEl.textContent = t('auth.fill.all'); return; }
   const { error } = await supabase.auth.signInWithPassword({ email, password: pass });
-  if (error) { errEl.textContent = error.message === 'Invalid login credentials' ? 'Email ou mot de passe incorrect' : error.message; return; }
+  if (error) { errEl.textContent = error.message === 'Invalid login credentials' ? t('auth.login.invalid') : error.message; return; }
   checkAuth();
 }
 async function authRegister() {
@@ -887,28 +895,28 @@ async function authRegister() {
   const errEl = document.getElementById('authError');
   const submitBtn = document.getElementById('authSubmitBtn');
   errEl.textContent = ''; errEl.style.color = '#e94560';
-  if (!email || !pass) { errEl.textContent = 'Remplissez tous les champs'; return; }
-  if (pass.length < 6) { errEl.textContent = 'Le mot de passe doit faire au moins 6 caracteres'; return; }
-  if (pass !== passConfirm) { errEl.textContent = 'Les mots de passe ne correspondent pas'; return; }
+  if (!email || !pass) { errEl.textContent = t('auth.fill.all'); return; }
+  if (pass.length < 6) { errEl.textContent = t('auth.pass.min'); return; }
+  if (pass !== passConfirm) { errEl.textContent = t('auth.pass.mismatch'); return; }
   try {
-    submitBtn.disabled = true; submitBtn.textContent = 'Creation en cours...';
+    submitBtn.disabled = true; submitBtn.textContent = t('auth.register.loading');
     const { data, error } = await supabase.auth.signUp({ email, password: pass });
-    submitBtn.disabled = false; submitBtn.textContent = 'Creer mon compte';
+    submitBtn.disabled = false; submitBtn.textContent = t('auth.register.btn');
     if (error) { errEl.textContent = error.message; return; }
     if (data.user && data.user.identities && data.user.identities.length === 0) {
-      errEl.textContent = 'Cet email est deja utilise'; return;
+      errEl.textContent = t('auth.email.taken'); return;
     }
     if (data.user && !data.user.confirmed_at) {
       errEl.style.color = '#34d399';
-      errEl.innerHTML = '&#10003; Compte cree !<br><span style="font-size:12px;color:var(--text3);">Un email de confirmation a ete envoye a <b>' + email + '</b>.<br>Cliquez sur le lien dans l\'email puis revenez vous connecter.</span>';
+      errEl.innerHTML = '&#10003; ' + t('auth.register.success') + '<br><span style="font-size:12px;color:var(--text3);">' + t('auth.register.check_email', {email: email}) + '</span>';
       submitBtn.style.display = 'none';
       return;
     }
     errEl.style.color = '#34d399';
-    errEl.textContent = 'Compte cree ! Connexion...';
+    errEl.textContent = t('auth.register.connecting');
     setTimeout(() => checkAuth(), 1000);
   } catch (e) {
-    submitBtn.disabled = false; submitBtn.textContent = 'Creer mon compte';
+    submitBtn.disabled = false; submitBtn.textContent = t('auth.register.btn');
     errEl.textContent = 'Erreur: ' + e.message;
     console.error('Register error:', e);
   }
@@ -918,7 +926,7 @@ async function authLogout() {
   localStorage.clear();
   checkAuth();
 }
-document.addEventListener('DOMContentLoaded', checkAuth);
+document.addEventListener('DOMContentLoaded', () => { setLang(currentLang); checkAuth(); });
 
 /* ── PWA Install ── */
 let deferredPrompt = null;
