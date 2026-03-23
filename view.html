@@ -71,21 +71,47 @@ async function loadData() {
 
     let found = null;
     let providerName = null;
+    let matchedProp = null;
+    let matchedPlanning = [];
 
     for (const row of allData) {
       const cfg = row.config || {};
-      if (readonlyToken && cfg.readonlyToken === readonlyToken) {
-        found = row;
-        break;
-      }
-      if (providerToken) {
-        const prov = (cfg.providers || []).find(p => p.token === providerToken);
-        if (prov) {
-          found = row;
-          providerName = prov.name;
+      const props = cfg.properties || [];
+      const planningData = row.planning || {};
+
+      // Multi-property: search in each property
+      for (const prop of props) {
+        if (readonlyToken && prop.readonlyToken === readonlyToken) {
+          found = row; matchedProp = prop;
+          matchedPlanning = Array.isArray(planningData) ? planningData : (planningData[prop.id] || []);
           break;
         }
+        if (providerToken) {
+          const prov = (prop.providers || []).find(p => p.token === providerToken);
+          if (prov) {
+            found = row; matchedProp = prop; providerName = prov.name;
+            matchedPlanning = Array.isArray(planningData) ? planningData : (planningData[prop.id] || []);
+            break;
+          }
+        }
       }
+
+      // Fallback: legacy single-property format
+      if (!found && !props.length) {
+        if (readonlyToken && cfg.readonlyToken === readonlyToken) {
+          found = row; matchedPlanning = Array.isArray(row.planning) ? row.planning : [];
+          matchedProp = { name: cfg.property || 'Planning', providers: cfg.providers || [] };
+        }
+        if (providerToken) {
+          const prov = (cfg.providers || []).find(p => p.token === providerToken);
+          if (prov) {
+            found = row; providerName = prov.name;
+            matchedPlanning = Array.isArray(row.planning) ? row.planning : [];
+            matchedProp = { name: cfg.property || 'Planning', providers: cfg.providers || [] };
+          }
+        }
+      }
+      if (found) break;
     }
 
     if (!found) {
@@ -94,18 +120,16 @@ async function loadData() {
       return;
     }
 
-    const config = found.config || {};
-    const planning = found.planning || [];
-    const property = config.property || 'Planning';
+    const property = (matchedProp && matchedProp.name) || 'Planning';
 
     // Filter for provider view
-    let displayCleanings = planning;
+    let displayCleanings = matchedPlanning;
     if (providerName) {
-      displayCleanings = planning.filter(c => c.provider === providerName);
-      subtitle.textContent = `Planning de ${providerName} - ${property}`;
+      displayCleanings = matchedPlanning.filter(c => c.provider === providerName);
+      subtitle.textContent = `Planning de ${esc(providerName)} - ${esc(property)}`;
       document.title = `Planning ${providerName} - Menage Manager`;
     } else {
-      subtitle.textContent = `Planning complet - ${property}`;
+      subtitle.textContent = `Planning complet - ${esc(property)}`;
       document.title = `Planning ${property} - Menage Manager`;
     }
 
