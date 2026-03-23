@@ -50,10 +50,11 @@ const API = (function() {
     },
 
     async save_config(config) {
+      const secureToken = (len) => { const a = new Uint8Array(len); crypto.getRandomValues(a); return Array.from(a, b => b.toString(16).padStart(2,'0')).join(''); };
       for (const p of (config.providers || [])) {
-        if (!p.token) p.token = Math.random().toString(36).substring(2, 10);
+        if (!p.token) p.token = secureToken(4);
       }
-      if (!config.readonlyToken) config.readonlyToken = Math.random().toString(36).substring(2, 18);
+      if (!config.readonlyToken) config.readonlyToken = secureToken(8);
       await save('config', config);
       return { ok: true, config };
     },

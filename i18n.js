@@ -54,6 +54,7 @@ const I18N = {
     'config.add': '+ Ajouter',
 
     // Generate
+    'generate.title': 'Generer',
     'generate.btn': 'GENERER LE PLANNING',
     'generate.save': 'Sauvegarder config',
 
@@ -157,6 +158,7 @@ const I18N = {
     'config.add': '+ Add',
 
     // Generate
+    'generate.title': 'Generate',
     'generate.btn': 'GENERATE PLANNING',
     'generate.save': 'Save config',
 

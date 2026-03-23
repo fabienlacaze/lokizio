@@ -244,8 +244,8 @@
   .provTable tr:last-child td { border-bottom: none; }
   .provTable tr:hover td { background: rgba(255,255,255,0.02); }
   .provInput { width: 100%; padding: 8px 10px; border: 1px solid var(--border2); background: rgba(255,255,255,0.04); color: var(--text); font-size: 13px; border-radius: 8px; font-family: 'Inter', sans-serif; }
-  .pctInput { width: 55px; text-align: center; }
-  .colPct { width: 55px; text-align: center; }
+  .pctInput { width: 75px; text-align: center; }
+  .colPct { width: 75px; text-align: center; }
   .colVac { width: 80px; text-align: center; }
   .colLink { width: 45px; text-align: center; }
   .colDel { width: 35px; }
@@ -664,6 +664,12 @@
 
   <!-- Panel 2: Generate -->
   <div class="panel">
+    <div class="panelHeader" style="cursor:default;">
+      <div class="panelLeft">
+        <div class="stepBadge">2</div>
+        <div class="panelTitle" data-i18n="generate.title">Generer</div>
+      </div>
+    </div>
     <div class="generateArea">
       <button class="btn btnPrimary" onclick="generatePlanning()" id="btnGenerate" data-i18n="generate.btn">GENERER LE PLANNING</button>
       <br><br>
@@ -714,7 +720,7 @@
   <div class="panel">
     <div class="panelHeader" onclick="togglePanel('comm')">
       <div class="panelLeft">
-        <div class="stepBadge" style="background:linear-gradient(135deg,#34d399,#059669);">4</div>
+        <div class="stepBadge">4</div>
         <div class="panelTitle" data-i18n="comm.title">Communication & Export</div>
       </div>
       <span class="panelChevron open" id="chevComm">&#9660;</span>
@@ -738,42 +744,42 @@
 <div class="modal" id="msgModal">
   <div class="modalHeader" id="msgTitle">Menage Manager</div>
   <div class="modalBody" id="msgBody"></div>
-  <div class="modalBtns"><button class="btn btnPrimary" style="padding:12px 32px;font-size:14px;" onclick="closeMsg()">OK</button></div>
+  <div class="modalBtns"><button class="btn btnPrimary" style="padding:12px 32px;font-size:14px;" onclick="closeMsg()" data-i18n="modal.ok">OK</button></div>
 </div>
 <div class="modal" id="vacModal">
-  <div class="modalHeader">Vacances prestataire</div>
+  <div class="modalHeader" data-i18n="modal.vacations">Vacances prestataire</div>
   <div class="modalBody" id="vacBody"></div>
-  <div class="modalBtns"><button class="btn btnPrimary" style="padding:12px 32px;font-size:14px;" onclick="closeVacModal()">Fermer</button></div>
+  <div class="modalBtns"><button class="btn btnPrimary" style="padding:12px 32px;font-size:14px;" onclick="closeVacModal()" data-i18n="modal.close">Fermer</button></div>
 </div>
 <div class="modal" id="helpModal">
-  <div class="modalHeader">Aide</div>
+  <div class="modalHeader" data-i18n="help.title">Aide</div>
   <div class="modalBody">
     <div style="margin-bottom:16px;">
-      <div style="color:var(--accent);font-weight:600;font-size:14px;margin-bottom:6px;">1. Configuration</div>
-      <div style="color:var(--text2);font-size:13px;">Collez les URLs iCal depuis Airbnb et Booking. Ajoutez vos prestataires avec leur pourcentage (total = 100%).</div>
+      <div style="color:var(--accent);font-weight:600;font-size:14px;margin-bottom:6px;" data-i18n="help.config.title">1. Configuration</div>
+      <div style="color:var(--text2);font-size:13px;" data-i18n="help.config.text">Collez les URLs iCal depuis Airbnb et Booking. Ajoutez vos prestataires avec leur pourcentage (total = 100%).</div>
     </div>
     <div style="margin-bottom:16px;">
-      <div style="color:var(--accent);font-weight:600;font-size:14px;margin-bottom:6px;">2. Planning</div>
-      <div style="color:var(--text2);font-size:13px;">Cliquez GENERER pour telecharger les calendriers et attribuer les menages automatiquement.</div>
+      <div style="color:var(--accent);font-weight:600;font-size:14px;margin-bottom:6px;" data-i18n="help.planning.title">2. Planning</div>
+      <div style="color:var(--text2);font-size:13px;" data-i18n="help.planning.text">Cliquez GENERER pour telecharger les calendriers et attribuer les menages automatiquement.</div>
     </div>
     <div style="margin-bottom:16px;">
-      <div style="color:var(--accent);font-weight:600;font-size:14px;margin-bottom:6px;">3. Resultats</div>
-      <div style="color:var(--text2);font-size:13px;">Changez les prestataires, filtrez, cochez "Transmis" pour les dates envoyees.</div>
+      <div style="color:var(--accent);font-weight:600;font-size:14px;margin-bottom:6px;" data-i18n="help.results.title">3. Resultats</div>
+      <div style="color:var(--text2);font-size:13px;" data-i18n="help.results.text">Changez les prestataires, filtrez, cochez "Transmis" pour les dates envoyees.</div>
     </div>
     <div style="border-top:1px solid var(--border);padding-top:14px;margin-top:4px;">
-      <div style="color:var(--accent);font-weight:600;font-size:14px;margin-bottom:8px;">Fonctionnalites</div>
-      <div style="color:var(--text2);font-size:13px;line-height:2;">
-        <b>Persistance</b> : modifications sauvegardees automatiquement.<br>
-        <b>WhatsApp</b> : envoyez le planning a chaque prestataire.<br>
-        <b>Calendrier</b> : vue mensuelle avec menages et reservations.<br>
-        <b>Statistiques</b> : graphiques de repartition par prestataire.<br>
-        <b>Historique</b> : les menages passes sont archives.<br>
-        <b>Notifications</b> : alertes 2 jours avant arrivee/depart.<br>
-        <b>Lien prestataire</b> : partagez un lien read-only.
+      <div style="color:var(--accent);font-weight:600;font-size:14px;margin-bottom:8px;" data-i18n="help.features">Fonctionnalites</div>
+      <div style="color:var(--text2);font-size:13px;line-height:2;" id="helpFeaturesList">
+        <b>Persistance</b> : <span data-i18n="help.feature.persist">modifications sauvegardees automatiquement.</span><br>
+        <b>WhatsApp</b> : <span data-i18n="help.feature.whatsapp">envoyez le planning a chaque prestataire.</span><br>
+        <b>Calendrier</b> : <span data-i18n="help.feature.calendar">vue mensuelle avec menages et reservations.</span><br>
+        <b>Statistiques</b> : <span data-i18n="help.feature.stats">graphiques de repartition par prestataire.</span><br>
+        <b>Historique</b> : <span data-i18n="help.feature.history">les menages passes sont archives.</span><br>
+        <b>Notifications</b> : <span data-i18n="help.feature.notif">alertes 2 jours avant arrivee/depart.</span><br>
+        <b>Lien prestataire</b> : <span data-i18n="help.feature.link">partagez un lien read-only.</span>
       </div>
     </div>
   </div>
-  <div class="modalBtns"><button class="btn btnPrimary" style="padding:12px 32px;font-size:14px;" onclick="closeHelp()">Fermer</button></div>
+  <div class="modalBtns"><button class="btn btnPrimary" style="padding:12px 32px;font-size:14px;" onclick="closeHelp()" data-i18n="modal.close">Fermer</button></div>
 </div>
 <div class="toast" id="toast"></div>
 <div class="statusBar"><span id="statusText">Pret</span></div>
@@ -1191,7 +1197,7 @@ function isOnVacation(provName,dateISO) { const p=config.providers.find(pr=>pr.n
 
 /* ── Config ── */
 function logAction(action, detail='') {
-  const log = JSON.parse(localStorage.getItem('mm_changelog') || '[]');
+  const log = (()=>{try{return JSON.parse(localStorage.getItem('mm_changelog')||'[]')}catch(e){return[]}})();
   log.unshift({date: new Date().toLocaleString('fr-FR'), action, detail});
   if (log.length > 100) log.length = 100;
   localStorage.setItem('mm_changelog', JSON.stringify(log));
@@ -1354,7 +1360,7 @@ async function setReminder(idx) {
   if (perm === 'denied') { showMsg('Notifications bloquees. Autorisez-les dans les parametres du navigateur.'); return; }
   if (perm !== 'granted') { perm = await Notification.requestPermission(); if (perm !== 'granted') { showMsg('Permission de notification refusee.'); return; } }
   // Store reminder in localStorage
-  const reminders = JSON.parse(localStorage.getItem('mm_reminders') || '[]');
+  const reminders = (()=>{try{return JSON.parse(localStorage.getItem('mm_reminders')||'[]')}catch(e){return[]}})();
   const key = c.cleaningDate + '_' + c.provider;
   if (reminders.find(r => r.key === key)) { showToast('Rappel deja programme pour ' + c.provider + ' le ' + c.cleaningDateFR); return; }
   const reminderDate = new Date(c.cleaningDate);
@@ -1366,7 +1372,7 @@ async function setReminder(idx) {
   checkReminders();
 }
 function checkReminders() {
-  const reminders = JSON.parse(localStorage.getItem('mm_reminders') || '[]');
+  const reminders = (()=>{try{return JSON.parse(localStorage.getItem('mm_reminders')||'[]')}catch(e){return[]}})();
   const now = new Date();
   const remaining = [];
   reminders.forEach(r => {

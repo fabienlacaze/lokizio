@@ -45,6 +45,7 @@ const params = new URLSearchParams(window.location.search);
 const readonlyToken = params.get('readonly');
 const providerToken = params.get('provider');
 
+function esc(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
 function fmtDate(iso) {
   if (!iso) return '';
   const [y,m,d] = iso.split('-');
@@ -127,13 +128,13 @@ async function loadData() {
       html += `
         <div class="card">
           <div>
-            <div class="date">${c.dayName || ''} ${fmtDate(c.date)}</div>
+            <div class="date">${esc(c.dayName || '')} ${fmtDate(c.date)}</div>
             <div class="details">
-              <span class="badge ${badgeClass}">${c.source || ''}</span>
+              <span class="badge ${badgeClass}">${esc(c.source || '')}</span>
               Arrivee: ${fmtDate(c.date)} &rarr; Depart: ${fmtDate(c.checkoutDate)}
             </div>
           </div>
-          <div class="provider">${c.provider || '?'}</div>
+          <div class="provider">${esc(c.provider || '?')}</div>
         </div>`;
     }
     content.innerHTML = html;
