@@ -102,7 +102,7 @@
   .header-actions { display: flex; gap: 8px; align-items: center; }
 
   /* ── Main Content ── */
-  .content { padding: 16px 16px 100px 16px; max-width: 900px; margin: 0 auto; }
+  .content { padding: 16px 16px 100px 16px; max-width: 900px; margin: 0 auto; display:flex; flex-direction:column; gap:14px; }
 
   /* ── Notification Banner ── */
   .notifBanner {
@@ -122,7 +122,7 @@
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: var(--radius);
-    margin-bottom: 12px;
+    margin-bottom: 0;
     overflow: hidden;
     box-shadow: var(--shadow);
   }
@@ -589,17 +589,17 @@
 
   /* ══ PRO UI POLISH ══ */
 
-  /* Aurora animated header */
+  /* Subtle animated header */
   .header {
-    background: linear-gradient(-45deg, #e94560, #6c63ff, #0f3460, #16213e, #34d399, #1a1a2e) !important;
-    background-size: 600% 600% !important;
-    animation: aurora 8s ease infinite !important;
+    background: linear-gradient(-45deg, #1a1a2e, #0f3460, #16213e, #1a1040) !important;
+    background-size: 300% 300% !important;
+    animation: aurora 20s ease infinite !important;
   }
-  @keyframes aurora { 0%{background-position:0% 50%} 25%{background-position:50% 0%} 50%{background-position:100% 50%} 75%{background-position:50% 100%} 100%{background-position:0% 50%} }
+  @keyframes aurora { 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
 
-  /* Header logo pulse */
-  .header-logo { animation: logoPulse 2s ease-in-out infinite !important; }
-  @keyframes logoPulse { 0%,100%{box-shadow:0 4px 12px rgba(233,69,96,0.3);transform:scale(1)} 50%{box-shadow:0 4px 30px rgba(233,69,96,0.8);transform:scale(1.05)} }
+  /* Header logo subtle pulse */
+  .header-logo { animation: logoPulse 4s ease-in-out infinite !important; }
+  @keyframes logoPulse { 0%,100%{box-shadow:0 4px 12px rgba(233,69,96,0.3)} 50%{box-shadow:0 4px 20px rgba(233,69,96,0.5)} }
 
   /* Gradient border panels */
   .panel { position:relative; border:none; }
@@ -670,10 +670,10 @@
 
   /* Particles background */
   .particles { position:fixed; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:-1; overflow:hidden; }
-  .particle { position:absolute; border-radius:50%; opacity:0.08; animation:particleFloat linear infinite; }
+  .particle { position:absolute; border-radius:50%; opacity:0.04; animation:particleFloat linear infinite; }
   .particle:nth-child(odd) { background:var(--accent2); }
   .particle:nth-child(even) { background:var(--accent); }
-  @keyframes particleFloat { 0%{transform:translateY(100vh) rotate(0deg);opacity:0} 10%{opacity:0.08} 90%{opacity:0.08} 100%{transform:translateY(-100px) rotate(360deg);opacity:0} }
+  @keyframes particleFloat { 0%{transform:translateY(100vh) rotate(0deg);opacity:0} 10%{opacity:0.04} 90%{opacity:0.04} 100%{transform:translateY(-100px) rotate(360deg);opacity:0} }
 
   /* Pricing card hover */
   .pricingCard { transition:all 0.3s ease; }
@@ -882,17 +882,16 @@
     <button class="btn btnSmall btnDanger" id="btnRemoveProp" onclick="removeCurrentProperty()" style="padding:6px 10px;font-size:12px;display:none;">&#128465;</button>
   </div>
 
-  <!-- Panel 1: Configuration -->
-  <div class="panel">
+  <!-- Section 1: Calendriers iCal -->
+  <div class="panel" id="panelConfig">
     <div class="panelHeader" onclick="togglePanel('config')">
       <div class="panelLeft">
         <div class="stepBadge">1</div>
-        <div class="panelTitle" data-i18n="config.title">Configuration</div>
+        <div class="panelTitle" data-i18n="config.ical">Calendriers iCal</div>
       </div>
-      <span class="panelChevron open" id="chevConfig">&#9660;</span>
+      <span class="panelChevron" id="chevConfig">&#9660;</span>
     </div>
-    <div class="panelBody" id="bodyConfig">
-      <div class="lbl" data-i18n="config.ical">Calendriers iCal</div>
+    <div class="panelBody collapsed" id="bodyConfig">
       <div class="urlRow">
         <span class="urlLabel airbnb">Airbnb</span>
         <input type="text" id="txtAirbnb" placeholder="URL iCal Airbnb...">
@@ -903,7 +902,22 @@
         <input type="text" id="txtBooking" placeholder="URL iCal Booking...">
         <button class="btnIcon" onclick="pasteField('txtBooking')" title="Coller">&#128203;</button>
       </div>
-      <div class="lbl" style="margin-top:14px;" data-i18n="config.providers">Prestataires</div>
+      <div style="margin-top:10px;text-align:right;">
+        <button class="btn btnOutline btnSmall" onclick="saveConfig()" data-i18n="generate.save">Sauvegarder</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section 2: Prestataires -->
+  <div class="panel">
+    <div class="panelHeader" onclick="togglePanel('providers')">
+      <div class="panelLeft">
+        <div class="stepBadge">2</div>
+        <div class="panelTitle" data-i18n="config.providers">Prestataires</div>
+      </div>
+      <span class="panelChevron" id="chevProviders">&#9660;</span>
+    </div>
+    <div class="panelBody collapsed" id="bodyProviders">
       <div class="provTableWrap"><div id="providerList"></div></div>
       <div class="addRow">
         <input type="text" class="provInput" id="txtNewName" data-i18n="config.name" data-i18n-attr="placeholder" placeholder="Nom">
@@ -915,27 +929,19 @@
     </div>
   </div>
 
-  <!-- Panel 2: Generate -->
-  <div class="panel">
-    <div class="panelHeader" style="cursor:default;">
-      <div class="panelLeft">
-        <div class="stepBadge">2</div>
-        <div class="panelTitle" data-i18n="generate.title">Generer</div>
-      </div>
-    </div>
-    <div class="generateArea">
-      <button class="btn btnPrimary" onclick="generatePlanning()" id="btnGenerate" data-i18n="generate.btn">GENERER LE PLANNING</button>
-      <br><br>
-      <button class="btn btnOutline btnSmall" onclick="saveConfig()" data-i18n="generate.save">Sauvegarder config</button>
+  <!-- Section 3: Generer (toujours visible, proéminent) -->
+  <div class="panel" style="background:linear-gradient(135deg, rgba(233,69,96,0.08), rgba(108,99,255,0.08));">
+    <div class="generateArea" style="padding:20px;">
+      <button class="btn btnPrimary" onclick="generatePlanning()" id="btnGenerate" style="width:100%;max-width:400px;padding:16px 32px;font-size:16px;font-weight:700;" data-i18n="generate.btn">GENERER LE PLANNING</button>
     </div>
   </div>
 
-  <!-- Panel 3: Results -->
+  <!-- Section 4: Planning (section principale) -->
   <div class="panel">
     <div class="panelHeader" onclick="togglePanel('results')">
       <div class="panelLeft">
-        <div class="stepBadge">3</div>
-        <div class="panelTitle" data-i18n="results.title">Resultats</div>
+        <div class="stepBadge" style="background:linear-gradient(135deg,var(--success),#059669);">3</div>
+        <div class="panelTitle" data-i18n="results.title">Planning</div>
       </div>
       <span class="panelChevron open" id="chevResults">&#9660;</span>
     </div>
@@ -969,16 +975,16 @@
     </div>
   </div>
 
-  <!-- Panel 4: Communication & Export -->
+  <!-- Section 5: Communication & Export -->
   <div class="panel">
     <div class="panelHeader" onclick="togglePanel('comm')">
       <div class="panelLeft">
-        <div class="stepBadge">4</div>
+        <div class="stepBadge" style="background:linear-gradient(135deg,#6c63ff,#5a52d5);">4</div>
         <div class="panelTitle" data-i18n="comm.title">Communication & Export</div>
       </div>
-      <span class="panelChevron open" id="chevComm">&#9660;</span>
+      <span class="panelChevron" id="chevComm">&#9660;</span>
     </div>
-    <div class="panelBody" id="bodyComm">
+    <div class="panelBody collapsed" id="bodyComm">
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;">
         <button class="btn btnWA" onclick="sendWhatsAppAll()" style="padding:14px;font-size:14px;">&#128172; <span data-i18n="results.whatsapp">WhatsApp</span></button>
         <button class="btn btnOutline" onclick="shareReadonly()" style="padding:14px;font-size:14px;">&#128279; <span data-i18n="comm.share">Partager (lecture seule)</span></button>
@@ -1211,7 +1217,7 @@ function syncAndSaveConfig() {
 
 /* ── Panel Collapse ── */
 function togglePanel(id) {
-  const map = { config: ['bodyConfig','chevConfig'], results: ['bodyResults','chevResults'], comm: ['bodyComm','chevComm'] };
+  const map = { config: ['bodyConfig','chevConfig'], providers: ['bodyProviders','chevProviders'], results: ['bodyResults','chevResults'], comm: ['bodyComm','chevComm'] };
   const [bodyId, chevId] = map[id] || [null, null];
   if (!bodyId) return;
   const body = document.getElementById(bodyId);
