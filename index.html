@@ -1222,7 +1222,7 @@ function togglePanel(id) {
   if (!bodyId) return;
   const body = document.getElementById(bodyId);
   const chev = document.getElementById(chevId);
-  if (id === 'config' || id === 'comm') {
+  if (id === 'config' || id === 'comm' || id === 'providers') {
     body.classList.toggle('collapsed');
   } else if (id === 'results') {
     const content = document.getElementById('bodyResults');
