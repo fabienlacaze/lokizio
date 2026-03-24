@@ -1804,6 +1804,12 @@ function syncIcalToOldFormat(prop) {
 function showAddIcalModal() {
   const prop = API.getActiveProperty(fullConfig);
   if (!prop.icals) prop.icals = [];
+  // Check plan limit
+  const limits = API.getLimits();
+  if (prop.icals.length >= limits.maxIcals) {
+    showPremiumModal();
+    return;
+  }
   // Show simple prompt with platform selection
   const existingPlatforms = new Set(prop.icals.map(i => i.platform));
   const available = ICAL_PLATFORMS.filter(p => !existingPlatforms.has(p.id) || p.id === 'other');
