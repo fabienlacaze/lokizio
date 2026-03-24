@@ -940,12 +940,8 @@
     </div>
     <div class="panelBody collapsed" id="bodyProviders">
       <div class="provTableWrap"><div id="providerList"></div></div>
-      <div class="addRow">
-        <input type="text" class="provInput" id="txtNewName" data-i18n="config.name" data-i18n-attr="placeholder" placeholder="Nom">
-        <input type="text" class="provInput" id="txtNewPhone" data-i18n="config.phone" data-i18n-attr="placeholder" placeholder="Telephone">
-        <input type="text" class="provInput pctInput" id="txtNewPct" placeholder="%">
-        <input type="text" class="provInput pctInput" id="txtNewPrice" data-i18n="config.price" data-i18n-attr="placeholder" placeholder="Tarif">
-        <button class="btn btnSmall btnSuccess" onclick="addProvider()" data-i18n="config.add">+ Ajouter</button>
+      <div style="margin-top:8px;">
+        <button class="btn btnSmall btnSuccess" onclick="showAddProviderModal()" style="padding:8px 16px;font-size:12px;" data-i18n="config.add">+ Ajouter un prestataire</button>
       </div>
     </div>
   </div>
@@ -1108,6 +1104,34 @@
     <div style="text-align:center;color:var(--text3);font-size:11px;" data-i18n="premium.cancel">Annulable a tout moment. Paiement securise par Stripe.</div>
   </div>
 </div>
+<!-- Add Provider Modal -->
+<div class="modal" id="addProviderModal" style="max-width:420px;">
+  <div class="modalHeader" style="display:flex;justify-content:space-between;align-items:center;">
+    <span data-i18n="provider.add.title">Ajouter un prestataire</span>
+    <button class="btn btnSmall" onclick="closeAddProviderModal()" style="padding:4px 10px;">&#10005;</button>
+  </div>
+  <div class="modalBody" style="padding:16px 20px;">
+    <label style="display:block;font-size:12px;color:var(--text3);margin-bottom:4px;text-transform:uppercase;letter-spacing:0.5px;" data-i18n="config.name">Nom</label>
+    <input id="txtNewName" type="text" placeholder="Nom du prestataire" style="width:100%;padding:10px 14px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;margin-bottom:12px;box-sizing:border-box;">
+
+    <label style="display:block;font-size:12px;color:var(--text3);margin-bottom:4px;text-transform:uppercase;letter-spacing:0.5px;" data-i18n="config.phone">Telephone</label>
+    <input id="txtNewPhone" type="tel" placeholder="06 12 34 56 78" style="width:100%;padding:10px 14px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;margin-bottom:12px;box-sizing:border-box;">
+
+    <div style="display:flex;gap:10px;margin-bottom:12px;">
+      <div style="flex:1;">
+        <label style="display:block;font-size:12px;color:var(--text3);margin-bottom:4px;text-transform:uppercase;letter-spacing:0.5px;">%</label>
+        <input id="txtNewPct" type="number" min="0" max="100" placeholder="50" style="width:100%;padding:10px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;box-sizing:border-box;">
+      </div>
+      <div style="flex:1;">
+        <label style="display:block;font-size:12px;color:var(--text3);margin-bottom:4px;text-transform:uppercase;letter-spacing:0.5px;" data-i18n="config.price">Tarif (€)</label>
+        <input id="txtNewPrice" type="number" min="0" placeholder="65" style="width:100%;padding:10px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;box-sizing:border-box;">
+      </div>
+    </div>
+
+    <button class="btn btnPrimary" style="width:100%;padding:14px;font-size:14px;" onclick="addProviderFromModal()" data-i18n="config.add">Ajouter</button>
+  </div>
+</div>
+
 <!-- Property Detail Modal -->
 <div class="modal" id="propDetailModal" style="max-width:600px;max-height:90vh;overflow-y:auto;">
   <div class="modalHeader" style="display:flex;justify-content:space-between;align-items:center;">
@@ -2141,16 +2165,42 @@ function syncProviders() {
     if(n)p.name=n.value; if(ph)p.phone=ph.value; if(pct)p.percentage=parseInt(pct.value)||0; if(pr)p.price=parseFloat(pr.value)||0;
   });
 }
-function addProvider() {
+function showAddProviderModal() {
   if (!checkProviderLimit()) return;
+  document.getElementById('txtNewName').value = '';
+  document.getElementById('txtNewPhone').value = '';
+  document.getElementById('txtNewPct').value = '';
+  document.getElementById('txtNewPrice').value = '';
+  document.getElementById('overlay').style.display = 'block';
+  document.getElementById('addProviderModal').style.display = 'block';
+  setTimeout(() => document.getElementById('txtNewName').focus(), 100);
+}
+function closeAddProviderModal() {
+  document.getElementById('overlay').style.display = 'none';
+  document.getElementById('addProviderModal').style.display = 'none';
+}
+function addProviderFromModal() {
   const name=document.getElementById('txtNewName').value.trim(), phone=document.getElementById('txtNewPhone').value.trim(), pct=parseInt(document.getElementById('txtNewPct').value)||0, price=parseFloat(document.getElementById('txtNewPrice').value)||0;
-  if(!name){showMsg('Veuillez saisir un nom.');return;}
+  if(!name){showToast('Veuillez saisir un nom.');return;}
   syncProviders();
-  config.providers.push({name,phone,percentage:pct,price,vacations:''});
-  document.getElementById('txtNewName').value='';document.getElementById('txtNewPhone').value='';document.getElementById('txtNewPct').value='';document.getElementById('txtNewPrice').value='';
+  config.providers.push({name,phone,percentage:pct||0,price,vacations:''});
+  autoBalancePercentages();
+  closeAddProviderModal();
+  showToast(name + ' ajoute');
+}
+function addProvider() { showAddProviderModal(); }
+
+function autoBalancePercentages() {
+  if (!config.providers || !config.providers.length) return;
+  const n = config.providers.length;
+  const base = Math.floor(100 / n);
+  const remainder = 100 - (base * n);
+  config.providers.forEach((p, i) => {
+    p.percentage = base + (i < remainder ? 1 : 0);
+  });
   renderProviders();
 }
-function removeProvider(i) { const name=config.providers[i]?.name||''; if(!confirm('Supprimer le prestataire "'+name+'" ?'))return; syncProviders(); config.providers.splice(i,1); renderProviders(); }
+function removeProvider(i) { const name=config.providers[i]?.name||''; if(!confirm('Supprimer le prestataire "'+name+'" ?'))return; syncProviders(); config.providers.splice(i,1); autoBalancePercentages(); }
 
 /* ── Vacations ── */
 function showVacModal(i) { syncProviders(); vacPopupIdx=i; renderVacContent(); document.getElementById('overlay').style.display='block'; document.getElementById('vacModal').style.display='block'; }
