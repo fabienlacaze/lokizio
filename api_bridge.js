@@ -241,14 +241,16 @@ const API = (function() {
       const fullConfig = await this.load_config();
       const prop = getActiveProp(fullConfig);
       if (!prop) return { error: 'Aucune propriete configuree' };
-      // Build single-property config for generator
+      // Build config for generator with all iCal sources
       const genConfig = {
-        airbnbIcalUrl: prop.airbnbIcalUrl,
-        bookingIcalUrl: prop.bookingIcalUrl,
+        airbnbIcalUrl: prop.airbnbIcalUrl || '',
+        bookingIcalUrl: prop.bookingIcalUrl || '',
+        icals: prop.icals || [],
         providers: prop.providers,
         property: prop.name,
       };
-      log('Config: ' + (genConfig.providers||[]).length + ' prestataires, airbnb=' + (genConfig.airbnbIcalUrl?'oui':'non') + ', booking=' + (genConfig.bookingIcalUrl?'oui':'non'), 'ok');
+      const icalCount = (genConfig.icals || []).filter(i => i.url).length || ((genConfig.airbnbIcalUrl?1:0)+(genConfig.bookingIcalUrl?1:0));
+      log('Config: ' + (genConfig.providers||[]).length + ' prestataires, ' + icalCount + ' calendrier(s)', 'ok');
       const previousPlanning = (await this.load_planning()) || [];
       log('Planning precedent: ' + previousPlanning.length + ' entree(s)', 'ok');
       const transmittedDates = await this.load_transmitted();

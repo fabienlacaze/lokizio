@@ -110,16 +110,19 @@ async function generatePlanningFromICal(config, previousPlanning, transmittedDat
     if (d) prevByDate[d] = c;
   }
 
-  const airbnbUrl = config.airbnbIcalUrl || '';
-  const bookingUrl = config.bookingIcalUrl || '';
   const providers = config.providers || [];
   let allEvents = [];
   const errors = [];
 
-  const sources = [
-    { url: airbnbUrl, name: 'Airbnb' },
-    { url: bookingUrl, name: 'Booking' }
-  ];
+  // Build sources from dynamic icals list or legacy fields
+  const PLATFORM_NAMES = { airbnb:'Airbnb', booking:'Booking', vrbo:'Vrbo', tripadvisor:'Tripadvisor', holidu:'Holidu', gites:'Gites de France', other:'Autre' };
+  let sources = [];
+  if (config.icals && config.icals.length) {
+    sources = config.icals.filter(i => i.url).map(i => ({ url: i.url, name: PLATFORM_NAMES[i.platform] || i.platform }));
+  } else {
+    if (config.airbnbIcalUrl) sources.push({ url: config.airbnbIcalUrl, name: 'Airbnb' });
+    if (config.bookingIcalUrl) sources.push({ url: config.bookingIcalUrl, name: 'Booking' });
+  }
   for (const src of sources) {
     if (!src.url) { log(src.name + ': pas d\'URL, skip', 'info'); continue; }
     log('Lecture ' + src.name + '...', 'info');
