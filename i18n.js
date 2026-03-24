@@ -65,6 +65,19 @@ const I18N = {
 
     // Map
     'map.radius': 'Rayon :',
+    // Property detail modal
+    'prop.detail.title': 'Details de la propriete',
+    'prop.detail.name': 'Nom',
+    'prop.detail.address': 'Adresse',
+    'prop.detail.type': 'Type',
+    'prop.detail.rooms': 'Pieces',
+    'prop.detail.price': 'Tarif menage (€)',
+    'prop.detail.duration': 'Duree estimee',
+    'prop.detail.checklist': 'Instructions de menage',
+    'prop.detail.notes': 'Notes',
+    'prop.detail.save': 'Enregistrer',
+    'prop.detail.saved': 'Propriete enregistree',
+
     'map.save': 'Enregistrer',
     'map.provider_zone': 'Zone de',
     'map.property_location': 'Position de',
@@ -259,6 +272,19 @@ const I18N = {
     'help.feature.history': 'past cleanings are archived.',
     'help.feature.notif': 'alerts 2 days before check-in/out.',
     'help.feature.link': 'share a read-only link.',
+
+    // Property detail modal
+    'prop.detail.title': 'Property details',
+    'prop.detail.name': 'Name',
+    'prop.detail.address': 'Address',
+    'prop.detail.type': 'Type',
+    'prop.detail.rooms': 'Rooms',
+    'prop.detail.price': 'Cleaning price (€)',
+    'prop.detail.duration': 'Estimated duration',
+    'prop.detail.checklist': 'Cleaning instructions',
+    'prop.detail.notes': 'Notes',
+    'prop.detail.save': 'Save',
+    'prop.detail.saved': 'Property saved',
 
     // Map
     'map.radius': 'Radius:',
