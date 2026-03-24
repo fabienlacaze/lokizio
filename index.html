@@ -1000,7 +1000,7 @@
       <!-- Premium: WhatsApp, PDF, Partage -->
       <div class="lbl" style="margin-bottom:8px;">Premium &#11088;</div>
       <div id="commPremiumZone" style="position:relative;">
-        <div id="commPremLock" style="display:none;position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(15,15,26,0.7);display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:var(--radius-sm);z-index:2;cursor:pointer;" onclick="showPremiumModal()"><span style="font-size:28px;">&#128274;</span><span style="color:#fff;font-size:12px;font-weight:600;margin-top:6px;">Debloquer</span></div>
+        <div id="commPremLock" style="display:none;position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(15,15,26,0.7);display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:var(--radius-sm);z-index:2;cursor:pointer;" onclick="showPremiumModal('WhatsApp, PDF et Partage sont reserves aux utilisateurs Premium')"><span style="font-size:28px;">&#128274;</span><span style="color:#fff;font-size:12px;font-weight:600;margin-top:6px;">Debloquer</span></div>
         <div id="commPremContent" style="">
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
             <button class="btn btnWA" onclick="sendWhatsAppAll()" style="padding:14px;font-size:14px;">&#128172; <span data-i18n="results.whatsapp">WhatsApp</span></button>
@@ -1025,7 +1025,7 @@
     </div>
     <div class="panelBody collapsed" id="bodyHistory">
       <div id="histPremiumZone" style="position:relative;">
-        <div id="histPremLock" style="display:none;position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(15,15,26,0.7);display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:var(--radius-sm);z-index:2;cursor:pointer;" onclick="showPremiumModal()"><span style="font-size:32px;">&#128274;</span><span style="color:#fff;font-size:13px;font-weight:600;margin-top:8px;">Premium</span></div>
+        <div id="histPremLock" style="display:none;position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(15,15,26,0.7);display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:var(--radius-sm);z-index:2;cursor:pointer;" onclick="showPremiumModal('L\'historique et le pressing sont reserves aux utilisateurs Premium')"><span style="font-size:32px;">&#128274;</span><span style="color:#fff;font-size:13px;font-weight:600;margin-top:8px;">Premium</span></div>
         <div id="histPremContent">
       <div class="tabBar" style="margin-bottom:10px;">
         <button class="tabBtn active" id="tabHist" onclick="switchHistTab('history')">&#128214; <span data-i18n="results.tab.history">Historique</span></button>
@@ -1087,8 +1087,12 @@
   <div class="modalBtns"><button class="btn btnPrimary" style="padding:12px 32px;font-size:14px;" onclick="closeHelp()" data-i18n="modal.close">Fermer</button></div>
 </div>
 <div class="modal" id="premiumModal" style="max-width:520px;">
-  <div class="modalHeader" data-i18n="premium.modal.title">Choisissez votre plan</div>
+  <div class="modalHeader" style="display:flex;justify-content:space-between;align-items:center;">
+    <span data-i18n="premium.modal.title">Choisissez votre plan</span>
+    <button class="btn btnSmall" onclick="closePremiumModal()" style="padding:4px 10px;font-size:16px;">&#10005;</button>
+  </div>
   <div class="modalBody">
+    <div id="premiumReason" style="display:none;background:rgba(233,69,96,0.15);border:1px solid rgba(233,69,96,0.3);border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:13px;color:var(--accent);text-align:center;font-weight:600;"></div>
     <div class="pricingCards">
       <div class="pricingCard">
         <h3 data-i18n="premium.plan.free">Gratuit</h3>
@@ -1394,7 +1398,7 @@ async function switchProperty(propId) {
 function addNewProperty() {
   const limits = API.getLimits();
   if ((fullConfig.properties || []).length >= limits.maxProperties) {
-    showPremiumModal();
+    showPremiumModal('Vous avez atteint la limite de ' + limits.maxProperties + ' propriete(s). Passez a Premium pour en ajouter plus.');
     return;
   }
   const name = prompt(t('property.name_prompt') || 'Nom de la propriete :');
@@ -1619,7 +1623,20 @@ function updatePlanUI() {
     histContent.style.pointerEvents = isPremium ? '' : 'none';
   }
 }
-function showPremiumModal() {
+function closePremiumModal() {
+  document.getElementById('overlay').style.display = 'none';
+  document.getElementById('premiumModal').style.display = 'none';
+}
+function showPremiumModal(reason) {
+  const reasonEl = document.getElementById('premiumReason');
+  if (reasonEl) {
+    if (reason) {
+      reasonEl.textContent = reason;
+      reasonEl.style.display = 'block';
+    } else {
+      reasonEl.style.display = 'none';
+    }
+  }
   document.getElementById('overlay').style.display = 'block';
   document.getElementById('premiumModal').style.display = 'block';
 }
@@ -1653,7 +1670,7 @@ function checkProviderLimit() {
   const limits = API.getLimits();
   const count = (config.providers || []).length;
   if (count >= limits.maxProviders) {
-    showPremiumModal();
+    showPremiumModal('Vous avez atteint la limite de ' + limits.maxProviders + ' prestataires. Passez a Premium pour en ajouter plus.');
     return false;
   }
   return true;
@@ -1862,7 +1879,7 @@ function showAddIcalModal() {
   // Check plan limit
   const limits = API.getLimits();
   if (prop.icals.length >= limits.maxIcals) {
-    showPremiumModal();
+    showPremiumModal('Vous avez atteint la limite de ' + limits.maxIcals + ' calendriers. Passez a Premium pour en ajouter plus.');
     return;
   }
   // Show simple prompt with platform selection
@@ -2299,7 +2316,7 @@ function autoRegenerateIfNeeded() {
   if (!hasUrls || !hasProviders) return;
   // Debounce: wait 2s after last change before regenerating
   if (autoRegenTimer) clearTimeout(autoRegenTimer);
-  autoRegenTimer = setTimeout(() => { generatePlanning(); }, 2000);
+  autoRegenTimer = setTimeout(() => { generatePlanning(true); }, 2000);
 }
 
 function autoBalancePercentages() {
@@ -2342,18 +2359,20 @@ async function saveConfig() { const res = await syncAndSaveConfig(); if(res&&res
 async function savePlanning() { if(cleanings.length>0) { await API.save_planning(cleanings); logAction('Planning sauvegarde', cleanings.length+' menage(s)'); } }
 
 /* ── Generate Planning ── */
-async function generatePlanning() {
-  // Check daily generation limit for free users
-  const limits = API.getLimits();
-  if (limits.maxGenerates < Infinity) {
-    const today = new Date().toISOString().substring(0,10);
-    const genLog = JSON.parse(localStorage.getItem('mm_gen_log') || '[]').filter(d => d === today);
-    if (genLog.length >= limits.maxGenerates) {
-      showPremiumModal();
-      return;
+async function generatePlanning(isAuto) {
+  // Check daily generation limit for free users (only manual clicks count)
+  if (!isAuto) {
+    const limits = API.getLimits();
+    if (limits.maxGenerates < Infinity) {
+      const today = new Date().toISOString().substring(0,10);
+      const genLog = JSON.parse(localStorage.getItem('mm_gen_log') || '[]').filter(d => d === today);
+      if (genLog.length >= limits.maxGenerates) {
+        showPremiumModal('Vous avez atteint la limite de ' + limits.maxGenerates + ' generations par jour. Passez a Premium pour des generations illimitees.');
+        return;
+      }
+      genLog.push(today);
+      localStorage.setItem('mm_gen_log', JSON.stringify(genLog));
     }
-    genLog.push(today);
-    localStorage.setItem('mm_gen_log', JSON.stringify(genLog));
   }
   syncProviders();
   // Sync iCal URLs from dynamic list
@@ -2780,7 +2799,7 @@ function renderStats() {
   const actuals=provNames.map((_,i)=>cleanings.length>0?Math.round((counts[i]/cleanings.length)*1000)/10:0);
   const colors=(config.providers||[]).map((_,i)=>COLORS[i]||'#888');
   const isPrem = API.isPremium();
-  const premLock = `<div style="position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(15,15,26,0.7);display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:var(--radius-sm);z-index:2;cursor:pointer;" onclick="showPremiumModal()"><span style="font-size:32px;">&#128274;</span><span style="color:#fff;font-size:13px;font-weight:600;margin-top:8px;">Premium</span></div>`;
+  const premLock = `<div style="position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(15,15,26,0.7);display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:var(--radius-sm);z-index:2;cursor:pointer;" onclick="showPremiumModal('Les graphiques et couts sont reserves aux utilisateurs Premium')"><span style="font-size:32px;">&#128274;</span><span style="color:#fff;font-size:13px;font-weight:600;margin-top:8px;">Premium</span></div>`;
   const blurStyle = isPrem ? '' : 'filter:blur(4px);pointer-events:none;';
   const premWrap = (content) => isPrem ? content : `<div style="position:relative;">${premLock}<div style="${blurStyle}">${content}</div></div>`;
 
