@@ -57,6 +57,7 @@ const I18N = {
     'config.pct': '%',
     'config.price': 'Tarif',
     'config.add': '+ Ajouter',
+    'provider.add.title': 'Ajouter un prestataire',
 
     // Generate
     'generate.title': 'Generer',
@@ -218,6 +219,7 @@ const I18N = {
     'config.pct': '%',
     'config.price': 'Rate',
     'config.add': '+ Add',
+    'provider.add.title': 'Add a provider',
 
     // Generate
     'generate.title': 'Generate',
