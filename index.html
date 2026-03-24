@@ -1899,13 +1899,15 @@ function updateIcalUrl(idx, url) {
   }
 }
 
-function removeIcal(idx) {
+async function removeIcal(idx) {
   const prop = API.getActiveProperty(fullConfig);
-  if (prop.icals) {
-    prop.icals.splice(idx, 1);
-    syncIcalToOldFormat(prop);
-    renderIcalList();
-  }
+  if (!prop.icals || !prop.icals[idx]) return;
+  const plat = ICAL_PLATFORMS.find(p => p.id === prop.icals[idx].platform) || { name: 'Calendrier' };
+  const ok = await customConfirm('Supprimer le calendrier "' + plat.name + '" ?', 'Supprimer');
+  if (!ok) return;
+  prop.icals.splice(idx, 1);
+  syncIcalToOldFormat(prop);
+  renderIcalList();
 }
 
 /* ── History/Pressing sub-tabs ── */
