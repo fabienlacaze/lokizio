@@ -2710,14 +2710,14 @@ function renderStats() {
   const targets=provNames.map(name=>{const p=config.providers.find(pr=>pr.name===name);return parseInt(p.percentage)||0;});
   const actuals=provNames.map((_,i)=>cleanings.length>0?Math.round((counts[i]/cleanings.length)*1000)/10:0);
   const colors=(config.providers||[]).map((_,i)=>COLORS[i]||'#888');
+  const isPrem = API.isPremium();
+  const premLock = `<div style="position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(15,15,26,0.7);display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:var(--radius-sm);z-index:2;cursor:pointer;" onclick="showPremiumModal()"><span style="font-size:32px;">&#128274;</span><span style="color:#fff;font-size:13px;font-weight:600;margin-top:8px;">Premium</span></div>`;
+  const blurStyle = isPrem ? '' : 'filter:blur(4px);pointer-events:none;';
+  const premWrap = (content) => isPrem ? content : `<div style="position:relative;">${premLock}<div style="${blurStyle}">${content}</div></div>`;
+
   document.getElementById('statsDiv').innerHTML=`
-    ${hasPlanning ? `<div class="statsCard" style="margin-top:8px;">
-      <h3 class="statsToggle" onclick="toggleStats(this)">Repartition des menages</h3>
-      <div class="statsBody"><div class="statsGrid">
-        <div><canvas id="chartDistribution" height="250"></canvas></div>
-        <div><canvas id="chartComparison" height="250"></canvas></div>
-      </div></div>
-    </div>
+    ${hasPlanning ? `
+    <!-- FREE: Detail par prestataire -->
     <div class="statsCard" style="margin-top:8px;">
       <h3 class="statsToggle" onclick="toggleStats(this)">Detail par prestataire</h3>
       <div class="statsBody">
@@ -2731,27 +2731,39 @@ function renderStats() {
       </table>
       </div>
     </div>
+    <!-- PREMIUM: Graphiques -->
     <div class="statsCard" style="margin-top:8px;">
-      <h3 class="statsToggle" onclick="toggleStats(this)">Cout previsionnel</h3>
-      <div class="statsBody">
-      ${buildFinanceHtml()}
-      </div>
+      <h3 class="statsToggle" onclick="toggleStats(this)">Graphiques &#11088;</h3>
+      <div class="statsBody">${premWrap(`<div class="statsGrid">
+        <div><canvas id="chartDistribution" height="250"></canvas></div>
+        <div><canvas id="chartComparison" height="250"></canvas></div>
+      </div>`)}</div>
+    </div>
+    <!-- PREMIUM: Couts -->
+    <div class="statsCard" style="margin-top:8px;">
+      <h3 class="statsToggle" onclick="toggleStats(this)">Cout previsionnel &#11088;</h3>
+      <div class="statsBody">${premWrap(buildFinanceHtml())}</div>
     </div>` : ''}
-    ${monthly.hasData ? `<div class="statsCard" style="margin-top:8px;">
-      <h3 class="statsToggle" onclick="toggleStats(this)">Historique mensuel</h3>
-      <div class="statsBody"><canvas id="chartMonthly" height="300"></canvas></div>
+    ${monthly.hasData ? `
+    <!-- PREMIUM: Historique mensuel -->
+    <div class="statsCard" style="margin-top:8px;">
+      <h3 class="statsToggle" onclick="toggleStats(this)">Historique mensuel &#11088;</h3>
+      <div class="statsBody">${premWrap(`<canvas id="chartMonthly" height="300"></canvas>`)}</div>
     </div>
     <div class="statsCard" style="margin-top:8px;">
-      <h3 class="statsToggle" onclick="toggleStats(this)">Detail mensuel</h3>
-      <div class="statsBody">${monthly.tableHtml}</div>
+      <h3 class="statsToggle" onclick="toggleStats(this)">Detail mensuel &#11088;</h3>
+      <div class="statsBody">${premWrap(monthly.tableHtml)}</div>
     </div>` : ''}`;
-  if(hasPlanning) {
+  if(hasPlanning && (isPrem || document.getElementById('chartDistribution'))) {
+    const chartEl = document.getElementById('chartDistribution');
+    if(chartEl && isPrem) {
     if(chartDistrib)chartDistrib.destroy();
-    chartDistrib=new Chart(document.getElementById('chartDistribution').getContext('2d'),{type:'doughnut',data:{labels:provNames,datasets:[{data:counts,backgroundColor:colors,borderColor:'var(--surface)',borderWidth:3}]},options:{plugins:{legend:{position:'bottom',labels:{color:'#9ca3af',font:{size:12,family:'Inter'},padding:16}}},cutout:'65%'}});
+    chartDistrib=new Chart(chartEl.getContext('2d'),{type:'doughnut',data:{labels:provNames,datasets:[{data:counts,backgroundColor:colors,borderColor:'var(--surface)',borderWidth:3}]},options:{plugins:{legend:{position:'bottom',labels:{color:'#9ca3af',font:{size:12,family:'Inter'},padding:16}}},cutout:'65%'}});
     if(chartCompare)chartCompare.destroy();
     chartCompare=new Chart(document.getElementById('chartComparison').getContext('2d'),{type:'bar',data:{labels:provNames,datasets:[{label:'Cible %',data:targets,backgroundColor:'rgba(108,99,255,0.4)',borderColor:'#6c63ff',borderWidth:1,borderRadius:6},{label:'Reel %',data:actuals,backgroundColor:colors.map(c=>c+'aa'),borderColor:colors,borderWidth:1,borderRadius:6}]},options:{scales:{x:{ticks:{color:'#9ca3af',font:{family:'Inter'}},grid:{color:'rgba(255,255,255,0.04)'}},y:{ticks:{color:'#9ca3af',font:{family:'Inter'}},grid:{color:'rgba(255,255,255,0.04)'},max:100}},plugins:{legend:{labels:{color:'#9ca3af',font:{size:12,family:'Inter'}}}}}});
+    }
   }
-  if(monthly.hasData) {
+  if(monthly.hasData && isPrem) {
     if(chartMonthly)chartMonthly.destroy();
     chartMonthly=new Chart(document.getElementById('chartMonthly').getContext('2d'),{
       type:'bar',
