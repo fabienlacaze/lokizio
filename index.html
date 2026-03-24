@@ -1193,26 +1193,7 @@
   <div class="modalBody" style="padding:16px 20px;">
     <div id="sendProviderSelect" style="margin-bottom:8px;"></div>
     <div id="sendProviderInfo" style="margin-bottom:10px;"></div>
-    <div style="display:flex;flex-direction:column;gap:8px;">
-      <button class="btn" onclick="sendViaChannel('whatsapp')" style="padding:14px;font-size:14px;background:#25D366;color:#fff;border:none;border-radius:10px;display:flex;align-items:center;gap:10px;">
-        <span style="font-size:20px;">💬</span> WhatsApp
-      </button>
-      <button class="btn" onclick="sendViaChannel('telegram')" style="padding:14px;font-size:14px;background:#0088cc;color:#fff;border:none;border-radius:10px;display:flex;align-items:center;gap:10px;">
-        <span style="font-size:20px;">✈️</span> Telegram
-      </button>
-      <button class="btn" onclick="sendViaChannel('sms')" style="padding:14px;font-size:14px;background:#34d399;color:#fff;border:none;border-radius:10px;display:flex;align-items:center;gap:10px;">
-        <span style="font-size:20px;">📱</span> SMS
-      </button>
-      <button class="btn" onclick="sendViaChannel('messenger')" style="padding:14px;font-size:14px;background:#0084FF;color:#fff;border:none;border-radius:10px;display:flex;align-items:center;gap:10px;">
-        <span style="font-size:20px;">💭</span> Messenger
-      </button>
-      <button class="btn" onclick="sendViaChannel('email')" style="padding:14px;font-size:14px;background:#ea580c;color:#fff;border:none;border-radius:10px;display:flex;align-items:center;gap:10px;">
-        <span style="font-size:20px;">📧</span> Email
-      </button>
-      <button class="btn btnOutline" onclick="sendViaChannel('copy')" style="padding:14px;font-size:14px;display:flex;align-items:center;gap:10px;">
-        <span style="font-size:20px;">📋</span> <span data-i18n="send.copy">Copier le texte</span>
-      </button>
-    </div>
+    <div style="display:flex;flex-direction:column;gap:8px;" id="sendChannelList"></div>
   </div>
 </div>
 
@@ -2950,17 +2931,45 @@ function selectSendProvider(name) {
     btn.style.borderColor = btn.dataset.prov === name ? 'var(--accent)' : 'var(--border2)';
     btn.style.background = btn.dataset.prov === name ? 'rgba(233,69,96,0.15)' : '';
   });
-  // Show provider contact info
   const p = config.providers.find(pr => pr.name === name);
+  const hasPhone = p && p.phone && p.phone.trim();
+  const hasEmail = p && p.email && p.email.trim();
+  const provIdx = config.providers.indexOf(p);
+
+  // Show provider contact info
   const infoEl = document.getElementById('sendProviderInfo');
   if (infoEl && p) {
     let info = '<div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;padding:8px 0;font-size:12px;color:var(--text2);">';
-    if (p.phone) info += '<span>📱 ' + esc(p.phone) + '</span>';
-    if (p.email) info += '<span>📧 ' + esc(p.email) + '</span>';
-    if (p.address) info += '<span>📍 ' + esc(p.address) + '</span>';
-    if (!p.phone && !p.email) info += '<span style="color:var(--warning);">⚠️ Pas de coordonnees renseignees</span>';
+    if (hasPhone) info += '<span>📱 ' + esc(p.phone) + '</span>';
+    if (hasEmail) info += '<span>📧 ' + esc(p.email) + '</span>';
+    if (!hasPhone && !hasEmail) info += '<span style="color:var(--warning);">⚠️ Aucune coordonnee — <a href="#" onclick="closeSendModal();editProvider('+provIdx+');return false;" style="color:var(--accent2);">Configurer</a></span>';
     info += '</div>';
     infoEl.innerHTML = info;
+  }
+
+  // Build channel buttons with disabled state
+  const channels = [
+    { id:'whatsapp', icon:'💬', name:'WhatsApp', color:'#25D366', needs:'phone' },
+    { id:'telegram', icon:'✈️', name:'Telegram', color:'#0088cc', needs:'phone' },
+    { id:'sms', icon:'📱', name:'SMS', color:'#34d399', needs:'phone' },
+    { id:'messenger', icon:'💭', name:'Messenger', color:'#0084FF', needs:null },
+    { id:'email', icon:'📧', name:'Email', color:'#ea580c', needs:'email' },
+    { id:'copy', icon:'📋', name:t('send.copy')||'Copier le texte', color:null, needs:null },
+  ];
+  const listEl = document.getElementById('sendChannelList');
+  if (listEl) {
+    listEl.innerHTML = channels.map(ch => {
+      const disabled = (ch.needs === 'phone' && !hasPhone) || (ch.needs === 'email' && !hasEmail);
+      const bg = ch.color ? 'background:' + (disabled ? ch.color + '44' : ch.color) : '';
+      const configLink = disabled ? ' — <a href="#" onclick="closeSendModal();editProvider('+provIdx+');return false;" style="color:#fff;text-decoration:underline;font-size:11px;">Configurer</a>' : '';
+      const missing = disabled ? (ch.needs === 'phone' ? ' (tel. manquant)' : ' (email manquant)') : '';
+      if (ch.id === 'copy') {
+        return `<button class="btn btnOutline" onclick="sendViaChannel('copy')" style="padding:14px;font-size:14px;display:flex;align-items:center;gap:10px;"><span style="font-size:20px;">${ch.icon}</span> ${ch.name}</button>`;
+      }
+      return `<button class="btn" onclick="${disabled?'closeSendModal();editProvider('+provIdx+')':'sendViaChannel(\''+ch.id+'\')'}" style="padding:14px;font-size:14px;${bg};color:#fff;border:none;border-radius:10px;display:flex;align-items:center;gap:10px;${disabled?'opacity:0.5;cursor:not-allowed;':''}">
+        <span style="font-size:20px;">${ch.icon}</span> ${ch.name}${disabled?'<span style="font-size:11px;opacity:0.8;margin-left:auto;">'+missing+configLink+'</span>':''}
+      </button>`;
+    }).join('');
   }
 }
 
