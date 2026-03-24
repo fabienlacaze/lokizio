@@ -714,6 +714,9 @@
   #btnGenerate:hover::after { left:100%; }
 
   /* Property selector polish */
+  #propSelectTitle:hover { background:rgba(255,255,255,0.14); border-color:rgba(255,255,255,0.25); }
+  #propSelectTitle:focus { outline:none; border-color:var(--accent2); box-shadow:0 0 0 2px rgba(108,99,255,0.3); }
+  #propSelectTitle option { background:var(--surface); color:var(--text); padding:8px; }
   #propSelect { background-image:none; appearance:auto; }
 
   /* Toast animation */
@@ -905,7 +908,7 @@
       <div class="panelLeft">
         <div class="stepBadge">1</div>
         <div class="panelTitle" style="display:flex;align-items:center;gap:8px;">&#127968;
-          <select id="propSelectTitle" onchange="event.stopPropagation();switchProperty(this.value)" style="background:transparent;border:none;color:var(--text);font-size:15px;font-weight:700;cursor:pointer;padding:2px 4px;max-width:200px;"></select>
+          <select id="propSelectTitle" onchange="event.stopPropagation();switchProperty(this.value)" style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);color:var(--text);font-size:15px;font-weight:700;cursor:pointer;padding:6px 28px 6px 12px;max-width:220px;border-radius:8px;appearance:none;-webkit-appearance:none;background-image:url('data:image/svg+xml;charset=UTF-8,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2212%22 height=%228%22 viewBox=%220 0 12 8%22%3E%3Cpath fill=%22%23ffffff%22 d=%22M1 1l5 5 5-5%22 stroke=%22%23ffffff%22 stroke-width=%221.5%22 fill=%22none%22/%3E%3C/svg%3E');background-repeat:no-repeat;background-position:right 10px center;transition:all 0.2s;"></select>
         </div>
       </div>
       <span class="panelChevron" id="chevConfig">&#9660;</span>
