@@ -15,6 +15,8 @@
 <script src="i18n.js?v=5"></script>
 <script src="ical_parser.js?v=5"></script>
 <script src="api_bridge.js?v=5"></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
@@ -587,6 +589,22 @@
   .btnUpgrade { background:linear-gradient(135deg,#6c63ff,#5a52d5); color:#fff; border:none; padding:12px 24px; border-radius:8px; font-size:14px; font-weight:600; cursor:pointer; width:100%; }
   .btnUpgrade:hover { opacity:0.9; transform:translateY(-1px); }
 
+  /* ══ MAP & GEOLOCATION ══ */
+  .mapModal { position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:1000; display:none; align-items:center; justify-content:center; }
+  .mapModal.show { display:flex; }
+  .mapContainer { width:90vw; max-width:700px; height:75vh; background:var(--surface); border-radius:var(--radius); overflow:hidden; display:flex; flex-direction:column; }
+  .mapHeader { padding:14px 18px; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border2); }
+  .mapHeader h3 { font-size:16px; color:var(--text); margin:0; }
+  .mapControls { padding:10px 18px; display:flex; gap:10px; align-items:center; flex-wrap:wrap; border-bottom:1px solid var(--border); }
+  .mapControls label { font-size:12px; color:var(--text2); }
+  .mapControls input[type=range] { flex:1; min-width:100px; }
+  .mapControls .radiusVal { font-size:13px; font-weight:600; color:var(--accent); min-width:50px; }
+  #mapView { flex:1; min-height:300px; }
+  .btnLocation { background:none; border:1px solid var(--border2); border-radius:8px; padding:4px 8px; cursor:pointer; font-size:14px; transition:all 0.2s; }
+  .btnLocation:hover { background:var(--accent2); border-color:var(--accent2); }
+  .btnLocation.hasLocation { background:rgba(52,211,153,0.15); border-color:var(--success); }
+  .mapSearch { width:100%; padding:8px 12px; background:var(--surface2); color:var(--text); border:1px solid var(--border2); border-radius:8px; font-size:13px; margin-bottom:8px; }
+
   /* ══ PRO UI POLISH ══ */
 
   /* Subtle animated header */
@@ -878,6 +896,7 @@
   <div id="propertySelector" class="panel" style="padding:12px 18px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
     <span style="font-size:13px;color:var(--text2);font-weight:600;" data-i18n="property.label">Propriete :</span>
     <select id="propSelect" onchange="switchProperty(this.value)" style="flex:1;min-width:150px;padding:8px 12px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;"></select>
+    <button class="btnLocation" onclick="openMapForProperty()" id="btnPropLocation" title="Position de la propriete" style="font-size:16px;">&#128205;</button>
     <button class="btn btnSmall btnSuccess" onclick="addNewProperty()" style="padding:6px 14px;font-size:12px;" data-i18n="property.add">+ Ajouter</button>
     <button class="btn btnSmall btnDanger" id="btnRemoveProp" onclick="removeCurrentProperty()" style="padding:6px 10px;font-size:12px;display:none;">&#128465;</button>
   </div>
@@ -1070,6 +1089,23 @@
       </div>
     </div>
     <div style="text-align:center;color:var(--text3);font-size:11px;" data-i18n="premium.cancel">Annulable a tout moment. Paiement securise par Stripe.</div>
+  </div>
+</div>
+<!-- Map Modal -->
+<div class="mapModal" id="mapModal" onclick="if(event.target===this)closeMap()">
+  <div class="mapContainer">
+    <div class="mapHeader">
+      <h3 id="mapTitle">Zone d'action</h3>
+      <button class="btn btnSmall" onclick="closeMap()" style="padding:6px 12px;">&#10005;</button>
+    </div>
+    <div class="mapControls">
+      <label data-i18n="map.radius">Rayon :</label>
+      <input type="range" id="mapRadius" min="1" max="100" value="15" oninput="updateMapRadius(this.value)">
+      <span class="radiusVal" id="mapRadiusVal">15 km</span>
+      <button class="btn btnSmall btnSuccess" onclick="saveMapLocation()" data-i18n="map.save" style="padding:6px 14px;">Enregistrer</button>
+    </div>
+    <input type="text" class="mapSearch" id="mapSearch" placeholder="Rechercher une adresse..." onkeydown="if(event.key==='Enter')searchAddress()">
+    <div id="mapView"></div>
   </div>
 </div>
 <div class="toast" id="toast"></div>
@@ -1547,6 +1583,159 @@ function renderPressing() {
   div.innerHTML = html;
 }
 
+/* ── Map & Geolocation ── */
+let mapInstance = null;
+let mapMarker = null;
+let mapCircle = null;
+let mapTargetType = ''; // 'provider' or 'property'
+let mapTargetIdx = -1;
+
+function openMapForProvider(idx) {
+  mapTargetType = 'provider';
+  mapTargetIdx = idx;
+  const p = config.providers[idx];
+  const title = (t('map.provider_zone') || 'Zone de') + ' ' + (p ? p.name : '');
+  document.getElementById('mapTitle').textContent = title;
+  const lat = p.lat || 43.7;
+  const lng = p.lng || 7.25;
+  const radius = p.radius || 15;
+  document.getElementById('mapRadius').value = radius;
+  document.getElementById('mapRadiusVal').textContent = radius + ' km';
+  document.getElementById('mapSearch').value = p.address || '';
+  showMap(lat, lng, radius);
+}
+
+function openMapForProperty() {
+  mapTargetType = 'property';
+  mapTargetIdx = -1;
+  const prop = API.getActiveProperty(fullConfig);
+  const title = (t('map.property_location') || 'Position de') + ' ' + (prop ? prop.name : '');
+  document.getElementById('mapTitle').textContent = title;
+  const lat = prop.lat || 43.7;
+  const lng = prop.lng || 7.25;
+  const radius = 1;
+  document.getElementById('mapRadius').value = radius;
+  document.getElementById('mapRadiusVal').textContent = radius + ' km';
+  document.getElementById('mapSearch').value = prop.address || '';
+  document.getElementById('mapRadius').parentElement.querySelector('label').style.display = 'none';
+  document.getElementById('mapRadius').style.display = 'none';
+  document.getElementById('mapRadiusVal').style.display = 'none';
+  showMap(lat, lng, radius);
+}
+
+function showMap(lat, lng, radiusKm) {
+  document.getElementById('mapModal').classList.add('show');
+  setTimeout(() => {
+    if (mapInstance) { mapInstance.remove(); mapInstance = null; }
+    mapInstance = L.map('mapView').setView([lat, lng], radiusKm > 30 ? 8 : radiusKm > 10 ? 10 : 12);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap'
+    }).addTo(mapInstance);
+    mapMarker = L.marker([lat, lng], { draggable: true }).addTo(mapInstance);
+    if (mapTargetType === 'provider') {
+      mapCircle = L.circle([lat, lng], { radius: radiusKm * 1000, color: '#6c63ff', fillColor: '#6c63ff', fillOpacity: 0.15, weight: 2 }).addTo(mapInstance);
+    }
+    mapMarker.on('dragend', function(e) {
+      const pos = e.target.getLatLng();
+      if (mapCircle) mapCircle.setLatLng(pos);
+      reverseGeocode(pos.lat, pos.lng);
+    });
+    mapInstance.on('click', function(e) {
+      mapMarker.setLatLng(e.latlng);
+      if (mapCircle) mapCircle.setLatLng(e.latlng);
+      reverseGeocode(e.latlng.lat, e.latlng.lng);
+    });
+  }, 100);
+}
+
+function closeMap() {
+  document.getElementById('mapModal').classList.remove('show');
+  // Reset radius controls visibility
+  const controls = document.getElementById('mapRadius').parentElement;
+  controls.querySelector('label').style.display = '';
+  document.getElementById('mapRadius').style.display = '';
+  document.getElementById('mapRadiusVal').style.display = '';
+  if (mapInstance) { mapInstance.remove(); mapInstance = null; }
+}
+
+function updateMapRadius(val) {
+  document.getElementById('mapRadiusVal').textContent = val + ' km';
+  if (mapCircle) mapCircle.setRadius(val * 1000);
+}
+
+async function searchAddress() {
+  const q = document.getElementById('mapSearch').value.trim();
+  if (!q) return;
+  try {
+    const resp = await fetch('https://nominatim.openstreetmap.org/search?format=json&q=' + encodeURIComponent(q) + '&limit=1', {
+      headers: { 'User-Agent': 'CleaningManager/2.0' }
+    });
+    const results = await resp.json();
+    if (results.length > 0) {
+      const lat = parseFloat(results[0].lat);
+      const lng = parseFloat(results[0].lon);
+      mapMarker.setLatLng([lat, lng]);
+      if (mapCircle) mapCircle.setLatLng([lat, lng]);
+      mapInstance.setView([lat, lng], 12);
+      document.getElementById('mapSearch').value = results[0].display_name;
+    } else {
+      showToast(t('map.not_found') || 'Adresse non trouvee');
+    }
+  } catch (e) { showToast('Erreur: ' + e.message); }
+}
+
+async function reverseGeocode(lat, lng) {
+  try {
+    const resp = await fetch('https://nominatim.openstreetmap.org/reverse?format=json&lat=' + lat + '&lon=' + lng, {
+      headers: { 'User-Agent': 'CleaningManager/2.0' }
+    });
+    const result = await resp.json();
+    if (result.display_name) {
+      document.getElementById('mapSearch').value = result.display_name;
+    }
+  } catch (e) { /* ignore */ }
+}
+
+function saveMapLocation() {
+  const pos = mapMarker.getLatLng();
+  const radius = parseInt(document.getElementById('mapRadius').value) || 15;
+  const address = document.getElementById('mapSearch').value;
+
+  if (mapTargetType === 'provider' && mapTargetIdx >= 0) {
+    const p = config.providers[mapTargetIdx];
+    if (p) {
+      p.lat = pos.lat; p.lng = pos.lng; p.radius = radius; p.address = address;
+      renderProviders();
+      showToast((t('map.saved') || 'Position enregistree pour') + ' ' + p.name);
+    }
+  } else if (mapTargetType === 'property') {
+    const prop = API.getActiveProperty(fullConfig);
+    if (prop) {
+      prop.lat = pos.lat; prop.lng = pos.lng; prop.address = address;
+      showToast((t('map.saved') || 'Position enregistree pour') + ' ' + prop.name);
+    }
+  }
+  syncAndSaveConfig();
+  closeMap();
+}
+
+// Haversine distance in km
+function haversineKm(lat1, lng1, lat2, lng2) {
+  const R = 6371;
+  const dLat = (lat2-lat1)*Math.PI/180;
+  const dLng = (lng2-lng1)*Math.PI/180;
+  const a = Math.sin(dLat/2)*Math.sin(dLat/2) + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLng/2)*Math.sin(dLng/2);
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+}
+
+// Check if provider can serve a property
+function providerCoversProperty(provider, property) {
+  if (!provider.lat || !provider.lng || !property.lat || !property.lng) return true; // No geo = no restriction
+  if (!provider.radius) return true;
+  const dist = haversineKm(provider.lat, provider.lng, property.lat, property.lng);
+  return dist <= provider.radius;
+}
+
 /* ── Notifications ── */
 function checkRentalNotifications() {
   if (!cleanings.length) return;
@@ -1607,6 +1796,7 @@ function renderProviders() {
       <td><input type="text" class="provInput pctInput" id="ppct_${i}" value="${p.percentage}"></td>
       <td><input type="text" class="provInput pctInput" id="pprice_${i}" value="${p.price||''}" placeholder="0"></td>
       <td class="center"><button class="btn btnSmall" onclick="showVacModal(${i})">${vacCount > 0 ? vacCount+' per.' : 'Aucune'}</button></td>
+      <td class="center"><button class="btnLocation ${p.lat ? 'hasLocation' : ''}" onclick="openMapForProvider(${i})" title="${p.address || 'Definir la zone'}">&#128205;</button></td>
       <td class="center">${p.token ? `<button class="btn btnSmall" style="padding:4px 8px;" onclick="copyViewLink('${esc(p.token)}')" title="Copier le lien prestataire">&#128279;</button>` : ''}</td>
       <td class="center"><button class="btn btnSmall btnDanger" style="padding:4px 8px;" onclick="removeProvider(${i})">&#10005;</button></td>
     </tr>`;

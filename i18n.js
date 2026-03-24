@@ -58,6 +58,15 @@ const I18N = {
     'generate.btn': 'GENERER LE PLANNING',
     'generate.save': 'Sauvegarder config',
 
+    // Map
+    'map.radius': 'Rayon :',
+    'map.save': 'Enregistrer',
+    'map.provider_zone': 'Zone de',
+    'map.property_location': 'Position de',
+    'map.saved': 'Position enregistree pour',
+    'map.not_found': 'Adresse non trouvee',
+    'map.search': 'Rechercher une adresse...',
+
     // Communication & Export
     'comm.title': 'Communication & Export',
     'comm.share': 'Partager (lecture seule)',
@@ -240,6 +249,15 @@ const I18N = {
     'help.feature.history': 'past cleanings are archived.',
     'help.feature.notif': 'alerts 2 days before check-in/out.',
     'help.feature.link': 'share a read-only link.',
+
+    // Map
+    'map.radius': 'Radius:',
+    'map.save': 'Save',
+    'map.provider_zone': 'Zone of',
+    'map.property_location': 'Location of',
+    'map.saved': 'Location saved for',
+    'map.not_found': 'Address not found',
+    'map.search': 'Search an address...',
 
     // Status
     // Premium
