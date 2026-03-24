@@ -639,6 +639,154 @@ const I18N = {
     // Results
     'results.empty.future': 'No upcoming cleanings.',
     'results.loading': 'Loading...',
+  },
+
+  // ═══ ESPAÑOL ═══
+  es: {
+    'auth.title': 'Menage Manager', 'auth.subtitle': 'Gestion de limpieza de alquileres',
+    'auth.tab.login': 'Iniciar sesion', 'auth.tab.register': 'Crear cuenta',
+    'auth.email': 'Email', 'auth.password': 'Contrasena', 'auth.password.placeholder': '6 caracteres minimo',
+    'auth.login.btn': 'Iniciar sesion', 'auth.register.btn': 'Crear mi cuenta',
+    'auth.fill.all': 'Complete todos los campos', 'auth.pass.short': 'La contrasena debe tener al menos 6 caracteres',
+    'auth.pass.mismatch': 'Las contrasenas no coinciden', 'auth.logout.confirm': 'Cerrar sesion?',
+    'header.subtitle': 'Gestion de limpieza', 'section.property': 'Propiedad', 'section.team': 'Equipo de limpieza',
+    'section.history': 'Historial y Lavanderia', 'config.ical': 'Calendarios iCal',
+    'config.providers': 'Proveedores', 'config.name': 'Nombre', 'config.phone': 'Telefono', 'config.price': 'Tarifa',
+    'config.add': '+ Agregar', 'provider.add.title': 'Agregar proveedor',
+    'generate.btn': 'GENERAR PLANIFICACION', 'generate.refresh': 'Actualizar',
+    'generate.loading': 'Generando...', 'generate.success': 'Planificacion generada con exito',
+    'results.title': 'Planificacion', 'results.tab.list': 'Lista', 'results.tab.calendar': 'Calendario', 'results.tab.stats': 'Estadisticas',
+    'results.tab.history': 'Historial', 'results.tab.pressing': 'Lavanderia',
+    'results.csv': 'CSV', 'results.pdf': 'PDF', 'results.copy': 'Copiar',
+    'comm.title': 'Comunicacion y Exportacion', 'comm.share': 'Compartir',
+    'send.btn': 'Enviar', 'send.title': 'Enviar planificacion', 'send.copy': 'Copiar texto',
+    'premium.title': 'Actualizar a Premium', 'premium.subtitle': 'Proveedores ilimitados, sin publicidad',
+    'premium.btn': 'Ver ofertas', 'premium.modal.title': 'Elija su plan',
+    'premium.plan.free': 'Gratis', 'premium.plan.current': 'Plan actual', 'premium.btn.upgrade': 'Actualizar a Premium',
+    'premium.cancel': 'Cancelable en cualquier momento. Pago seguro por Stripe.',
+    'table.source': 'Fuente', 'table.checkin': 'Llegada', 'table.checkout': 'Salida',
+    'table.interval': 'Intervalo', 'table.cleaning': 'Limpieza el', 'table.provider': 'Proveedor',
+    'property.label': 'Propiedad:', 'property.add': '+ Agregar',
+    'prop.detail.title': 'Detalles de la propiedad', 'prop.detail.name': 'Nombre', 'prop.detail.address': 'Direccion',
+    'prop.detail.type': 'Tipo', 'prop.detail.rooms': 'Habitaciones', 'prop.detail.price': 'Tarifa limpieza (€)',
+    'prop.detail.duration': 'Duracion estimada', 'prop.detail.checklist': 'Instrucciones de limpieza',
+    'prop.detail.notes': 'Notas', 'prop.detail.save': 'Guardar',
+    'map.radius': 'Radio:', 'map.save': 'Guardar', 'map.not_found': 'Direccion no encontrada',
+    'modal.close': 'Cerrar', 'modal.ok': 'OK',
+    'status.ready': 'Listo', 'status.restored': 'Planificacion restaurada',
+    'ad.label': 'Publicidad', 'calendar.today': 'Hoy',
+    'install.title': 'Instalar Menage Manager', 'install.btn': 'Instalar',
+  },
+
+  // ═══ PORTUGUES ═══
+  pt: {
+    'auth.title': 'Menage Manager', 'auth.subtitle': 'Gestao de limpeza de alugueis',
+    'auth.tab.login': 'Entrar', 'auth.tab.register': 'Criar conta',
+    'auth.email': 'Email', 'auth.password': 'Senha', 'auth.password.placeholder': '6 caracteres minimo',
+    'auth.login.btn': 'Entrar', 'auth.register.btn': 'Criar minha conta',
+    'auth.fill.all': 'Preencha todos os campos', 'auth.pass.short': 'A senha deve ter pelo menos 6 caracteres',
+    'auth.pass.mismatch': 'As senhas nao coincidem', 'auth.logout.confirm': 'Sair?',
+    'header.subtitle': 'Gestao de limpeza', 'section.property': 'Propriedade', 'section.team': 'Equipe de limpeza',
+    'section.history': 'Historico e Lavanderia', 'config.ical': 'Calendarios iCal',
+    'config.providers': 'Fornecedores', 'config.name': 'Nome', 'config.phone': 'Telefone', 'config.price': 'Tarifa',
+    'config.add': '+ Adicionar', 'provider.add.title': 'Adicionar fornecedor',
+    'generate.btn': 'GERAR PLANEJAMENTO', 'generate.refresh': 'Atualizar',
+    'generate.loading': 'Gerando...', 'generate.success': 'Planejamento gerado com sucesso',
+    'results.title': 'Planejamento', 'results.tab.list': 'Lista', 'results.tab.calendar': 'Calendario', 'results.tab.stats': 'Estatisticas',
+    'results.tab.history': 'Historico', 'results.tab.pressing': 'Lavanderia',
+    'results.csv': 'CSV', 'results.pdf': 'PDF', 'results.copy': 'Copiar',
+    'comm.title': 'Comunicacao e Exportacao', 'comm.share': 'Compartilhar',
+    'send.btn': 'Enviar', 'send.title': 'Enviar planejamento', 'send.copy': 'Copiar texto',
+    'premium.title': 'Atualizar para Premium', 'premium.subtitle': 'Fornecedores ilimitados, sem publicidade',
+    'premium.btn': 'Ver ofertas', 'premium.modal.title': 'Escolha seu plano',
+    'premium.plan.free': 'Gratis', 'premium.plan.current': 'Plano atual', 'premium.btn.upgrade': 'Atualizar para Premium',
+    'premium.cancel': 'Cancelavel a qualquer momento. Pagamento seguro por Stripe.',
+    'table.source': 'Fonte', 'table.checkin': 'Chegada', 'table.checkout': 'Saida',
+    'table.interval': 'Intervalo', 'table.cleaning': 'Limpeza em', 'table.provider': 'Fornecedor',
+    'property.label': 'Propriedade:', 'property.add': '+ Adicionar',
+    'prop.detail.title': 'Detalhes da propriedade', 'prop.detail.name': 'Nome', 'prop.detail.address': 'Endereco',
+    'prop.detail.type': 'Tipo', 'prop.detail.rooms': 'Quartos', 'prop.detail.price': 'Tarifa limpeza (€)',
+    'prop.detail.duration': 'Duracao estimada', 'prop.detail.checklist': 'Instrucoes de limpeza',
+    'prop.detail.notes': 'Notas', 'prop.detail.save': 'Salvar',
+    'map.radius': 'Raio:', 'map.save': 'Salvar', 'map.not_found': 'Endereco nao encontrado',
+    'modal.close': 'Fechar', 'modal.ok': 'OK',
+    'status.ready': 'Pronto', 'status.restored': 'Planejamento restaurado',
+    'ad.label': 'Publicidade', 'calendar.today': 'Hoje',
+    'install.title': 'Instalar Menage Manager', 'install.btn': 'Instalar',
+  },
+
+  // ═══ ITALIANO ═══
+  it: {
+    'auth.title': 'Menage Manager', 'auth.subtitle': 'Gestione pulizie affitti',
+    'auth.tab.login': 'Accedi', 'auth.tab.register': 'Crea account',
+    'auth.email': 'Email', 'auth.password': 'Password', 'auth.password.placeholder': '6 caratteri minimo',
+    'auth.login.btn': 'Accedi', 'auth.register.btn': 'Crea il mio account',
+    'auth.fill.all': 'Compila tutti i campi', 'auth.pass.short': 'La password deve avere almeno 6 caratteri',
+    'auth.pass.mismatch': 'Le password non corrispondono', 'auth.logout.confirm': 'Disconnettersi?',
+    'header.subtitle': 'Gestione pulizie', 'section.property': 'Proprieta', 'section.team': 'Team pulizie',
+    'section.history': 'Storico e Lavanderia', 'config.ical': 'Calendari iCal',
+    'config.providers': 'Fornitori', 'config.name': 'Nome', 'config.phone': 'Telefono', 'config.price': 'Tariffa',
+    'config.add': '+ Aggiungi', 'provider.add.title': 'Aggiungi fornitore',
+    'generate.btn': 'GENERA PIANIFICAZIONE', 'generate.refresh': 'Aggiorna',
+    'generate.loading': 'Generazione...', 'generate.success': 'Pianificazione generata con successo',
+    'results.title': 'Pianificazione', 'results.tab.list': 'Lista', 'results.tab.calendar': 'Calendario', 'results.tab.stats': 'Statistiche',
+    'results.tab.history': 'Storico', 'results.tab.pressing': 'Lavanderia',
+    'results.csv': 'CSV', 'results.pdf': 'PDF', 'results.copy': 'Copia',
+    'comm.title': 'Comunicazione ed Esportazione', 'comm.share': 'Condividi',
+    'send.btn': 'Invia', 'send.title': 'Invia pianificazione', 'send.copy': 'Copia testo',
+    'premium.title': 'Passa a Premium', 'premium.subtitle': 'Fornitori illimitati, senza pubblicita',
+    'premium.btn': 'Vedi offerte', 'premium.modal.title': 'Scegli il tuo piano',
+    'premium.plan.free': 'Gratuito', 'premium.plan.current': 'Piano attuale', 'premium.btn.upgrade': 'Passa a Premium',
+    'premium.cancel': 'Annullabile in qualsiasi momento. Pagamento sicuro tramite Stripe.',
+    'table.source': 'Fonte', 'table.checkin': 'Arrivo', 'table.checkout': 'Partenza',
+    'table.interval': 'Intervallo', 'table.cleaning': 'Pulizia il', 'table.provider': 'Fornitore',
+    'property.label': 'Proprieta:', 'property.add': '+ Aggiungi',
+    'prop.detail.title': 'Dettagli proprieta', 'prop.detail.name': 'Nome', 'prop.detail.address': 'Indirizzo',
+    'prop.detail.type': 'Tipo', 'prop.detail.rooms': 'Stanze', 'prop.detail.price': 'Tariffa pulizia (€)',
+    'prop.detail.duration': 'Durata stimata', 'prop.detail.checklist': 'Istruzioni pulizia',
+    'prop.detail.notes': 'Note', 'prop.detail.save': 'Salva',
+    'map.radius': 'Raggio:', 'map.save': 'Salva', 'map.not_found': 'Indirizzo non trovato',
+    'modal.close': 'Chiudi', 'modal.ok': 'OK',
+    'status.ready': 'Pronto', 'status.restored': 'Pianificazione ripristinata',
+    'ad.label': 'Pubblicita', 'calendar.today': 'Oggi',
+    'install.title': 'Installa Menage Manager', 'install.btn': 'Installa',
+  },
+
+  // ═══ DEUTSCH ═══
+  de: {
+    'auth.title': 'Menage Manager', 'auth.subtitle': 'Reinigungsverwaltung fur Ferienwohnungen',
+    'auth.tab.login': 'Anmelden', 'auth.tab.register': 'Konto erstellen',
+    'auth.email': 'Email', 'auth.password': 'Passwort', 'auth.password.placeholder': 'Mindestens 6 Zeichen',
+    'auth.login.btn': 'Anmelden', 'auth.register.btn': 'Konto erstellen',
+    'auth.fill.all': 'Alle Felder ausfuellen', 'auth.pass.short': 'Passwort muss mindestens 6 Zeichen haben',
+    'auth.pass.mismatch': 'Passwoerter stimmen nicht ueberein', 'auth.logout.confirm': 'Abmelden?',
+    'header.subtitle': 'Reinigungsverwaltung', 'section.property': 'Unterkunft', 'section.team': 'Reinigungsteam',
+    'section.history': 'Verlauf und Waescherei', 'config.ical': 'iCal-Kalender',
+    'config.providers': 'Dienstleister', 'config.name': 'Name', 'config.phone': 'Telefon', 'config.price': 'Preis',
+    'config.add': '+ Hinzufuegen', 'provider.add.title': 'Dienstleister hinzufuegen',
+    'generate.btn': 'PLANUNG ERSTELLEN', 'generate.refresh': 'Aktualisieren',
+    'generate.loading': 'Wird erstellt...', 'generate.success': 'Planung erfolgreich erstellt',
+    'results.title': 'Planung', 'results.tab.list': 'Liste', 'results.tab.calendar': 'Kalender', 'results.tab.stats': 'Statistiken',
+    'results.tab.history': 'Verlauf', 'results.tab.pressing': 'Waescherei',
+    'results.csv': 'CSV', 'results.pdf': 'PDF', 'results.copy': 'Kopieren',
+    'comm.title': 'Kommunikation & Export', 'comm.share': 'Teilen',
+    'send.btn': 'Senden', 'send.title': 'Planung senden', 'send.copy': 'Text kopieren',
+    'premium.title': 'Auf Premium upgraden', 'premium.subtitle': 'Unbegrenzte Dienstleister, keine Werbung',
+    'premium.btn': 'Angebote', 'premium.modal.title': 'Waehlen Sie Ihren Plan',
+    'premium.plan.free': 'Kostenlos', 'premium.plan.current': 'Aktueller Plan', 'premium.btn.upgrade': 'Auf Premium upgraden',
+    'premium.cancel': 'Jederzeit kuendbar. Sichere Zahlung ueber Stripe.',
+    'table.source': 'Quelle', 'table.checkin': 'Anreise', 'table.checkout': 'Abreise',
+    'table.interval': 'Intervall', 'table.cleaning': 'Reinigung am', 'table.provider': 'Dienstleister',
+    'property.label': 'Unterkunft:', 'property.add': '+ Hinzufuegen',
+    'prop.detail.title': 'Unterkunft-Details', 'prop.detail.name': 'Name', 'prop.detail.address': 'Adresse',
+    'prop.detail.type': 'Typ', 'prop.detail.rooms': 'Zimmer', 'prop.detail.price': 'Reinigungspreis (€)',
+    'prop.detail.duration': 'Geschaetzte Dauer', 'prop.detail.checklist': 'Reinigungsanleitung',
+    'prop.detail.notes': 'Notizen', 'prop.detail.save': 'Speichern',
+    'map.radius': 'Radius:', 'map.save': 'Speichern', 'map.not_found': 'Adresse nicht gefunden',
+    'modal.close': 'Schliessen', 'modal.ok': 'OK',
+    'status.ready': 'Bereit', 'status.restored': 'Planung wiederhergestellt',
+    'ad.label': 'Werbung', 'calendar.today': 'Heute',
+    'install.title': 'Menage Manager installieren', 'install.btn': 'Installieren',
   }
 };
 
@@ -652,6 +800,17 @@ function t(key, params) {
     }
   }
   return str;
+}
+
+function setLangPremium(lang) {
+  // Premium languages require premium plan
+  if (typeof API !== 'undefined' && !API.isPremium()) {
+    if (typeof showPremiumModal === 'function') {
+      showPremiumModal('Les langues supplementaires (ES, PT, IT, DE) sont reservees aux utilisateurs Premium.');
+    }
+    return;
+  }
+  setLang(lang);
 }
 
 function setLang(lang) {
