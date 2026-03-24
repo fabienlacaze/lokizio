@@ -945,13 +945,6 @@
     </div>
   </div>
 
-  <!-- ═══ BOUTON GÉNÉRER ═══ -->
-  <div class="panel" style="background:linear-gradient(135deg, rgba(233,69,96,0.08), rgba(108,99,255,0.08));">
-    <div class="generateArea" style="padding:16px;display:flex;gap:12px;align-items:center;justify-content:center;flex-wrap:wrap;">
-      <button class="btn btnPrimary" onclick="generatePlanning()" id="btnGenerate" style="flex:1;max-width:400px;padding:16px 32px;font-size:16px;font-weight:700;" data-i18n="generate.btn">GENERER LE PLANNING</button>
-    </div>
-  </div>
-
   <!-- ═══ SECTION 3: PLANNING ═══ -->
   <div class="panel">
     <div class="panelHeader" onclick="togglePanel('results')">
@@ -959,6 +952,7 @@
         <div class="stepBadge" style="background:linear-gradient(135deg,var(--success),#059669);">3</div>
         <div class="panelTitle">&#128197; <span data-i18n="results.title">Planning</span></div>
       </div>
+      <button class="btn btnSmall" onclick="event.stopPropagation();generatePlanning()" id="btnGenerate" style="padding:6px 14px;font-size:11px;background:var(--accent);color:#fff;border:none;border-radius:8px;" data-i18n="generate.refresh">&#128260; Rafraichir</button>
       <span class="panelChevron open" id="chevResults">&#9660;</span>
     </div>
     <div id="bodyResults">
@@ -1344,6 +1338,12 @@ async function loadActiveProperty() {
   calYear = now.getFullYear();
   calMonth = now.getMonth();
   restorePanelStates();
+  // Auto-generate if URLs configured but no planning
+  const hasUrls = config.airbnbIcalUrl || config.bookingIcalUrl || (prop && prop.icals && prop.icals.some(i => i.url));
+  const hasProviders = (config.providers || []).length > 0;
+  if (hasUrls && hasProviders && (!saved || saved.length === 0)) {
+    setTimeout(() => generatePlanning(), 500);
+  }
 }
 
 async function switchProperty(propId) {
@@ -2221,8 +2221,19 @@ function addProviderFromModal() {
   autoBalancePercentages();
   closeAddProviderModal();
   showToast(name + ' ajoute');
+  autoRegenerateIfNeeded();
 }
 function addProvider() { showAddProviderModal(); }
+
+let autoRegenTimer = null;
+function autoRegenerateIfNeeded() {
+  const hasUrls = config.airbnbIcalUrl || config.bookingIcalUrl;
+  const hasProviders = (config.providers || []).length > 0;
+  if (!hasUrls || !hasProviders) return;
+  // Debounce: wait 2s after last change before regenerating
+  if (autoRegenTimer) clearTimeout(autoRegenTimer);
+  autoRegenTimer = setTimeout(() => { generatePlanning(); }, 2000);
+}
 
 function autoBalancePercentages() {
   if (!config.providers || !config.providers.length) return;
@@ -2234,7 +2245,7 @@ function autoBalancePercentages() {
   });
   renderProviders();
 }
-function removeProvider(i) { const name=config.providers[i]?.name||''; if(!confirm('Supprimer le prestataire "'+name+'" ?'))return; syncProviders(); config.providers.splice(i,1); autoBalancePercentages(); }
+function removeProvider(i) { const name=config.providers[i]?.name||''; if(!confirm('Supprimer le prestataire "'+name+'" ?'))return; syncProviders(); config.providers.splice(i,1); autoBalancePercentages(); autoRegenerateIfNeeded(); }
 
 /* ── Vacations ── */
 function showVacModal(i) { syncProviders(); vacPopupIdx=i; renderVacContent(); document.getElementById('overlay').style.display='block'; document.getElementById('vacModal').style.display='block'; }
