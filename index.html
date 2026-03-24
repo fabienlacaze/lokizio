@@ -1343,8 +1343,12 @@
       <code style="background:var(--surface2);padding:1px 4px;border-radius:3px;">{total}</code>
       <code style="background:var(--surface2);padding:1px 4px;border-radius:3px;">{lien}</code>
     </div>
-    <textarea id="propDetailTemplate" rows="6" style="width:100%;padding:10px 14px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:12px;resize:vertical;font-family:'Inter',sans-serif;box-sizing:border-box;margin-bottom:6px;"></textarea>
-    <button class="btn btnSmall btnOutline" onclick="resetTemplate()" style="font-size:11px;padding:4px 10px;margin-bottom:16px;">Reinitialiser le template</button>
+    <textarea id="propDetailTemplate" rows="6" oninput="previewTemplate()" style="width:100%;padding:10px 14px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:12px;resize:vertical;font-family:'Inter',sans-serif;box-sizing:border-box;margin-bottom:6px;"></textarea>
+    <div style="display:flex;gap:8px;margin-bottom:8px;">
+      <button class="btn btnSmall btnOutline" onclick="resetTemplate();previewTemplate()" style="font-size:11px;padding:4px 10px;">Reinitialiser</button>
+      <button class="btn btnSmall btnOutline" onclick="document.getElementById('templatePreview').style.display=document.getElementById('templatePreview').style.display==='none'?'':'none'" style="font-size:11px;padding:4px 10px;">&#128065; Apercu</button>
+    </div>
+    <div id="templatePreview" style="display:none;background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:16px;font-size:12px;color:var(--text2);white-space:pre-wrap;line-height:1.6;max-height:200px;overflow-y:auto;"></div>
 
     <!-- Save button -->
     <button class="btn btnPrimary" style="width:100%;padding:14px;font-size:14px;" onclick="savePropDetail()" data-i18n="prop.detail.save">Enregistrer</button>
@@ -2852,6 +2856,33 @@ function getDefaultTemplate() {
 
 function resetTemplate() {
   document.getElementById('propDetailTemplate').value = getDefaultTemplate();
+}
+
+function previewTemplate() {
+  const tpl = document.getElementById('propDetailTemplate').value;
+  const previewEl = document.getElementById('templatePreview');
+  if (!previewEl || previewEl.style.display === 'none') return;
+  const prop = API.getActiveProperty(fullConfig);
+  const propName = prop ? prop.name : 'Mon logement';
+  const exampleProv = (config.providers && config.providers[0]) ? config.providers[0].name : 'Jean';
+  // Build example planning
+  let exPlan = '';
+  const exCleanings = cleanings.filter(c => c.provider === exampleProv).slice(0, 3);
+  if (exCleanings.length) {
+    exCleanings.forEach(c => { exPlan += '- ' + c.dayName + ' ' + c.cleaningDateFR + (c.source ? ' (' + c.source + ')' : '') + '\n'; });
+    if (cleanings.filter(c => c.provider === exampleProv).length > 3) exPlan += '- ...\n';
+  } else {
+    exPlan = '- Lun 01/01/2026 (Airbnb)\n- Mer 03/01/2026 (Booking)\n';
+  }
+  const total = exCleanings.length || 2;
+  const link = 'https://fabienlacaze.github.io/menage-manager-app/view.html?provider=abc123';
+  const result = tpl
+    .replace(/\{nom\}/g, exampleProv)
+    .replace(/\{propriete\}/g, propName)
+    .replace(/\{planning\}/g, exPlan)
+    .replace(/\{total\}/g, String(total))
+    .replace(/\{lien\}/g, link);
+  previewEl.textContent = result;
 }
 
 function buildWhatsAppText(provName) {
