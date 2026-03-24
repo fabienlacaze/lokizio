@@ -3077,14 +3077,14 @@ function buildFinanceHtml() {
 }
 
 function toggleStats(el) {
-  el.classList.toggle('collapsed');
   const body = el.nextElementSibling;
-  if (body.classList.contains('collapsed')) {
-    body.classList.remove('collapsed');
-    body.style.maxHeight = body.scrollHeight + 'px';
+  if (!body) return;
+  if (body.style.display === 'none') {
+    body.style.display = '';
+    el.classList.remove('collapsed');
   } else {
-    body.style.maxHeight = body.scrollHeight + 'px';
-    requestAnimationFrame(() => { body.classList.add('collapsed'); });
+    body.style.display = 'none';
+    el.classList.add('collapsed');
   }
 }
 
@@ -3122,8 +3122,8 @@ function renderStats() {
     <div class="statsCard" style="margin-top:8px;">
       <h3 class="statsToggle" onclick="toggleStats(this)">Graphiques &#11088;</h3>
       <div class="statsBody">${premWrap(`<div class="statsGrid">
-        <div><canvas id="chartDistribution" height="250"></canvas></div>
-        <div><canvas id="chartComparison" height="250"></canvas></div>
+        <div><canvas id="chartDistribution" height="180"></canvas></div>
+        <div><canvas id="chartComparison" height="180"></canvas></div>
       </div>`)}</div>
     </div>
     <!-- PREMIUM: Couts -->
@@ -3135,7 +3135,7 @@ function renderStats() {
     <!-- PREMIUM: Historique mensuel -->
     <div class="statsCard" style="margin-top:8px;">
       <h3 class="statsToggle" onclick="toggleStats(this)">Historique mensuel &#11088;</h3>
-      <div class="statsBody">${premWrap(`<canvas id="chartMonthly" height="300"></canvas>`)}</div>
+      <div class="statsBody">${premWrap(`<canvas id="chartMonthly" height="200"></canvas>`)}</div>
     </div>
     <div class="statsCard" style="margin-top:8px;">
       <h3 class="statsToggle" onclick="toggleStats(this)">Detail mensuel &#11088;</h3>
