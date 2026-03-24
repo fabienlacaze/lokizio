@@ -1353,6 +1353,18 @@
     <label style="display:block;font-size:12px;color:var(--text3);margin-bottom:4px;text-transform:uppercase;letter-spacing:0.5px;" data-i18n="prop.detail.notes">Notes</label>
     <textarea id="propDetailNotes" rows="3" placeholder="Notes sur la propriete..." style="width:100%;padding:10px 14px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:13px;resize:vertical;font-family:'Inter',sans-serif;box-sizing:border-box;margin-bottom:16px;"></textarea>
 
+    <!-- Message template -->
+    <label style="display:block;font-size:12px;color:var(--text3);margin-bottom:4px;text-transform:uppercase;letter-spacing:0.5px;">Template message</label>
+    <div style="font-size:10px;color:var(--text3);margin-bottom:6px;line-height:1.5;">
+      Variables : <code style="background:var(--surface2);padding:1px 4px;border-radius:3px;">{nom}</code>
+      <code style="background:var(--surface2);padding:1px 4px;border-radius:3px;">{propriete}</code>
+      <code style="background:var(--surface2);padding:1px 4px;border-radius:3px;">{planning}</code>
+      <code style="background:var(--surface2);padding:1px 4px;border-radius:3px;">{total}</code>
+      <code style="background:var(--surface2);padding:1px 4px;border-radius:3px;">{lien}</code>
+    </div>
+    <textarea id="propDetailTemplate" rows="6" style="width:100%;padding:10px 14px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:12px;resize:vertical;font-family:'Inter',sans-serif;box-sizing:border-box;margin-bottom:6px;"></textarea>
+    <button class="btn btnSmall btnOutline" onclick="resetTemplate()" style="font-size:11px;padding:4px 10px;margin-bottom:16px;">Reinitialiser le template</button>
+
     <!-- Save button -->
     <button class="btn btnPrimary" style="width:100%;padding:14px;font-size:14px;" onclick="savePropDetail()" data-i18n="prop.detail.save">Enregistrer</button>
   </div>
@@ -2211,6 +2223,7 @@ function openPropDetail() {
   document.getElementById('propDetailPrice').value = prop.cleaningPrice || '';
   document.getElementById('propDetailDuration').value = prop.cleaningDuration || '90';
   document.getElementById('propDetailNotes').value = prop.notes || '';
+  document.getElementById('propDetailTemplate').value = prop.messageTemplate || getDefaultTemplate();
   propCheckItems = (prop.checklist || []).slice();
   renderChecklist();
   // Photo
@@ -2283,6 +2296,8 @@ function savePropDetail() {
   prop.cleaningPrice = parseInt(document.getElementById('propDetailPrice').value) || 0;
   prop.cleaningDuration = parseInt(document.getElementById('propDetailDuration').value) || 90;
   prop.notes = document.getElementById('propDetailNotes').value;
+  const tpl = document.getElementById('propDetailTemplate').value.trim();
+  prop.messageTemplate = tpl !== getDefaultTemplate() ? tpl : '';
   prop.checklist = propCheckItems.slice();
   const img = document.getElementById('propPhotoImg');
   if (img.style.display !== 'none' && img.src && img.src.startsWith('data:')) {
@@ -2850,23 +2865,35 @@ function exportPDF() {
 }
 function copyPlanning() { if(!cleanings.length){showMsg('Aucun planning a copier.');return;} const filtered=currentFilter?cleanings.filter(c=>c.provider===currentFilter):cleanings; if(!filtered.length){showMsg(t('export.filter.empty'));return;} let txt=currentFilter?`PLANNING MENAGES - ${currentFilter.toUpperCase()}\n`:'PLANNING MENAGES\n'; txt+='='.repeat(txt.trim().length)+'\n\n'; filtered.forEach(c=>{txt+=`Menage: ${c.cleaningDateFR} (arrivee: ${c.dateFR})`;if(!currentFilter)txt+=` | ${c.provider}`;txt+='\n';}); navigator.clipboard.writeText(txt).then(()=>{showToast(currentFilter?`Liste de ${currentFilter} copiee (${filtered.length})`:`Planning copie (${filtered.length})`);}); }
 
+function getDefaultTemplate() {
+  return 'Bonjour {nom},\n\nVoici votre planning de menages pour "{propriete}" :\n\n{planning}\n{total} menage(s) au total.\n\nConsultez votre planning en ligne :\n{lien}\n\n-- Cleaning Manager';
+}
+
+function resetTemplate() {
+  document.getElementById('propDetailTemplate').value = getDefaultTemplate();
+}
+
 function buildWhatsAppText(provName) {
   const pc = cleanings.filter(c => c.provider === provName);
   if (!pc.length) return '';
   const prop = API.getActiveProperty(fullConfig);
   const propName = prop ? prop.name : '';
-  let txt = 'Bonjour ' + provName + ',\n\n';
-  txt += 'Voici votre planning de menages' + (propName ? ' pour "' + propName + '"' : '') + ' :\n\n';
-  pc.forEach(c => { txt += '- ' + c.dayName + ' ' + c.cleaningDateFR + (c.source ? ' (' + c.source + ')' : '') + '\n'; });
-  txt += '\n' + pc.length + ' menage(s) au total.\n';
-  // Add provider link if token exists
   const p = config.providers.find(pr => pr.name === provName);
-  if (p && p.token) {
-    const base = window.location.origin + window.location.pathname.replace(/\/[^\/]*$/, '');
-    txt += '\nConsultez votre planning en ligne :\n' + base + '/view.html?provider=' + p.token + '\n';
-  }
-  txt += '\n-- Cleaning Manager';
-  return txt;
+  const base = window.location.origin + window.location.pathname.replace(/\/[^\/]*$/, '');
+  const link = (p && p.token) ? base + '/view.html?provider=' + p.token : '';
+
+  // Build planning list
+  let planningTxt = '';
+  pc.forEach(c => { planningTxt += '- ' + c.dayName + ' ' + c.cleaningDateFR + (c.source ? ' (' + c.source + ')' : '') + '\n'; });
+
+  // Use custom template or default
+  const template = (prop && prop.messageTemplate) || getDefaultTemplate();
+  return template
+    .replace(/\{nom\}/g, provName)
+    .replace(/\{propriete\}/g, propName)
+    .replace(/\{planning\}/g, planningTxt)
+    .replace(/\{total\}/g, String(pc.length))
+    .replace(/\{lien\}/g, link);
 }
 /* ── Provider Links ── */
 function showProviderLinks() {
