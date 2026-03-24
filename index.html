@@ -896,6 +896,7 @@
   <div id="propertySelector" class="panel" style="padding:12px 18px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
     <span style="font-size:13px;color:var(--text2);font-weight:600;" data-i18n="property.label">Propriete :</span>
     <select id="propSelect" onchange="switchProperty(this.value)" style="flex:1;min-width:150px;padding:8px 12px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;"></select>
+    <button class="btnLocation" onclick="openPropDetail()" title="Details de la propriete" style="font-size:16px;">&#9998;</button>
     <button class="btnLocation" onclick="openMapForProperty()" id="btnPropLocation" title="Position de la propriete" style="font-size:16px;">&#128205;</button>
     <button class="btn btnSmall btnSuccess" onclick="addNewProperty()" style="padding:6px 14px;font-size:12px;" data-i18n="property.add">+ Ajouter</button>
     <button class="btn btnSmall btnDanger" id="btnRemoveProp" onclick="removeCurrentProperty()" style="padding:6px 10px;font-size:12px;display:none;">&#128465;</button>
@@ -1091,6 +1092,91 @@
     <div style="text-align:center;color:var(--text3);font-size:11px;" data-i18n="premium.cancel">Annulable a tout moment. Paiement securise par Stripe.</div>
   </div>
 </div>
+<!-- Property Detail Modal -->
+<div class="modal" id="propDetailModal" style="max-width:600px;max-height:90vh;overflow-y:auto;">
+  <div class="modalHeader" style="display:flex;justify-content:space-between;align-items:center;">
+    <span data-i18n="prop.detail.title">Details de la propriete</span>
+    <button class="btn btnSmall" onclick="closePropDetail()" style="padding:4px 10px;">&#10005;</button>
+  </div>
+  <div class="modalBody" style="padding:16px 20px;">
+    <!-- Photo -->
+    <div style="text-align:center;margin-bottom:16px;">
+      <div id="propPhotoPreview" style="width:100%;max-height:200px;border-radius:12px;overflow:hidden;background:var(--surface2);display:flex;align-items:center;justify-content:center;margin-bottom:8px;min-height:120px;cursor:pointer;" onclick="document.getElementById('propPhotoInput').click()">
+        <span id="propPhotoPlaceholder" style="color:var(--text3);font-size:13px;">&#128247; Cliquez pour ajouter une photo</span>
+        <img id="propPhotoImg" style="width:100%;object-fit:cover;display:none;">
+      </div>
+      <input type="file" id="propPhotoInput" accept="image/*" style="display:none;" onchange="handlePropPhoto(this)">
+    </div>
+
+    <!-- Name -->
+    <label style="display:block;font-size:12px;color:var(--text3);margin-bottom:4px;text-transform:uppercase;letter-spacing:0.5px;" data-i18n="prop.detail.name">Nom</label>
+    <input id="propDetailName" type="text" style="width:100%;padding:10px 14px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;margin-bottom:12px;box-sizing:border-box;">
+
+    <!-- Address -->
+    <label style="display:block;font-size:12px;color:var(--text3);margin-bottom:4px;text-transform:uppercase;letter-spacing:0.5px;" data-i18n="prop.detail.address">Adresse</label>
+    <input id="propDetailAddress" type="text" placeholder="12 rue de France, Nice" style="width:100%;padding:10px 14px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;margin-bottom:12px;box-sizing:border-box;">
+
+    <!-- Type + Rooms + Surface (row) -->
+    <div style="display:flex;gap:10px;margin-bottom:12px;flex-wrap:wrap;">
+      <div style="flex:1;min-width:120px;">
+        <label style="display:block;font-size:12px;color:var(--text3);margin-bottom:4px;text-transform:uppercase;letter-spacing:0.5px;" data-i18n="prop.detail.type">Type</label>
+        <select id="propDetailType" style="width:100%;padding:10px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:13px;">
+          <option value="apartment">Appartement</option>
+          <option value="house">Maison</option>
+          <option value="studio">Studio</option>
+          <option value="villa">Villa</option>
+          <option value="chalet">Chalet</option>
+          <option value="other">Autre</option>
+        </select>
+      </div>
+      <div style="flex:0.5;min-width:80px;">
+        <label style="display:block;font-size:12px;color:var(--text3);margin-bottom:4px;text-transform:uppercase;letter-spacing:0.5px;" data-i18n="prop.detail.rooms">Pieces</label>
+        <input id="propDetailRooms" type="number" min="1" max="20" style="width:100%;padding:10px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:13px;box-sizing:border-box;">
+      </div>
+      <div style="flex:0.5;min-width:80px;">
+        <label style="display:block;font-size:12px;color:var(--text3);margin-bottom:4px;text-transform:uppercase;letter-spacing:0.5px;">m²</label>
+        <input id="propDetailSurface" type="number" min="1" max="1000" style="width:100%;padding:10px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:13px;box-sizing:border-box;">
+      </div>
+    </div>
+
+    <!-- Price + Duration (row) -->
+    <div style="display:flex;gap:10px;margin-bottom:12px;">
+      <div style="flex:1;">
+        <label style="display:block;font-size:12px;color:var(--text3);margin-bottom:4px;text-transform:uppercase;letter-spacing:0.5px;" data-i18n="prop.detail.price">Tarif menage (€)</label>
+        <input id="propDetailPrice" type="number" min="0" step="5" placeholder="65" style="width:100%;padding:10px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:13px;box-sizing:border-box;">
+      </div>
+      <div style="flex:1;">
+        <label style="display:block;font-size:12px;color:var(--text3);margin-bottom:4px;text-transform:uppercase;letter-spacing:0.5px;" data-i18n="prop.detail.duration">Duree estimee</label>
+        <select id="propDetailDuration" style="width:100%;padding:10px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:13px;">
+          <option value="30">30 min</option>
+          <option value="45">45 min</option>
+          <option value="60">1h</option>
+          <option value="90" selected>1h30</option>
+          <option value="120">2h</option>
+          <option value="150">2h30</option>
+          <option value="180">3h</option>
+          <option value="240">4h</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Cleaning Checklist -->
+    <label style="display:block;font-size:12px;color:var(--text3);margin-bottom:4px;text-transform:uppercase;letter-spacing:0.5px;" data-i18n="prop.detail.checklist">Instructions de menage</label>
+    <div id="propChecklist" style="background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:10px;margin-bottom:12px;max-height:200px;overflow-y:auto;"></div>
+    <div style="display:flex;gap:8px;margin-bottom:12px;">
+      <input id="propNewCheckItem" type="text" placeholder="Nouvelle instruction..." style="flex:1;padding:8px 12px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:13px;" onkeydown="if(event.key==='Enter')addCheckItem()">
+      <button class="btn btnSmall btnSuccess" onclick="addCheckItem()" style="padding:6px 14px;">+</button>
+    </div>
+
+    <!-- Notes -->
+    <label style="display:block;font-size:12px;color:var(--text3);margin-bottom:4px;text-transform:uppercase;letter-spacing:0.5px;" data-i18n="prop.detail.notes">Notes</label>
+    <textarea id="propDetailNotes" rows="3" placeholder="Notes sur la propriete..." style="width:100%;padding:10px 14px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:13px;resize:vertical;font-family:'Inter',sans-serif;box-sizing:border-box;margin-bottom:16px;"></textarea>
+
+    <!-- Save button -->
+    <button class="btn btnPrimary" style="width:100%;padding:14px;font-size:14px;" onclick="savePropDetail()" data-i18n="prop.detail.save">Enregistrer</button>
+  </div>
+</div>
+
 <!-- Map Modal -->
 <div class="mapModal" id="mapModal" onclick="if(event.target===this)closeMap()">
   <div class="mapContainer">
@@ -1581,6 +1667,103 @@ function renderPressing() {
     }
   }
   div.innerHTML = html;
+}
+
+/* ── Property Detail Modal ── */
+let propCheckItems = [];
+
+function openPropDetail() {
+  const prop = API.getActiveProperty(fullConfig);
+  if (!prop) return;
+  document.getElementById('propDetailName').value = prop.name || '';
+  document.getElementById('propDetailAddress').value = prop.address || '';
+  document.getElementById('propDetailType').value = prop.type || 'apartment';
+  document.getElementById('propDetailRooms').value = prop.rooms || '';
+  document.getElementById('propDetailSurface').value = prop.surface || '';
+  document.getElementById('propDetailPrice').value = prop.cleaningPrice || '';
+  document.getElementById('propDetailDuration').value = prop.cleaningDuration || '90';
+  document.getElementById('propDetailNotes').value = prop.notes || '';
+  propCheckItems = (prop.checklist || []).slice();
+  renderChecklist();
+  // Photo
+  const img = document.getElementById('propPhotoImg');
+  const placeholder = document.getElementById('propPhotoPlaceholder');
+  if (prop.photo) {
+    img.src = prop.photo; img.style.display = 'block'; placeholder.style.display = 'none';
+  } else {
+    img.style.display = 'none'; placeholder.style.display = '';
+  }
+  document.getElementById('overlay').style.display = 'block';
+  document.getElementById('propDetailModal').style.display = 'block';
+}
+
+function closePropDetail() {
+  document.getElementById('overlay').style.display = 'none';
+  document.getElementById('propDetailModal').style.display = 'none';
+}
+
+function renderChecklist() {
+  const div = document.getElementById('propChecklist');
+  if (!propCheckItems.length) {
+    div.innerHTML = '<div style="color:var(--text3);font-size:12px;text-align:center;padding:8px;">Aucune instruction</div>';
+    return;
+  }
+  div.innerHTML = propCheckItems.map((item, i) => `
+    <div style="display:flex;align-items:center;gap:8px;padding:6px 4px;border-bottom:1px solid var(--border);">
+      <span style="flex:1;font-size:13px;color:var(--text);">${esc(item)}</span>
+      <button class="btn btnSmall btnDanger" style="padding:2px 8px;font-size:11px;" onclick="removeCheckItem(${i})">&#10005;</button>
+    </div>
+  `).join('');
+}
+
+function addCheckItem() {
+  const input = document.getElementById('propNewCheckItem');
+  const val = input.value.trim();
+  if (!val) return;
+  propCheckItems.push(val);
+  input.value = '';
+  renderChecklist();
+}
+
+function removeCheckItem(idx) {
+  propCheckItems.splice(idx, 1);
+  renderChecklist();
+}
+
+function handlePropPhoto(input) {
+  const file = input.files[0];
+  if (!file) return;
+  if (file.size > 500000) { showToast('Image trop grande (max 500 Ko)'); return; }
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const img = document.getElementById('propPhotoImg');
+    img.src = e.target.result;
+    img.style.display = 'block';
+    document.getElementById('propPhotoPlaceholder').style.display = 'none';
+  };
+  reader.readAsDataURL(file);
+}
+
+function savePropDetail() {
+  const prop = API.getActiveProperty(fullConfig);
+  if (!prop) return;
+  prop.name = document.getElementById('propDetailName').value.trim() || 'Mon logement';
+  prop.address = document.getElementById('propDetailAddress').value.trim();
+  prop.type = document.getElementById('propDetailType').value;
+  prop.rooms = parseInt(document.getElementById('propDetailRooms').value) || 0;
+  prop.surface = parseInt(document.getElementById('propDetailSurface').value) || 0;
+  prop.cleaningPrice = parseInt(document.getElementById('propDetailPrice').value) || 0;
+  prop.cleaningDuration = parseInt(document.getElementById('propDetailDuration').value) || 90;
+  prop.notes = document.getElementById('propDetailNotes').value;
+  prop.checklist = propCheckItems.slice();
+  const img = document.getElementById('propPhotoImg');
+  if (img.style.display !== 'none' && img.src && img.src.startsWith('data:')) {
+    prop.photo = img.src;
+  }
+  syncAndSaveConfig();
+  renderPropertySelector();
+  closePropDetail();
+  showToast(t('prop.detail.saved') || 'Propriete enregistree');
 }
 
 /* ── Map & Geolocation ── */
