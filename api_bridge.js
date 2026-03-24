@@ -4,8 +4,8 @@
  */
 
 const PLAN_LIMITS = {
-  free: { maxProviders: 2, maxProperties: 1, maxIcals: 2, ads: true },
-  premium: { maxProviders: Infinity, maxProperties: Infinity, maxIcals: Infinity, ads: false },
+  free: { maxProviders: 2, maxProperties: 1, maxIcals: 2, maxGenerates: 2, ads: true },
+  premium: { maxProviders: Infinity, maxProperties: Infinity, maxIcals: Infinity, maxGenerates: Infinity, ads: false },
 };
 
 let currentPlan = 'free';

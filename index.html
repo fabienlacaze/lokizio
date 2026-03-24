@@ -1094,11 +1094,16 @@
         <h3 data-i18n="premium.plan.free">Gratuit</h3>
         <div class="price">0€</div>
         <ul>
-          <li data-i18n="premium.free.property">1 propriete</li>
-          <li data-i18n="premium.free.providers">2 prestataires max</li>
-          <li data-i18n="premium.free.ical">Calendrier iCal</li>
-          <li>WhatsApp</li>
-          <li class="limit" data-i18n="premium.free.ads">Publicites</li>
+          <li>1 propriete</li>
+          <li>2 prestataires max</li>
+          <li>2 calendriers iCal max</li>
+          <li>2 generations de planning/jour</li>
+          <li>Export CSV + Copier</li>
+          <li>Stats basiques</li>
+          <li class="limit">Publicites</li>
+          <li class="limit">WhatsApp / PDF / Partage</li>
+          <li class="limit">Graphiques / Couts</li>
+          <li class="limit">Historique / Pressing</li>
         </ul>
         <button class="btn btnOutline" style="width:100%;padding:12px;" disabled data-i18n="premium.plan.current">Plan actuel</button>
       </div>
@@ -1106,11 +1111,16 @@
         <h3>Premium <span class="premiumBadge">PRO</span></h3>
         <div class="price">3.99€<small>/mois</small></div>
         <ul>
-          <li data-i18n="premium.feat.properties">Proprietes illimitees</li>
-          <li data-i18n="premium.feat.providers">Prestataires illimites</li>
-          <li data-i18n="premium.feat.noads">Aucune publicite</li>
-          <li data-i18n="premium.feat.priority">Support prioritaire</li>
-          <li data-i18n="premium.feat.export">Export PDF avance</li>
+          <li>Proprietes illimitees</li>
+          <li>Prestataires illimites</li>
+          <li>Calendriers illimites</li>
+          <li>Generations illimitees</li>
+          <li>WhatsApp + PDF + Partage</li>
+          <li>Graphiques + Couts previsionnels</li>
+          <li>Historique + Pressing</li>
+          <li>Aucune publicite</li>
+          <li>Support prioritaire</li>
+          <li>Geolocalisation avancee</li>
         </ul>
         <button class="btnUpgrade" onclick="upgradeToPremium()" id="btnUpgrade" data-i18n="premium.btn.upgrade">Passer a Premium</button>
       </div>
@@ -2318,6 +2328,18 @@ async function savePlanning() { if(cleanings.length>0) { await API.save_planning
 
 /* ── Generate Planning ── */
 async function generatePlanning() {
+  // Check daily generation limit for free users
+  const limits = API.getLimits();
+  if (limits.maxGenerates < Infinity) {
+    const today = new Date().toISOString().substring(0,10);
+    const genLog = JSON.parse(localStorage.getItem('mm_gen_log') || '[]').filter(d => d === today);
+    if (genLog.length >= limits.maxGenerates) {
+      showPremiumModal();
+      return;
+    }
+    genLog.push(today);
+    localStorage.setItem('mm_gen_log', JSON.stringify(genLog));
+  }
   syncProviders();
   // Sync iCal URLs from dynamic list
   const prop = API.getActiveProperty(fullConfig);
