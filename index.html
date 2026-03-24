@@ -2075,18 +2075,18 @@ function showOnboarding() {
   // Step 1: Language selection
   let html = '<div style="text-align:center;padding:10px;">';
   html += '<div style="font-size:40px;margin-bottom:12px;">&#127760;</div>';
-  html += '<div style="font-size:18px;font-weight:700;color:var(--accent);margin-bottom:16px;">Choose your language</div>';
+  html += '<div style="font-size:18px;font-weight:700;color:var(--accent);margin-bottom:16px;">Choisissez votre langue<br><span style="font-size:13px;font-weight:400;color:var(--text2);">Choose your language</span></div>';
   html += '<div style="display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin:20px 0;">';
   const langs = [
     {code:'fr',flag:'fr',name:'Francais'},
     {code:'en',flag:'gb',name:'English'},
     {code:'es',flag:'es',name:'Espanol',premium:true},
-    {code:'pt',flag:'pt',name:'Portugues',premium:true},
-    {code:'it',flag:'it',name:'Italiano',premium:true},
-    {code:'de',flag:'de',name:'Deutsch',premium:true},
+    {code:'pt',flag:'pt',name:'Portugais',premium:true},
+    {code:'it',flag:'it',name:'Italien',premium:true},
+    {code:'de',flag:'de',name:'Allemand',premium:true},
   ];
   langs.forEach(l => {
-    const premBadge = l.premium ? ' <span style="font-size:9px;background:var(--accent2);color:#fff;padding:1px 5px;border-radius:4px;">PRO</span>' : '';
+    const premBadge = l.premium ? ' <span style="font-size:8px;background:var(--accent2);color:#fff;padding:2px 5px;border-radius:4px;font-weight:700;letter-spacing:0.5px;">PRO</span>' : '';
     html += `<button class="btn btnOutline" onclick="setLang('${l.code}');showOnboardingStep2()" style="padding:12px 20px;font-size:14px;min-width:130px;">`;
     html += `<img src="https://flagcdn.com/w20/${l.flag}.png" width="20" height="15" style="vertical-align:middle;margin-right:8px;">`;
     html += `${l.name}${premBadge}</button>`;
