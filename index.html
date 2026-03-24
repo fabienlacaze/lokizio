@@ -1022,7 +1022,7 @@
         <div id="commPremLock" style="display:none;position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(15,15,26,0.7);display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:var(--radius-sm);z-index:2;cursor:pointer;" onclick="showPremiumModal('WhatsApp, PDF et Partage sont reserves aux utilisateurs Premium')"><span style="font-size:28px;">&#128274;</span><span style="color:#fff;font-size:12px;font-weight:600;margin-top:6px;">Debloquer</span></div>
         <div id="commPremContent" style="">
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
-            <button class="btn btnWA" onclick="sendWhatsAppAll()" style="padding:14px;font-size:14px;">&#128172; <span data-i18n="results.whatsapp">WhatsApp</span></button>
+            <button class="btn btnPrimary" onclick="showSendModal()" style="padding:14px;font-size:14px;background:linear-gradient(135deg,#6c63ff,#5a52d5);">&#128228; <span data-i18n="send.btn">Envoyer</span></button>
             <button class="btn btnOutline" onclick="shareReadonly()" style="padding:14px;font-size:14px;">&#128279; <span data-i18n="comm.share">Partager</span></button>
           </div>
           <div style="display:grid;grid-template-columns:1fr;gap:10px;">
@@ -1151,6 +1151,37 @@
     <div style="text-align:center;color:var(--text3);font-size:11px;" data-i18n="premium.cancel">Annulable a tout moment. Paiement securise par Stripe.</div>
   </div>
 </div>
+<!-- Send Modal (multi-channel) -->
+<div class="modal" id="sendModal" style="max-width:420px;">
+  <div class="modalHeader" style="display:flex;justify-content:space-between;align-items:center;">
+    <span data-i18n="send.title">Envoyer le planning</span>
+    <button class="btn btnSmall" onclick="closeSendModal()" style="padding:4px 10px;">&#10005;</button>
+  </div>
+  <div class="modalBody" style="padding:16px 20px;">
+    <div id="sendProviderSelect" style="margin-bottom:14px;"></div>
+    <div style="display:flex;flex-direction:column;gap:8px;">
+      <button class="btn" onclick="sendViaChannel('whatsapp')" style="padding:14px;font-size:14px;background:#25D366;color:#fff;border:none;border-radius:10px;display:flex;align-items:center;gap:10px;">
+        <span style="font-size:20px;">💬</span> WhatsApp
+      </button>
+      <button class="btn" onclick="sendViaChannel('telegram')" style="padding:14px;font-size:14px;background:#0088cc;color:#fff;border:none;border-radius:10px;display:flex;align-items:center;gap:10px;">
+        <span style="font-size:20px;">✈️</span> Telegram
+      </button>
+      <button class="btn" onclick="sendViaChannel('sms')" style="padding:14px;font-size:14px;background:#34d399;color:#fff;border:none;border-radius:10px;display:flex;align-items:center;gap:10px;">
+        <span style="font-size:20px;">📱</span> SMS
+      </button>
+      <button class="btn" onclick="sendViaChannel('messenger')" style="padding:14px;font-size:14px;background:#0084FF;color:#fff;border:none;border-radius:10px;display:flex;align-items:center;gap:10px;">
+        <span style="font-size:20px;">💭</span> Messenger
+      </button>
+      <button class="btn" onclick="sendViaChannel('email')" style="padding:14px;font-size:14px;background:#ea580c;color:#fff;border:none;border-radius:10px;display:flex;align-items:center;gap:10px;">
+        <span style="font-size:20px;">📧</span> Email
+      </button>
+      <button class="btn btnOutline" onclick="sendViaChannel('copy')" style="padding:14px;font-size:14px;display:flex;align-items:center;gap:10px;">
+        <span style="font-size:20px;">📋</span> <span data-i18n="send.copy">Copier le texte</span>
+      </button>
+    </div>
+  </div>
+</div>
+
 <!-- Confirm Modal -->
 <div class="modal" id="confirmModal" style="max-width:380px;">
   <div class="modalHeader" id="confirmTitle">Confirmer</div>
@@ -2569,6 +2600,78 @@ function buildWhatsAppText(provName) {
   pc.forEach(c => { txt += `${c.dayName} ${c.cleaningDateFR}\n`; });
   return txt;
 }
+/* ── Send Modal (multi-channel) ── */
+let sendSelectedProvider = null;
+
+function showSendModal() {
+  if (!cleanings.length) { showMsg(t('whatsapp.empty.all')); return; }
+  const provsWithWork = config.providers.filter(p => cleanings.some(c => c.provider === p.name));
+  if (!provsWithWork.length) { showMsg(t('whatsapp.no.providers')); return; }
+  // Build provider selector
+  let html = '<div style="font-size:13px;color:var(--text2);margin-bottom:8px;">' + (t('whatsapp.select') || 'Choisir un prestataire :') + '</div>';
+  html += '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:4px;">';
+  provsWithWork.forEach((p, i) => {
+    const count = cleanings.filter(c => c.provider === p.name).length;
+    const color = COLORS[config.providers.indexOf(p)] || '#888';
+    html += `<button class="btn btnSmall sendProvBtn" data-prov="${esc(p.name)}" onclick="selectSendProvider('${esc(p.name)}')" style="padding:8px 14px;border:2px solid var(--border2);border-radius:8px;"><span class="provDot" style="background:${color}"></span>${esc(p.name)} (${count})</button>`;
+  });
+  html += '</div>';
+  document.getElementById('sendProviderSelect').innerHTML = html;
+  sendSelectedProvider = provsWithWork[0].name;
+  setTimeout(() => selectSendProvider(provsWithWork[0].name), 50);
+  document.getElementById('overlay').style.display = 'block';
+  document.getElementById('sendModal').style.display = 'block';
+}
+
+function closeSendModal() {
+  document.getElementById('overlay').style.display = 'none';
+  document.getElementById('sendModal').style.display = 'none';
+}
+
+function selectSendProvider(name) {
+  sendSelectedProvider = name;
+  document.querySelectorAll('.sendProvBtn').forEach(btn => {
+    btn.style.borderColor = btn.dataset.prov === name ? 'var(--accent)' : 'var(--border2)';
+    btn.style.background = btn.dataset.prov === name ? 'rgba(233,69,96,0.15)' : '';
+  });
+}
+
+async function sendViaChannel(channel) {
+  if (!sendSelectedProvider) return;
+  const txt = buildWhatsAppText(sendSelectedProvider);
+  if (!txt) { showToast(t('whatsapp.empty') + ' ' + sendSelectedProvider); return; }
+  const p = config.providers.find(pr => pr.name === sendSelectedProvider);
+  const phone = p ? (p.phone || '').replace(/[\s.\-]/g, '') : '';
+  const intlPhone = phone.startsWith('0') && phone.length === 10 ? '+33' + phone.substring(1) : phone;
+  const encoded = encodeURIComponent(txt);
+
+  switch (channel) {
+    case 'whatsapp':
+      if (intlPhone) window.open(`https://wa.me/${intlPhone}?text=${encoded}`, '_blank');
+      else { await navigator.clipboard.writeText(txt).catch(() => {}); }
+      break;
+    case 'telegram':
+      window.open(`https://t.me/share/url?url=${encodeURIComponent('Cleaning Manager')}&text=${encoded}`, '_blank');
+      break;
+    case 'sms':
+      window.open(`sms:${intlPhone}?body=${encoded}`, '_blank');
+      break;
+    case 'messenger':
+      window.open(`fb-messenger://share/?link=${encodeURIComponent('https://fabienlacaze.github.io/menage-manager-app/')}&quote=${encoded}`, '_blank');
+      break;
+    case 'email':
+      const subject = encodeURIComponent('Planning menages - ' + (sendSelectedProvider || ''));
+      window.open(`mailto:?subject=${subject}&body=${encoded}`, '_blank');
+      break;
+    case 'copy':
+      await navigator.clipboard.writeText(txt).catch(() => {});
+      showToast(t('export.text.copied') || 'Copie !');
+      break;
+  }
+  if (channel !== 'copy') showToast((t('whatsapp.opened') || 'Envoye via') + ' ' + channel);
+  closeSendModal();
+}
+
 async function sendWhatsApp(provName) { const p=config.providers.find(pr=>pr.name===provName);const txt=buildWhatsAppText(provName);if(!txt){showMsg('Aucun menage pour '+provName);return;} await navigator.clipboard.writeText(txt).catch(()=>{}); if(p&&p.phone){await API.open_whatsapp(p.phone,txt);showToast('Copie + WhatsApp ouvert pour '+provName);}else{showToast('Planning copie dans le presse-papier !');} }
 function sendWhatsAppAll() {
   if(!cleanings.length){showMsg('Aucun planning a envoyer.');return;}

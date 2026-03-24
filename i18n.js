@@ -293,6 +293,11 @@ const I18N = {
     'changelog.cleared': 'Historique efface',
 
     // Calendar
+    // Send modal
+    'send.btn': 'Envoyer',
+    'send.title': 'Envoyer le planning',
+    'send.copy': 'Copier le texte',
+
     'calendar.legend.cleaning': 'Menage',
     'calendar.legend.reservation': 'Reservation',
     'calendar.today': 'Aujourd\'hui',
@@ -605,6 +610,11 @@ const I18N = {
     'changelog.title': 'Change history',
     'changelog.empty': 'No changes recorded.',
     'changelog.cleared': 'History cleared',
+
+    // Send modal
+    'send.btn': 'Send',
+    'send.title': 'Send the planning',
+    'send.copy': 'Copy text',
 
     // Calendar
     'calendar.legend.cleaning': 'Cleaning',
