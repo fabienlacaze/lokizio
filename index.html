@@ -3408,7 +3408,6 @@ function initAddressAutocomplete(inputId, mapId, dataKey) {
   input.addEventListener('input', function() {
     clearTimeout(_autocompleteTimer);
     const q = this.value.trim();
-    console.log('Autocomplete input:', q);
     if (q.length < 3) { sugDiv.style.display = 'none'; return; }
     sugDiv.innerHTML = '<div style="padding:10px 12px;font-size:12px;color:var(--text3);">Recherche...</div>';
     sugDiv.style.display = 'block';
