@@ -4,9 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="theme-color" content="#1a1a2e">
-<title>Planning - Menage Manager</title>
+<title>Planning - Cleaning Manager</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<script src="supabase_config.js?v=5"></script>
+<!-- No SDK needed - direct REST API calls -->
 <style>
   :root { --bg:#0f0f1a; --surface:#1a1a2e; --surface2:#16213e; --border:rgba(255,255,255,0.06); --border2:rgba(255,255,255,0.1); --accent:#e94560; --text:#f0f0f5; --text2:#9ca3af; --text3:#6b7280; --success:#34d399; }
   * { box-sizing:border-box; margin:0; padding:0; }
@@ -32,7 +32,7 @@
 <body>
 <div class="container">
   <div class="header">
-    <h1>Menage Manager</h1>
+    <h1>Cleaning Manager</h1>
     <div class="sub" id="subtitle">Chargement...</div>
   </div>
   <div id="content"><div class="loading">Chargement du planning...</div></div>
@@ -127,10 +127,10 @@ async function loadData() {
     if (providerName) {
       displayCleanings = matchedPlanning.filter(c => c.provider === providerName);
       subtitle.textContent = `Planning de ${esc(providerName)} - ${esc(property)}`;
-      document.title = `Planning ${providerName} - Menage Manager`;
+      document.title = `Planning ${providerName} - Cleaning Manager`;
     } else {
       subtitle.textContent = `Planning complet - ${esc(property)}`;
-      document.title = `Planning ${property} - Menage Manager`;
+      document.title = `Planning ${property} - Cleaning Manager`;
     }
 
     // Sort by date

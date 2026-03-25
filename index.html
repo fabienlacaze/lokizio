@@ -1635,9 +1635,10 @@ async function init() {
   if ('Notification' in window && Notification.permission === 'default') Notification.requestPermission();
   checkRentalNotifications();
   checkReminders();
-  // Onboarding for first visit
+  // Onboarding for first visit — show immediately, hide main content
   if (!localStorage.getItem('mm_onboarded')) {
-    setTimeout(() => showOnboarding(), 1000);
+    document.querySelector('.content').style.display = 'none';
+    showOnboarding();
   }
 }
 /* ── Auth ── */
@@ -1869,7 +1870,7 @@ function dismissInstall() { document.getElementById('installBanner').style.displ
 function shareReadonly() {
   const prop = API.getActiveProperty(fullConfig);
   const token = prop ? prop.readonlyToken : config.readonlyToken;
-  if (!token) { showMsg('Sauvegardez la configuration d\'abord pour generer le lien.'); return; }
+  if (!token) { showMsg(t('share.save_first') || 'Save config first to generate the link.'); return; }
   const base = location.href.replace(/\/[^\/]*$/, '');
   const url = base + '/view.html?readonly=' + token;
   if (navigator.share) {
@@ -2079,7 +2080,7 @@ async function removeIcal(idx) {
   const prop = API.getActiveProperty(fullConfig);
   if (!prop.icals || !prop.icals[idx]) return;
   const plat = ICAL_PLATFORMS.find(p => p.id === prop.icals[idx].platform) || { name: 'Calendrier' };
-  const ok = await customConfirm('Supprimer le calendrier "' + plat.name + '" ?', 'Supprimer');
+  const ok = await customConfirm((t('ical.remove_confirm') || 'Remove calendar') + ' "' + plat.name + '" ?', t('btn.delete') || 'Delete');
   if (!ok) return;
   prop.icals.splice(idx, 1);
   syncIcalToOldFormat(prop);
@@ -2175,7 +2176,7 @@ function showOnboardingStep2() {
   html += '3. <b>' + (t('results.title') || 'Planning') + '</b> — ' + (t('onboarding.step3') || 'Il se genere automatiquement !') + '<br><br>';
   html += (t('onboarding.help') || 'Cliquez ? a cote de chaque section pour plus d\'aide.');
   html += '</div>';
-  html += '<button class="btn btnPrimary" style="padding:14px 32px;font-size:14px;" onclick="closeMsg();localStorage.setItem(\'mm_onboarded\',\'1\');">' + (t('onboarding.go') || 'C\'est parti !') + '</button>';
+  html += '<button class="btn btnPrimary" style="padding:14px 32px;font-size:14px;" onclick="closeMsg();localStorage.setItem(\'mm_onboarded\',\'1\');document.querySelector(\'.content\').style.display=\'\';">' + (t('onboarding.go') || 'C\'est parti !') + '</button>';
   html += '</div>';
   document.getElementById('msgBody').innerHTML = html;
 }
@@ -2517,7 +2518,7 @@ function renderProviders() {
       <td><input type="text" class="provInput" id="pp_${i}" value="${esc(p.phone)}"></td>
       <td><input type="text" class="provInput pctInput" id="ppct_${i}" value="${p.percentage}" onchange="redistributePct(${i})"></td>
       <td><input type="text" class="provInput pctInput" id="pprice_${i}" value="${p.price||''}" placeholder="0"></td>
-      <td class="center"><button class="btn btnSmall" onclick="showVacModal(${i})">${vacCount > 0 ? vacCount+' per.' : 'Aucune'}</button></td>
+      <td class="center"><button class="btn btnSmall" onclick="showVacModal(${i})">${vacCount > 0 ? vacCount+' per.' : (t('vacation.none') || 'None')}</button></td>
       <td class="center"><button class="btnLocation" onclick="editProvider(${i})" title="Modifier" style="font-size:14px;">&#9998;</button></td>
       <td class="center"><button class="btnLocation ${p.lat ? 'hasLocation' : ''}" onclick="openMapForProvider(${i})" title="${p.address || 'Definir la zone'}">&#128205;</button></td>
       <td class="center"><button class="btn btnSmall btnDanger" style="padding:4px 8px;" onclick="removeProvider(${i})">&#10005;</button></td>
@@ -2646,7 +2647,7 @@ function autoBalancePercentages() {
   });
   renderProviders();
 }
-async function removeProvider(i) { const name=config.providers[i]?.name||''; const ok=await customConfirm('Supprimer le prestataire "'+name+'" ?','Supprimer'); if(!ok)return; syncProviders(); config.providers.splice(i,1); autoBalancePercentages(); autoRegenerateIfNeeded(); }
+async function removeProvider(i) { const name=config.providers[i]?.name||''; const ok=await customConfirm((t('provider.remove_confirm') || 'Remove provider') + ' "'+name+'" ?', t('btn.delete') || 'Delete'); if(!ok)return; syncProviders(); config.providers.splice(i,1); autoBalancePercentages(); autoRegenerateIfNeeded(); }
 
 /* ── Vacations ── */
 function showVacModal(i) { syncProviders(); vacPopupIdx=i; renderVacContent(); document.getElementById('overlay').style.display='block'; document.getElementById('vacModal').style.display='block'; }
@@ -2707,7 +2708,7 @@ async function generatePlanning(isAuto) {
   if(!config.airbnbIcalUrl&&!config.bookingIcalUrl&&!(prop&&prop.icals&&prop.icals.some(i=>i.url))){showMsg(t('config.ical.required'));return;}
   if(!(config.providers||[]).length){showMsg(t('config.provider.required'));return;}
   const totalPct=(config.providers||[]).reduce((s,p)=>s+(parseInt(p.percentage)||0),0);
-  if(totalPct!==100){showMsg('Le total des pourcentages doit etre 100% (actuellement '+totalPct+'%).');return;}
+  if(totalPct!==100){showMsg((t('validate.pct') || 'Total must be 100%') + ' (' + totalPct + '%)');return;}
   await syncAndSaveConfig();
   const btn=document.getElementById('btnGenerate');
   btn.classList.add('loading');
@@ -2725,7 +2726,7 @@ async function generatePlanning(isAuto) {
   document.getElementById('resultDiv').innerHTML='<div class="emptyState"><span class="spinner"></span> Chargement en cours...</div>';
   try {
     const data = await API.generate_planning();
-    if(data.error){showMsg('Erreur: '+data.error);setStatus('Erreur');return;}
+    if(data.error){showMsg((t('error') || 'Error') + ': '+data.error);setStatus(t('error') || 'Error');return;}
     reservations = data.reservations || [];
     cleanings = (data.cleanings||[]).map(c=>({...c,dateFR:fmtDate(c.date),cleaningDate:c.cleaningDate||c.date,cleaningDateFR:fmtDate(c.cleaningDate||c.date),checkoutDateFR:fmtDate(c.checkoutDate),prevCheckout:c.prevCheckout||''}));
     currentFilter=''; renderResults(); renderFilterBar(); await savePlanning(); await archivePastCleanings(); checkRentalNotifications();
@@ -3067,8 +3068,8 @@ async function setReminder(idx) {
   // Use browser Notification API (works on mobile PWA too)
   if (!('Notification' in window)) { showMsg(t('notification.unsupported')); return; }
   let perm = Notification.permission;
-  if (perm === 'denied') { showMsg('Notifications bloquees. Autorisez-les dans les parametres du navigateur.'); return; }
-  if (perm !== 'granted') { perm = await Notification.requestPermission(); if (perm !== 'granted') { showMsg('Permission de notification refusee.'); return; } }
+  if (perm === 'denied') { showMsg(t('notif.blocked') || 'Notifications blocked. Enable them in browser settings.'); return; }
+  if (perm !== 'granted') { perm = await Notification.requestPermission(); if (perm !== 'granted') { showMsg(t('notif.denied') || 'Notification permission denied.'); return; } }
   // Store reminder in localStorage
   const reminders = (()=>{try{return JSON.parse(localStorage.getItem('mm_reminders')||'[]')}catch(e){return[]}})();
   const key = c.cleaningDate + '_' + c.provider;
