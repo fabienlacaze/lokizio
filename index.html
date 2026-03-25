@@ -2008,11 +2008,11 @@ async function showProviderMode() {
       const key = dateStr + '_' + providerName;
       const v = validations[key];
       const status = v ? v.status : 'pending';
-      const statusIcons = { done: '&#9989;', in_progress: '&#9203;', accepted: '&#9989;', seen: '&#128065;', sent: '&#9993;', refused: '&#10060;', pending: '&#9898;' };
+      const statusIcons = { done: '&#9989;', departed: '&#128682;', in_progress: '&#129529;', arrived: '&#127968;', accepted: '&#9989;', seen: '&#128065;', sent: '&#9993;', refused: '&#10060;', pending: '&#9898;' };
       const statusIcon = statusIcons[status] || '&#9898;';
-      const statusLabels = { done: 'Termine', in_progress: 'En cours', accepted: 'Accepte ✓✓', seen: 'Lu ✓', sent: 'Envoye', refused: 'Refuse', pending: 'A faire' };
+      const statusLabels = { done: 'Termine', departed: 'Parti', in_progress: 'Menage en cours', arrived: 'Sur place', accepted: 'Accepte ✓✓', seen: 'Lu ✓', sent: 'Envoye', refused: 'Refuse', pending: 'A faire' };
       const statusLabel = statusLabels[status] || 'A faire';
-      const statusColors = { done: '#34d399', in_progress: '#f59e0b', accepted: '#34d399', seen: '#6c63ff', sent: 'var(--text3)', refused: '#ef4444', pending: 'var(--text3)' };
+      const statusColors = { done: '#34d399', departed: '#34d399', in_progress: '#f59e0b', arrived: '#6c63ff', accepted: '#34d399', seen: '#6c63ff', sent: 'var(--text3)', refused: '#ef4444', pending: 'var(--text3)' };
       const statusColor = statusColors[status] || 'var(--text3)';
       const source = (c.source || '').toLowerCase();
       const badgeClass = source.includes('airbnb') ? 'background:#e94560;' : source.includes('booking') ? 'background:#003580;' : 'background:#666;';
@@ -2058,21 +2058,32 @@ async function showProviderMode() {
           <button onclick="refuseCleaning('${c.propertyId}','${dateStr}','${esc(providerName)}')" style="flex:1;padding:10px;background:#ef4444;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">&#10007; Refuser</button>
         </div>`;
       } else if (status === 'accepted') {
-        // Step 2: In progress or Done
+        // Step 2: En route
         html += `<div style="display:flex;gap:8px;margin-top:12px;padding-top:10px;border-top:1px solid var(--border);">
-          <button onclick="providerValidate('${c.propertyId}','${dateStr}','${esc(providerName)}','in_progress',this)" style="flex:1;padding:10px;background:#f59e0b;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">&#128692; En route</button>
-          <button onclick="providerValidate('${c.propertyId}','${dateStr}','${esc(providerName)}','done',this)" style="flex:1;padding:10px;background:#34d399;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">&#9989; Termine</button>
+          <button onclick="providerValidate('${c.propertyId}','${dateStr}','${esc(providerName)}','arrived',this)" style="flex:1;padding:12px;background:linear-gradient(135deg,#6c63ff,#5a54e0);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">&#128692; En route / Je suis arrive</button>
+        </div>`;
+      } else if (status === 'arrived') {
+        // Step 3: Start cleaning
+        html += `<div style="display:flex;gap:8px;margin-top:12px;padding-top:10px;border-top:1px solid var(--border);">
+          <button onclick="providerValidate('${c.propertyId}','${dateStr}','${esc(providerName)}','in_progress',this)" style="flex:1;padding:12px;background:#f59e0b;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">&#129529; Commencer le menage</button>
         </div>
         <div style="margin-top:8px;">
           <input type="file" accept="image/*" multiple onchange="providerUploadPhotos(this,'${c.propertyId}','${dateStr}','${esc(providerName)}')" style="font-size:11px;color:var(--text3);">
+          <span style="font-size:10px;color:var(--text3);margin-left:4px;">📷 Photos avant menage</span>
         </div>`;
       } else if (status === 'in_progress') {
-        // Step 3: Just Done
+        // Step 4: Finish and leave
         html += `<div style="display:flex;gap:8px;margin-top:12px;padding-top:10px;border-top:1px solid var(--border);">
-          <button onclick="providerValidate('${c.propertyId}','${dateStr}','${esc(providerName)}','done',this)" style="flex:1;padding:10px;background:#34d399;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">&#9989; Marquer comme termine</button>
+          <button onclick="providerValidate('${c.propertyId}','${dateStr}','${esc(providerName)}','departed',this)" style="flex:1;padding:12px;background:#34d399;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">&#128682; Menage termine — Je pars</button>
         </div>
         <div style="margin-top:8px;">
           <input type="file" accept="image/*" multiple onchange="providerUploadPhotos(this,'${c.propertyId}','${dateStr}','${esc(providerName)}')" style="font-size:11px;color:var(--text3);">
+          <span style="font-size:10px;color:var(--text3);margin-left:4px;">📷 Photos apres menage</span>
+        </div>`;
+      } else if (status === 'departed') {
+        // Step 5: Confirm done
+        html += `<div style="display:flex;gap:8px;margin-top:12px;padding-top:10px;border-top:1px solid var(--border);">
+          <button onclick="providerValidate('${c.propertyId}','${dateStr}','${esc(providerName)}','done',this)" style="flex:1;padding:12px;background:#059669;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">&#9989; Confirmer — Tout est OK</button>
         </div>`;
       }
 
@@ -2110,8 +2121,40 @@ async function providerValidate(propId, date, provName, status, btn) {
       validated_at: new Date().toISOString(),
       validated_by: user.id,
     }, { onConflict: 'property_id,cleaning_date,provider_name' });
-    showToast(status === 'done' ? 'Menage marque comme termine !' : 'Statut mis a jour');
-    showProviderMode(); // Refresh
+
+    // Status messages
+    const statusMsgs = {
+      arrived: '📍 ' + provName + ' est arrive(e) a la propriete (' + fmtDate(date) + ')',
+      in_progress: '🧹 ' + provName + ' a commence le menage (' + fmtDate(date) + ')',
+      departed: '🚪 ' + provName + ' a termine et quitte la propriete (' + fmtDate(date) + ')',
+      done: '✅ ' + provName + ' a confirme — menage termine (' + fmtDate(date) + ')',
+    };
+    const msg = statusMsgs[status];
+
+    // Send auto-message to chat (notifies gestionnaire + propriétaire)
+    if (msg) {
+      const org = API.getOrg();
+      if (org) {
+        await sb.from('messages').insert({
+          org_id: org.id,
+          property_id: propId,
+          sender_id: user.id,
+          sender_name: provName,
+          sender_role: 'provider',
+          recipient_name: 'gestionnaire',
+          body: msg,
+        });
+      }
+    }
+
+    const toastMsgs = {
+      arrived: 'Arrive sur place !',
+      in_progress: 'Menage commence !',
+      departed: 'Menage termine, vous avez quitte !',
+      done: 'Tout est confirme !',
+    };
+    showToast(toastMsgs[status] || 'Statut mis a jour');
+    showProviderMode();
   } catch (e) {
     showToast('Erreur: ' + e.message);
     if (btn) { btn.disabled = false; }
