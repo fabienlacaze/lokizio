@@ -3875,6 +3875,7 @@ function selectSendProvider(name) {
     { id:'sms', icon:'📱', name:'SMS', color:'#34d399', needs:'phone' },
     { id:'messenger', icon:'💭', name:'Messenger', color:'#0084FF', needs:null },
     { id:'email', icon:'📧', name:'Email', color:'#ea580c', needs:'email' },
+    { id:'chat', icon:'💬', name:'Chat interne', color:'#6c63ff', needs:null },
     { id:'copy', icon:'📋', name:t('send.copy')||'Copier le texte', color:null, needs:null },
   ];
   const listEl = document.getElementById('sendChannelList');
@@ -3922,12 +3923,32 @@ async function sendViaChannel(channel) {
       const subject = encodeURIComponent('Planning menages - ' + (sendSelectedProvider || ''));
       window.open(`mailto:${provEmail}?subject=${subject}&body=${encoded}`, '_blank');
       break;
+    case 'chat':
+      closeSendModal();
+      // Send message via internal chat
+      const org = API.getOrg();
+      const { data: { user } } = await sb.auth.getUser();
+      if (org && user) {
+        const prop = API.getActiveProperty(fullConfig);
+        await sb.from('messages').insert({
+          org_id: org.id,
+          property_id: prop ? prop.id : null,
+          sender_id: user.id,
+          sender_name: user.email.split('@')[0],
+          sender_role: API.getRole(),
+          recipient_name: sendSelectedProvider,
+          body: txt,
+        });
+        showToast('Message envoye a ' + sendSelectedProvider + ' via chat interne');
+        openChat(sendSelectedProvider);
+      }
+      return;
     case 'copy':
       await navigator.clipboard.writeText(txt).catch(() => {});
       showToast(t('export.text.copied') || 'Copie !');
       break;
   }
-  if (channel !== 'copy') showToast((t('whatsapp.opened') || 'Envoye via') + ' ' + channel);
+  if (channel !== 'copy' && channel !== 'chat') showToast((t('whatsapp.opened') || 'Envoye via') + ' ' + channel);
   closeSendModal();
 }
 
