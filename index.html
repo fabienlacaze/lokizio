@@ -3337,36 +3337,172 @@ function selectRole(roleId) {
   document.getElementById('msgBody').innerHTML = html;
 }
 
+let wizardData = {};
+
 async function finishOnboarding(roleId) {
-  closeMsg();
-  localStorage.setItem('mm_onboarded', '1');
   localStorage.setItem('mm_user_role', roleId);
+  wizardData = { roleId };
 
   const { data: { user } } = await sb.auth.getUser();
   if (!user) return;
 
-  // Check if org already exists (from trigger)
   let org = API.getOrg();
   let member = API.getMember();
 
   if (org && member) {
-    // Update role based on choice
     if (roleId === 'provider') {
       await sb.from('members').update({ role: 'provider' }).eq('id', member.id);
-      // Show provider mode directly (don't wait for reload)
+      closeMsg();
+      localStorage.setItem('mm_onboarded', '1');
       showProviderMode();
       return;
     } else if (roleId === 'owner') {
       await sb.from('members').update({ role: 'admin' }).eq('id', member.id);
     } else if (roleId === 'concierge') {
       await sb.from('members').update({ role: 'admin' }).eq('id', member.id);
-      await sb.from('organizations').update({ name: 'Ma conciergerie', plan: 'free' }).eq('id', org.id);
     }
+    wizardData.orgId = org.id;
+    wizardData.memberId = member.id;
   }
 
-  // Show the main content and reload
+  // Start wizard
+  if (roleId === 'concierge') {
+    wizardStep_ConciergeName();
+  } else {
+    wizardStep_PropertyName();
+  }
+}
+
+// ── Wizard: Concierge Step 1 — Nom de la conciergerie ──
+function wizardStep_ConciergeName() {
+  let html = '<div style="text-align:center;padding:10px;">';
+  html += '<div style="font-size:32px;margin-bottom:8px;">&#127970;</div>';
+  html += '<div style="font-size:16px;font-weight:700;color:#6c63ff;margin-bottom:4px;">Etape 1/4</div>';
+  html += '<div style="font-size:14px;color:var(--text2);margin-bottom:16px;">Comment s\'appelle votre conciergerie ?</div>';
+  html += '<input id="wizOrgName" type="text" placeholder="Ex: Conciergerie Cote d\'Azur" value="" style="width:100%;padding:12px 14px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;font-family:\'Inter\',sans-serif;box-sizing:border-box;margin-bottom:16px;">';
+  html += '<button class="btn btnPrimary" style="width:100%;padding:14px;font-size:14px;" onclick="wizardSaveConciergeName()">Suivant &#10140;</button>';
+  html += '</div>';
+  document.getElementById('msgBody').innerHTML = html;
+  setTimeout(() => document.getElementById('wizOrgName').focus(), 200);
+}
+
+async function wizardSaveConciergeName() {
+  const name = document.getElementById('wizOrgName').value.trim() || 'Ma conciergerie';
+  wizardData.orgName = name;
+  if (wizardData.orgId) {
+    await sb.from('organizations').update({ name }).eq('id', wizardData.orgId);
+  }
+  wizardStep_PropertyName();
+}
+
+// ── Wizard: Property Name ──
+function wizardStep_PropertyName() {
+  const step = wizardData.roleId === 'concierge' ? '2/4' : '1/3';
+  const icon = wizardData.roleId === 'concierge' ? '&#127970;' : '&#127968;';
+  let html = '<div style="text-align:center;padding:10px;">';
+  html += '<div style="font-size:32px;margin-bottom:8px;">' + icon + '</div>';
+  html += '<div style="font-size:16px;font-weight:700;color:var(--accent);margin-bottom:4px;">Etape ' + step + '</div>';
+  html += '<div style="font-size:14px;color:var(--text2);margin-bottom:16px;">Ajoutez votre premiere propriete</div>';
+  html += '<input id="wizPropName" type="text" placeholder="Ex: Appartement Nice Centre" value="" style="width:100%;padding:12px 14px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;font-family:\'Inter\',sans-serif;box-sizing:border-box;margin-bottom:10px;">';
+  html += '<input id="wizPropAddress" type="text" placeholder="Adresse (optionnel)" value="" style="width:100%;padding:12px 14px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;font-family:\'Inter\',sans-serif;box-sizing:border-box;margin-bottom:16px;">';
+  html += '<button class="btn btnPrimary" style="width:100%;padding:14px;font-size:14px;" onclick="wizardSaveProperty()">Suivant &#10140;</button>';
+  html += '</div>';
+  document.getElementById('msgBody').innerHTML = html;
+  setTimeout(() => document.getElementById('wizPropName').focus(), 200);
+}
+
+async function wizardSaveProperty() {
+  const name = document.getElementById('wizPropName').value.trim() || 'Mon logement';
+  const address = document.getElementById('wizPropAddress').value.trim();
+  wizardData.propName = name;
+  wizardData.propAddress = address;
+
+  // Update the default property created by the trigger
+  const { data: props } = await sb.from('properties').select('id').eq('org_id', wizardData.orgId).limit(1);
+  if (props && props.length) {
+    wizardData.propId = props[0].id;
+    await sb.from('properties').update({ name, address }).eq('id', props[0].id);
+  }
+  wizardStep_IcalUrl();
+}
+
+// ── Wizard: iCal URL ──
+function wizardStep_IcalUrl() {
+  const step = wizardData.roleId === 'concierge' ? '3/4' : '2/3';
+  let html = '<div style="text-align:center;padding:10px;">';
+  html += '<div style="font-size:32px;margin-bottom:8px;">&#128197;</div>';
+  html += '<div style="font-size:16px;font-weight:700;color:var(--accent);margin-bottom:4px;">Etape ' + step + '</div>';
+  html += '<div style="font-size:14px;color:var(--text2);margin-bottom:6px;">Collez l\'URL de votre calendrier iCal</div>';
+  html += '<div style="font-size:11px;color:var(--text3);margin-bottom:16px;">Airbnb : Calendrier > Exporter > Copier le lien<br>Booking : Extranet > Tarifs > Sync calendrier</div>';
+  html += '<div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;">';
+  html += '<span style="background:#e94560;color:#fff;padding:4px 10px;border-radius:6px;font-size:11px;font-weight:600;min-width:60px;text-align:center;">Airbnb</span>';
+  html += '<input id="wizAirbnb" type="url" placeholder="https://www.airbnb.fr/calendar/ical/..." style="flex:1;padding:10px 12px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:12px;font-family:\'Inter\',sans-serif;">';
+  html += '</div>';
+  html += '<div style="display:flex;gap:8px;align-items:center;margin-bottom:16px;">';
+  html += '<span style="background:#003580;color:#fff;padding:4px 10px;border-radius:6px;font-size:11px;font-weight:600;min-width:60px;text-align:center;">Booking</span>';
+  html += '<input id="wizBooking" type="url" placeholder="https://ical.booking.com/v1/export/..." style="flex:1;padding:10px 12px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:12px;font-family:\'Inter\',sans-serif;">';
+  html += '</div>';
+  html += '<div style="display:flex;gap:10px;">';
+  html += '<button class="btn btnOutline" style="flex:1;padding:12px;font-size:13px;" onclick="wizardSaveIcal()">Passer &#10140;</button>';
+  html += '<button class="btn btnPrimary" style="flex:1;padding:12px;font-size:13px;" onclick="wizardSaveIcal()">Suivant &#10140;</button>';
+  html += '</div>';
+  html += '</div>';
+  document.getElementById('msgBody').innerHTML = html;
+}
+
+async function wizardSaveIcal() {
+  const airbnb = (document.getElementById('wizAirbnb') || {}).value?.trim() || '';
+  const booking = (document.getElementById('wizBooking') || {}).value?.trim() || '';
+  wizardData.airbnb = airbnb;
+  wizardData.booking = booking;
+
+  if (wizardData.propId) {
+    const icals = [];
+    if (airbnb) icals.push({ platform: 'airbnb', url: airbnb });
+    if (booking) icals.push({ platform: 'booking', url: booking });
+    if (icals.length) {
+      await sb.from('properties').update({ icals }).eq('id', wizardData.propId);
+    }
+  }
+  wizardStep_Provider();
+}
+
+// ── Wizard: First Provider ──
+function wizardStep_Provider() {
+  const step = wizardData.roleId === 'concierge' ? '4/4' : '3/3';
+  let html = '<div style="text-align:center;padding:10px;">';
+  html += '<div style="font-size:32px;margin-bottom:8px;">&#129529;</div>';
+  html += '<div style="font-size:16px;font-weight:700;color:#34d399;margin-bottom:4px;">Etape ' + step + '</div>';
+  html += '<div style="font-size:14px;color:var(--text2);margin-bottom:16px;">Ajoutez votre premier prestataire de menage</div>';
+  html += '<input id="wizProvName" type="text" placeholder="Nom du prestataire" style="width:100%;padding:12px 14px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;font-family:\'Inter\',sans-serif;box-sizing:border-box;margin-bottom:10px;">';
+  html += '<input id="wizProvPhone" type="tel" placeholder="06 12 34 56 78" style="width:100%;padding:12px 14px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;font-family:\'Inter\',sans-serif;box-sizing:border-box;margin-bottom:16px;">';
+  html += '<div style="display:flex;gap:10px;">';
+  html += '<button class="btn btnOutline" style="flex:1;padding:12px;font-size:13px;" onclick="wizardFinish()">Passer</button>';
+  html += '<button class="btn btnPrimary" style="flex:1;padding:12px;font-size:13px;" onclick="wizardSaveProvider()">Terminer &#10003;</button>';
+  html += '</div>';
+  html += '</div>';
+  document.getElementById('msgBody').innerHTML = html;
+  setTimeout(() => document.getElementById('wizProvName').focus(), 200);
+}
+
+async function wizardSaveProvider() {
+  const name = document.getElementById('wizProvName').value.trim();
+  const phone = document.getElementById('wizProvPhone').value.trim();
+  if (name && wizardData.propId) {
+    const { data: prop } = await sb.from('properties').select('providers').eq('id', wizardData.propId).single();
+    const providers = prop ? (prop.providers || []) : [];
+    providers.push({ name, phone, percentage: 100, price: 0, vacations: '', waMode: 'direct' });
+    await sb.from('properties').update({ providers }).eq('id', wizardData.propId);
+  }
+  wizardFinish();
+}
+
+async function wizardFinish() {
+  closeMsg();
+  localStorage.setItem('mm_onboarded', '1');
   const content = document.querySelector('.content');
   if (content) content.style.display = '';
+  showToast('Configuration terminee ! &#127881;');
   location.reload();
 }
 
