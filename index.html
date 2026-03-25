@@ -1934,6 +1934,21 @@ async function init() {
   checkReminders();
   loadDashboard();
   initChatWidget();
+
+  // Sequential panel reveal animation on first load
+  if (!localStorage.getItem('mm_panels_revealed')) {
+    const panels = document.querySelectorAll('.panel');
+    panels.forEach((panel, i) => {
+      panel.style.opacity = '0';
+      panel.style.transform = 'translateY(20px)';
+      panel.style.transition = 'opacity 0.4s ease, transform 0.4s ease';
+      setTimeout(() => {
+        panel.style.opacity = '1';
+        panel.style.transform = 'translateY(0)';
+      }, 200 + i * 150);
+    });
+    localStorage.setItem('mm_panels_revealed', '1');
+  }
 }
 
 /* ── Provider Mode ── */
