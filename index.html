@@ -1875,20 +1875,55 @@ function restorePanelStates() {
 async function init() {
   // Init theme button icon
   if(document.documentElement.getAttribute('data-theme')==='light'&&document.getElementById('themeBtn'))document.getElementById('themeBtn').innerHTML='&#9790;';
-  // Load plan
+
+  // Load plan (also loads org + member)
   await API.load_plan();
   updatePlanUI();
 
-  // Check role for different views
+  const org = API.getOrg();
+  const member = API.getMember();
   const role = API.getRole();
+
+  // ── FLOW 1: Invited user (prestataire ou propriétaire invité) ──
+  // Check if there's a pending invitation for this email
+  if (!member && !org) {
+    const { data: { user } } = await sb.auth.getUser();
+    if (user) {
+      const { data: invites } = await sb.from('members')
+        .select('*,organizations(*)')
+        .eq('invited_email', user.email)
+        .eq('accepted', false);
+      if (invites && invites.length > 0) {
+        // Accept the invitation
+        const invite = invites[0];
+        await sb.from('members').update({ user_id: user.id, accepted: true }).eq('id', invite.id);
+        showToast('Invitation acceptee !');
+        location.reload();
+        return;
+      }
+    }
+  }
+
+  // ── FLOW 2: First time user (no org) → onboarding ──
+  if (!org && !localStorage.getItem('mm_onboarded')) {
+    document.querySelector('.content').style.display = 'none';
+    showOnboarding();
+    return;
+  }
+
+  // ── FLOW 3: Provider role → provider mode ──
   if (role === 'provider') {
     showProviderMode();
     return;
   }
+
+  // ── FLOW 4: Owner role → owner mode ──
   if (role === 'owner') {
     showOwnerMode();
     return;
   }
+
+  // ── FLOW 5: Admin/Manager → full mode ──
 
   fullConfig = await API.load_config();
   renderPropertySelector();
@@ -1899,11 +1934,6 @@ async function init() {
   checkReminders();
   loadDashboard();
   initChatWidget();
-  // Onboarding for first visit — show immediately, hide main content
-  if (!localStorage.getItem('mm_onboarded')) {
-    document.querySelector('.content').style.display = 'none';
-    showOnboarding();
-  }
 }
 
 /* ── Provider Mode ── */
@@ -2705,9 +2735,23 @@ async function inviteTeamMember() {
 
   const result = await API.inviteMember(email, role);
   if (result) {
-    showToast((t('team.invited') || 'Invitation envoyee a') + ' ' + email);
+    // Show invitation link to copy
+    const appUrl = window.location.origin + window.location.pathname;
+    const roleLabels = { owner: 'proprietaire', provider: 'prestataire', manager: 'gestionnaire' };
+    const msg = `Bonjour,\n\nVous etes invite(e) en tant que ${roleLabels[role] || role} sur Cleaning Manager.\n\n1. Creez un compte sur : ${appUrl}\n2. Utilisez l'email : ${email}\n3. Votre acces sera automatiquement configure.\n\n-- Cleaning Manager`;
+
+    await customConfirm(
+      'Invitation creee pour ' + email + ' (role: ' + (roleLabels[role] || role) + ').\n\nEnvoyez-lui ce lien pour creer son compte :\n' + appUrl + '\n\nAvec l\'email : ' + email,
+      'Copier le message'
+    ).then(ok => {
+      if (ok) {
+        navigator.clipboard.writeText(msg).catch(() => {});
+        showToast('Message d\'invitation copie !');
+      }
+    });
+
     document.getElementById('inviteEmail').value = '';
-    showTeamModal(); // Refresh list
+    showTeamModal();
   } else {
     showMsg(t('team.invite_error') || 'Erreur lors de l\'invitation.');
   }
@@ -3281,20 +3325,30 @@ function selectRole(roleId) {
 async function finishOnboarding(roleId) {
   closeMsg();
   localStorage.setItem('mm_onboarded', '1');
-  const content = document.querySelector('.content');
-  if (content) content.style.display = '';
+  localStorage.setItem('mm_user_role', roleId);
 
-  // Update member role in DB if needed
-  if (roleId === 'provider') {
-    const member = API.getMember();
-    if (member && member.role !== 'provider') {
+  const { data: { user } } = await sb.auth.getUser();
+  if (!user) return;
+
+  // Check if org already exists (from trigger)
+  let org = API.getOrg();
+  let member = API.getMember();
+
+  if (org && member) {
+    // Update role based on choice
+    if (roleId === 'provider') {
       await sb.from('members').update({ role: 'provider' }).eq('id', member.id);
-      location.reload(); // Reload to show provider mode
+    } else if (roleId === 'owner') {
+      await sb.from('members').update({ role: 'admin' }).eq('id', member.id);
+      // Owners are admin of their own org
+    } else if (roleId === 'concierge') {
+      await sb.from('members').update({ role: 'admin' }).eq('id', member.id);
+      await sb.from('organizations').update({ name: 'Ma conciergerie', plan: 'free' }).eq('id', org.id);
     }
-  } else if (roleId === 'concierge') {
-    // Set org plan preference
-    localStorage.setItem('mm_preferred_plan', 'business');
   }
+
+  // Reload to apply the correct view
+  location.reload();
 }
 
 /* ── History/Pressing sub-tabs ── */
