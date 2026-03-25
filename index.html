@@ -3371,11 +3371,11 @@ window._wizardActive = false;
 
 // Reusable address autocomplete + map widget for wizards
 function wizAddressFieldHTML(inputId, mapId) {
-  return `<div style="position:relative;">
+  return `<div style="position:relative;z-index:10000;">
     <input id="${inputId}" type="text" placeholder="Tapez votre adresse..." autocomplete="off" style="width:100%;padding:12px 14px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;font-family:'Inter',sans-serif;box-sizing:border-box;">
-    <div id="${inputId}_suggestions" style="display:none;position:absolute;top:100%;left:0;right:0;background:var(--surface);border:1px solid var(--border2);border-radius:0 0 8px 8px;max-height:150px;overflow-y:auto;z-index:9999;box-shadow:0 8px 24px rgba(0,0,0,0.5);"></div>
+    <div id="${inputId}_suggestions" style="display:none;position:absolute;top:100%;left:0;right:0;background:#1a1a2e;border:1px solid rgba(255,255,255,0.15);border-radius:0 0 10px 10px;max-height:180px;overflow-y:auto;z-index:10001;box-shadow:0 12px 32px rgba(0,0,0,0.7);"></div>
   </div>
-  <div id="${mapId}" style="width:100%;height:180px;border-radius:8px;overflow:hidden;margin-top:8px;background:var(--surface2);"></div>`;
+  <div id="${mapId}" style="width:100%;height:180px;border-radius:8px;overflow:hidden;margin-top:8px;background:var(--surface2);position:relative;z-index:1;"></div>`;
 }
 
 let _autocompleteTimer = null;
