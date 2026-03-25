@@ -1859,6 +1859,14 @@ async function init() {
   // Load plan
   await API.load_plan();
   updatePlanUI();
+
+  // Check if user is a provider (limited access)
+  const role = API.getRole();
+  if (role === 'provider') {
+    showProviderMode();
+    return;
+  }
+
   fullConfig = await API.load_config();
   renderPropertySelector();
   await loadActiveProperty();
@@ -1872,6 +1880,221 @@ async function init() {
     document.querySelector('.content').style.display = 'none';
     showOnboarding();
   }
+}
+
+/* ── Provider Mode ── */
+async function showProviderMode() {
+  const content = document.querySelector('.content');
+  if (!content) return;
+
+  // Hide all normal panels
+  content.innerHTML = '';
+
+  // Get user's provider data
+  const { data: { user } } = await sb.auth.getUser();
+  if (!user) return;
+
+  // Find which properties this provider has cleanings in
+  const org = API.getOrg();
+  if (!org) {
+    content.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text3);">Aucune organisation trouvee. Contactez votre gestionnaire.</div>';
+    return;
+  }
+
+  // Load all properties
+  const { data: properties } = await sb.from('properties').select('*').eq('org_id', org.id);
+  if (!properties || !properties.length) {
+    content.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text3);">Aucune propriete trouvee.</div>';
+    return;
+  }
+
+  // Find provider name by email
+  const providerEmail = user.email;
+  let providerName = '';
+  for (const prop of properties) {
+    const match = (prop.providers || []).find(p => p.email === providerEmail);
+    if (match) { providerName = match.name; break; }
+  }
+  if (!providerName) {
+    content.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text3);">Votre email n\'est associe a aucun prestataire. Contactez votre gestionnaire.</div>';
+    return;
+  }
+
+  // Load all plannings and filter for this provider
+  const today = new Date().toISOString().split('T')[0];
+  let allCleanings = [];
+  const propMap = {};
+
+  for (const prop of properties) {
+    propMap[prop.id] = prop;
+    const { data: planning } = await sb.from('plannings').select('cleanings').eq('property_id', prop.id).single();
+    if (planning && planning.cleanings) {
+      planning.cleanings
+        .filter(c => c.provider === providerName && (c.cleaningDate || c.date) >= today)
+        .forEach(c => allCleanings.push({ ...c, propertyId: prop.id, propertyName: prop.name, checklist: prop.checklist || [] }));
+    }
+  }
+
+  allCleanings.sort((a, b) => (a.cleaningDate || a.date || '').localeCompare(b.cleaningDate || b.date || ''));
+
+  // Load validations
+  const validations = {};
+  for (const prop of properties) {
+    const { data: vals } = await sb.from('cleaning_validations').select('*').eq('property_id', prop.id).eq('provider_name', providerName);
+    if (vals) vals.forEach(v => { validations[v.cleaning_date + '_' + v.provider_name] = v; });
+  }
+
+  // Render provider view
+  const headerEl = document.querySelector('.header');
+  if (headerEl) {
+    const h1 = headerEl.querySelector('h1');
+    if (h1) h1.innerHTML = '&#128167; ' + esc(providerName);
+    const sub = headerEl.querySelector('.sub-title');
+    if (sub) sub.textContent = 'Mode prestataire';
+    // Hide unnecessary header buttons
+    document.querySelectorAll('.header-actions .btnHelp').forEach(btn => {
+      if (!btn.onclick?.toString().includes('authLogout') && !btn.onclick?.toString().includes('toggleTheme')) {
+        btn.style.display = 'none';
+      }
+    });
+  }
+
+  let html = '';
+
+  // Stats bar
+  const doneCount = allCleanings.filter(c => { const v = validations[(c.cleaningDate||c.date) + '_' + providerName]; return v && v.status === 'done'; }).length;
+  html += `<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:16px;">
+    <div style="background:linear-gradient(135deg,#6c63ff,#5a54e0);border-radius:12px;padding:16px;text-align:center;">
+      <div style="font-size:24px;font-weight:800;color:#fff;">${allCleanings.length}</div>
+      <div style="font-size:11px;color:rgba(255,255,255,0.8);">A venir</div>
+    </div>
+    <div style="background:linear-gradient(135deg,#34d399,#059669);border-radius:12px;padding:16px;text-align:center;">
+      <div style="font-size:24px;font-weight:800;color:#fff;">${doneCount}</div>
+      <div style="font-size:11px;color:rgba(255,255,255,0.8);">Termines</div>
+    </div>
+    <div style="background:linear-gradient(135deg,#f59e0b,#d97706);border-radius:12px;padding:16px;text-align:center;">
+      <div style="font-size:24px;font-weight:800;color:#fff;">${allCleanings.length - doneCount}</div>
+      <div style="font-size:11px;color:rgba(255,255,255,0.8);">Restants</div>
+    </div>
+  </div>`;
+
+  // Cleaning cards
+  if (allCleanings.length === 0) {
+    html += '<div style="text-align:center;padding:40px;color:var(--text3);">&#9989; Aucun menage a venir. Profitez-en !</div>';
+  } else {
+    for (const c of allCleanings) {
+      const dateStr = c.cleaningDate || c.date;
+      const isToday = dateStr === today;
+      const key = dateStr + '_' + providerName;
+      const v = validations[key];
+      const status = v ? v.status : 'pending';
+      const statusIcon = status === 'done' ? '&#9989;' : status === 'in_progress' ? '&#9203;' : '&#9898;';
+      const statusLabel = status === 'done' ? 'Termine' : status === 'in_progress' ? 'En cours' : 'A faire';
+      const statusColor = status === 'done' ? '#34d399' : status === 'in_progress' ? '#f59e0b' : 'var(--text3)';
+      const source = (c.source || '').toLowerCase();
+      const badgeClass = source.includes('airbnb') ? 'background:#e94560;' : source.includes('booking') ? 'background:#003580;' : 'background:#666;';
+
+      html += `<div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:10px;${isToday ? 'border-left:3px solid #e94560;' : ''}">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+          <div>
+            <div style="font-weight:700;font-size:15px;color:var(--accent);">${c.dayName || ''} ${fmtDate(dateStr)}${isToday ? ' <span style="background:#e94560;color:#fff;font-size:10px;padding:2px 6px;border-radius:4px;">AUJOURD\'HUI</span>' : ''}</div>
+            <div style="font-size:12px;color:var(--text3);margin-top:2px;">${esc(c.propertyName)}</div>
+          </div>
+          <div style="text-align:right;">
+            <span style="display:inline-block;padding:2px 8px;border-radius:12px;font-size:10px;font-weight:600;color:#fff;${badgeClass}">${esc(c.source || '')}</span>
+            <div style="font-size:12px;color:${statusColor};margin-top:4px;">${statusIcon} ${statusLabel}</div>
+          </div>
+        </div>`;
+
+      // Checklist
+      if (c.checklist && c.checklist.length > 0) {
+        html += '<div style="border-top:1px solid var(--border);padding-top:10px;margin-top:8px;">';
+        html += '<div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;margin-bottom:6px;">Checklist</div>';
+        c.checklist.forEach((item, ci) => {
+          const checkKey = 'prov_check_' + dateStr + '_' + ci;
+          const checked = localStorage.getItem(checkKey) === '1';
+          const itemText = typeof item === 'string' ? item : (item.text || item.name || '');
+          html += `<label style="display:flex;align-items:center;gap:8px;padding:5px 0;cursor:pointer;font-size:13px;color:${checked ? 'var(--success)' : 'var(--text)'};">
+            <input type="checkbox" ${checked ? 'checked' : ''} onchange="localStorage.setItem('${checkKey}',this.checked?'1':'0');this.parentElement.style.color=this.checked?'var(--success)':'var(--text)';" style="width:18px;height:18px;accent-color:var(--success);">
+            <span style="${checked ? 'text-decoration:line-through;opacity:0.6;' : ''}">${esc(itemText)}</span>
+          </label>`;
+        });
+        html += '</div>';
+      }
+
+      // Action buttons (if not done)
+      if (status !== 'done') {
+        html += `<div style="display:flex;gap:8px;margin-top:12px;padding-top:10px;border-top:1px solid var(--border);">
+          <button onclick="providerValidate('${c.propertyId}','${dateStr}','${esc(providerName)}','in_progress',this)" style="flex:1;padding:10px;background:#f59e0b;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">&#128692; En route</button>
+          <button onclick="providerValidate('${c.propertyId}','${dateStr}','${esc(providerName)}','done',this)" style="flex:1;padding:10px;background:#34d399;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">&#9989; Termine</button>
+        </div>
+        <div style="margin-top:8px;">
+          <input type="file" accept="image/*" multiple onchange="providerUploadPhotos(this,'${c.propertyId}','${dateStr}','${esc(providerName)}')" style="font-size:11px;color:var(--text3);">
+        </div>`;
+      }
+
+      // Photos
+      if (v && v.photos && v.photos.length) {
+        html += '<div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;">';
+        v.photos.forEach(p => { html += `<img src="${p}" style="width:60px;height:60px;object-fit:cover;border-radius:6px;border:1px solid var(--border);">`; });
+        html += '</div>';
+      }
+
+      html += '</div>';
+    }
+  }
+
+  content.innerHTML = html;
+
+  // Request push notifications
+  if ('Notification' in window && Notification.permission === 'default') {
+    Notification.requestPermission();
+  }
+}
+
+async function providerValidate(propId, date, provName, status, btn) {
+  if (btn) { btn.disabled = true; btn.textContent = '...'; }
+  try {
+    const { data: { user } } = await sb.auth.getUser();
+    await sb.from('cleaning_validations').upsert({
+      property_id: propId,
+      cleaning_date: date,
+      provider_name: provName,
+      status: status,
+      validated_at: new Date().toISOString(),
+      validated_by: user.id,
+    }, { onConflict: 'property_id,cleaning_date,provider_name' });
+    showToast(status === 'done' ? 'Menage marque comme termine !' : 'Statut mis a jour');
+    showProviderMode(); // Refresh
+  } catch (e) {
+    showToast('Erreur: ' + e.message);
+    if (btn) { btn.disabled = false; }
+  }
+}
+
+async function providerUploadPhotos(input, propId, date, provName) {
+  const files = input.files;
+  if (!files.length) return;
+  const photos = [];
+  for (const file of files) {
+    const reader = new FileReader();
+    const b64 = await new Promise(resolve => { reader.onload = e => resolve(e.target.result); reader.readAsDataURL(file); });
+    photos.push(b64);
+  }
+  // Get existing validation
+  const { data: existing } = await sb.from('cleaning_validations')
+    .select('*').eq('property_id', propId).eq('cleaning_date', date).eq('provider_name', provName).single();
+  if (existing) {
+    await sb.from('cleaning_validations').update({ photos: [...(existing.photos || []), ...photos] }).eq('id', existing.id);
+  } else {
+    const { data: { user } } = await sb.auth.getUser();
+    await sb.from('cleaning_validations').insert({
+      property_id: propId, cleaning_date: date, provider_name: provName,
+      status: 'in_progress', photos, validated_at: new Date().toISOString(), validated_by: user.id,
+    });
+  }
+  showToast(photos.length + ' photo(s) ajoutee(s)');
+  showProviderMode();
 }
 /* ── Auth ── */
 function togglePassVisibility(inputId, icon) {
