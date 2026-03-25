@@ -3546,13 +3546,23 @@ function wizardStep_PropertyName() {
   html += '<div style="height:16px;"></div>';
   html += '<div style="display:flex;gap:10px;">';
   html += '<button class="btn btnOutline" style="flex:1;padding:12px;font-size:13px;" onclick="' + (wizardData.roleId === 'concierge' ? 'wizardStep_ConciergeName()' : 'showOnboardingStep2()') + '">&#10094; Retour</button>';
-  html += '<button class="btn btnPrimary" style="flex:1;padding:14px;font-size:14px;" onclick="wizardSaveProperty()">Suivant &#10140;</button>';
+  html += '<button class="btn btnPrimary" id="wizPropNext" style="flex:1;padding:14px;font-size:14px;opacity:0.4;pointer-events:none;" onclick="wizardSaveProperty()">Suivant &#10140;</button>';
   html += '</div>';
   html += '</div>';
   document.getElementById('msgBody').innerHTML = html;
   setTimeout(() => {
     document.getElementById('wizPropName').focus();
     initAddressAutocomplete('wizPropAddress', 'wizPropMap', 'prop');
+    // Enable "Suivant" when name + address filled
+    const checkPropInputs = () => {
+      const name = (document.getElementById('wizPropName') || {}).value?.trim();
+      const addr = (document.getElementById('wizPropAddress') || {}).value?.trim();
+      const btn = document.getElementById('wizPropNext');
+      const ok = name && name.length > 1 && addr && addr.length > 3;
+      if (btn) { btn.style.opacity = ok ? '1' : '0.4'; btn.style.pointerEvents = ok ? 'auto' : 'none'; }
+    };
+    document.getElementById('wizPropName').addEventListener('input', checkPropInputs);
+    document.getElementById('wizPropAddress').addEventListener('input', checkPropInputs);
   }, 200);
 }
 
@@ -3604,10 +3614,23 @@ function wizardStep_IcalUrl() {
 
   html += '<div style="display:flex;gap:10px;margin-top:16px;">';
   html += '<button class="btn btnOutline" style="flex:1;padding:12px;font-size:13px;" onclick="wizardStep_PropertyName()">&#10094; Retour</button>';
-  html += '<button class="btn btnPrimary" style="flex:1;padding:12px;font-size:13px;" onclick="wizardSaveIcal()">Suivant &#10140;</button>';
+  html += '<button class="btn btnPrimary" id="wizIcalNext" style="flex:1;padding:12px;font-size:13px;opacity:0.4;pointer-events:none;" onclick="wizardSaveIcal()">Suivant &#10140;</button>';
   html += '</div>';
   html += '</div>';
   document.getElementById('msgBody').innerHTML = html;
+  // Enable "Suivant" only when at least one URL is filled
+  const checkIcalInputs = () => {
+    const hasUrl = ['airbnb','booking','vrbo','tripadvisor','other'].some(p => {
+      const el = document.getElementById('wiz_' + p);
+      return el && el.value.trim().length > 10;
+    });
+    const btn = document.getElementById('wizIcalNext');
+    if (btn) { btn.style.opacity = hasUrl ? '1' : '0.4'; btn.style.pointerEvents = hasUrl ? 'auto' : 'none'; }
+  };
+  ['airbnb','booking','vrbo','tripadvisor','other'].forEach(p => {
+    const el = document.getElementById('wiz_' + p);
+    if (el) el.addEventListener('input', checkIcalInputs);
+  });
 }
 
 async function wizardSaveIcal() {
@@ -3672,13 +3695,22 @@ function wizardStep_ProviderInfo() {
   html += '<div style="height:16px;"></div>';
   html += '<div style="display:flex;gap:10px;">';
   html += '<button class="btn btnOutline" style="flex:1;padding:12px;font-size:13px;" onclick="showOnboardingStep2()">&#10094; Retour</button>';
-  html += '<button class="btn btnPrimary" style="flex:1;padding:14px;font-size:14px;" onclick="wizardSaveProviderInfo()">Suivant &#10140;</button>';
+  html += '<button class="btn btnPrimary" id="wizProvNext" style="flex:1;padding:14px;font-size:14px;opacity:0.4;pointer-events:none;" onclick="wizardSaveProviderInfo()">Suivant &#10140;</button>';
   html += '</div>';
   html += '</div>';
   document.getElementById('msgBody').innerHTML = html;
   setTimeout(() => {
     document.getElementById('wizProvSelfName').focus();
     initAddressAutocomplete('wizProvSelfAddress', 'wizProvMap', 'provSelf');
+    const checkProvInputs = () => {
+      const name = (document.getElementById('wizProvSelfName') || {}).value?.trim();
+      const phone = (document.getElementById('wizProvSelfPhone') || {}).value?.trim();
+      const btn = document.getElementById('wizProvNext');
+      const ok = name && name.length > 1 && phone && phone.length > 5;
+      if (btn) { btn.style.opacity = ok ? '1' : '0.4'; btn.style.pointerEvents = ok ? 'auto' : 'none'; }
+    };
+    document.getElementById('wizProvSelfName').addEventListener('input', checkProvInputs);
+    document.getElementById('wizProvSelfPhone').addEventListener('input', checkProvInputs);
   }, 200);
 }
 
