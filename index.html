@@ -3358,7 +3358,10 @@ function selectRole(roleId) {
     html += '</div>';
   }
 
-  html += '<button class="btn btnPrimary" style="padding:14px 32px;font-size:14px;width:100%;" onclick="finishOnboarding(\'' + roleId + '\')">' + (t('onboarding.go') || 'C\'est parti !') + '</button>';
+  html += '<div style="display:flex;gap:10px;">';
+  html += '<button class="btn btnOutline" style="flex:1;padding:12px;font-size:13px;" onclick="showOnboardingStep2()">&#10094; Retour</button>';
+  html += '<button class="btn btnPrimary" style="flex:1;padding:14px;font-size:14px;" onclick="finishOnboarding(\'' + roleId + '\')">' + (t('onboarding.go') || 'C\'est parti !') + '</button>';
+  html += '</div>';
   html += '</div>';
   document.getElementById('msgBody').innerHTML = html;
 }
@@ -3421,8 +3424,8 @@ function initAddressAutocomplete(inputId, mapId, dataKey) {
     }, 300);
   });
 
-  // Hide suggestions on blur (with delay for click)
-  input.addEventListener('blur', () => setTimeout(() => { sugDiv.style.display = 'none'; }, 300));
+  // Hide suggestions on blur (with delay for click to register)
+  input.addEventListener('blur', () => setTimeout(() => { sugDiv.style.display = 'none'; }, 500));
 }
 
 function selectWizAddress(inputId, mapId, dataKey, lat, lng, displayName) {
