@@ -136,21 +136,21 @@ async function loadData() {
 
     // Phase 2: Search in properties table by token (secure - only returns matching property)
     if (readonlyToken) {
-      const resp = await fetch(`${SUPABASE_URL_VIEW}/rest/v1/properties?readonly_token=eq.${encodeURIComponent(readonlyToken)}&select=id,name,providers,plannings(cleanings,transmitted)`, {
+      const resp = await fetch(`${SUPABASE_URL_VIEW}/rest/v1/properties?readonly_token=eq.${encodeURIComponent(readonlyToken)}&select=id,name,providers,checklist,plannings(cleanings,transmitted)`, {
         headers: { 'apikey': ANON_KEY }
       });
       const props = await resp.json();
       if (props && props.length > 0) {
         const p = props[0];
         found = true;
-        matchedProp = { id: p.id, name: p.name, providers: p.providers || [] };
+        matchedProp = { id: p.id, name: p.name, providers: p.providers || [], checklist: p.checklist || [] };
         matchedPlanning = (p.plannings && p.plannings[0]) ? (p.plannings[0].cleanings || []) : [];
       }
     }
 
     if (providerToken && !found) {
       // Search all properties for this provider token
-      const resp = await fetch(`${SUPABASE_URL_VIEW}/rest/v1/properties?select=id,name,providers,plannings(cleanings)`, {
+      const resp = await fetch(`${SUPABASE_URL_VIEW}/rest/v1/properties?select=id,name,providers,checklist,plannings(cleanings)`, {
         headers: { 'apikey': ANON_KEY }
       });
       const allProps = await resp.json();
@@ -159,7 +159,7 @@ async function loadData() {
           const prov = (p.providers || []).find(pr => pr.token === providerToken);
           if (prov) {
             found = true;
-            matchedProp = { id: p.id, name: p.name, providers: p.providers || [] };
+            matchedProp = { id: p.id, name: p.name, providers: p.providers || [], checklist: p.checklist || [] };
             providerName = prov.name;
             matchedPlanning = (p.plannings && p.plannings[0]) ? (p.plannings[0].cleanings || []) : [];
             break;
@@ -243,6 +243,9 @@ async function loadData() {
       return;
     }
 
+    // Get checklist from property
+    const checklist = (matchedProp && matchedProp.checklist) || [];
+
     let html = `<div class="info">${displayCleanings.length} menage(s) a venir</div>`;
     for (const c of displayCleanings) {
       const source = (c.source || '').toLowerCase();
@@ -284,6 +287,20 @@ async function loadData() {
           ${validation && validation.photos && validation.photos.length ? `
             <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;">
               ${validation.photos.map(p => `<img src="${p}" style="width:60px;height:60px;object-fit:cover;border-radius:6px;border:1px solid var(--border);">`).join('')}
+            </div>
+          ` : ''}
+          ${isProvider && checklist.length > 0 && isToday ? `
+            <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);">
+              <div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;margin-bottom:6px;">Checklist</div>
+              ${checklist.map((item, ci) => {
+                const checkKey = cleaningId + '_check_' + ci;
+                const checked = localStorage.getItem(checkKey) === '1';
+                return `<label style="display:flex;align-items:center;gap:8px;padding:6px 0;cursor:pointer;font-size:13px;color:${checked?'var(--success)':'var(--text)'};">
+                  <input type="checkbox" ${checked?'checked':''} onchange="localStorage.setItem('${checkKey}',this.checked?'1':'0');this.parentElement.style.color=this.checked?'var(--success)':'var(--text)';" style="width:18px;height:18px;accent-color:var(--success);">
+                  <span style="${checked?'text-decoration:line-through;opacity:0.6;':''}}">${esc(typeof item === 'string' ? item : (item.text || item.name || ''))}</span>
+                </label>`;
+              }).join('')}
+              <div style="margin-top:6px;font-size:11px;color:var(--text3);" id="checkProgress_${cleaningId.replace(/[^a-zA-Z0-9]/g,'_')}"></div>
             </div>
           ` : ''}
         </div>`;

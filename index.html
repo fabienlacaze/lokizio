@@ -3089,8 +3089,11 @@ async function generatePlanning(isAuto) {
     logAction('Planning genere', cleanings.length+' menage(s)');
     setStatus('<span style="color:var(--success);font-weight:bold;">Planning genere avec succes</span>');
     scrollToResults();
-    // Confetti on successful generation
     showConfetti();
+    // Feature 1: Detect new cleanings and offer to notify providers
+    detectNewCleaningsAndNotify(data);
+    // Feature 4: Detect conflicts
+    detectConflicts();
   } finally {
     btn.classList.remove('loading');
     btn.innerHTML='GENERER LE PLANNING';
@@ -3547,6 +3550,142 @@ async function setReminder(idx) {
   checkReminders();
 }
 /* ── Confetti Effect ── */
+/* ═══ KILLER FEATURES ═══ */
+
+// Feature 1: Auto-notify providers when new cleanings detected
+function detectNewCleaningsAndNotify(data) {
+  const newCleanings = cleanings.filter(c => c.isNew);
+  if (newCleanings.length === 0) return;
+  // Group by provider
+  const byProv = {};
+  newCleanings.forEach(c => {
+    if (!byProv[c.provider]) byProv[c.provider] = [];
+    byProv[c.provider].push(c);
+  });
+  const provCount = Object.keys(byProv).length;
+  const totalNew = newCleanings.length;
+  // Show notification bar
+  const bar = document.createElement('div');
+  bar.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:200;background:linear-gradient(135deg,#34d399,#059669);padding:12px 20px;display:flex;align-items:center;justify-content:space-between;gap:10px;animation:slideDown 0.3s ease;';
+  bar.innerHTML = `
+    <span style="color:#fff;font-size:13px;font-weight:600;">&#128276; ${totalNew} nouveau(x) menage(s) detecte(s) pour ${provCount} prestataire(s)</span>
+    <div style="display:flex;gap:8px;">
+      <button onclick="notifyAllProviders();this.parentElement.parentElement.remove();" style="background:#fff;color:#059669;border:none;padding:8px 16px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;">&#9993; Notifier tous</button>
+      <button onclick="this.parentElement.parentElement.remove();" style="background:rgba(255,255,255,0.2);color:#fff;border:none;padding:8px 12px;border-radius:8px;font-size:12px;cursor:pointer;">&#10005;</button>
+    </div>`;
+  document.body.appendChild(bar);
+  setTimeout(() => { if (bar.parentElement) bar.remove(); }, 15000);
+}
+
+async function notifyAllProviders() {
+  const byProv = {};
+  cleanings.filter(c => !transmittedDates.includes(c.cleaningDate)).forEach(c => {
+    if (!byProv[c.provider]) byProv[c.provider] = [];
+    byProv[c.provider].push(c);
+  });
+  const prop = API.getActiveProperty(fullConfig);
+  const propName = prop ? prop.name : '';
+  let sent = 0;
+  for (const [provName, provCleanings] of Object.entries(byProv)) {
+    const prov = (config.providers || []).find(p => p.name === provName);
+    if (!prov || !prov.phone) continue;
+    const dates = provCleanings.map(c => '- ' + (c.cleaningDateFR || c.dateFR) + ' (' + (c.source || '') + ')').join('\n');
+    const msg = `Bonjour ${provName},\n\nNouveau(x) menage(s) pour "${propName}" :\n\n${dates}\n\n${provCleanings.length} menage(s) au total.\n\n-- Cleaning Manager`;
+    let phone = prov.phone.replace(/[\s.\-]/g, '');
+    if (phone.startsWith('0') && phone.length === 10) phone = '+33' + phone.substring(1);
+    window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, '_blank');
+    sent++;
+    await new Promise(r => setTimeout(r, 500)); // Delay between tabs
+  }
+  showToast(sent + ' prestataire(s) notifie(s)');
+}
+
+// Feature 2: Live status in dashboard (uses cleaning_validations)
+function renderDashboardLiveStatus(cleanings, validations) {
+  const statusIcons = { pending: '🔴', in_progress: '🟡', done: '🟢' };
+  const statusLabels = { pending: 'En attente', in_progress: 'En cours', done: 'Termine' };
+  return cleanings.map(c => {
+    const key = (c.cleaningDate || c.date) + '_' + (c.provider || '');
+    const v = validations[key];
+    const status = v ? v.status : 'pending';
+    const icon = statusIcons[status] || '⚪';
+    const label = statusLabels[status] || 'Inconnu';
+    const time = v && v.validated_at ? new Date(v.validated_at).toLocaleTimeString('fr-FR', {hour:'2-digit',minute:'2-digit'}) : '';
+    return `<div style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--surface2);border-radius:10px;margin-bottom:6px;">
+      <span style="font-size:16px;">${icon}</span>
+      <div style="flex:1;">
+        <div style="font-weight:600;font-size:13px;">${esc(c.propertyName || c.property || '')}</div>
+        <div style="font-size:11px;color:var(--text3);">${esc(c.provider || '')} — ${esc(c.source || '')}</div>
+      </div>
+      <div style="text-align:right;">
+        <div style="font-size:12px;color:var(--text2);">${c.cleaningDateFR || fmtDate(c.cleaningDate || c.date)}</div>
+        <div style="font-size:11px;color:${status==='done'?'var(--success)':status==='in_progress'?'#f59e0b':'var(--text3)'};">${label}${time?' '+time:''}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// Feature 4: Conflict detection
+function detectConflicts() {
+  const alerts = [];
+  const today = new Date().toISOString().split('T')[0];
+  const prop = API.getActiveProperty(fullConfig);
+
+  // Check: provider overloaded (3+ cleanings same day)
+  const byProvDate = {};
+  cleanings.forEach(c => {
+    const key = (c.provider || '') + '_' + (c.cleaningDate || c.date);
+    byProvDate[key] = (byProvDate[key] || 0) + 1;
+  });
+  Object.entries(byProvDate).forEach(([key, count]) => {
+    if (count >= 3) {
+      const [prov, date] = key.split('_');
+      alerts.push({ type: 'overload', icon: '⚠️', msg: `${prov} a ${count} menages le ${fmtDate(date)} (surcharge)`, severity: 'warning' });
+    }
+  });
+
+  // Check: tight turnaround (less than 3h between checkout and next checkin)
+  cleanings.forEach(c => {
+    if (c.prevCheckout && c.date) {
+      const days = getIntervalDays(c.prevCheckout, c.date);
+      if (days === 0) {
+        alerts.push({ type: 'tight', icon: '🔴', msg: `Check-out + menage + check-in le meme jour (${fmtDate(c.date)})`, severity: 'danger' });
+      }
+    }
+  });
+
+  // Check: provider on vacation
+  cleanings.forEach(c => {
+    if (isOnVacation(c.provider, c.cleaningDate || c.date)) {
+      alerts.push({ type: 'vacation', icon: '🏖️', msg: `${c.provider} est en vacances le ${fmtDate(c.cleaningDate || c.date)}`, severity: 'warning' });
+    }
+  });
+
+  // Check: unassigned cleanings
+  cleanings.forEach(c => {
+    if (!c.provider) {
+      alerts.push({ type: 'unassigned', icon: '❓', msg: `Menage du ${fmtDate(c.date)} sans prestataire assigne`, severity: 'danger' });
+    }
+  });
+
+  // Display alerts
+  if (alerts.length > 0) {
+    const alertDiv = document.createElement('div');
+    alertDiv.id = 'conflictAlerts';
+    alertDiv.style.cssText = 'margin:10px 0;padding:12px;background:rgba(233,69,96,0.08);border:1px solid rgba(233,69,96,0.2);border-radius:10px;';
+    alertDiv.innerHTML = `<div style="font-size:12px;font-weight:700;color:var(--accent);margin-bottom:8px;">&#9888; ${alerts.length} alerte(s)</div>` +
+      alerts.map(a => `<div style="font-size:12px;padding:4px 0;color:${a.severity==='danger'?'var(--accent)':'#f59e0b'};">${a.icon} ${esc(a.msg)}</div>`).join('');
+    // Insert before result table
+    const existing = document.getElementById('conflictAlerts');
+    if (existing) existing.remove();
+    const resultDiv = document.getElementById('resultDiv');
+    if (resultDiv) resultDiv.parentNode.insertBefore(alertDiv, resultDiv);
+  } else {
+    const existing = document.getElementById('conflictAlerts');
+    if (existing) existing.remove();
+  }
+}
+
 function showConfetti() {
   const container = document.createElement('div');
   container.className = 'confetti-container';
