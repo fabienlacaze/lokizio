@@ -1,4 +1,4 @@
-const CACHE_NAME = 'menage-manager-v3';
+const CACHE_NAME = 'menage-manager-v4';
 
 // Only cache static assets, never JS files or API calls
 const CACHEABLE = /\.(png|jpg|jpeg|svg|gif|woff2?|ttf|eot)$/;
@@ -22,7 +22,7 @@ self.addEventListener('fetch', event => {
   if (url.pathname.endsWith('.js') || url.pathname.endsWith('.html') ||
       url.hostname.includes('supabase') || url.pathname.startsWith('/rest/') ||
       url.pathname.startsWith('/auth/') || url.pathname.startsWith('/functions/')) {
-    return; // Let browser handle normally (no cache)
+    return;
   }
 
   // Cache static assets only (images, fonts)
@@ -40,5 +40,36 @@ self.addEventListener('fetch', event => {
       })
     );
   }
-  // All other requests: network only, no caching
+});
+
+// Push notification handler
+self.addEventListener('push', event => {
+  const data = event.data ? event.data.json() : {};
+  const title = data.title || 'Cleaning Manager';
+  const options = {
+    body: data.body || 'Nouveau menage assigne',
+    icon: '/menage-manager-app/icons/icon-192.png',
+    badge: '/menage-manager-app/icons/icon-192.png',
+    vibrate: [200, 100, 200],
+    data: { url: data.url || '/menage-manager-app/view.html' },
+    actions: [
+      { action: 'open', title: 'Voir' },
+      { action: 'dismiss', title: 'Fermer' }
+    ]
+  };
+  event.waitUntil(self.registration.showNotification(title, options));
+});
+
+// Click on notification
+self.addEventListener('notificationclick', event => {
+  event.notification.close();
+  const url = event.notification.data && event.notification.data.url ? event.notification.data.url : '/menage-manager-app/';
+  event.waitUntil(
+    clients.matchAll({ type: 'window' }).then(windowClients => {
+      for (const client of windowClients) {
+        if (client.url.includes('menage-manager-app') && 'focus' in client) return client.focus();
+      }
+      return clients.openWindow(url);
+    })
+  );
 });

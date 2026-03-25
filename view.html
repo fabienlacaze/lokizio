@@ -35,9 +35,14 @@
     <h1>Cleaning Manager</h1>
     <div class="sub" id="subtitle">Chargement...</div>
   </div>
+  <div id="pushBanner" style="display:none;background:linear-gradient(135deg,#6c63ff,#5a54e0);padding:14px 18px;border-radius:12px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;gap:10px;">
+    <div style="color:#fff;font-size:13px;">&#128276; Activez les notifications pour etre prevenu de vos prochains menages</div>
+    <button onclick="subscribePush()" style="background:#fff;color:#6c63ff;border:none;padding:8px 16px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;">Activer</button>
+  </div>
   <div id="content"><div class="loading">Chargement du planning...</div></div>
 </div>
 <script>
+const VAPID_PUBLIC_KEY = 'BMAMPjPS9Hb4yfjMpaku-69Cuwlot-lrBl53uF1JDF3OMzuEUckskFCS77Y534VT2PSf0S68ZSOJjfjXUqVU8-Q';
 const SUPABASE_URL_VIEW = 'https://mrvejwyvhuivmipfwlzz.supabase.co';
 const ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1ydmVqd3l2aHVpdm1pcGZ3bHp6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQyNjU0NTksImV4cCI6MjA4OTg0MTQ1OX0.1pi-KN5N6sNG6hIu6N0wDsR_g_G1TTf-uPecmWQ2ovU';
 
@@ -54,6 +59,74 @@ function fmtDate(iso) {
 
 let validations = {};
 let matchedPropertyId = null;
+
+// Push notification setup
+function urlBase64ToUint8Array(base64String) {
+  const padding = '='.repeat((4 - base64String.length % 4) % 4);
+  const base64 = (base64String + padding).replace(/\-/g, '+').replace(/_/g, '/');
+  const rawData = atob(base64);
+  const outputArray = new Uint8Array(rawData.length);
+  for (let i = 0; i < rawData.length; ++i) outputArray[i] = rawData.charCodeAt(i);
+  return outputArray;
+}
+
+async function subscribePush() {
+  const token = providerToken || readonlyToken;
+  if (!token) return;
+  try {
+    if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+      alert('Notifications non supportees par ce navigateur.');
+      return;
+    }
+    const reg = await navigator.serviceWorker.register('sw.js');
+    await navigator.serviceWorker.ready;
+    const perm = await Notification.requestPermission();
+    if (perm !== 'granted') { alert('Permission refusee.'); return; }
+
+    const sub = await reg.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
+    });
+    const subJson = sub.toJSON();
+
+    // Save to Supabase
+    await fetch(`${SUPABASE_URL_VIEW}/rest/v1/push_subscriptions`, {
+      method: 'POST',
+      headers: {
+        'apikey': ANON_KEY,
+        'Authorization': 'Bearer ' + ANON_KEY,
+        'Content-Type': 'application/json',
+        'Prefer': 'return=minimal',
+      },
+      body: JSON.stringify({
+        provider_token: token,
+        endpoint: subJson.endpoint,
+        p256dh: subJson.keys.p256dh,
+        auth: subJson.keys.auth,
+      })
+    });
+
+    document.getElementById('pushBanner').innerHTML = '<div style="color:#fff;font-size:13px;text-align:center;width:100%;">&#9989; Notifications activees ! Vous serez prevenu de vos prochains menages.</div>';
+    setTimeout(() => { document.getElementById('pushBanner').style.display = 'none'; }, 5000);
+  } catch (e) {
+    console.error('Push subscribe error:', e);
+    alert('Erreur: ' + e.message);
+  }
+}
+
+function showPushBanner() {
+  if (!('PushManager' in window)) return;
+  if (Notification.permission === 'granted') {
+    // Already subscribed, hide banner
+    document.getElementById('pushBanner').style.display = 'none';
+    return;
+  }
+  if (Notification.permission === 'denied') {
+    document.getElementById('pushBanner').style.display = 'none';
+    return;
+  }
+  document.getElementById('pushBanner').style.display = 'flex';
+}
 
 async function loadValidations(propId) {
   try {
@@ -314,6 +387,7 @@ async function loadData() {
 }
 
 loadData();
+showPushBanner();
 </script>
 </body>
 </html>
