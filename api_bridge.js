@@ -59,7 +59,7 @@ const API = (function() {
     }
     // Migrate from single-property format
     const secureToken = (len) => { const a = new Uint8Array(len); crypto.getRandomValues(a); return Array.from(a, b => b.toString(16).padStart(2,'0')).join(''); };
-    const propId = secureToken(4);
+    const propId = secureToken(16);
     const newConfig = {
       properties: [{
         id: propId,
@@ -67,13 +67,13 @@ const API = (function() {
         airbnbIcalUrl: (config && config.airbnbIcalUrl) || '',
         bookingIcalUrl: (config && config.bookingIcalUrl) || '',
         providers: (config && config.providers) || [],
-        readonlyToken: (config && config.readonlyToken) || secureToken(8),
+        readonlyToken: (config && config.readonlyToken) || secureToken(16),
       }],
       activeProperty: propId,
     };
     // Copy provider tokens
     for (const p of newConfig.properties[0].providers) {
-      if (!p.token) p.token = secureToken(4);
+      if (!p.token) p.token = secureToken(16);
     }
     return newConfig;
   }
@@ -133,9 +133,9 @@ const API = (function() {
       const secureToken = (len) => { const a = new Uint8Array(len); crypto.getRandomValues(a); return Array.from(a, b => b.toString(16).padStart(2,'0')).join(''); };
       // Ensure tokens for all properties
       for (const prop of (config.properties || [])) {
-        if (!prop.readonlyToken) prop.readonlyToken = secureToken(8);
+        if (!prop.readonlyToken) prop.readonlyToken = secureToken(16);
         for (const p of (prop.providers || [])) {
-          if (!p.token) p.token = secureToken(4);
+          if (!p.token) p.token = secureToken(16);
         }
       }
       // Enforce plan limits
@@ -158,11 +158,11 @@ const API = (function() {
 
     addProperty(config, name) {
       const secureToken = (len) => { const a = new Uint8Array(len); crypto.getRandomValues(a); return Array.from(a, b => b.toString(16).padStart(2,'0')).join(''); };
-      const id = secureToken(4);
+      const id = secureToken(16);
       config.properties.push({
         id, name: name || 'Nouvelle propriete',
         airbnbIcalUrl: '', bookingIcalUrl: '',
-        providers: [], readonlyToken: secureToken(8),
+        providers: [], readonlyToken: secureToken(16),
       });
       config.activeProperty = id;
       activePropertyId = id;
