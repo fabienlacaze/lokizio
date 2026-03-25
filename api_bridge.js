@@ -1,17 +1,25 @@
 /**
- * api_bridge.js - Full client-side API bridge using Supabase.
- * Supports multiple properties per user (freemium: 1 free, unlimited premium).
+ * api_bridge.js v3 - Full client-side API bridge using Supabase.
+ * Phase 2: Uses organizations, properties, plannings tables.
+ * Backward compatible with user_data table.
  */
 
 const PLAN_LIMITS = {
   free: { maxProviders: 2, maxProperties: 1, maxIcals: 2, maxGenerates: 5, ads: true },
+  pro: { maxProviders: Infinity, maxProperties: 5, maxIcals: Infinity, maxGenerates: Infinity, ads: false },
   premium: { maxProviders: Infinity, maxProperties: Infinity, maxIcals: Infinity, maxGenerates: Infinity, ads: false },
+  business: { maxProviders: Infinity, maxProperties: Infinity, maxIcals: Infinity, maxGenerates: Infinity, ads: false },
 };
 
 let currentPlan = 'free';
 let activePropertyId = null;
+let currentOrg = null;
+let currentMember = null;
+let currentRole = 'admin';
 
 const API = (function() {
+
+  const secureToken = (len) => { const a = new Uint8Array(len); crypto.getRandomValues(a); return Array.from(a, b => b.toString(16).padStart(2,'0')).join(''); };
 
   async function getUserId() {
     const { data: { user } } = await sb.auth.getUser();
@@ -19,97 +27,222 @@ const API = (function() {
     return user.id;
   }
 
-  async function loadRaw(column, defaultVal) {
+  // Load user's organization and role
+  async function loadOrg() {
     try {
       const userId = await getUserId();
-      const { data, error } = await sb
-        .from('user_data')
-        .select(column)
-        .eq('user_id', userId)
-        .single();
+      const { data: members, error } = await sb
+        .from('members')
+        .select('*, organizations(*)')
+        .eq('user_id', userId);
+      if (error || !members || !members.length) {
+        console.log('No org found, using legacy mode');
+        return null;
+      }
+      // Use first org (later: org switcher)
+      const m = members[0];
+      currentOrg = m.organizations;
+      currentMember = m;
+      currentRole = m.role;
+      return currentOrg;
+    } catch (e) {
+      console.error('loadOrg error:', e);
+      return null;
+    }
+  }
+
+  // ─── NEW TABLES API ───
+
+  async function loadProperties() {
+    if (!currentOrg) return [];
+    const { data, error } = await sb
+      .from('properties')
+      .select('*')
+      .eq('org_id', currentOrg.id)
+      .order('created_at');
+    if (error) { console.error('loadProperties:', error); return []; }
+    return data || [];
+  }
+
+  async function saveProperty(prop) {
+    const { data, error } = await sb
+      .from('properties')
+      .update({
+        name: prop.name,
+        address: prop.address,
+        lat: prop.lat,
+        lng: prop.lng,
+        type: prop.type,
+        rooms: prop.rooms,
+        surface: prop.surface,
+        photo: prop.photo,
+        tarif: prop.tarif,
+        duration: prop.duration,
+        checklist: prop.checklist || [],
+        notes: prop.notes,
+        icals: prop.icals || [],
+        providers: prop.providers || [],
+        readonly_token: prop.readonlyToken || prop.readonly_token,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', prop.id)
+      .select()
+      .single();
+    if (error) console.error('saveProperty:', error);
+    return data;
+  }
+
+  async function createProperty(name) {
+    if (!currentOrg || !currentMember) return null;
+    const { data, error } = await sb
+      .from('properties')
+      .insert({
+        org_id: currentOrg.id,
+        owner_member_id: currentMember.id,
+        name: name || 'Nouvelle propriete',
+        readonly_token: secureToken(16),
+      })
+      .select()
+      .single();
+    if (error) { console.error('createProperty:', error); return null; }
+    return data;
+  }
+
+  async function deleteProperty(propId) {
+    // Also deletes planning via CASCADE
+    const { error } = await sb.from('properties').delete().eq('id', propId);
+    if (error) console.error('deleteProperty:', error);
+    return !error;
+  }
+
+  async function loadPlanning(propId) {
+    const { data, error } = await sb
+      .from('plannings')
+      .select('*')
+      .eq('property_id', propId)
+      .single();
+    if (error || !data) return { cleanings: [], transmitted: [], history: [] };
+    return data;
+  }
+
+  async function savePlanningData(propId, field, value) {
+    // Check if planning exists
+    const { data: existing } = await sb.from('plannings').select('id').eq('property_id', propId).single();
+    if (existing) {
+      await sb.from('plannings').update({ [field]: value, updated_at: new Date().toISOString() }).eq('property_id', propId);
+    } else {
+      await sb.from('plannings').insert({ property_id: propId, [field]: value });
+    }
+  }
+
+  // ─── LEGACY FALLBACK ───
+
+  async function loadRawLegacy(column, defaultVal) {
+    try {
+      const userId = await getUserId();
+      const { data, error } = await sb.from('user_data').select(column).eq('user_id', userId).single();
       if (error || !data) return defaultVal;
       const val = data[column];
-      if (val !== null && val !== undefined) {
-        localStorage.setItem('mm_cache_' + column, JSON.stringify(val));
-        return val;
-      }
+      if (val !== null && val !== undefined) return val;
       return defaultVal;
-    } catch (e) {
-      const cached = localStorage.getItem('mm_cache_' + column);
-      if (cached) { try { return JSON.parse(cached); } catch(e2) { return defaultVal; } }
-      return defaultVal;
-    }
+    } catch (e) { return defaultVal; }
   }
 
-  async function saveRaw(column, data) {
-    localStorage.setItem('mm_cache_' + column, JSON.stringify(data));
-    const userId = await getUserId();
-    const { error } = await sb
-      .from('user_data')
-      .update({ [column]: data, updated_at: new Date().toISOString() })
-      .eq('user_id', userId);
-    if (error) console.error('Save error:', error);
-    return { ok: !error };
-  }
-
-  // Ensure config has multi-property structure
-  function migrateConfig(config) {
-    if (config && config.properties && Array.isArray(config.properties)) {
-      return config; // Already migrated
-    }
-    // Migrate from single-property format
-    const secureToken = (len) => { const a = new Uint8Array(len); crypto.getRandomValues(a); return Array.from(a, b => b.toString(16).padStart(2,'0')).join(''); };
-    const propId = secureToken(16);
-    const newConfig = {
-      properties: [{
-        id: propId,
-        name: (config && config.property) || 'Mon logement',
-        airbnbIcalUrl: (config && config.airbnbIcalUrl) || '',
-        bookingIcalUrl: (config && config.bookingIcalUrl) || '',
-        providers: (config && config.providers) || [],
-        readonlyToken: (config && config.readonlyToken) || secureToken(16),
-      }],
-      activeProperty: propId,
+  // Convert DB property to frontend format (compatibility)
+  function dbPropToFrontend(dbProp) {
+    return {
+      id: dbProp.id,
+      name: dbProp.name || 'Mon logement',
+      address: dbProp.address || '',
+      lat: dbProp.lat,
+      lng: dbProp.lng,
+      type: dbProp.type || '',
+      rooms: dbProp.rooms,
+      surface: dbProp.surface,
+      photo: dbProp.photo || '',
+      tarif: dbProp.tarif,
+      duration: dbProp.duration || '',
+      checklist: dbProp.checklist || [],
+      notes: dbProp.notes || '',
+      icals: dbProp.icals || [],
+      providers: dbProp.providers || [],
+      readonlyToken: dbProp.readonly_token || '',
+      // Legacy compat
+      airbnbIcalUrl: (dbProp.icals || []).find(i => i.platform === 'airbnb')?.url || '',
+      bookingIcalUrl: (dbProp.icals || []).find(i => i.platform === 'booking')?.url || '',
     };
-    // Copy provider tokens
-    for (const p of newConfig.properties[0].providers) {
-      if (!p.token) p.token = secureToken(16);
-    }
-    return newConfig;
   }
 
-  // Migrate planning/transmitted to per-property format
-  function migratePlanning(data, propId) {
-    if (data && typeof data === 'object' && !Array.isArray(data)) {
-      return data; // Already per-property object
-    }
-    // Migrate from array to { propId: [...] }
-    if (Array.isArray(data)) {
-      return { [propId]: data };
-    }
-    return {};
-  }
-
-  function getActiveProp(config) {
-    if (!config || !config.properties || !config.properties.length) return null;
-    const id = activePropertyId || config.activeProperty || config.properties[0].id;
-    return config.properties.find(p => p.id === id) || config.properties[0];
+  function frontendPropToDb(prop) {
+    return {
+      id: prop.id,
+      name: prop.name,
+      address: prop.address,
+      lat: prop.lat,
+      lng: prop.lng,
+      type: prop.type,
+      rooms: prop.rooms,
+      surface: prop.surface,
+      photo: prop.photo,
+      tarif: prop.tarif,
+      duration: prop.duration,
+      checklist: prop.checklist || [],
+      notes: prop.notes || '',
+      icals: prop.icals || [],
+      providers: prop.providers || [],
+      readonlyToken: prop.readonlyToken,
+      readonly_token: prop.readonlyToken,
+    };
   }
 
   return {
-    // Plan management
+    // ─── Organization ───
+    async loadOrganization() { return await loadOrg(); },
+    getOrg() { return currentOrg; },
+    getRole() { return currentRole; },
+    getMember() { return currentMember; },
+    isAdmin() { return currentRole === 'admin' || currentRole === 'manager'; },
+    isProvider() { return currentRole === 'provider'; },
+
+    // ─── Members ───
+    async loadMembers() {
+      if (!currentOrg) return [];
+      const { data } = await sb.from('members').select('*, profiles(email)').eq('org_id', currentOrg.id);
+      return data || [];
+    },
+    async inviteMember(email, role) {
+      if (!currentOrg) return null;
+      // Create invite (user may not exist yet)
+      const { data, error } = await sb.from('members').insert({
+        org_id: currentOrg.id,
+        invited_email: email,
+        role: role || 'owner',
+        accepted: false,
+      }).select().single();
+      if (error) console.error('inviteMember:', error);
+      return data;
+    },
+    async removeMember(memberId) {
+      const { error } = await sb.from('members').delete().eq('id', memberId);
+      return !error;
+    },
+
+    // ─── Plan management ───
     async load_plan() {
       try {
+        // Try org plan first (Phase 2)
+        if (currentOrg) {
+          currentPlan = currentOrg.plan || 'free';
+          // Map 'pro' to 'premium' for backward compat
+          if (currentPlan === 'pro') currentPlan = 'premium';
+          return currentPlan;
+        }
+        // Fallback to subscriptions table
         const userId = await getUserId();
-        const { data, error } = await sb
-          .from('subscriptions')
-          .select('plan, current_period_end')
-          .eq('user_id', userId)
-          .single();
+        const { data, error } = await sb.from('subscriptions').select('plan, current_period_end').eq('user_id', userId).single();
         if (error || !data) { currentPlan = 'free'; return 'free'; }
         if (data.plan === 'premium' && data.current_period_end) {
-          const expiry = new Date(data.current_period_end);
-          if (expiry < new Date()) { currentPlan = 'free'; return 'free'; }
+          if (new Date(data.current_period_end) < new Date()) { currentPlan = 'free'; return 'free'; }
         }
         currentPlan = data.plan || 'free';
         return currentPlan;
@@ -117,21 +250,37 @@ const API = (function() {
     },
     getPlan() { return currentPlan; },
     getLimits() { return PLAN_LIMITS[currentPlan] || PLAN_LIMITS.free; },
-    isPremium() { return currentPlan === 'premium'; },
+    isPremium() { return currentPlan === 'premium' || currentPlan === 'pro' || currentPlan === 'business'; },
 
-    // Config (multi-property)
+    // ─── Config (builds from properties table) ───
     async load_config() {
-      const raw = await loadRaw('config', {});
-      const config = migrateConfig(raw);
-      // Set active property
-      const prop = getActiveProp(config);
-      if (prop) activePropertyId = prop.id;
-      return config;
+      // Try new tables first
+      await loadOrg();
+      if (currentOrg) {
+        const dbProps = await loadProperties();
+        if (dbProps.length > 0) {
+          const config = {
+            properties: dbProps.map(dbPropToFrontend),
+            activeProperty: activePropertyId || dbProps[0].id,
+          };
+          const prop = config.properties.find(p => p.id === config.activeProperty) || config.properties[0];
+          if (prop) activePropertyId = prop.id;
+          localStorage.setItem('mm_cache_config', JSON.stringify(config));
+          return config;
+        }
+      }
+      // Fallback to legacy user_data
+      const raw = await loadRawLegacy('config', {});
+      if (raw && raw.properties && raw.properties.length) {
+        const prop = raw.properties.find(p => p.id === (activePropertyId || raw.activeProperty)) || raw.properties[0];
+        if (prop) activePropertyId = prop.id;
+        return raw;
+      }
+      return { properties: [], activeProperty: null };
     },
 
     async save_config(config) {
-      const secureToken = (len) => { const a = new Uint8Array(len); crypto.getRandomValues(a); return Array.from(a, b => b.toString(16).padStart(2,'0')).join(''); };
-      // Ensure tokens for all properties
+      // Ensure tokens
       for (const prop of (config.properties || [])) {
         if (!prop.readonlyToken) prop.readonlyToken = secureToken(16);
         for (const p of (prop.providers || [])) {
@@ -143,33 +292,54 @@ const API = (function() {
       if ((config.properties || []).length > limits.maxProperties) {
         return { ok: false, error: 'limit_properties', max: limits.maxProperties };
       }
-      const activeProp = getActiveProp(config);
+      const activeProp = config.properties.find(p => p.id === activePropertyId) || config.properties[0];
       if (activeProp && (activeProp.providers || []).length > limits.maxProviders) {
         return { ok: false, error: 'limit_providers', max: limits.maxProviders };
       }
-      await saveRaw('config', config);
+      // Save each property to DB
+      if (currentOrg) {
+        for (const prop of (config.properties || [])) {
+          await saveProperty(frontendPropToDb(prop));
+        }
+      }
+      localStorage.setItem('mm_cache_config', JSON.stringify(config));
       return { ok: true, config };
     },
 
-    // Property helpers
-    getActiveProperty(config) { return getActiveProp(config); },
+    // ─── Property helpers ───
+    getActiveProperty(config) {
+      if (!config || !config.properties || !config.properties.length) return null;
+      const id = activePropertyId || config.activeProperty || config.properties[0].id;
+      return config.properties.find(p => p.id === id) || config.properties[0];
+    },
     setActiveProperty(propId) { activePropertyId = propId; },
     getActivePropertyId() { return activePropertyId; },
 
-    addProperty(config, name) {
-      const secureToken = (len) => { const a = new Uint8Array(len); crypto.getRandomValues(a); return Array.from(a, b => b.toString(16).padStart(2,'0')).join(''); };
-      const id = secureToken(16);
-      config.properties.push({
-        id, name: name || 'Nouvelle propriete',
-        airbnbIcalUrl: '', bookingIcalUrl: '',
-        providers: [], readonlyToken: secureToken(16),
-      });
-      config.activeProperty = id;
-      activePropertyId = id;
+    async addProperty(config, name) {
+      if (currentOrg) {
+        const dbProp = await createProperty(name);
+        if (dbProp) {
+          config.properties.push(dbPropToFrontend(dbProp));
+          config.activeProperty = dbProp.id;
+          activePropertyId = dbProp.id;
+        }
+      } else {
+        const id = secureToken(16);
+        config.properties.push({
+          id, name: name || 'Nouvelle propriete',
+          airbnbIcalUrl: '', bookingIcalUrl: '',
+          icals: [], providers: [], readonlyToken: secureToken(16),
+        });
+        config.activeProperty = id;
+        activePropertyId = id;
+      }
       return config;
     },
 
-    removeProperty(config, propId) {
+    async removeProperty(config, propId) {
+      if (currentOrg) {
+        await deleteProperty(propId);
+      }
       config.properties = config.properties.filter(p => p.id !== propId);
       if (config.activeProperty === propId && config.properties.length > 0) {
         config.activeProperty = config.properties[0].id;
@@ -178,70 +348,137 @@ const API = (function() {
       return config;
     },
 
-    // Planning (per-property)
+    // ─── Planning ───
     async load_planning() {
-      const raw = await loadRaw('planning', {});
       if (!activePropertyId) return [];
-      const data = migratePlanning(raw, activePropertyId);
-      return data[activePropertyId] || [];
+      if (currentOrg) {
+        const p = await loadPlanning(activePropertyId);
+        const cleanings = p.cleanings || [];
+        localStorage.setItem('mm_cache_planning_' + activePropertyId, JSON.stringify(cleanings));
+        return cleanings;
+      }
+      // Legacy
+      const raw = await loadRawLegacy('planning', {});
+      const data = (typeof raw === 'object' && !Array.isArray(raw)) ? raw : {};
+      return data[activePropertyId] || (Array.isArray(raw) ? raw : []);
     },
     async save_planning(cleanings) {
-      const raw = await loadRaw('planning', {});
-      const data = migratePlanning(raw, activePropertyId);
-      data[activePropertyId] = cleanings;
-      return await saveRaw('planning', data);
+      if (!activePropertyId) return;
+      localStorage.setItem('mm_cache_planning_' + activePropertyId, JSON.stringify(cleanings));
+      if (currentOrg) {
+        await savePlanningData(activePropertyId, 'cleanings', cleanings);
+      }
     },
 
-    // Transmitted (per-property)
+    // ─── Transmitted ───
     async load_transmitted() {
-      const raw = await loadRaw('transmitted', {});
       if (!activePropertyId) return [];
-      const data = (typeof raw === 'object' && !Array.isArray(raw)) ? raw : { [activePropertyId]: raw || [] };
+      if (currentOrg) {
+        const p = await loadPlanning(activePropertyId);
+        return p.transmitted || [];
+      }
+      const raw = await loadRawLegacy('transmitted', {});
+      const data = (typeof raw === 'object' && !Array.isArray(raw)) ? raw : {};
       return data[activePropertyId] || [];
     },
     async save_transmitted(dates) {
-      const raw = await loadRaw('transmitted', {});
-      const data = (typeof raw === 'object' && !Array.isArray(raw)) ? raw : {};
-      data[activePropertyId] = dates;
-      return await saveRaw('transmitted', data);
+      if (!activePropertyId) return;
+      if (currentOrg) {
+        await savePlanningData(activePropertyId, 'transmitted', dates);
+      }
     },
 
-    // History (per-property)
+    // ─── History ───
     async load_history() {
-      const raw = await loadRaw('history', {});
       if (!activePropertyId) return [];
-      const data = (typeof raw === 'object' && !Array.isArray(raw)) ? raw : { [activePropertyId]: raw || [] };
+      if (currentOrg) {
+        const p = await loadPlanning(activePropertyId);
+        return p.history || [];
+      }
+      const raw = await loadRawLegacy('history', {});
+      const data = (typeof raw === 'object' && !Array.isArray(raw)) ? raw : {};
       return data[activePropertyId] || [];
     },
     async save_history(history) {
-      const raw = await loadRaw('history', {});
-      const data = (typeof raw === 'object' && !Array.isArray(raw)) ? raw : {};
-      data[activePropertyId] = history;
-      return await saveRaw('history', data);
+      if (!activePropertyId) return;
+      if (currentOrg) {
+        await savePlanningData(activePropertyId, 'history', history);
+      }
     },
 
-    // Linens (per-property)
+    // ─── Linens ───
     async load_linens() {
-      const raw = await loadRaw('linens', {});
       if (!activePropertyId) return [];
-      const data = (typeof raw === 'object' && !Array.isArray(raw)) ? raw : { [activePropertyId]: raw || [] };
+      // Linens stay in user_data for now (not critical for Phase 2)
+      const raw = await loadRawLegacy('linens', {});
+      const data = (typeof raw === 'object' && !Array.isArray(raw)) ? raw : {};
       return data[activePropertyId] || [];
     },
     async save_linens(linens) {
-      const raw = await loadRaw('linens', {});
-      const data = (typeof raw === 'object' && !Array.isArray(raw)) ? raw : {};
-      data[activePropertyId] = linens;
-      return await saveRaw('linens', data);
+      // Keep in legacy for now
     },
 
-    // Generate planning (uses active property)
+    // ─── Cleaning Validations ───
+    async loadValidations(propId) {
+      const { data } = await sb.from('cleaning_validations').select('*').eq('property_id', propId || activePropertyId).order('cleaning_date');
+      return data || [];
+    },
+    async validateCleaning(propId, cleaningDate, providerName, status, photos, notes) {
+      const userId = await getUserId();
+      const { data, error } = await sb.from('cleaning_validations').upsert({
+        property_id: propId || activePropertyId,
+        cleaning_date: cleaningDate,
+        provider_name: providerName,
+        status: status || 'done',
+        photos: photos || [],
+        notes: notes || '',
+        validated_at: new Date().toISOString(),
+        validated_by: userId,
+      }, { onConflict: 'property_id,cleaning_date,provider_name' }).select().single();
+      if (error) console.error('validateCleaning:', error);
+      return data;
+    },
+
+    // ─── Dashboard (all properties) ───
+    async loadDashboard() {
+      if (!currentOrg) return { properties: [], cleanings: [], today: [] };
+      const props = await loadProperties();
+      const allCleanings = [];
+      const today = new Date().toISOString().split('T')[0];
+      const weekEnd = new Date(Date.now() + 7 * 86400000).toISOString().split('T')[0];
+
+      for (const prop of props) {
+        const p = await loadPlanning(prop.id);
+        const cleanings = (p.cleanings || []).map(c => ({ ...c, propertyId: prop.id, propertyName: prop.name }));
+        allCleanings.push(...cleanings);
+      }
+
+      // Sort by date
+      allCleanings.sort((a, b) => (a.date || a.cleaningDate || '').localeCompare(b.date || b.cleaningDate || ''));
+
+      const todayCleanings = allCleanings.filter(c => (c.cleaningDate || c.date) === today);
+      const weekCleanings = allCleanings.filter(c => {
+        const d = c.cleaningDate || c.date || '';
+        return d >= today && d <= weekEnd;
+      });
+
+      return {
+        properties: props.map(dbPropToFrontend),
+        allCleanings,
+        todayCleanings,
+        weekCleanings,
+        totalProperties: props.length,
+        totalProviders: [...new Set(allCleanings.map(c => c.provider))].length,
+      };
+    },
+
+    // ─── Generate planning ───
     async generate_planning() {
       const log = typeof dbg === 'function' ? dbg : console.log;
       log('Chargement config...');
       const fullConfig = await this.load_config();
-      const prop = getActiveProp(fullConfig);
+      const prop = this.getActiveProperty(fullConfig);
       if (!prop) return { error: 'Aucune propriete configuree' };
-      // Build config for generator with all iCal sources
       const genConfig = {
         airbnbIcalUrl: prop.airbnbIcalUrl || '',
         bookingIcalUrl: prop.bookingIcalUrl || '',
@@ -259,6 +496,7 @@ const API = (function() {
       return await generatePlanningFromICal(genConfig, previousPlanning, transmittedDates);
     },
 
+    // ─── Export ───
     async export_csv(cleanings, filename) {
       const sep = '\t';
       let csv = '\uFEFF' + ['Date menage','Jour','Arrivee','Depart','Prestataire','Telephone','Source'].join(sep) + '\n';
@@ -289,10 +527,6 @@ const API = (function() {
         document.execCommand('copy'); document.body.removeChild(ta);
       }
       return true;
-    },
-
-    async setup_reminder() {
-      return { ok: false, msg: 'Rappels non disponibles en mode web.' };
     },
 
     isMobile() { return /Android|iPhone|iPad|iPod/i.test(navigator.userAgent); }
