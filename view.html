@@ -52,6 +52,72 @@ function fmtDate(iso) {
   return `${d}/${m}/${y}`;
 }
 
+let validations = {};
+let matchedPropertyId = null;
+
+async function loadValidations(propId) {
+  try {
+    const resp = await fetch(`${SUPABASE_URL_VIEW}/rest/v1/cleaning_validations?property_id=eq.${propId}&select=*`, {
+      headers: { 'apikey': ANON_KEY }
+    });
+    const data = await resp.json();
+    if (Array.isArray(data)) {
+      data.forEach(v => {
+        validations[v.cleaning_date + '_' + v.provider_name] = v;
+      });
+    }
+  } catch (e) { console.error('loadValidations:', e); }
+}
+
+async function validateCleaning(date, provider, status) {
+  try {
+    const resp = await fetch(`${SUPABASE_URL_VIEW}/rest/v1/cleaning_validations`, {
+      method: 'POST',
+      headers: {
+        'apikey': ANON_KEY,
+        'Authorization': 'Bearer ' + ANON_KEY,
+        'Content-Type': 'application/json',
+        'Prefer': 'return=representation',
+      },
+      body: JSON.stringify({
+        property_id: matchedPropertyId,
+        cleaning_date: date,
+        provider_name: provider,
+        status: status,
+        validated_at: new Date().toISOString(),
+      }),
+    });
+    const data = await resp.json();
+    if (data && !data.error) {
+      validations[date + '_' + provider] = data[0] || data;
+      loadData(); // Refresh
+    }
+  } catch (e) { console.error('validateCleaning:', e); alert('Erreur: ' + e.message); }
+}
+
+async function uploadPhotos(input, date, provider) {
+  // Convert to base64 and store in validation
+  const files = input.files;
+  if (!files.length) return;
+  const photos = [];
+  for (const file of files) {
+    const reader = new FileReader();
+    const b64 = await new Promise(resolve => { reader.onload = e => resolve(e.target.result); reader.readAsDataURL(file); });
+    photos.push(b64);
+  }
+  // Update validation with photos
+  const key = date + '_' + provider;
+  const existing = validations[key];
+  if (existing && existing.id) {
+    await fetch(`${SUPABASE_URL_VIEW}/rest/v1/cleaning_validations?id=eq.${existing.id}`, {
+      method: 'PATCH',
+      headers: { 'apikey': ANON_KEY, 'Authorization': 'Bearer ' + ANON_KEY, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ photos: [...(existing.photos||[]), ...photos] }),
+    });
+  }
+  loadData();
+}
+
 async function loadData() {
   const content = document.getElementById('content');
   const subtitle = document.getElementById('subtitle');
@@ -121,6 +187,8 @@ async function loadData() {
     }
 
     const property = (matchedProp && matchedProp.name) || 'Planning';
+    // Load validations for this property
+    if (matchedProp && matchedProp.id) { matchedPropertyId = matchedProp.id; await loadValidations(matchedProp.id); }
 
     // Filter for provider view
     let displayCleanings = matchedPlanning;
@@ -149,16 +217,45 @@ async function loadData() {
     for (const c of displayCleanings) {
       const source = (c.source || '').toLowerCase();
       const badgeClass = source.includes('airbnb') ? 'airbnb' : source.includes('booking') ? 'booking' : '';
+      const isProvider = !!providerToken;
+      const today = new Date().toISOString().split('T')[0];
+      const isToday = (c.cleaningDate || c.date) === today;
+      const isPast = (c.cleaningDate || c.date) < today;
+      const cleaningId = (c.cleaningDate || c.date) + '_' + (c.provider || '');
+      const validation = validations[cleaningId];
+      const statusIcon = validation ? (validation.status === 'done' ? '&#9989;' : validation.status === 'in_progress' ? '&#9203;' : '&#9898;') : '&#9898;';
+      const statusText = validation ? (validation.status === 'done' ? 'Termine' : validation.status === 'in_progress' ? 'En cours' : 'A faire') : 'A faire';
+      const statusColor = validation && validation.status === 'done' ? '#34d399' : validation && validation.status === 'in_progress' ? '#f59e0b' : 'var(--text3)';
+
       html += `
-        <div class="card">
-          <div>
-            <div class="date">${esc(c.dayName || '')} ${fmtDate(c.date)}</div>
-            <div class="details">
-              <span class="badge ${badgeClass}">${esc(c.source || '')}</span>
-              Arrivee: ${fmtDate(c.date)} &rarr; Depart: ${fmtDate(c.checkoutDate)}
+        <div class="card" style="flex-direction:column;align-items:stretch;${isToday ? 'border-left:3px solid #e94560;' : ''}">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <div>
+              <div class="date">${esc(c.dayName || '')} ${fmtDate(c.date)}</div>
+              <div class="details">
+                <span class="badge ${badgeClass}">${esc(c.source || '')}</span>
+                Arrivee: ${fmtDate(c.date)} &rarr; Depart: ${fmtDate(c.checkoutDate)}
+              </div>
+            </div>
+            <div style="text-align:right;">
+              <div class="provider">${esc(c.provider || '?')}</div>
+              <div style="font-size:11px;color:${statusColor};margin-top:4px;">${statusIcon} ${statusText}</div>
             </div>
           </div>
-          <div class="provider">${esc(c.provider || '?')}</div>
+          ${isProvider && !isPast && (!validation || validation.status !== 'done') ? `
+            <div style="display:flex;gap:8px;margin-top:10px;padding-top:10px;border-top:1px solid var(--border);">
+              <button onclick="validateCleaning('${c.cleaningDate||c.date}','${esc(c.provider||'')}','in_progress')" style="flex:1;padding:10px;background:#f59e0b;color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;">&#128692; En route</button>
+              <button onclick="validateCleaning('${c.cleaningDate||c.date}','${esc(c.provider||'')}','done')" style="flex:1;padding:10px;background:#34d399;color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;">&#9989; Termine</button>
+            </div>
+            <div style="margin-top:8px;">
+              <input type="file" accept="image/*" multiple id="photos_${cleaningId.replace(/[^a-zA-Z0-9]/g,'_')}" style="font-size:11px;color:var(--text3);" onchange="uploadPhotos(this,'${c.cleaningDate||c.date}','${esc(c.provider||'')}')">
+            </div>
+          ` : ''}
+          ${validation && validation.photos && validation.photos.length ? `
+            <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;">
+              ${validation.photos.map(p => `<img src="${p}" style="width:60px;height:60px;object-fit:cover;border-radius:6px;border:1px solid var(--border);">`).join('')}
+            </div>
+          ` : ''}
         </div>`;
     }
     content.innerHTML = html;

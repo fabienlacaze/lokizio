@@ -906,6 +906,7 @@
     <button class="btnHelp" onclick="showChangelog()" data-i18n-attr="title" data-i18n="header.changelog" title="Historique modifications" style="font-size:13px;">&#128221;</button>
     <button class="btnHelp" onclick="toggleTheme()" data-i18n-attr="title" data-i18n="header.theme" title="Theme clair/sombre" id="themeBtn" style="font-size:15px;">&#9788;</button>
     <button class="btnHelp" onclick="showHelp()" data-i18n-attr="title" data-i18n="header.help" title="Aide">?</button>
+    <button class="btnHelp" onclick="showTeamModal()" title="Equipe" style="font-size:13px;">&#128101;</button>
     <button class="btnHelp" onclick="showAccountModal()" title="Mon compte" style="font-size:13px;">&#9881;</button>
     <button class="btnHelp" onclick="customConfirm(t('auth.logout.confirm')||'Se deconnecter ?','Deconnexion').then(ok=>{if(ok)authLogout()})" data-i18n-attr="title" data-i18n="header.logout" title="Deconnexion" style="font-size:13px;">&#9211;</button>
   </div>
@@ -1215,6 +1216,34 @@
     </div>
   </div>
 </div>
+<div class="modal" id="teamModal" style="max-width:520px;">
+  <div class="modalHeader" style="display:flex;justify-content:space-between;align-items:center;">
+    <span>&#128101; Equipe</span>
+    <button class="modalClose" onclick="closeTeamModal()">&times;</button>
+  </div>
+  <div class="modalBody">
+    <div style="margin-bottom:16px;">
+      <label style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:1px;">ORGANISATION</label>
+      <div id="teamOrgName" style="padding:10px 14px;background:var(--surface2);border-radius:8px;color:var(--text);font-size:14px;font-weight:600;margin-top:4px;"></div>
+    </div>
+    <div style="margin-bottom:16px;">
+      <label style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:1px;">MEMBRES</label>
+      <div id="teamMembersList" style="margin-top:8px;"></div>
+    </div>
+    <div style="border-top:1px solid var(--border2);padding-top:16px;">
+      <label style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:1px;">INVITER UN MEMBRE</label>
+      <div style="display:flex;gap:8px;margin-top:8px;">
+        <input type="email" id="inviteEmail" placeholder="email@exemple.com" style="flex:1;padding:10px 12px;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;color:var(--text);font-size:13px;">
+        <select id="inviteRole" style="padding:10px;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;color:var(--text);font-size:13px;">
+          <option value="owner">Proprietaire</option>
+          <option value="manager">Gestionnaire</option>
+          <option value="provider">Prestataire</option>
+        </select>
+      </div>
+      <button class="btn btnPrimary" style="width:100%;padding:12px;font-size:13px;margin-top:10px;" onclick="inviteTeamMember()">&#9993; Envoyer l'invitation</button>
+    </div>
+  </div>
+</div>
 <div class="modal" id="premiumModal" style="max-width:520px;">
   <div class="modalHeader" style="display:flex;justify-content:space-between;align-items:center;">
     <span data-i18n="premium.modal.title">Choisissez votre plan</span>
@@ -1255,7 +1284,23 @@
           <li>Support prioritaire</li>
           <li>Geolocalisation avancee</li>
         </ul>
-        <button class="btnUpgrade" onclick="upgradeToPremium()" id="btnUpgrade" data-i18n="premium.btn.upgrade">Passer a Premium</button>
+        <button class="btnUpgrade" onclick="upgradeToPremium('pro')" id="btnUpgrade" data-i18n="premium.btn.upgrade">Passer a Pro</button>
+      </div>
+      <div class="pricingCard" style="border:2px solid #6c63ff;">
+        <h3>Business <span class="premiumBadge" style="background:#6c63ff;">BIZ</span></h3>
+        <div class="price">19.99€<small>/mois</small></div>
+        <ul>
+          <li><b>Tout le plan Pro +</b></li>
+          <li>Multi-proprietaires</li>
+          <li>Dashboard conciergerie</li>
+          <li>Gestion d'equipe (roles)</li>
+          <li>Validation prestataire + photos</li>
+          <li>Facturation automatique</li>
+          <li>Rapports PDF mensuels</li>
+          <li>Check-in / Check-out</li>
+          <li>Inventaire</li>
+        </ul>
+        <button class="btnUpgrade" style="background:linear-gradient(135deg,#6c63ff,#5a54e0);" onclick="upgradeToPremium('business')">Passer a Business</button>
       </div>
     </div>
     <div style="text-align:center;color:var(--text3);font-size:11px;" data-i18n="premium.cancel">Annulable a tout moment. Paiement securise par Stripe.</div>
@@ -1900,6 +1945,60 @@ function closeAccountModal() {
   document.getElementById('overlay').style.display = 'none';
   document.getElementById('accountModal').style.display = 'none';
 }
+/* ── Team Management ── */
+async function showTeamModal() {
+  const org = API.getOrg();
+  document.getElementById('teamOrgName').textContent = org ? org.name : 'Mon organisation';
+
+  // Load members
+  const members = await API.loadMembers();
+  const list = document.getElementById('teamMembersList');
+  if (members.length === 0) {
+    list.innerHTML = '<div style="color:var(--text3);font-size:12px;padding:8px;">Aucun membre</div>';
+  } else {
+    const roleLabels = { admin: '👑 Admin', manager: '📋 Gestionnaire', owner: '🏠 Proprietaire', provider: '🧹 Prestataire' };
+    const roleColors = { admin: '#e94560', manager: '#6c63ff', owner: '#34d399', provider: '#f59e0b' };
+    list.innerHTML = members.map(m => {
+      const email = m.profiles ? m.profiles.email : (m.invited_email || '?');
+      const role = m.role || 'owner';
+      const isMe = m.user_id === (sb.auth.getUser && sb.auth.getUser().then ? '' : '');
+      return `<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--surface2);border-radius:8px;margin-bottom:6px;">
+        <span style="font-size:11px;font-weight:700;color:${roleColors[role]||'#888'};background:${roleColors[role]||'#888'}22;padding:3px 8px;border-radius:6px;">${roleLabels[role]||role}</span>
+        <span style="flex:1;font-size:13px;">${esc(email)}</span>
+        ${m.accepted ? '<span style="color:var(--success);font-size:11px;">✓</span>' : '<span style="color:var(--text3);font-size:11px;">En attente</span>'}
+        ${API.isAdmin() && members.length > 1 ? '<button class="btn btnSmall btnDanger" style="padding:2px 6px;font-size:11px;" onclick="removeTeamMember(\''+m.id+'\')">✕</button>' : ''}
+      </div>`;
+    }).join('');
+  }
+
+  document.getElementById('overlay').style.display = 'block';
+  document.getElementById('teamModal').style.display = 'block';
+}
+function closeTeamModal() {
+  document.getElementById('overlay').style.display = 'none';
+  document.getElementById('teamModal').style.display = 'none';
+}
+async function inviteTeamMember() {
+  const email = document.getElementById('inviteEmail').value.trim();
+  const role = document.getElementById('inviteRole').value;
+  if (!email) { showMsg(t('team.email_required') || 'Entrez un email.'); return; }
+  if (!API.isAdmin()) { showMsg(t('team.admin_only') || 'Seuls les administrateurs peuvent inviter.'); return; }
+
+  const result = await API.inviteMember(email, role);
+  if (result) {
+    showToast((t('team.invited') || 'Invitation envoyee a') + ' ' + email);
+    document.getElementById('inviteEmail').value = '';
+    showTeamModal(); // Refresh list
+  } else {
+    showMsg(t('team.invite_error') || 'Erreur lors de l\'invitation.');
+  }
+}
+async function removeTeamMember(memberId) {
+  const ok = await customConfirm(t('team.remove_confirm') || 'Retirer ce membre de l\'equipe ?', t('btn.delete') || 'Retirer');
+  if (!ok) return;
+  await API.removeMember(memberId);
+  showTeamModal(); // Refresh
+}
 async function changePassword() {
   closeAccountModal();
   const newPwd = await customPrompt(t('account.new_password') || 'Nouveau mot de passe (6 caracteres minimum) :', '', {type:'password',placeholder:'••••••'});
@@ -1999,18 +2098,16 @@ function closePremiumModal() {
   document.getElementById('overlay').style.display = 'none';
   document.getElementById('premiumModal').style.display = 'none';
 }
-async function upgradeToPremium() {
-  const btn = document.getElementById('btnUpgrade');
-  btn.textContent = 'Redirection...';
-  btn.disabled = true;
-  // Stripe Checkout - will be configured with actual Stripe keys
-  if (typeof STRIPE_PRICE_ID !== 'undefined' && STRIPE_PRICE_ID) {
+async function upgradeToPremium(plan) {
+  const priceId = (plan === 'business') ? STRIPE_PRICE_BUSINESS : STRIPE_PRICE_PRO;
+  // Stripe Checkout
+  if (priceId) {
     try {
       const userId = await (async()=>{ const{data:{user}}=await sb.auth.getUser(); return user.id; })();
       const resp = await fetch(`${SUPABASE_URL}/functions/v1/create-checkout`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${SUPABASE_ANON_KEY}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId, priceId: STRIPE_PRICE_ID })
+        body: JSON.stringify({ userId, priceId })
       });
       const { url } = await resp.json();
       if (url) { window.location.href = url; return; }
