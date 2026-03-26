@@ -2812,7 +2812,30 @@ async function authRegister() {
     submitBtn.disabled = true; submitBtn.textContent = t('auth.register.loading');
     const { data, error } = await sb.auth.signUp({ email, password: pass });
     submitBtn.disabled = false; submitBtn.textContent = t('auth.register.btn');
-    if (error) { errEl.textContent = error.message; return; }
+    if (error) {
+      // Handle rate limit with countdown
+      const match = error.message.match(/after (\d+) second/);
+      if (match) {
+        let secs = parseInt(match[1]);
+        submitBtn.disabled = true;
+        const tick = () => {
+          if (secs <= 0) {
+            errEl.textContent = '';
+            submitBtn.disabled = false;
+            submitBtn.textContent = t('auth.register.btn');
+            return;
+          }
+          errEl.innerHTML = '&#9203; Veuillez patienter <b>' + secs + 's</b>';
+          submitBtn.textContent = secs + 's...';
+          secs--;
+          setTimeout(tick, 1000);
+        };
+        tick();
+      } else {
+        errEl.textContent = error.message;
+      }
+      return;
+    }
     if (data.user && data.user.identities && data.user.identities.length === 0) {
       errEl.textContent = t('auth.email.taken'); return;
     }
