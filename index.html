@@ -5664,7 +5664,7 @@ let confirmResolve = null;
 function customConfirm(msg, okText) {
   return new Promise(resolve => {
     confirmResolve = resolve;
-    document.getElementById('confirmMsg').textContent = msg;
+    document.getElementById('confirmMsg').innerHTML = msg;
     if (okText) document.getElementById('confirmOkBtn').textContent = okText;
     document.getElementById('overlay').style.display = 'block';
     document.getElementById('confirmModal').style.display = 'block';
