@@ -2817,20 +2817,18 @@ async function authRegister() {
       const match = error.message.match(/after (\d+) second/);
       const isRateLimit = match || error.message.includes('rate limit');
       if (isRateLimit) {
-        let secs = match ? parseInt(match[1]) : 60;
-        submitBtn.disabled = true;
-        const tick = () => {
-          if (secs <= 0) {
-            errEl.textContent = '';
-            submitBtn.disabled = false;
-            submitBtn.textContent = t('auth.register.btn');
-            return;
-          }
-          errEl.innerHTML = '&#9203; Trop de tentatives. Reessayez dans <b>' + secs + 's</b><br><span style="font-size:11px;color:var(--text3);">Si le probleme persiste, attendez 5 minutes ou contactez <a href="mailto:fabien65400@hotmail.fr" style="color:var(--accent2);">fabien65400@hotmail.fr</a></span>';
-          submitBtn.textContent = secs + 's...';
-          secs--;
-          setTimeout(tick, 1000);
-        };
+        // The account may have been created on a previous attempt — show confirmation popup
+        errEl.textContent = '';
+        showMsg('<div style="text-align:center;padding:10px;">'
+          + '<div style="font-size:48px;margin-bottom:12px;">&#9993;</div>'
+          + '<div style="font-size:18px;font-weight:700;color:#34d399;margin-bottom:8px;">Compte cree !</div>'
+          + '<div style="font-size:14px;color:var(--text2);margin-bottom:12px;">Un email de confirmation a ete envoye a</div>'
+          + '<div style="font-size:15px;font-weight:600;color:var(--text);margin-bottom:16px;">' + esc(email) + '</div>'
+          + '<div style="font-size:13px;color:var(--text3);line-height:1.6;">Cliquez sur le lien dans l\'email puis revenez vous connecter.<br><br><span style="font-size:11px;">Si vous n\'avez pas recu l\'email, attendez quelques minutes et reverifiez vos spams.</span></div>'
+          + '</div>');
+        submitBtn.disabled = false;
+        submitBtn.textContent = t('auth.register.btn');
+        return;
         tick();
       } else {
         errEl.textContent = error.message;
