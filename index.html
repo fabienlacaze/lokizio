@@ -2971,27 +2971,62 @@ async function changeEmail() {
 }
 async function deleteAccount() {
   closeAccountModal();
-  const ok = await customConfirm(
-    t('account.delete_confirm') || 'Etes-vous sur de vouloir supprimer votre compte ? Cette action est irreversible. Toutes vos donnees seront perdues.',
-    t('account.delete_btn') || 'Supprimer definitivement'
-  );
+  const org = API.getOrg();
+  const hasSubscription = org && org.stripe_subscription_id;
+  const planName = API.getPlan();
+
+  let html = '<div style="text-align:left;padding:8px 0;">';
+  html += '<div style="font-size:14px;color:var(--accent);font-weight:700;margin-bottom:12px;">&#9888; Supprimer mon compte</div>';
+  html += '<div style="font-size:13px;color:var(--text2);margin-bottom:16px;">Cette action est irreversible.</div>';
+  html += '<label style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:rgba(255,255,255,0.04);border-radius:8px;cursor:pointer;margin-bottom:8px;">';
+  html += '<input type="checkbox" id="delCheckData" checked style="width:18px;height:18px;accent-color:var(--accent);">';
+  html += '<div><div style="font-size:13px;color:var(--text);font-weight:600;">Supprimer toutes mes donnees</div><div style="font-size:11px;color:var(--text3);">Proprietes, plannings, prestataires, historique, messages</div></div>';
+  html += '</label>';
+  if (hasSubscription) {
+    html += '<label style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:rgba(255,255,255,0.04);border-radius:8px;cursor:pointer;margin-bottom:8px;">';
+    html += '<input type="checkbox" id="delCheckSub" checked style="width:18px;height:18px;accent-color:var(--accent);">';
+    html += '<div><div style="font-size:13px;color:var(--text);font-weight:600;">Annuler mon abonnement ' + esc(planName) + '</div><div style="font-size:11px;color:var(--text3);">Vous ne serez plus facture</div></div>';
+    html += '</label>';
+  }
+  html += '</div>';
+
+  const ok = await customConfirm(html, 'Supprimer definitivement');
   if (!ok) return;
+
   const ok2 = await customConfirm(
-    t('account.delete_confirm2') || 'Derniere chance ! Tapez "SUPPRIMER" pour confirmer.',
-    'SUPPRIMER'
+    '<div style="text-align:center;"><div style="font-size:32px;margin-bottom:8px;">&#9888;</div><div style="font-size:14px;color:var(--text);">Derniere chance !<br>Cette action supprimera votre compte et toutes vos donnees.</div></div>',
+    'JE CONFIRME LA SUPPRESSION'
   );
   if (!ok2) return;
-  // Delete user data first
+
   try {
     const userId = (await sb.auth.getUser()).data.user.id;
-    // Note: actual user deletion requires admin API - we clear data and sign out
-    await sb.from('user_data').delete().eq('user_id', userId);
-    await sb.from('subscriptions').delete().eq('user_id', userId);
-    await sb.from('profiles').delete().eq('id', userId);
+    const deleteData = document.getElementById('delCheckData')?.checked !== false;
+    const cancelSub = hasSubscription && document.getElementById('delCheckSub')?.checked !== false;
+
+    showToast('Suppression en cours...');
+
+    const resp = await fetch(SUPABASE_URL + '/functions/v1/delete-account', {
+      method: 'POST',
+      headers: {
+        'Authorization': 'Bearer ' + (await sb.auth.getSession()).data.session.access_token,
+        'Content-Type': 'application/json',
+        'apikey': SUPABASE_ANON_KEY,
+      },
+      body: JSON.stringify({
+        userId,
+        deleteData,
+        cancelSubscription: cancelSub,
+        stripeSubscriptionId: org?.stripe_subscription_id || null,
+      }),
+    });
+
+    if (!resp.ok) throw new Error('Echec de la suppression');
+
     await sb.auth.signOut();
     localStorage.clear();
-    showToast(t('account.deleted') || 'Compte supprime.');
-    checkAuth();
+    showToast('Compte supprime. Au revoir !');
+    setTimeout(() => location.reload(), 2000);
   } catch (e) {
     showMsg((t('error') || 'Erreur') + ': ' + e.message);
   }
