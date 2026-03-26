@@ -2787,12 +2787,24 @@ async function showRoleChangeModal() {
 
 async function changeRole(newRole) {
   const member = API.getMember();
-  if (member) {
+  if (!member) {
+    // Try to find member from DB directly
+    const { data: { user } } = await sb.auth.getUser();
+    if (user) {
+      const { data: members } = await sb.from('members').select('id').eq('user_id', user.id).limit(1);
+      if (members && members.length) {
+        await sb.from('members').update({ role: newRole }).eq('id', members[0].id);
+      }
+    }
+  } else {
     await sb.from('members').update({ role: newRole }).eq('id', member.id);
   }
   closeMsg();
-  showToast('Role change !');
-  setTimeout(() => location.reload(), 1000);
+  // Clear cached data so init() reloads fresh
+  localStorage.removeItem('mm_cache_config');
+  localStorage.removeItem('mm_panels_revealed');
+  showToast('Role change en ' + ({admin:'Conciergerie',owner:'Proprietaire',provider:'Prestataire'}[newRole] || newRole) + ' !');
+  setTimeout(() => location.reload(), 1500);
 }
 
 function closeAccountModal() {
