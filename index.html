@@ -2787,7 +2787,7 @@ async function authLogin() {
   errEl.textContent = ''; errEl.style.color = '#e94560';
   if (!email || !pass) { errEl.textContent = t('auth.fill.all'); return; }
   const { error } = await sb.auth.signInWithPassword({ email, password: pass });
-  if (error) { errEl.textContent = error.message === 'Invalid login credentials' ? t('auth.login.invalid') : error.message; return; }
+  if (error) { errEl.innerHTML = error.message === 'Invalid login credentials' ? (t('auth.login.invalid') + ' <a href="#" onclick="switchAuthMode(\'register\');return false;" style="color:var(--accent2);text-decoration:underline;">Creer un compte</a>') : esc(error.message); return; }
   // Remember credentials
   if (remember) {
     localStorage.setItem('mm_remember_email', email);
