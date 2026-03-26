@@ -4832,13 +4832,18 @@ function previewTemplate() {
     .replace(/\{total\}/g, String(total))
     .replace(/\{lien\}/g, link);
   previewEl.textContent = result;
-  // Sync heights
-  const ta = document.getElementById('propDetailTemplate');
-  if (ta) {
-    const maxH = Math.max(ta.scrollHeight, previewEl.scrollHeight, 180);
-    ta.style.height = maxH + 'px';
-    previewEl.style.minHeight = maxH + 'px';
-  }
+  // Sync heights after render
+  requestAnimationFrame(() => {
+    const ta = document.getElementById('propDetailTemplate');
+    const prev = document.getElementById('templatePreview');
+    if (ta && prev) {
+      ta.style.height = 'auto';
+      prev.style.height = 'auto';
+      const maxH = Math.max(ta.scrollHeight, prev.scrollHeight, 180);
+      ta.style.height = maxH + 'px';
+      prev.style.height = maxH + 'px';
+    }
+  });
 }
 
 function buildWhatsAppText(provName) {
