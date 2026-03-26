@@ -1307,10 +1307,10 @@ async function loadPDF() {
         </tr>
       </thead>
       <tbody id="pricingTableBody">
-        <tr><td style="padding:7px 8px;">Proprietes</td><td style="text-align:center;">1</td><td style="text-align:center;background:rgba(233,69,96,0.04);">&#8734;</td><td style="text-align:center;background:rgba(108,99,255,0.04);">&#8734;</td></tr>
-        <tr style="background:rgba(255,255,255,0.02);"><td style="padding:7px 8px;">Prestataires</td><td style="text-align:center;">2</td><td style="text-align:center;background:rgba(233,69,96,0.04);">&#8734;</td><td style="text-align:center;background:rgba(108,99,255,0.04);">&#8734;</td></tr>
-        <tr><td style="padding:7px 8px;">Calendriers iCal</td><td style="text-align:center;">2</td><td style="text-align:center;background:rgba(233,69,96,0.04);">&#8734;</td><td style="text-align:center;background:rgba(108,99,255,0.04);">&#8734;</td></tr>
-        <tr style="background:rgba(255,255,255,0.02);"><td style="padding:7px 8px;">Generations / jour</td><td style="text-align:center;">5</td><td style="text-align:center;background:rgba(233,69,96,0.04);">&#8734;</td><td style="text-align:center;background:rgba(108,99,255,0.04);">&#8734;</td></tr>
+        <tr><td style="padding:7px 8px;">Proprietes</td><td style="text-align:center;">1</td><td style="text-align:center;color:var(--success);font-weight:700;background:rgba(233,69,96,0.04);">text-align:center;background:rgba(233,69,96,0.04);">&#8734;#8734;</td><td style="text-align:center;color:var(--success);font-weight:700;background:rgba(108,99,255,0.04);">text-align:center;background:rgba(108,99,255,0.04);">&#8734;#8734;</td></tr>
+        <tr style="background:rgba(255,255,255,0.02);"><td style="padding:7px 8px;">Prestataires</td><td style="text-align:center;">2</td><td style="text-align:center;color:var(--success);font-weight:700;background:rgba(233,69,96,0.04);">text-align:center;background:rgba(233,69,96,0.04);">&#8734;#8734;</td><td style="text-align:center;color:var(--success);font-weight:700;background:rgba(108,99,255,0.04);">text-align:center;background:rgba(108,99,255,0.04);">&#8734;#8734;</td></tr>
+        <tr><td style="padding:7px 8px;">Calendriers iCal</td><td style="text-align:center;">2</td><td style="text-align:center;color:var(--success);font-weight:700;background:rgba(233,69,96,0.04);">text-align:center;background:rgba(233,69,96,0.04);">&#8734;#8734;</td><td style="text-align:center;color:var(--success);font-weight:700;background:rgba(108,99,255,0.04);">text-align:center;background:rgba(108,99,255,0.04);">&#8734;#8734;</td></tr>
+        <tr style="background:rgba(255,255,255,0.02);"><td style="padding:7px 8px;">Generations / jour</td><td style="text-align:center;">5</td><td style="text-align:center;color:var(--success);font-weight:700;background:rgba(233,69,96,0.04);">text-align:center;background:rgba(233,69,96,0.04);">&#8734;#8734;</td><td style="text-align:center;color:var(--success);font-weight:700;background:rgba(108,99,255,0.04);">text-align:center;background:rgba(108,99,255,0.04);">&#8734;#8734;</td></tr>
         <tr><td style="padding:7px 8px;">Export CSV</td><td style="text-align:center;color:var(--success);">&#10003;</td><td style="text-align:center;color:var(--success);background:rgba(233,69,96,0.04);">&#10003;</td><td style="text-align:center;color:var(--success);background:rgba(108,99,255,0.04);">&#10003;</td></tr>
         <tr style="background:rgba(255,255,255,0.02);"><td style="padding:7px 8px;">Stats basiques</td><td style="text-align:center;color:var(--success);">&#10003;</td><td style="text-align:center;color:var(--success);background:rgba(233,69,96,0.04);">&#10003;</td><td style="text-align:center;color:var(--success);background:rgba(108,99,255,0.04);">&#10003;</td></tr>
         <tr><td style="padding:7px 8px;">WhatsApp / Envoi</td><td style="text-align:center;color:var(--accent);">&#10007;</td><td style="text-align:center;color:var(--success);background:rgba(233,69,96,0.04);">&#10003;</td><td style="text-align:center;color:var(--success);background:rgba(108,99,255,0.04);">&#10003;</td></tr>
@@ -1983,7 +1983,7 @@ async function showProviderMode() {
   if (!org) {
     const { data: { user: u2 } } = await sb.auth.getUser();
     content.innerHTML = `<div style="text-align:center;padding:60px 20px;">
-      <div style="font-size:48px;margin-bottom:16px;">&#9203;</div>
+      <div style="font-size:48px;margin-bottom:16px;animation:spin 2s ease-in-out infinite;">&#9203;</div>
       <div style="font-size:18px;font-weight:700;color:#6c63ff;margin-bottom:8px;">En attente d'invitation</div>
       <div style="font-size:13px;color:var(--text3);line-height:1.6;">
         Votre compte prestataire est pret !<br><br>
@@ -2012,7 +2012,7 @@ async function showProviderMode() {
   }
   if (!providerName) {
     content.innerHTML = `<div style="text-align:center;padding:60px 20px;">
-      <div style="font-size:48px;margin-bottom:16px;">&#9203;</div>
+      <div style="font-size:48px;margin-bottom:16px;animation:spin 2s ease-in-out infinite;">&#9203;</div>
       <div style="font-size:18px;font-weight:700;color:var(--accent);margin-bottom:8px;">En attente</div>
       <div style="font-size:13px;color:var(--text3);line-height:1.6;">
         Votre compte prestataire est pret.<br>
@@ -3428,14 +3428,21 @@ function initAddressAutocomplete(inputId, mapId, dataKey) {
       await loadLeaflet();
       const mapEl = document.getElementById(mapId);
       if (mapEl && window.L) {
-        map = L.map(mapEl).setView([46.6, 2.3], 5);
+        map = L.map(mapEl, { dragging: true, tap: true, touchZoom: true, scrollWheelZoom: true }).setView([46.6, 2.3], 5);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OSM', maxZoom: 18 }).addTo(map);
+        // Store map instance for circle drawing
+        _wizMaps[mapId] = map;
+        // Fix drag in modal
+        mapEl.style.touchAction = 'none';
         map.on('click', (e) => {
           if (marker) map.removeLayer(marker);
           marker = L.marker(e.latlng).addTo(map);
           wizardData[dataKey + '_lat'] = e.latlng.lat;
           wizardData[dataKey + '_lng'] = e.latlng.lng;
+          updateWizProvCircle();
         });
+        // Invalidate size after modal renders
+        setTimeout(() => map.invalidateSize(), 500);
       }
     } catch (e) { console.log('Map error:', e); }
   }, 300);
@@ -3470,36 +3477,17 @@ function selectWizAddress(inputId, mapId, dataKey, lat, lng, displayName) {
   wizardData[dataKey + '_lat'] = lat;
   wizardData[dataKey + '_lng'] = lng;
   wizardData[dataKey + '_address'] = displayName;
-  // Move map
-  try {
-    const mapEl = document.getElementById(mapId);
-    if (mapEl && mapEl._leaflet_id) {
-      // Find the map instance — use a stored reference
-    }
-    // Simpler: just reinit the view
-    if (window.L) {
-      const containers = document.querySelectorAll('.leaflet-container');
-      containers.forEach(c => {
-        if (c.id === mapId || c.parentElement.id === mapId) {
-          const m = c._leaflet;
-        }
-      });
-    }
-  } catch (e) {}
-  // Fallback: reload map section
-  setTimeout(async () => {
-    try {
-      await loadLeaflet();
-      const mapEl = document.getElementById(mapId);
-      if (mapEl && window.L) {
-        // Remove old map
-        if (mapEl._leaflet_id) { mapEl._leaflet_id = null; mapEl.innerHTML = ''; }
-        const m = L.map(mapEl).setView([lat, lng], 15);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OSM', maxZoom: 18 }).addTo(m);
-        L.marker([lat, lng]).addTo(m);
-      }
-    } catch (e) {}
-  }, 100);
+
+  // Use stored map instance
+  const map = _wizMaps[mapId];
+  if (map) {
+    map.setView([lat, lng], 13);
+    // Remove old markers
+    map.eachLayer(l => { if (l instanceof L.Marker) map.removeLayer(l); });
+    L.marker([lat, lng]).addTo(map);
+    // Draw circle if radius slider exists
+    updateWizProvCircle();
+  }
 }
 
 async function finishOnboarding(roleId) {
@@ -3522,6 +3510,20 @@ async function finishOnboarding(roleId) {
 
   let org = API.getOrg();
   let member = API.getMember();
+
+  // Create org + member if they don't exist (e.g. after account reset)
+  if (!org) {
+    const orgName = roleId === 'concierge' ? 'Ma conciergerie' : 'Mon organisation';
+    const { data: newOrg } = await sb.from('organizations').insert({ name: orgName, plan: 'free', owner_id: user.id }).select().single();
+    if (newOrg) {
+      org = newOrg;
+      const { data: newMember } = await sb.from('members').insert({ org_id: org.id, user_id: user.id, role: 'admin', accepted: true }).select().single();
+      member = newMember;
+      // Create default property
+      const { data: newProp } = await sb.from('properties').insert({ org_id: org.id, owner_member_id: member.id, name: 'Mon logement' }).select().single();
+      if (newProp) wizardData.defaultPropId = newProp.id;
+    }
+  }
 
   if (org && member) {
     if (roleId === 'owner') {
@@ -3835,7 +3837,7 @@ async function wizardFinishProvider() {
     const { data: { user } } = await sb.auth.getUser();
     const email = user ? user.email : '';
     content.innerHTML = `<div style="text-align:center;padding:60px 20px;">
-      <div style="font-size:48px;margin-bottom:16px;">&#9203;</div>
+      <div style="font-size:48px;margin-bottom:16px;animation:spin 2s ease-in-out infinite;">&#9203;</div>
       <div style="font-size:18px;font-weight:700;color:#6c63ff;margin-bottom:8px;">En attente d'invitation</div>
       <div style="font-size:13px;color:var(--text3);line-height:1.6;">
         Votre compte prestataire est pret !<br><br>
