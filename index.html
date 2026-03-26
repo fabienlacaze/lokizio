@@ -2826,7 +2826,7 @@ async function authRegister() {
             submitBtn.textContent = t('auth.register.btn');
             return;
           }
-          errEl.innerHTML = '&#9203; Trop de tentatives. Reessayez dans <b>' + secs + 's</b><br><span style="font-size:11px;color:var(--text3);">Si le probleme persiste, contactez <a href="mailto:fabien65400@hotmail.fr" style="color:var(--accent2);">support@cleaningmanager.app</a></span>';
+          errEl.innerHTML = '&#9203; Trop de tentatives. Reessayez dans <b>' + secs + 's</b><br><span style="font-size:11px;color:var(--text3);">Si le probleme persiste, contactez <a href="mailto:fabien65400@hotmail.fr" style="color:var(--accent2);">fabien65400@hotmail.fr</a></span>';
           submitBtn.textContent = secs + 's...';
           secs--;
           setTimeout(tick, 1000);
