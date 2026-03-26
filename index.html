@@ -970,6 +970,10 @@ async function loadPDF() {
         <span onclick="togglePassVisibility('authPassConfirm',this)" style="position:absolute;right:12px;top:12px;cursor:pointer;color:var(--text3);font-size:16px;user-select:none;">&#128065;</span>
       </div>
     </div>
+    <div id="rememberMeRow" style="display:flex;align-items:center;gap:8px;margin-top:12px;">
+      <input type="checkbox" id="rememberMe" style="width:16px;height:16px;accent-color:var(--accent);" checked>
+      <label for="rememberMe" style="font-size:12px;color:var(--text3);cursor:pointer;">Se souvenir de moi</label>
+    </div>
     <button id="authSubmitBtn" onclick="authSubmit()" data-i18n="auth.login.btn" style="width:100%;padding:12px;background:linear-gradient(135deg,#e94560,#c73e54);color:#fff;border:none;font-size:14px;font-weight:600;cursor:pointer;border-radius:8px;margin-top:12px;">Se connecter</button>
     <div id="forgotPassLink" style="text-align:center;margin-top:10px;"><a href="#" onclick="forgotPassword();return false;" style="color:var(--accent2);font-size:12px;text-decoration:none;" data-i18n="auth.forgot">Mot de passe oublie ?</a></div>
   </div>
@@ -2757,6 +2761,17 @@ async function checkAuth() {
     } else {
       document.getElementById('authScreen').style.display = 'flex';
       document.getElementById('appMain').style.display = 'none';
+      // Load remembered credentials
+      const savedEmail = localStorage.getItem('mm_remember_email');
+      const savedPass = localStorage.getItem('mm_remember_pass');
+      if (savedEmail) {
+        const emailInput = document.getElementById('authEmail');
+        if (emailInput) emailInput.value = savedEmail;
+      }
+      if (savedPass) {
+        const passInput = document.getElementById('authPass');
+        if (passInput) { try { passInput.value = atob(savedPass); } catch(e2) {} }
+      }
     }
   } catch (e) {
     console.error('Auth check error:', e);
@@ -2767,11 +2782,20 @@ async function checkAuth() {
 async function authLogin() {
   const email = document.getElementById('authEmail').value.trim();
   const pass = document.getElementById('authPass').value;
+  const remember = document.getElementById('rememberMe')?.checked;
   const errEl = document.getElementById('authError');
   errEl.textContent = ''; errEl.style.color = '#e94560';
   if (!email || !pass) { errEl.textContent = t('auth.fill.all'); return; }
   const { error } = await sb.auth.signInWithPassword({ email, password: pass });
   if (error) { errEl.textContent = error.message === 'Invalid login credentials' ? t('auth.login.invalid') : error.message; return; }
+  // Remember credentials
+  if (remember) {
+    localStorage.setItem('mm_remember_email', email);
+    localStorage.setItem('mm_remember_pass', btoa(pass));
+  } else {
+    localStorage.removeItem('mm_remember_email');
+    localStorage.removeItem('mm_remember_pass');
+  }
   checkAuth();
 }
 async function authRegister() {
