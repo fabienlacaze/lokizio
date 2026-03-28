@@ -2813,7 +2813,9 @@ async function authRegister() {
   if (pass !== passConfirm) { errEl.textContent = t('auth.pass.mismatch'); return; }
   try {
     submitBtn.disabled = true; submitBtn.textContent = t('auth.register.loading');
+    console.log('signUp: calling...');
     const { data, error } = await sb.auth.signUp({ email, password: pass });
+    console.log('signUp: returned', { data, error });
     submitBtn.disabled = false; submitBtn.textContent = t('auth.register.btn');
     if (error) {
       // Handle rate limit / too many requests
