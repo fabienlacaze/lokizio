@@ -1977,6 +1977,8 @@ async function init() {
   }
 
   // ── FLOW 2: First time user → onboarding ──
+  // Skip onboarding if user already has an org (onboarded on another device/session)
+  if (org) localStorage.setItem('mm_onboarded', '1');
   if (!localStorage.getItem('mm_onboarded')) {
     document.getElementById('appMain').style.display = '';
     document.querySelector('.header').style.display = 'none';
@@ -2878,7 +2880,12 @@ async function forgotPassword() {
 }
 async function authLogout() {
   await sb.auth.signOut();
+  // Keep persistent settings, clear session data
+  const keep = ['mm_onboarded', 'mm_lang', 'mm_theme', 'mm_remember_email', 'mm_remember_pass'];
+  const saved = {};
+  keep.forEach(k => { const v = localStorage.getItem(k); if (v !== null) saved[k] = v; });
   localStorage.clear();
+  Object.entries(saved).forEach(([k, v]) => localStorage.setItem(k, v));
   checkAuth();
 }
 /* ── Account Management ── */
