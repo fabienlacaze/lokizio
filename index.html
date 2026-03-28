@@ -2448,8 +2448,8 @@ async function showOwnerMode() {
         html += `<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px solid var(--border);font-size:13px;">
           <div style="min-width:90px;font-weight:600;">${fmtDate(c.cleaningDate || c.date)}</div>
           <div style="flex:1;color:var(--text2);">${esc(c.provider || '?')}</div>
-          <span style="display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600;color:#fff;background:${c.source?.toLowerCase().includes('airbnb')?'#e94560':'#003580'};min-width:45px;text-align:center;">${esc(c.source || '')}</span>
-          <span style="font-size:11px;color:${statusColors[status] || 'var(--text3)'};min-width:80px;text-align:right;">${statusIcons[status] || '⏳'} ${statusLabels[status] || ''}</span>
+          <span style="display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600;color:#fff;background:${c.source?.toLowerCase().includes('airbnb')?'#e94560':'#003580'};min-width:50px;text-align:center;flex-shrink:0;">${esc(c.source || '')}</span>
+          <span style="font-size:11px;color:${statusColors[status] || 'var(--text3)'};min-width:90px;text-align:right;flex-shrink:0;white-space:nowrap;">${statusIcons[status] || '⏳'} ${statusLabels[status] || ''}</span>
         </div>`;
       });
       if (propCleanings.length > 5) {
@@ -2992,7 +2992,7 @@ async function showAccountModal() {
 async function showRoleChangeModal() {
   const roles = [
     { id: 'admin', label: 'Conciergerie', icon: '&#127970;', color: '#e94560', desc: 'Gerez les menages pour plusieurs proprietaires' },
-    { id: 'owner', label: 'Proprietaire', icon: '&#127968;', color: '#f59e0b', desc: 'Gerez vos propres locations' },
+    { id: 'owner', label: 'Proprietaire', icon: '&#127968;', color: '#f59e0b', desc: 'Suivez les menages de vos biens' },
     { id: 'provider', label: 'Prestataire', icon: '&#129529;', color: '#34d399', desc: 'Consultez et validez vos missions' },
   ];
   const currentRole = API.getRole();
@@ -3722,7 +3722,7 @@ function showOnboardingStep2() {
       id: 'owner',
       icon: '&#127968;',
       title: t('role.owner.title') || 'Je suis proprietaire',
-      desc: t('role.owner.desc') || 'Vous louez sur Airbnb/Booking et gerez vos propres menages.',
+      desc: t('role.owner.desc') || 'Vous etes proprietaire et suivez les menages de vos biens.',
       plan: t('role.owner.plan') || 'Gratuit (1 propriete) / Pro (3.99€/mois)',
       color: '#e94560',
     },
