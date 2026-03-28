@@ -2280,6 +2280,7 @@ async function showProviderMode() {
         } else {
           html += `<div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);font-size:11px;color:var(--text3);text-align:center;">Le jour du menage, vous pourrez signaler votre arrivee ici</div>`;
         }
+        html += `<div style="text-align:center;margin-top:6px;"><button onclick="refuseCleaning('${c.propertyId}','${dateStr}','${esc(providerName)}')" style="background:none;border:none;color:var(--text3);font-size:11px;cursor:pointer;text-decoration:underline;">Finalement refuser</button></div>`;
       } else if (status === 'arrived') {
         // Step 3: Start cleaning
         html += `<div style="display:flex;gap:8px;margin-top:12px;padding-top:10px;border-top:1px solid var(--border);">
@@ -2297,6 +2298,11 @@ async function showProviderMode() {
         <div style="margin-top:8px;">
           <input type="file" accept="image/*" multiple onchange="providerUploadPhotos(this,'${c.propertyId}','${dateStr}','${esc(providerName)}')" style="font-size:11px;color:var(--text3);">
           <span style="font-size:10px;color:var(--text3);margin-left:4px;">📷 Photos apres menage</span>
+        </div>`;
+      } else if (status === 'refused') {
+        // Refused: allow to change mind
+        html += `<div style="display:flex;gap:8px;margin-top:12px;padding-top:10px;border-top:1px solid var(--border);">
+          <button onclick="acceptCleaning('${c.propertyId}','${dateStr}','${esc(providerName)}')" style="flex:1;padding:10px;background:#34d399;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">&#10003; Finalement accepter</button>
         </div>`;
       } else if (status === 'departed') {
         // Step 5: Confirm done
