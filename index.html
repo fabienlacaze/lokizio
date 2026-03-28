@@ -3248,9 +3248,21 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (token && type === 'signup') {
       try {
         const { error } = await sb.auth.verifyOtp({ token_hash: token, type: 'email' });
+        window.location.hash = '';
         if (!error) {
-          window.location.hash = '';
-          showToast('Email confirme ! Connectez-vous maintenant.');
+          // Show confirmation success in auth screen
+          await sb.auth.signOut();
+          const authBox = document.querySelector('#authScreen > div');
+          if (authBox) {
+            document.getElementById('authScreen').style.display = 'flex';
+            authBox.innerHTML = '<div style="text-align:center;padding:30px 20px;">'
+              + '<div style="font-size:48px;margin-bottom:12px;">&#10003;</div>'
+              + '<div style="font-size:18px;font-weight:700;color:#34d399;margin-bottom:8px;">Email confirme !</div>'
+              + '<div style="font-size:14px;color:var(--text2);margin-bottom:20px;">Votre compte est maintenant actif.</div>'
+              + '<button onclick="location.reload()" style="padding:12px 32px;background:linear-gradient(135deg,#e94560,#c73e54);color:#fff;border:none;font-size:14px;font-weight:600;cursor:pointer;border-radius:8px;">Se connecter</button>'
+              + '</div>';
+          }
+          return;
         }
       } catch(e) { console.error('Confirm error:', e); }
     }
