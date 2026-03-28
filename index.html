@@ -2389,12 +2389,8 @@ async function showOwnerMode() {
 
   let html = '';
 
-  // KPI cards
-  html += `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin-bottom:16px;">
-    <div style="background:linear-gradient(135deg,#e94560,#c73e54);border-radius:12px;padding:16px;text-align:center;">
-      <div style="font-size:24px;font-weight:800;color:#fff;">${properties.length}</div>
-      <div style="font-size:11px;color:rgba(255,255,255,0.8);">${t('kpi.properties')}</div>
-    </div>
+  // KPI cards (no "properties" card for owner - they already know)
+  html += `<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px;">
     <div style="background:linear-gradient(135deg,#6c63ff,#5a54e0);border-radius:12px;padding:16px;text-align:center;">
       <div style="font-size:24px;font-weight:800;color:#fff;">${futureCleanings.length}</div>
       <div style="font-size:11px;color:rgba(255,255,255,0.8);">${t('kpi.upcoming')}</div>
