@@ -2841,10 +2841,8 @@ async function authRegister() {
     // Always show confirmation popup after successful signup
     errEl.textContent = '';
     try { await sb.auth.signOut(); } catch(e) {}
-    alert('Compte cree ! Verifiez votre email pour confirmer.');
     // Show inline confirmation in auth screen (modal is inside appMain which is hidden)
     const authBox = document.querySelector('#authScreen > div');
-    console.log('authBox found:', authBox);
     if (authBox) {
       authBox.innerHTML = '<div style="text-align:center;padding:30px 20px;">'
         + '<div style="font-size:48px;margin-bottom:12px;">&#9993;</div>'
