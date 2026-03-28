@@ -99,6 +99,7 @@ const API = (function() {
         checklist: prop.checklist || [],
         notes: prop.notes,
         icals: prop.icals || [],
+        manual_reservations: prop.manualReservations || [],
         providers: prop.providers || [],
         readonly_token: prop.readonlyToken || prop.readonly_token,
         updated_at: new Date().toISOString(),
@@ -184,6 +185,7 @@ const API = (function() {
       checklist: dbProp.checklist || [],
       notes: dbProp.notes || '',
       icals: dbProp.icals || [],
+      manualReservations: dbProp.manual_reservations || [],
       providers: dbProp.providers || [],
       readonlyToken: dbProp.readonly_token || '',
       // Legacy compat
@@ -539,6 +541,7 @@ const API = (function() {
         airbnbIcalUrl: prop.airbnbIcalUrl || '',
         bookingIcalUrl: prop.bookingIcalUrl || '',
         icals: prop.icals || [],
+        manualReservations: prop.manualReservations || [],
         providers: prop.providers,
         property: prop.name,
       };

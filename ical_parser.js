@@ -141,6 +141,21 @@ async function generatePlanningFromICal(config, previousPlanning, transmittedDat
     }
   }
 
+  // Inject manual reservations
+  if (config.manualReservations && config.manualReservations.length) {
+    for (const mr of config.manualReservations) {
+      if (mr.checkin && mr.checkout) {
+        allEvents.push({
+          start: new Date(mr.checkin),
+          end: new Date(mr.checkout),
+          summary: mr.guestName || 'Reservation manuelle',
+          source: mr.source || 'Direct',
+        });
+      }
+    }
+    log('Reservations manuelles: ' + config.manualReservations.length + ' ajoutee(s)', 'ok');
+  }
+
   log('Total: ' + allEvents.length + ' evenement(s), ' + errors.length + ' erreur(s)');
   if (!allEvents.length && errors.length) return { error: errors.join('; ') };
 

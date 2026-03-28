@@ -27,8 +27,8 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="supabase_config.js?v=13"></script>
 <script src="i18n.js?v=24"></script>
-<script src="ical_parser.js?v=13"></script>
-<script src="api_bridge.js?v=20"></script>
+<script src="ical_parser.js?v=14"></script>
+<script src="api_bridge.js?v=21"></script>
 <!-- Lazy-loaded: Leaflet, Chart.js, jsPDF (loaded on demand to improve startup) -->
 <script>
 function lazyLoad(url, type) {
@@ -890,7 +890,7 @@ async function loadPDF() {
 <body>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;pointer-events:none;">v2.54</div>
+<div id="versionBadge" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;pointer-events:none;">v2.55</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -902,7 +902,7 @@ async function loadPDF() {
   </div>
   <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Cleaning Manager</div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Gestion des menages</div>
-  <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou &mdash; v2.54</div>
+  <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou &mdash; v2.55</div>
   <!-- Loading bar -->
   <div style="width:200px;height:3px;background:rgba(255,255,255,0.1);border-radius:4px;margin-top:24px;overflow:hidden;">
     <div id="splashBar" style="width:0%;height:100%;background:linear-gradient(90deg,#e94560,#6c63ff);border-radius:4px;transition:width 1.5s ease;"></div>
@@ -993,7 +993,7 @@ async function loadPDF() {
   <div class="header-left">
     <div class="header-logo"><svg width="24" height="24" viewBox="0 0 24 24" fill="none"><!-- Maison --><path d="M3 21V8l9-5 9 5v13H3z" stroke="#fff" stroke-width="1.5" fill="none"/><path d="M9 21v-6h6v6" stroke="#fff" stroke-width="1.5"/><path d="M7 11h2v2H7zM15 11h2v2h-2z" fill="rgba(255,255,255,0.5)"/><!-- Balai --><line x1="17" y1="6" x2="20" y2="19" stroke="#fff" stroke-width="1.2" stroke-linecap="round"/><path d="M18.5 16.5c1.2 1 2.2 2.5 1.5 3.5s-2.5 0-3-1c-.4-.8-.2-1.8.2-2.5z" fill="#fff" opacity="0.85"/></svg></div>
     <div>
-      <h1>Menage Manager <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.35);vertical-align:middle;">v2.54</span></h1>
+      <h1>Menage Manager <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.35);vertical-align:middle;">v2.55</span></h1>
       <div class="subtitle" data-i18n="header.subtitle">Gestion des menages</div>
     </div>
   </div>
@@ -1244,7 +1244,7 @@ async function loadPDF() {
 
   <!-- Footer -->
   <div translate="no" style="text-align:center;padding:20px 16px;color:var(--text3);font-size:11px;line-height:1.8;">
-    <div style="font-weight:600;color:var(--text2);margin-bottom:4px;">Cleaning Manager v2.54</div>
+    <div style="font-weight:600;color:var(--text2);margin-bottom:4px;">Cleaning Manager v2.55</div>
     <div>Made with ❤️ by <a href="https://github.com/fabienlacaze" target="_blank" style="color:var(--accent2);text-decoration:none;">Fabidou</a></div>
     <div style="margin-top:4px;">
       <a href="privacy.html" target="_blank" style="color:var(--text3);text-decoration:none;margin:0 8px;">Confidentialite</a>
@@ -2215,7 +2215,7 @@ async function showProviderMode() {
   if (headerEl) {
     const h1 = headerEl.querySelector('h1');
     if (h1) {
-      h1.innerHTML = 'Menage Manager <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.35);vertical-align:middle;">v2.54</span>';
+      h1.innerHTML = 'Menage Manager <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.35);vertical-align:middle;">v2.55</span>';
       appendRoleBadge(h1);
     }
     const sub = headerEl.querySelector('.sub-title');
@@ -2440,7 +2440,7 @@ async function showOwnerMode() {
   if (headerEl) {
     const h1 = headerEl.querySelector('h1');
     if (h1) {
-      h1.innerHTML = 'Menage Manager <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.35);vertical-align:middle;">v2.54</span>';
+      h1.innerHTML = 'Menage Manager <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.35);vertical-align:middle;">v2.55</span>';
       appendRoleBadge(h1);
     }
     document.querySelectorAll('.header-actions .btnHelp').forEach(btn => {
@@ -3847,7 +3847,23 @@ function showIcalModal() {
       </div>`;
     });
   }
-  html += '<div style="margin-top:12px;text-align:center;"><button class="btn btnSmall btnSuccess" onclick="closeMsg();showAddIcalModal()" style="padding:8px 20px;font-size:12px;">+ Ajouter un calendrier</button></div>';
+  html += '<div style="margin-top:12px;text-align:center;display:flex;gap:8px;justify-content:center;flex-wrap:wrap;">';
+  html += '<button class="btn btnSmall btnSuccess" onclick="closeMsg();showAddIcalModal()" style="padding:8px 20px;font-size:12px;">+ Ajouter un calendrier</button>';
+  html += '<button class="btn btnSmall" onclick="closeMsg();showAddManualReservation()" style="padding:8px 20px;font-size:12px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);">+ Reservation manuelle</button>';
+  html += '</div>';
+  // List existing manual reservations
+  if (prop.manualReservations && prop.manualReservations.length) {
+    html += '<div style="margin-top:14px;border-top:1px solid var(--border);padding-top:10px;">';
+    html += '<div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;margin-bottom:6px;">Reservations manuelles</div>';
+    prop.manualReservations.forEach((mr, mi) => {
+      html += '<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border2);">';
+      html += '<span class="srcBadge ' + getSourceClass(mr.source) + '" style="font-size:9px;">' + esc(mr.source || 'Direct') + '</span>';
+      html += '<span style="font-size:12px;flex:1;">' + fmtDate(mr.checkin) + ' → ' + fmtDate(mr.checkout) + (mr.guestName ? ' — ' + esc(mr.guestName) : '') + '</span>';
+      html += '<button onclick="deleteManualReservation(' + mi + ')" style="background:none;border:none;color:#ef4444;font-size:14px;cursor:pointer;">&#10005;</button>';
+      html += '</div>';
+    });
+    html += '</div>';
+  }
   html += '</div>';
   document.getElementById('msgBody').innerHTML = html;
   document.getElementById('msgTitle').textContent = 'Calendriers iCal';
@@ -5275,7 +5291,9 @@ async function generatePlanning(isAuto) {
     prop.icals.forEach((ical, i) => { const input = document.getElementById('ical_' + i); if (input) ical.url = input.value.trim(); });
     syncIcalToOldFormat(prop);
   }
-  if(!config.airbnbIcalUrl&&!config.bookingIcalUrl&&!(prop&&prop.icals&&prop.icals.some(i=>i.url))){showMsg(t('config.ical.required'));return;}
+  const hasIcal = config.airbnbIcalUrl || config.bookingIcalUrl || (prop && prop.icals && prop.icals.some(i=>i.url));
+  const hasManual = prop && prop.manualReservations && prop.manualReservations.length > 0;
+  if(!hasIcal && !hasManual){showMsg(t('config.ical.required'));return;}
   if(!(config.providers||[]).length){showMsg(t('config.provider.required'));return;}
   const totalPct=(config.providers||[]).reduce((s,p)=>s+(parseInt(p.percentage)||0),0);
   if(totalPct!==100){showMsg((t('validate.pct') || 'Total must be 100%') + ' (' + totalPct + '%)');return;}
@@ -6462,6 +6480,56 @@ async function switchOwnerOrg(orgId) {
   API.switchOrg(orgId);
   await API.load_plan();
   showOwnerMode();
+}
+
+function showAddManualReservation() {
+  const sources = ['Direct','Airbnb','Booking','Vrbo','Tripadvisor','Holidu','Gites de France','Autre'];
+  let html = '<div style="padding:10px;">';
+  html += '<div style="font-size:16px;font-weight:700;color:var(--accent);margin-bottom:14px;text-align:center;">Ajouter une reservation</div>';
+  html += '<div style="display:flex;flex-direction:column;gap:10px;">';
+  html += '<div><label style="font-size:12px;color:var(--text3);display:block;margin-bottom:4px;">Date d\'arrivee (check-in)</label>';
+  html += '<input type="date" id="mrCheckin" style="width:100%;padding:10px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:13px;box-sizing:border-box;"></div>';
+  html += '<div><label style="font-size:12px;color:var(--text3);display:block;margin-bottom:4px;">Date de depart (check-out)</label>';
+  html += '<input type="date" id="mrCheckout" style="width:100%;padding:10px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:13px;box-sizing:border-box;"></div>';
+  html += '<div><label style="font-size:12px;color:var(--text3);display:block;margin-bottom:4px;">Source</label>';
+  html += '<select id="mrSource" style="width:100%;padding:10px;background:#1a1a2e;color:#f0f0f5;border:1px solid var(--border2);border-radius:8px;font-size:13px;box-sizing:border-box;">';
+  sources.forEach(s => html += '<option value="' + s + '" style="background:#1a1a2e;color:#f0f0f5;">' + s + '</option>');
+  html += '</select></div>';
+  html += '<div><label style="font-size:12px;color:var(--text3);display:block;margin-bottom:4px;">Nom du voyageur (optionnel)</label>';
+  html += '<input type="text" id="mrGuest" placeholder="Ex: Jean Dupont" style="width:100%;padding:10px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:13px;box-sizing:border-box;"></div>';
+  html += '</div>';
+  html += '<div style="display:flex;gap:8px;margin-top:14px;">';
+  html += '<button class="btn btnOutline" style="flex:1;padding:12px;" onclick="closeMsg()">Annuler</button>';
+  html += '<button class="btn btnPrimary" style="flex:1;padding:12px;" onclick="saveManualReservation()">Ajouter</button>';
+  html += '</div></div>';
+  showMsg(html);
+}
+
+async function saveManualReservation() {
+  const checkin = document.getElementById('mrCheckin').value;
+  const checkout = document.getElementById('mrCheckout').value;
+  const source = document.getElementById('mrSource').value;
+  const guestName = document.getElementById('mrGuest').value.trim();
+  if (!checkin || !checkout) { showToast('Dates requises'); return; }
+  if (checkout <= checkin) { showToast('La date de depart doit etre apres l\'arrivee'); return; }
+  const prop = API.getActiveProperty(fullConfig);
+  if (!prop) return;
+  if (!prop.manualReservations) prop.manualReservations = [];
+  prop.manualReservations.push({ checkin, checkout, source, guestName });
+  await syncAndSaveConfig();
+  closeMsg();
+  showToast('Reservation ajoutee !');
+  showIcalManager();
+}
+
+async function deleteManualReservation(idx) {
+  const prop = API.getActiveProperty(fullConfig);
+  if (!prop || !prop.manualReservations) return;
+  prop.manualReservations.splice(idx, 1);
+  await syncAndSaveConfig();
+  closeMsg();
+  showToast('Reservation supprimee');
+  showIcalManager();
 }
 
 function getSourceClass(source) {
