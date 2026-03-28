@@ -1386,7 +1386,7 @@ async function loadPDF() {
         <tr>
           <td></td>
           <td style="text-align:center;padding:12px 4px;"><button class="btn btnOutline" style="padding:8px 16px;font-size:12px;width:100%;" disabled>Actuel</button></td>
-          <td style="text-align:center;padding:12px 4px;background:rgba(108,99,255,0.04);border-radius:0 0 12px 12px;"><button class="btnUpgrade" style="background:linear-gradient(135deg,#6c63ff,#5a54e0);padding:8px 16px;font-size:12px;width:100%;" onclick="upgradeToPremium('business')">Premium</button></td>
+          <td style="text-align:center;padding:12px 4px;background:rgba(108,99,255,0.04);border-radius:0 0 12px 12px;"><button class="btnUpgrade" style="background:linear-gradient(135deg,#6c63ff,#5a54e0);padding:8px 16px;font-size:12px;width:100%;" onclick="upgradeToPremium()">Premium</button></td>
         </tr>
       </tfoot>
     </table>
@@ -3006,9 +3006,73 @@ async function showRoleChangeModal() {
 }
 
 async function changeRole(newRole) {
+  const currentRole = API.getRole();
+  const plan = API.getPlan();
+  const isPremium = API.isPremium();
+  const trialDays = API.getTrialDaysLeft();
+  const isTrial = trialDays > 0;
+
+  // Same role — do nothing
+  if (newRole === currentRole || (newRole === 'admin' && currentRole === 'manager')) { closeMsg(); return; }
+
+  // If user has a paid premium (not trial), handle subscription changes
+  if (isPremium && !isTrial) {
+    const fromConcierge = (currentRole === 'admin' || currentRole === 'manager');
+    const toConcierge = (newRole === 'admin');
+    const toOwner = (newRole === 'owner');
+    const toProvider = (newRole === 'provider');
+
+    // Concierge (19.99€) → Proprio: offer choice
+    if (fromConcierge && toOwner) {
+      closeMsg();
+      let html = '<div style="padding:10px;text-align:center;">';
+      html += '<div style="font-size:16px;font-weight:700;color:var(--accent);margin-bottom:12px;">Changement d\'abonnement</div>';
+      html += '<div style="font-size:13px;color:var(--text2);margin-bottom:20px;">Vous passez de Conciergerie a Proprietaire.<br>Votre abonnement Premium est a 19.99€/mois.</div>';
+      html += '<div style="display:flex;flex-direction:column;gap:10px;">';
+      html += '<button class="btn btnPrimary" style="padding:14px;font-size:14px;" onclick="doChangeRole(\'owner\',\'keep\')">Garder 19.99€/mois <span style="font-size:11px;opacity:0.7;display:block;">Toutes les fonctionnalites restent actives</span></button>';
+      html += '<button class="btn btnOutline" style="padding:14px;font-size:14px;" onclick="doChangeRole(\'owner\',\'downgrade\')">Passer a 3.99€/mois <span style="font-size:11px;opacity:0.7;display:block;">Credit au prorata sur votre prochaine facture</span></button>';
+      html += '</div></div>';
+      showMsg(html);
+      return;
+    }
+
+    // Proprio (3.99€) → Concierge: must upgrade
+    if (toOwner === false && toConcierge) {
+      closeMsg();
+      let html = '<div style="padding:10px;text-align:center;">';
+      html += '<div style="font-size:16px;font-weight:700;color:#6c63ff;margin-bottom:12px;">Upgrade requis</div>';
+      html += '<div style="font-size:13px;color:var(--text2);margin-bottom:20px;">Le mode Conciergerie necessite l\'abonnement a 19.99€/mois.<br>Votre credit restant sera deduit automatiquement.</div>';
+      html += '<div style="display:flex;flex-direction:column;gap:10px;">';
+      html += '<button class="btn btnPrimary" style="padding:14px;font-size:14px;background:linear-gradient(135deg,#6c63ff,#5a54e0);" onclick="doChangeRole(\'admin\',\'upgrade\')">Passer a 19.99€/mois</button>';
+      html += '<button class="btn btnOutline" style="padding:14px;font-size:14px;" onclick="closeMsg()">Annuler</button>';
+      html += '</div></div>';
+      showMsg(html);
+      return;
+    }
+
+    // Any → Provider: warn about losing premium
+    if (toProvider) {
+      closeMsg();
+      let html = '<div style="padding:10px;text-align:center;">';
+      html += '<div style="font-size:16px;font-weight:700;color:#34d399;margin-bottom:12px;">Passer en mode Prestataire</div>';
+      html += '<div style="font-size:13px;color:var(--text2);margin-bottom:20px;">Le mode Prestataire est gratuit.<br>Votre abonnement Premium restera actif jusqu\'a la fin de la periode.</div>';
+      html += '<div style="display:flex;flex-direction:column;gap:10px;">';
+      html += '<button class="btn btnPrimary" style="padding:14px;font-size:14px;background:#34d399;" onclick="doChangeRole(\'provider\',\'keep\')">Confirmer</button>';
+      html += '<button class="btn btnOutline" style="padding:14px;font-size:14px;" onclick="closeMsg()">Annuler</button>';
+      html += '</div></div>';
+      showMsg(html);
+      return;
+    }
+  }
+
+  // Free or trial: just change role directly
+  await doChangeRole(newRole, 'none');
+}
+
+async function doChangeRole(newRole, subscriptionAction) {
+  // Update role in DB
   const member = API.getMember();
   if (!member) {
-    // Try to find member from DB directly
     const { data: { user } } = await sb.auth.getUser();
     if (user) {
       const { data: members } = await sb.from('members').select('id').eq('user_id', user.id).limit(1);
@@ -3019,8 +3083,26 @@ async function changeRole(newRole) {
   } else {
     await sb.from('members').update({ role: newRole }).eq('id', member.id);
   }
+
+  // Handle subscription change via Stripe
+  if (subscriptionAction === 'upgrade' || subscriptionAction === 'downgrade') {
+    try {
+      const userId = await (async()=>{ const{data:{user}}=await sb.auth.getUser(); return user.id; })();
+      const newPriceId = subscriptionAction === 'upgrade' ? STRIPE_PRICE_BUSINESS : STRIPE_PRICE_PRO;
+      const resp = await fetch(`${SUPABASE_URL}/functions/v1/change-subscription`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${SUPABASE_ANON_KEY}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId, newPriceId, action: subscriptionAction })
+      });
+      if (!resp.ok) {
+        const err = await resp.json().catch(() => ({}));
+        console.error('Stripe change error:', err);
+        showToast('Erreur lors du changement d\'abonnement. Contactez le support.');
+      }
+    } catch(e) { console.error('Stripe change error:', e); }
+  }
+
   closeMsg();
-  // Clear cached data so init() reloads fresh
   localStorage.removeItem('mm_cache_config');
   localStorage.removeItem('mm_panels_revealed');
   showToast('Role change en ' + ({admin:'Conciergerie',owner:'Proprietaire',provider:'Prestataire'}[newRole] || newRole) + ' !');
@@ -3306,8 +3388,9 @@ function closePremiumModal() {
   document.getElementById('overlay').style.display = 'none';
   document.getElementById('premiumModal').style.display = 'none';
 }
-async function upgradeToPremium(plan) {
-  const priceId = (plan === 'business') ? STRIPE_PRICE_BUSINESS : STRIPE_PRICE_PRO;
+async function upgradeToPremium() {
+  const role = API.getRole();
+  const priceId = (role === 'admin' || role === 'manager') ? STRIPE_PRICE_BUSINESS : STRIPE_PRICE_PRO;
   // Stripe Checkout
   if (priceId) {
     try {
