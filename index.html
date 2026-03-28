@@ -2188,11 +2188,20 @@ async function showProviderMode() {
   const footerPrem = document.getElementById('footerPremiumLink');
   if (footerPrem) footerPrem.style.display = 'none';
 
+  // Calculate provider price and earnings
+  let providerPrice = 0;
+  for (const prop of properties) {
+    const prov = (prop.providers || []).find(p => p.name === providerName);
+    if (prov && prov.price) { providerPrice = prov.price; break; }
+  }
+  const doneCount = allCleanings.filter(c => { const v = validations[(c.cleaningDate||c.date) + '_' + providerName]; return v && v.status === 'done'; }).length;
+  const earnedThisMonth = doneCount * providerPrice;
+  const upcomingEarnings = (allCleanings.length - doneCount) * providerPrice;
+
   let html = '';
 
   // Stats bar
-  const doneCount = allCleanings.filter(c => { const v = validations[(c.cleaningDate||c.date) + '_' + providerName]; return v && v.status === 'done'; }).length;
-  html += `<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:16px;">
+  html += `<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:10px;">
     <div style="background:linear-gradient(135deg,#6c63ff,#5a54e0);border-radius:12px;padding:16px;text-align:center;">
       <div style="font-size:24px;font-weight:800;color:#fff;">${allCleanings.length}</div>
       <div style="font-size:11px;color:rgba(255,255,255,0.8);">${t('kpi.upcoming_provider')}</div>
@@ -2206,6 +2215,26 @@ async function showProviderMode() {
       <div style="font-size:11px;color:rgba(255,255,255,0.8);">${t('kpi.remaining')}</div>
     </div>
   </div>`;
+
+  // Financial summary
+  if (providerPrice > 0) {
+    html += `<div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:16px;display:flex;justify-content:space-around;text-align:center;">
+      <div>
+        <div style="font-size:11px;color:var(--text3);text-transform:uppercase;margin-bottom:4px;">Tarif/menage</div>
+        <div style="font-size:16px;font-weight:700;color:var(--text);">${providerPrice}€</div>
+      </div>
+      <div style="border-left:1px solid var(--border);"></div>
+      <div>
+        <div style="font-size:11px;color:var(--text3);text-transform:uppercase;margin-bottom:4px;">Gagne</div>
+        <div style="font-size:16px;font-weight:700;color:#34d399;">${earnedThisMonth}€</div>
+      </div>
+      <div style="border-left:1px solid var(--border);"></div>
+      <div>
+        <div style="font-size:11px;color:var(--text3);text-transform:uppercase;margin-bottom:4px;">A venir</div>
+        <div style="font-size:16px;font-weight:700;color:#6c63ff;">${upcomingEarnings}€</div>
+      </div>
+    </div>`;
+  }
 
   // Cleaning cards
   if (allCleanings.length === 0) {
