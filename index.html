@@ -2799,10 +2799,9 @@ async function openProviderChat() {
     }
   }
   chatProviderName = myName;
-  document.getElementById('chatTitle').textContent = 'Chat';
   document.getElementById('chatInput').value = '';
-  document.getElementById('overlay').style.display = 'block';
-  document.getElementById('chatModal').style.display = 'flex';
+  const widget = document.getElementById('chatWidget');
+  if (widget) widget.style.display = 'flex';
   await loadChatMessages();
   if (chatRealtimeSub) sb.removeChannel(chatRealtimeSub);
   chatRealtimeSub = sb.channel('chat_prov_' + myName)
