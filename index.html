@@ -2280,7 +2280,7 @@ async function showProviderMode() {
         } else {
           html += `<div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);font-size:11px;color:var(--text3);text-align:center;">Le jour du menage, vous pourrez signaler votre arrivee ici</div>`;
         }
-        html += `<div style="text-align:center;margin-top:6px;"><button onclick="showChangeStatusPopup('${c.propertyId}','${dateStr}','${esc(providerName)}','refused','Refuser ce menage ?')" style="background:none;border:none;color:var(--text3);font-size:11px;cursor:pointer;text-decoration:underline;">Finalement refuser</button></div>`;
+        html += `<div style="text-align:center;margin-top:6px;"><button onclick="showModifyResponsePopup('${c.propertyId}','${dateStr}','${esc(providerName)}','accepted')" style="background:none;border:none;color:var(--text3);font-size:11px;cursor:pointer;text-decoration:underline;">&#9998; Modifier ma reponse</button></div>`;
       } else if (status === 'arrived') {
         // Step 3: Start cleaning
         html += `<div style="display:flex;gap:8px;margin-top:12px;padding-top:10px;border-top:1px solid var(--border);">
@@ -2302,7 +2302,7 @@ async function showProviderMode() {
       } else if (status === 'refused') {
         // Refused: allow to change mind
         html += `<div style="display:flex;gap:8px;margin-top:12px;padding-top:10px;border-top:1px solid var(--border);">
-          <button onclick="showChangeStatusPopup('${c.propertyId}','${dateStr}','${esc(providerName)}','accepted','Accepter ce menage ?')" style="flex:1;padding:10px;background:#34d399;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">&#10003; Finalement accepter</button>
+          <button onclick="showModifyResponsePopup('${c.propertyId}','${dateStr}','${esc(providerName)}','refused')" style="flex:1;padding:10px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">&#9998; Modifier ma reponse</button>
         </div>`;
       } else if (status === 'departed') {
         // Step 5: Confirm done
@@ -2795,25 +2795,26 @@ async function markCleaningAsSeen(propId, date, provName) {
   }, { onConflict: 'property_id,cleaning_date,provider_name' });
 }
 
-function showChangeStatusPopup(propId, date, provName, newStatus, title) {
-  const isAccept = newStatus === 'accepted';
-  const color = isAccept ? '#34d399' : '#ef4444';
-  const btnText = isAccept ? '&#10003; Confirmer l\'acceptation' : '&#10007; Confirmer le refus';
-  let html = '<div style="padding:10px;text-align:center;">';
-  html += '<div style="font-size:16px;font-weight:700;color:' + color + ';margin-bottom:12px;">' + title + '</div>';
-  html += '<div style="font-size:13px;color:var(--text2);margin-bottom:12px;">' + esc(provName) + ' — ' + fmtDate(date) + '</div>';
-  html += '<div style="text-align:left;margin-bottom:12px;">';
+function showModifyResponsePopup(propId, date, provName, currentStatus) {
+  let html = '<div style="padding:10px;">';
+  html += '<div style="font-size:16px;font-weight:700;color:var(--accent);margin-bottom:6px;text-align:center;">Modifier ma reponse</div>';
+  html += '<div style="font-size:12px;color:var(--text3);margin-bottom:14px;text-align:center;">' + fmtDate(date) + '</div>';
+  html += '<div style="text-align:left;margin-bottom:14px;">';
   html += '<label style="font-size:12px;color:var(--text3);display:block;margin-bottom:4px;">Raison / commentaire (optionnel) :</label>';
-  html += '<textarea id="changeStatusReason" placeholder="Ex: imprevu, indisponibilite..." style="width:100%;padding:10px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:13px;font-family:Inter,sans-serif;resize:vertical;min-height:60px;box-sizing:border-box;"></textarea>';
+  html += '<textarea id="changeStatusReason" placeholder="Ex: imprevu, indisponibilite..." style="width:100%;padding:10px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:13px;font-family:Inter,sans-serif;resize:vertical;min-height:50px;box-sizing:border-box;"></textarea>';
   html += '</div>';
-  html += '<div style="display:flex;gap:8px;">';
-  html += '<button class="btn btnOutline" style="flex:1;padding:12px;" onclick="closeMsg()">Annuler</button>';
-  html += '<button class="btn" style="flex:1;padding:12px;background:' + color + ';color:#fff;border:none;font-weight:600;" onclick="confirmChangeStatus(\'' + propId + '\',\'' + date + '\',\'' + esc(provName) + '\',\'' + newStatus + '\')">'+btnText+'</button>';
+  html += '<div style="display:flex;flex-direction:column;gap:8px;">';
+  if (currentStatus === 'accepted') {
+    html += '<button class="btn" style="padding:12px;background:#ef4444;color:#fff;border:none;font-weight:600;border-radius:8px;" onclick="confirmModifyResponse(\'' + propId + '\',\'' + date + '\',\'' + esc(provName) + '\',\'refused\')">&#10007; Refuser ce menage</button>';
+  } else {
+    html += '<button class="btn" style="padding:12px;background:#34d399;color:#fff;border:none;font-weight:600;border-radius:8px;" onclick="confirmModifyResponse(\'' + propId + '\',\'' + date + '\',\'' + esc(provName) + '\',\'accepted\')">&#10003; Accepter ce menage</button>';
+  }
+  html += '<button class="btn btnOutline" style="padding:10px;font-size:13px;" onclick="closeMsg()">Annuler</button>';
   html += '</div></div>';
   showMsg(html);
 }
 
-async function confirmChangeStatus(propId, date, provName, newStatus) {
+async function confirmModifyResponse(propId, date, provName, newStatus) {
   const reason = document.getElementById('changeStatusReason')?.value?.trim() || '';
   closeMsg();
   if (newStatus === 'accepted') {
