@@ -885,7 +885,7 @@ async function loadPDF() {
 <body>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;pointer-events:none;">v2.32</div>
+<div id="versionBadge" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;pointer-events:none;">v2.40</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -897,7 +897,7 @@ async function loadPDF() {
   </div>
   <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Cleaning Manager</div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Gestion des menages</div>
-  <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou &mdash; v2.32</div>
+  <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou &mdash; v2.40</div>
   <!-- Loading bar -->
   <div style="width:200px;height:3px;background:rgba(255,255,255,0.1);border-radius:4px;margin-top:24px;overflow:hidden;">
     <div id="splashBar" style="width:0%;height:100%;background:linear-gradient(90deg,#e94560,#6c63ff);border-radius:4px;transition:width 1.5s ease;"></div>
@@ -988,7 +988,7 @@ async function loadPDF() {
   <div class="header-left">
     <div class="header-logo"><svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M3 21V8l9-5 9 5v13H3z" stroke="#fff" stroke-width="1.5" fill="none"/><path d="M9 21v-6h6v6" stroke="#fff" stroke-width="1.5"/><path d="M7 11h2v2H7zM15 11h2v2h-2z" fill="#e94560"/></svg></div>
     <div>
-      <h1>Menage Manager <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.35);vertical-align:middle;">v2.32</span></h1>
+      <h1>Menage Manager <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.35);vertical-align:middle;">v2.40</span></h1>
       <div class="subtitle" data-i18n="header.subtitle">Gestion des menages</div>
     </div>
   </div>
@@ -1266,7 +1266,7 @@ async function loadPDF() {
 
   <!-- Footer -->
   <div translate="no" style="text-align:center;padding:20px 16px;color:var(--text3);font-size:11px;line-height:1.8;">
-    <div style="font-weight:600;color:var(--text2);margin-bottom:4px;">Cleaning Manager v2.32</div>
+    <div style="font-weight:600;color:var(--text2);margin-bottom:4px;">Cleaning Manager v2.40</div>
     <div>Made with ❤️ by <a href="https://github.com/fabienlacaze" target="_blank" style="color:var(--accent2);text-decoration:none;">Fabidou</a></div>
     <div style="margin-top:4px;">
       <a href="privacy.html" target="_blank" style="color:var(--text3);text-decoration:none;margin:0 8px;">Confidentialite</a>
@@ -2475,6 +2475,26 @@ async function showOwnerMode() {
   }
 
   let html = '';
+
+  // Org switcher (if owner belongs to multiple orgs)
+  const memberships = API.getAllMemberships();
+  if (memberships.length > 1) {
+    html += `<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap;">
+      <span style="font-size:12px;color:var(--text3);">Conciergerie :</span>
+      <select onchange="switchOwnerOrg(this.value)" style="flex:1;padding:8px 12px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:13px;font-weight:600;">`;
+    memberships.forEach(m => {
+      const orgName = m.organizations?.name || 'Organisation';
+      const selected = m.org_id === org.id ? ' selected' : '';
+      html += `<option value="${m.org_id}"${selected}>${_escHtml(orgName)}</option>`;
+    });
+    html += `</select>
+      <button onclick="showMarketplace();document.getElementById('mkRoleFilter').value='admin';filterMarketplace();" style="padding:8px 12px;background:var(--surface2);color:var(--accent2);border:1px solid var(--border2);border-radius:8px;font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;">+ Trouver une conciergerie</button>
+    </div>`;
+  } else {
+    html += `<div style="text-align:right;margin-bottom:8px;">
+      <button onclick="showMarketplace();document.getElementById('mkRoleFilter').value='admin';filterMarketplace();" style="padding:6px 12px;background:none;color:var(--accent2);border:1px solid var(--border2);border-radius:8px;font-size:11px;font-weight:600;cursor:pointer;">+ Trouver une conciergerie</button>
+    </div>`;
+  }
 
   // KPI cards (no "properties" card for owner - they already know)
   html += `<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px;">
@@ -6383,6 +6403,62 @@ function showMsg(msg){document.getElementById('msgBody').innerHTML=msg;document.
 function closeMsg(){document.getElementById('overlay').style.display='none';document.getElementById('msgModal').style.display='none';document.getElementById('msgModalBtns').style.display='';}
 function showHelp(){document.getElementById('overlay').style.display='block';document.getElementById('helpModal').style.display='block';}
 
+async function requestJoinOrg(orgId, orgName) {
+  const ok = await customConfirm('Rejoindre la conciergerie "' + orgName + '" ?', 'Rejoindre');
+  if (!ok) return;
+  try {
+    const { data: { user } } = await sb.auth.getUser();
+    // Check if already a member
+    const { data: existing } = await sb.from('members').select('id').eq('org_id', orgId).eq('user_id', user.id).limit(1);
+    if (existing && existing.length) {
+      showToast('Vous etes deja membre de cette conciergerie');
+      return;
+    }
+    // Create membership request (accepted=false until concierge approves)
+    await sb.from('members').insert({
+      org_id: orgId,
+      user_id: user.id,
+      role: 'owner',
+      accepted: false,
+      invited_email: user.email,
+    });
+    showToast('Demande envoyee a ' + orgName + ' !');
+    closeMarketplace();
+  } catch(e) {
+    showToast('Erreur: ' + e.message);
+  }
+}
+
+async function requestHireProvider(userId, provName, provEmail) {
+  const org = API.getOrg();
+  if (!org) return;
+  const ok = await customConfirm('Inviter "' + provName + '" a rejoindre votre equipe ?', 'Inviter');
+  if (!ok) return;
+  try {
+    const { data: existing } = await sb.from('members').select('id').eq('org_id', org.id).eq('user_id', userId).limit(1);
+    if (existing && existing.length) {
+      showToast(provName + ' est deja dans votre equipe');
+      return;
+    }
+    await sb.from('members').insert({
+      org_id: org.id,
+      user_id: userId,
+      role: 'provider',
+      accepted: false,
+      invited_email: provEmail,
+    });
+    showToast('Invitation envoyee a ' + provName + ' !');
+  } catch(e) {
+    showToast('Erreur: ' + e.message);
+  }
+}
+
+async function switchOwnerOrg(orgId) {
+  API.switchOrg(orgId);
+  await API.load_plan();
+  showOwnerMode();
+}
+
 function showInviteModal() {
   const appUrl = 'https://fabienlacaze.github.io/menage-manager-app/';
   const role = API.getRole();
@@ -6474,6 +6550,7 @@ function filterMarketplace() {
 
 function renderMarketplaceResults(profiles) {
   const container = document.getElementById('mkResults');
+  const myRole = API.getRole();
   if (!profiles.length) {
     container.innerHTML = '<div style="text-align:center;padding:30px;color:var(--text3);">Aucun profil trouve</div>';
     return;
@@ -6492,9 +6569,11 @@ function renderMarketplaceResults(profiles) {
       ${p.city ? `<div style="font-size:12px;color:var(--text2);margin-bottom:4px;">&#128205; ${_escHtml(p.city)}${p.postal_code ? ' (' + _escHtml(p.postal_code) + ')' : ''}</div>` : ''}
       ${p.tarif ? `<div style="font-size:12px;color:var(--text2);margin-bottom:4px;">&#128176; ${_escHtml(p.tarif)}</div>` : ''}
       ${p.description ? `<div style="font-size:12px;color:var(--text3);margin-bottom:6px;">${_escHtml(p.description)}</div>` : ''}
-      <div style="display:flex;gap:10px;flex-wrap:wrap;">
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
         ${p.phone ? `<a href="tel:${_escHtml(p.phone)}" style="font-size:12px;color:var(--accent);text-decoration:none;">&#128222; ${_escHtml(p.phone)}</a>` : ''}
         ${p.email ? `<a href="mailto:${_escHtml(p.email)}" style="font-size:12px;color:var(--accent);text-decoration:none;">&#9993; ${_escHtml(p.email)}</a>` : ''}
+        ${(p.role === 'admin' && p.org_id && myRole === 'owner') ? `<button onclick="requestJoinOrg('${p.org_id}','${_escHtml(p.display_name)}')" style="margin-left:auto;padding:6px 14px;background:linear-gradient(135deg,#6c63ff,#5a54e0);color:#fff;border:none;border-radius:8px;font-size:11px;font-weight:600;cursor:pointer;">Rejoindre</button>` : ''}
+        ${(p.role === 'provider' && myRole === 'admin') ? `<button onclick="requestHireProvider('${p.user_id}','${_escHtml(p.display_name)}','${_escHtml(p.email)}')" style="margin-left:auto;padding:6px 14px;background:#34d399;color:#fff;border:none;border-radius:8px;font-size:11px;font-weight:600;cursor:pointer;">Inviter</button>` : ''}
       </div>
     </div>`;
   });

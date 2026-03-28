@@ -16,6 +16,7 @@ let activePropertyId = null;
 let currentOrg = null;
 let currentMember = null;
 let currentRole = 'admin';
+let allMemberships = []; // All orgs the user belongs to
 
 const API = (function() {
 
@@ -27,7 +28,7 @@ const API = (function() {
     return user.id;
   }
 
-  // Load user's organization and role
+  // Load user's organization(s) and role
   async function loadOrg() {
     try {
       const userId = await getUserId();
@@ -37,18 +38,34 @@ const API = (function() {
         .eq('user_id', userId);
       if (error || !members || !members.length) {
         console.log('No org found, using legacy mode');
+        allMemberships = [];
         return null;
       }
-      // Use first org (later: org switcher)
-      const m = members[0];
+      allMemberships = members;
+      // Use saved active org or first one
+      const savedOrgId = localStorage.getItem('mm_active_org');
+      const saved = savedOrgId ? members.find(m => m.org_id === savedOrgId) : null;
+      const m = saved || members[0];
       currentOrg = m.organizations;
       currentMember = m;
       currentRole = m.role;
       return currentOrg;
     } catch (e) {
       console.error('loadOrg error:', e);
+      allMemberships = [];
       return null;
     }
+  }
+
+  function switchOrg(orgId) {
+    const m = allMemberships.find(m => m.org_id === orgId);
+    if (!m) return false;
+    currentOrg = m.organizations;
+    currentMember = m;
+    currentRole = m.role;
+    activePropertyId = null;
+    localStorage.setItem('mm_active_org', orgId);
+    return true;
   }
 
   // ─── NEW TABLES API ───
@@ -202,6 +219,8 @@ const API = (function() {
     // ─── Organization ───
     async loadOrganization() { return await loadOrg(); },
     getOrg() { return currentOrg; },
+    getAllMemberships() { return allMemberships; },
+    switchOrg(orgId) { return switchOrg(orgId); },
     getRole() { return currentRole; },
     getMember() { return currentMember; },
     isAdmin() { return currentRole === 'admin' || currentRole === 'manager'; },
