@@ -238,6 +238,21 @@ const API = (function() {
         // Try org plan first (Phase 2)
         if (currentOrg) {
           currentPlan = currentOrg.plan || 'free';
+          // Check trial expiration
+          if (currentOrg.trial_start && !currentOrg.trial_used) {
+            const trialEnd = new Date(currentOrg.trial_start);
+            trialEnd.setDate(trialEnd.getDate() + 10);
+            if (new Date() > trialEnd) {
+              // Trial expired — downgrade to free
+              currentPlan = 'free';
+              currentOrg.plan = 'free';
+              currentOrg.trial_used = true;
+              await sb.from('organizations').update({ plan: 'free', trial_used: true }).eq('id', currentOrg.id);
+            } else {
+              // Trial still active
+              currentOrg._trialDaysLeft = Math.ceil((trialEnd - new Date()) / 86400000);
+            }
+          }
           // Map 'pro' to 'premium' for backward compat
           if (currentPlan === 'pro') currentPlan = 'premium';
           return currentPlan;
@@ -254,6 +269,7 @@ const API = (function() {
       } catch (e) { currentPlan = 'free'; return 'free'; }
     },
     getPlan() { return currentPlan; },
+    getTrialDaysLeft() { return currentOrg ? (currentOrg._trialDaysLeft || 0) : 0; },
     getLimits() { return PLAN_LIMITS[currentPlan] || PLAN_LIMITS.free; },
     isPremium() { return currentPlan === 'premium' || currentPlan === 'pro' || currentPlan === 'business'; },
 

@@ -1019,6 +1019,7 @@ async function loadPDF() {
     </div>
   </div>
 
+  <div id="trialBanner" style="display:none;background:linear-gradient(135deg,#6c63ff,#e94560);padding:10px 20px;text-align:center;font-size:13px;color:#fff;font-weight:600;"></div>
   <div id="notifBanner" class="notifBanner hidden"></div>
   <div id="installBanner" class="installBanner" style="display:none;">
     <div class="installText"><span data-i18n="install.title">Installer Menage Manager</span><small data-i18n="install.subtitle">Acces rapide depuis l'ecran d'accueil</small></div>
@@ -1347,51 +1348,45 @@ async function loadPDF() {
   </div>
   <div class="modalBody" style="padding:16px;overflow-x:auto;">
     <div id="premiumReason" style="display:none;background:rgba(233,69,96,0.15);border:1px solid rgba(233,69,96,0.3);border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:13px;color:var(--accent);text-align:center;font-weight:600;"></div>
-    <table style="width:100%;border-collapse:collapse;font-size:13px;" translate="no">
+    <table id="pricingTable" style="width:100%;border-collapse:collapse;font-size:13px;" translate="no">
       <thead>
         <tr>
           <th style="text-align:left;padding:10px 8px;font-size:12px;color:var(--text3);"></th>
-          <th style="text-align:center;padding:10px 8px;min-width:90px;">
+          <th style="text-align:center;padding:10px 8px;min-width:100px;">
             <div style="font-size:14px;font-weight:700;">Gratuit</div>
             <div style="font-size:18px;font-weight:800;color:var(--text);margin:4px 0;">0€</div>
           </th>
-          <th style="text-align:center;padding:10px 8px;min-width:90px;background:rgba(233,69,96,0.08);border-radius:12px 12px 0 0;">
-            <div style="font-size:14px;font-weight:700;color:var(--accent);">Pro <span class="premiumBadge">PRO</span></div>
-            <div style="font-size:18px;font-weight:800;color:var(--accent);margin:4px 0;">3.99€<small style="font-size:11px;font-weight:400;">/mois</small></div>
-          </th>
-          <th style="text-align:center;padding:10px 8px;min-width:90px;background:rgba(108,99,255,0.08);border-radius:12px 12px 0 0;">
-            <div style="font-size:14px;font-weight:700;color:#6c63ff;">Business <span class="premiumBadge" style="background:#6c63ff;">BIZ</span></div>
-            <div style="font-size:18px;font-weight:800;color:#6c63ff;margin:4px 0;">19.99€<small style="font-size:11px;font-weight:400;">/mois</small></div>
+          <th style="text-align:center;padding:10px 8px;min-width:100px;background:rgba(108,99,255,0.08);border-radius:12px 12px 0 0;">
+            <div style="font-size:14px;font-weight:700;color:#6c63ff;">Premium <span class="premiumBadge" style="background:#6c63ff;">&#9733;</span></div>
+            <div id="premiumPrice" style="font-size:18px;font-weight:800;color:#6c63ff;margin:4px 0;">3.99€<small style="font-size:11px;font-weight:400;">/mois</small></div>
           </th>
         </tr>
       </thead>
-      <tbody id="pricingTableBody">
-        <tr><td style="padding:7px 8px;">Proprietes</td><td style="text-align:center;color:var(--accent);">1</td><td style="text-align:center;color:var(--success);font-weight:700;background:rgba(233,69,96,0.04);">&#8734;</td><td style="text-align:center;color:var(--success);font-weight:700;background:rgba(108,99,255,0.04);">&#8734;</td></tr>
-        <tr style="background:rgba(255,255,255,0.02);"><td style="padding:7px 8px;">Prestataires</td><td style="text-align:center;color:var(--accent);">2</td><td style="text-align:center;color:var(--success);font-weight:700;background:rgba(233,69,96,0.04);">&#8734;</td><td style="text-align:center;color:var(--success);font-weight:700;background:rgba(108,99,255,0.04);">&#8734;</td></tr>
-        <tr><td style="padding:7px 8px;">Calendriers iCal</td><td style="text-align:center;color:var(--accent);">2</td><td style="text-align:center;color:var(--success);font-weight:700;background:rgba(233,69,96,0.04);">&#8734;</td><td style="text-align:center;color:var(--success);font-weight:700;background:rgba(108,99,255,0.04);">&#8734;</td></tr>
-        <tr style="background:rgba(255,255,255,0.02);"><td style="padding:7px 8px;">Generations / jour</td><td style="text-align:center;color:var(--accent);">5</td><td style="text-align:center;color:var(--success);font-weight:700;background:rgba(233,69,96,0.04);">&#8734;</td><td style="text-align:center;color:var(--success);font-weight:700;background:rgba(108,99,255,0.04);">&#8734;</td></tr>
-        <tr><td style="padding:7px 8px;">Export CSV</td><td style="text-align:center;color:var(--success);">&#10003;</td><td style="text-align:center;color:var(--success);background:rgba(233,69,96,0.04);">&#10003;</td><td style="text-align:center;color:var(--success);background:rgba(108,99,255,0.04);">&#10003;</td></tr>
-        <tr style="background:rgba(255,255,255,0.02);"><td style="padding:7px 8px;">Stats basiques</td><td style="text-align:center;color:var(--success);">&#10003;</td><td style="text-align:center;color:var(--success);background:rgba(233,69,96,0.04);">&#10003;</td><td style="text-align:center;color:var(--success);background:rgba(108,99,255,0.04);">&#10003;</td></tr>
-        <tr><td style="padding:7px 8px;">WhatsApp / Envoi</td><td style="text-align:center;color:var(--accent);">&#10007;</td><td style="text-align:center;color:var(--success);background:rgba(233,69,96,0.04);">&#10003;</td><td style="text-align:center;color:var(--success);background:rgba(108,99,255,0.04);">&#10003;</td></tr>
-        <tr style="background:rgba(255,255,255,0.02);"><td style="padding:7px 8px;">PDF / Partage</td><td style="text-align:center;color:var(--accent);">&#10007;</td><td style="text-align:center;color:var(--success);background:rgba(233,69,96,0.04);">&#10003;</td><td style="text-align:center;color:var(--success);background:rgba(108,99,255,0.04);">&#10003;</td></tr>
-        <tr><td style="padding:7px 8px;">Graphiques / Couts</td><td style="text-align:center;color:var(--accent);">&#10007;</td><td style="text-align:center;color:var(--success);background:rgba(233,69,96,0.04);">&#10003;</td><td style="text-align:center;color:var(--success);background:rgba(108,99,255,0.04);">&#10003;</td></tr>
-        <tr style="background:rgba(255,255,255,0.02);"><td style="padding:7px 8px;">Historique</td><td style="text-align:center;color:var(--accent);">&#10007;</td><td style="text-align:center;color:var(--success);background:rgba(233,69,96,0.04);">&#10003;</td><td style="text-align:center;color:var(--success);background:rgba(108,99,255,0.04);">&#10003;</td></tr>
-        <tr><td style="padding:7px 8px;">Sans pub</td><td style="text-align:center;color:var(--accent);">&#10007;</td><td style="text-align:center;color:var(--success);background:rgba(233,69,96,0.04);">&#10003;</td><td style="text-align:center;color:var(--success);background:rgba(108,99,255,0.04);">&#10003;</td></tr>
-        <tr style="background:rgba(255,255,255,0.02);"><td style="padding:7px 8px;">Geolocalisation</td><td style="text-align:center;color:var(--accent);">&#10007;</td><td style="text-align:center;color:var(--success);background:rgba(233,69,96,0.04);">&#10003;</td><td style="text-align:center;color:var(--success);background:rgba(108,99,255,0.04);">&#10003;</td></tr>
-        <tr><td style="padding:7px 8px;">Chat interne</td><td style="text-align:center;font-size:11px;color:var(--accent);">3/jour</td><td style="text-align:center;color:var(--success);background:rgba(233,69,96,0.04);">&#8734;</td><td style="text-align:center;color:var(--success);background:rgba(108,99,255,0.04);">&#8734;</td></tr>
-        <tr><td style="padding:7px 8px;font-weight:600;">Multi-proprietaires</td><td style="text-align:center;color:var(--accent);">&#10007;</td><td style="text-align:center;color:var(--accent);background:rgba(233,69,96,0.04);">&#10007;</td><td style="text-align:center;color:var(--success);background:rgba(108,99,255,0.04);">&#10003;</td></tr>
-        <tr style="background:rgba(255,255,255,0.02);"><td style="padding:7px 8px;font-weight:600;">Dashboard</td><td style="text-align:center;color:var(--accent);">&#10007;</td><td style="text-align:center;color:var(--accent);background:rgba(233,69,96,0.04);">&#10007;</td><td style="text-align:center;color:var(--success);background:rgba(108,99,255,0.04);">&#10003;</td></tr>
-        <tr><td style="padding:7px 8px;font-weight:600;">Gestion equipe</td><td style="text-align:center;color:var(--accent);">&#10007;</td><td style="text-align:center;color:var(--accent);background:rgba(233,69,96,0.04);">&#10007;</td><td style="text-align:center;color:var(--success);background:rgba(108,99,255,0.04);">&#10003;</td></tr>
-        <tr style="background:rgba(255,255,255,0.02);"><td style="padding:7px 8px;font-weight:600;">Validation + photos</td><td style="text-align:center;color:var(--accent);">&#10007;</td><td style="text-align:center;color:var(--accent);background:rgba(233,69,96,0.04);">&#10007;</td><td style="text-align:center;color:var(--success);background:rgba(108,99,255,0.04);">&#10003;</td></tr>
-        <tr><td style="padding:7px 8px;font-weight:600;">Facturation auto</td><td style="text-align:center;color:var(--accent);">&#10007;</td><td style="text-align:center;color:var(--accent);background:rgba(233,69,96,0.04);">&#10007;</td><td style="text-align:center;color:var(--success);background:rgba(108,99,255,0.04);">&#10003;</td></tr>
-        <tr style="background:rgba(255,255,255,0.02);"><td style="padding:7px 8px;font-weight:600;">Check-in / Check-out</td><td style="text-align:center;color:var(--accent);">&#10007;</td><td style="text-align:center;color:var(--accent);background:rgba(233,69,96,0.04);">&#10007;</td><td style="text-align:center;color:var(--success);background:rgba(108,99,255,0.04);">&#10003;</td></tr>
+      <tbody>
+        <tr><td style="padding:7px 8px;">Proprietes</td><td style="text-align:center;color:var(--accent);">1</td><td style="text-align:center;color:var(--success);font-weight:700;background:rgba(108,99,255,0.04);">&#8734;</td></tr>
+        <tr style="background:rgba(255,255,255,0.02);"><td style="padding:7px 8px;">Prestataires</td><td style="text-align:center;color:var(--accent);">2</td><td style="text-align:center;color:var(--success);font-weight:700;background:rgba(108,99,255,0.04);">&#8734;</td></tr>
+        <tr><td style="padding:7px 8px;">Calendriers iCal</td><td style="text-align:center;color:var(--accent);">2</td><td style="text-align:center;color:var(--success);font-weight:700;background:rgba(108,99,255,0.04);">&#8734;</td></tr>
+        <tr style="background:rgba(255,255,255,0.02);"><td style="padding:7px 8px;">Generations / jour</td><td style="text-align:center;color:var(--accent);">5</td><td style="text-align:center;color:var(--success);font-weight:700;background:rgba(108,99,255,0.04);">&#8734;</td></tr>
+        <tr><td style="padding:7px 8px;">Export CSV</td><td style="text-align:center;color:var(--success);">&#10003;</td><td style="text-align:center;color:var(--success);background:rgba(108,99,255,0.04);">&#10003;</td></tr>
+        <tr style="background:rgba(255,255,255,0.02);"><td style="padding:7px 8px;">Stats basiques</td><td style="text-align:center;color:var(--success);">&#10003;</td><td style="text-align:center;color:var(--success);background:rgba(108,99,255,0.04);">&#10003;</td></tr>
+        <tr><td style="padding:7px 8px;">WhatsApp / Envoi</td><td style="text-align:center;color:var(--accent);">&#10007;</td><td style="text-align:center;color:var(--success);background:rgba(108,99,255,0.04);">&#10003;</td></tr>
+        <tr style="background:rgba(255,255,255,0.02);"><td style="padding:7px 8px;">PDF / Partage</td><td style="text-align:center;color:var(--accent);">&#10007;</td><td style="text-align:center;color:var(--success);background:rgba(108,99,255,0.04);">&#10003;</td></tr>
+        <tr><td style="padding:7px 8px;">Graphiques / Couts</td><td style="text-align:center;color:var(--accent);">&#10007;</td><td style="text-align:center;color:var(--success);background:rgba(108,99,255,0.04);">&#10003;</td></tr>
+        <tr style="background:rgba(255,255,255,0.02);"><td style="padding:7px 8px;">Historique</td><td style="text-align:center;color:var(--accent);">&#10007;</td><td style="text-align:center;color:var(--success);background:rgba(108,99,255,0.04);">&#10003;</td></tr>
+        <tr><td style="padding:7px 8px;">Sans pub</td><td style="text-align:center;color:var(--accent);">&#10007;</td><td style="text-align:center;color:var(--success);background:rgba(108,99,255,0.04);">&#10003;</td></tr>
+        <tr style="background:rgba(255,255,255,0.02);"><td style="padding:7px 8px;">Geolocalisation</td><td style="text-align:center;color:var(--accent);">&#10007;</td><td style="text-align:center;color:var(--success);background:rgba(108,99,255,0.04);">&#10003;</td></tr>
+        <tr><td style="padding:7px 8px;">Chat interne</td><td style="text-align:center;font-size:11px;color:var(--accent);">3/jour</td><td style="text-align:center;color:var(--success);background:rgba(108,99,255,0.04);">&#8734;</td></tr>
+        <tr style="background:rgba(255,255,255,0.02);"><td style="padding:7px 8px;">Dashboard</td><td style="text-align:center;color:var(--accent);">&#10007;</td><td style="text-align:center;color:var(--success);background:rgba(108,99,255,0.04);">&#10003;</td></tr>
+        <tr><td style="padding:7px 8px;">Gestion equipe</td><td style="text-align:center;color:var(--accent);">&#10007;</td><td style="text-align:center;color:var(--success);background:rgba(108,99,255,0.04);">&#10003;</td></tr>
+        <tr style="background:rgba(255,255,255,0.02);"><td style="padding:7px 8px;">Validation + photos</td><td style="text-align:center;color:var(--accent);">&#10007;</td><td style="text-align:center;color:var(--success);background:rgba(108,99,255,0.04);">&#10003;</td></tr>
+        <tr><td style="padding:7px 8px;">Facturation auto</td><td style="text-align:center;color:var(--accent);">&#10007;</td><td style="text-align:center;color:var(--success);background:rgba(108,99,255,0.04);">&#10003;</td></tr>
+        <tr style="background:rgba(255,255,255,0.02);"><td style="padding:7px 8px;">Check-in / Check-out</td><td style="text-align:center;color:var(--accent);">&#10007;</td><td style="text-align:center;color:var(--success);background:rgba(108,99,255,0.04);">&#10003;</td></tr>
       </tbody>
       <tfoot>
         <tr>
           <td></td>
           <td style="text-align:center;padding:12px 4px;"><button class="btn btnOutline" style="padding:8px 16px;font-size:12px;width:100%;" disabled>Actuel</button></td>
-          <td style="text-align:center;padding:12px 4px;background:rgba(233,69,96,0.04);border-radius:0 0 0 12px;"><button class="btnUpgrade" onclick="upgradeToPremium('pro')" id="btnUpgrade" style="padding:8px 16px;font-size:12px;width:100%;">Pro</button></td>
-          <td style="text-align:center;padding:12px 4px;background:rgba(108,99,255,0.04);border-radius:0 0 12px 0;"><button class="btnUpgrade" style="background:linear-gradient(135deg,#6c63ff,#5a54e0);padding:8px 16px;font-size:12px;width:100%;" onclick="upgradeToPremium('business')">Business</button></td>
+          <td style="text-align:center;padding:12px 4px;background:rgba(108,99,255,0.04);border-radius:0 0 12px 12px;"><button class="btnUpgrade" style="background:linear-gradient(135deg,#6c63ff,#5a54e0);padding:8px 16px;font-size:12px;width:100%;" onclick="upgradeToPremium('business')">Premium</button></td>
         </tr>
       </tfoot>
     </table>
@@ -3257,6 +3252,17 @@ function updatePlanUI() {
     // Role badge
     appendRoleBadge(h1);
   }
+  // Trial banner
+  const trialBanner = document.getElementById('trialBanner');
+  if (trialBanner) {
+    const daysLeft = API.getTrialDaysLeft();
+    if (daysLeft > 0) {
+      trialBanner.style.display = 'block';
+      trialBanner.innerHTML = '&#127881; Essai gratuit — <b>' + daysLeft + ' jour' + (daysLeft > 1 ? 's' : '') + '</b> restant' + (daysLeft > 1 ? 's' : '') + ' <span style="opacity:0.7;margin-left:8px;">Toutes les fonctionnalites sont deverrouillees !</span>';
+    } else {
+      trialBanner.style.display = 'none';
+    }
+  }
   // Communication section: blur premium features
   const commLock = document.getElementById('commPremLock');
   const commContent = document.getElementById('commPremContent');
@@ -3284,20 +3290,14 @@ function showPremiumModal(reason) {
     if (reason) { reasonEl.textContent = reason; reasonEl.style.display = 'block'; }
     else { reasonEl.style.display = 'none'; }
   }
-  // Adapt pricing table based on role
+  // Adapt price based on role
   const role = API.getRole();
-  const table = document.querySelector('#premiumModal table');
-  if (table) {
-    // Pro column = index 2, Business column = index 3
-    const showPro = (role === 'owner' || !role);
-    const showBiz = (role === 'admin' || role === 'manager' || !role);
-    table.querySelectorAll('tr').forEach(row => {
-      const cells = row.querySelectorAll('th, td');
-      if (cells.length >= 4) {
-        cells[2].style.display = showPro ? '' : 'none';
-        cells[3].style.display = showBiz ? '' : 'none';
-      }
-    });
+  const priceEl = document.getElementById('premiumPrice');
+  if (priceEl) {
+    const isOwner = (role === 'owner');
+    priceEl.innerHTML = isOwner
+      ? '3.99€<small style="font-size:11px;font-weight:400;">/mois</small>'
+      : '19.99€<small style="font-size:11px;font-weight:400;">/mois</small>';
   }
   document.getElementById('overlay').style.display = 'block';
   document.getElementById('premiumModal').style.display = 'block';
@@ -3940,7 +3940,7 @@ async function finishOnboarding(roleId) {
   // Create org + member if they don't exist
   if (!org) {
     const orgName = roleId === 'concierge' ? 'Ma conciergerie' : 'Mon organisation';
-    const { data: newOrg, error: orgErr } = await sb.from('organizations').insert({ name: orgName, plan: 'free', owner_id: user.id }).select().single();
+    const { data: newOrg, error: orgErr } = await sb.from('organizations').insert({ name: orgName, plan: 'business', owner_id: user.id, trial_start: new Date().toISOString(), trial_used: false }).select().single();
     if (orgErr) console.error('Create org error:', orgErr);
     if (newOrg) {
       org = newOrg;
