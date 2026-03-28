@@ -2448,8 +2448,8 @@ async function showOwnerMode() {
         html += `<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px solid var(--border);font-size:13px;">
           <div style="min-width:90px;font-weight:600;">${fmtDate(c.cleaningDate || c.date)}</div>
           <div style="flex:1;color:var(--text2);">${esc(c.provider || '?')}</div>
-          <span style="display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600;color:#fff;background:${c.source?.toLowerCase().includes('airbnb')?'#e94560':'#003580'};">${esc(c.source || '')}</span>
-          <span style="font-size:11px;color:${statusColors[status] || 'var(--text3)'};">${statusIcons[status] || '⏳'} ${statusLabels[status] || ''}</span>
+          <span style="display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600;color:#fff;background:${c.source?.toLowerCase().includes('airbnb')?'#e94560':'#003580'};min-width:45px;text-align:center;">${esc(c.source || '')}</span>
+          <span style="font-size:11px;color:${statusColors[status] || 'var(--text3)'};min-width:80px;text-align:right;">${statusIcons[status] || '⏳'} ${statusLabels[status] || ''}</span>
         </div>`;
       });
       if (propCleanings.length > 5) {
