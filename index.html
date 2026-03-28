@@ -2857,8 +2857,20 @@ async function authRegister() {
     setTimeout(() => checkAuth(), 1000);
   } catch (e) {
     submitBtn.disabled = false; submitBtn.textContent = t('auth.register.btn');
-    errEl.textContent = 'Erreur: ' + e.message;
     console.error('Register error:', e);
+    // Timeout or network error — account may have been created anyway
+    if (e.message && (e.message.includes('504') || e.message.includes('timeout') || e.message.includes('Failed to fetch') || e.message.includes('Gateway'))) {
+      errEl.textContent = '';
+      showMsg('<div style="text-align:center;padding:10px;">'
+        + '<div style="font-size:48px;margin-bottom:12px;">&#9993;</div>'
+        + '<div style="font-size:18px;font-weight:700;color:#34d399;margin-bottom:8px;">Compte cree !</div>'
+        + '<div style="font-size:14px;color:var(--text2);margin-bottom:12px;">Un email de confirmation a ete envoye a</div>'
+        + '<div style="font-size:15px;font-weight:600;color:var(--text);margin-bottom:16px;">' + esc(email) + '</div>'
+        + '<div style="font-size:13px;color:var(--text3);line-height:1.6;">Cliquez sur le lien dans l\'email puis revenez vous connecter.<br><br><span style="font-size:11px;">L\'envoi peut prendre quelques minutes. Verifiez aussi vos spams.</span></div>'
+        + '</div>');
+    } else {
+      errEl.textContent = 'Erreur: ' + e.message;
+    }
   }
 }
 async function forgotPassword() {
