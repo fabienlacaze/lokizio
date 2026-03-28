@@ -1026,6 +1026,9 @@ async function loadPDF() {
     <button class="btnDismiss" onclick="dismissInstall()">&times;</button>
   </div>
 
+  <!-- KPI Cards (all modes) -->
+  <div id="kpiCards" style="display:none;"></div>
+
   <!-- ═══ DASHBOARD CONCIERGERIE ═══ -->
   <div class="panel" id="panelDashboard" style="display:none;">
     <div class="panelHeader" onclick="togglePanel('dashboard')">
@@ -2012,6 +2015,7 @@ async function init() {
   checkRentalNotifications();
   checkReminders();
   loadDashboard();
+  loadKpiCards();
   initChatWidget();
 
   // Sequential panel reveal animation on first load
@@ -2028,6 +2032,45 @@ async function init() {
     });
     localStorage.setItem('mm_panels_revealed', '1');
   }
+}
+
+async function loadKpiCards() {
+  const el = document.getElementById('kpiCards');
+  if (!el) return;
+  try {
+    const org = API.getOrg();
+    if (!org) { el.style.display = 'none'; return; }
+    const { data: properties } = await sb.from('properties').select('id').eq('org_id', org.id);
+    const { data: plannings } = await sb.from('plannings').select('cleanings').eq('org_id', org.id);
+    const now = new Date();
+    const todayStr = now.toISOString().split('T')[0];
+    const weekEnd = new Date(now); weekEnd.setDate(weekEnd.getDate() + 7);
+    const weekEndStr = weekEnd.toISOString().split('T')[0];
+    let allCleanings = [];
+    (plannings || []).forEach(p => { if (p.cleanings) allCleanings = allCleanings.concat(p.cleanings); });
+    const future = allCleanings.filter(c => (c.cleaningDate || c.date || '') >= todayStr);
+    const week = future.filter(c => (c.cleaningDate || c.date || '') <= weekEndStr);
+    const provCount = new Set(allCleanings.map(c => c.provider).filter(Boolean)).size;
+    el.style.display = '';
+    el.innerHTML = `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin-bottom:16px;">
+      <div style="background:linear-gradient(135deg,#e94560,#c73e54);border-radius:12px;padding:16px;text-align:center;">
+        <div style="font-size:24px;font-weight:800;color:#fff;">${(properties||[]).length}</div>
+        <div style="font-size:11px;color:rgba(255,255,255,0.8);">Proprietes</div>
+      </div>
+      <div style="background:linear-gradient(135deg,#6c63ff,#5a54e0);border-radius:12px;padding:16px;text-align:center;">
+        <div style="font-size:24px;font-weight:800;color:#fff;">${future.length}</div>
+        <div style="font-size:11px;color:rgba(255,255,255,0.8);">Menages a venir</div>
+      </div>
+      <div style="background:linear-gradient(135deg,#f59e0b,#d97706);border-radius:12px;padding:16px;text-align:center;">
+        <div style="font-size:24px;font-weight:800;color:#fff;">${week.length}</div>
+        <div style="font-size:11px;color:rgba(255,255,255,0.8);">Cette semaine</div>
+      </div>
+      <div style="background:linear-gradient(135deg,#34d399,#059669);border-radius:12px;padding:16px;text-align:center;">
+        <div style="font-size:24px;font-weight:800;color:#fff;">${provCount}</div>
+        <div style="font-size:11px;color:rgba(255,255,255,0.8);">Prestataires</div>
+      </div>
+    </div>`;
+  } catch(e) { console.error('KPI error:', e); el.style.display = 'none'; }
 }
 
 function appendRoleBadge(h1) {
