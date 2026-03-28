@@ -37,9 +37,25 @@ const API = (function() {
         .select('*, organizations(*)')
         .eq('user_id', userId);
       if (error || !members || !members.length) {
-        console.log('No org found, using legacy mode');
-        allMemberships = [];
-        return null;
+        console.log('No org found, creating onboarding...');
+        // Auto-create org + member + trial subscription
+        const user = (await sb.auth.getUser()).data.user;
+        const orgName = user.email ? user.email.split('@')[0] : 'Mon organisation';
+        const { data: newOrg, error: orgErr } = await sb.from('organizations').insert({ name: orgName, plan: 'business' }).select().single();
+        if (orgErr || !newOrg) { console.error('Onboarding org error:', orgErr); allMemberships = []; return null; }
+        await sb.from('members').insert({ org_id: newOrg.id, user_id: userId, role: 'admin', invited_email: user.email, accepted: true });
+        const trialEnd = new Date(); trialEnd.setDate(trialEnd.getDate() + 10);
+        await sb.from('subscriptions').upsert({ user_id: userId, plan: 'business', current_period_end: trialEnd.toISOString() }, { onConflict: 'user_id' });
+        // Reload
+        const { data: newMembers } = await sb.from('members').select('*, organizations(*)').eq('user_id', userId);
+        if (!newMembers || !newMembers.length) { allMemberships = []; return null; }
+        allMemberships = newMembers;
+        const m2 = newMembers[0];
+        currentOrg = m2.organizations;
+        currentMember = m2;
+        currentRole = m2.role;
+        console.log('Onboarding complete: org=' + currentOrg.name);
+        return currentOrg;
       }
       allMemberships = members;
       // Use saved active org or first one
