@@ -891,7 +891,7 @@ async function loadPDF() {
 <body>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;pointer-events:none;">v3.17</div>
+<div id="versionBadge" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;pointer-events:none;">v3.20</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -903,7 +903,7 @@ async function loadPDF() {
   </div>
   <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio</div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie</div>
-  <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou &mdash; v3.17</div>
+  <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou &mdash; v3.20</div>
   <!-- Loading bar -->
   <div style="width:200px;height:3px;background:rgba(255,255,255,0.1);border-radius:4px;margin-top:24px;overflow:hidden;">
     <div id="splashBar" style="width:0%;height:100%;background:linear-gradient(90deg,#e94560,#6c63ff);border-radius:4px;transition:width 1.5s ease;"></div>
@@ -994,10 +994,11 @@ async function loadPDF() {
   <div class="header-left">
     <div class="header-logo" style="width:28px;height:28px;background:linear-gradient(135deg,#e94560,#6c63ff);border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:900;color:#fff;">L</div>
     <div>
-      <h1>Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.35);vertical-align:middle;">v3.17</span></h1>
+      <h1>Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.35);vertical-align:middle;">v3.20</span></h1>
       <div class="subtitle" data-i18n="header.subtitle">Services et conciergerie</div>
     </div>
   </div>
+  <div id="headerCenter" style="position:absolute;left:50%;transform:translateX(-50%);display:flex;gap:6px;align-items:center;"></div>
   <div class="header-actions">
     <button class="btnHelp" onclick="showLangModal()" title="Langue" id="langBtn" style="font-size:14px;padding:4px 8px;"><img src="https://flagcdn.com/w20/fr.png" width="20" height="15" id="langFlagImg" style="vertical-align:middle;"> <span style="font-size:11px;vertical-align:middle;" id="langCode">FR</span></button>
     <button class="btnHelp" onclick="showChangelog()" data-i18n-attr="title" data-i18n="header.changelog" title="Historique modifications" style="font-size:13px;">&#128221;</button>
@@ -1143,6 +1144,24 @@ async function loadPDF() {
     </div>
   </div>
 
+  <!-- ═══ SECTION: SERVICES ═══ -->
+  <div class="panel" id="panelServices">
+    <div class="panelHeader" onclick="togglePanel('services')">
+      <div class="panelLeft">
+        <div class="stepBadge" style="background:#6c63ff;">&#128203;</div>
+        <div class="panelTitle">&#128203; Demandes de services <span id="svcBadge" style="display:none;background:#e94560;color:#fff;font-size:10px;padding:1px 6px;border-radius:10px;margin-left:6px;font-weight:700;"></span></div>
+      </div>
+      <span class="panelChevron" id="chevServices">&#9660;</span>
+    </div>
+    <div class="panelBody collapsed" id="bodyServices">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+        <div style="font-size:12px;color:var(--text3);">Demandes de services ponctuels</div>
+        <button class="btn btnSmall btnPrimary" onclick="showServiceRequestModal()" style="padding:6px 12px;font-size:12px;">+ Demander</button>
+      </div>
+      <div id="serviceRequestsList"></div>
+    </div>
+  </div>
+
   <!-- ═══ SECTION 3: PLANNING ═══ -->
   <div class="panel">
     <div class="panelHeader" onclick="togglePanel('results')">
@@ -1240,7 +1259,7 @@ async function loadPDF() {
 
   <!-- Footer -->
   <div translate="no" style="text-align:center;padding:20px 16px;color:var(--text3);font-size:11px;line-height:1.8;">
-    <div style="font-weight:600;color:var(--text2);margin-bottom:4px;">Lokizio v3.17</div>
+    <div style="font-weight:600;color:var(--text2);margin-bottom:4px;">Lokizio v3.20</div>
     <div>Made with ❤️ by <a href="https://github.com/fabienlacaze" target="_blank" style="color:var(--accent2);text-decoration:none;">Fabidou</a></div>
     <div style="margin-top:4px;">
       <a href="privacy.html" target="_blank" style="color:var(--text3);text-decoration:none;margin:0 8px;">Confidentialite</a>
@@ -1370,12 +1389,7 @@ async function loadPDF() {
         <textarea id="mkDescription" placeholder="Decrivez votre activite, vos specialites..." rows="3" style="width:100%;padding:10px;background:#1a1a2e;color:#f0f0f5;border:1px solid var(--border2);border-radius:8px;font-size:13px;font-family:'Inter',sans-serif;resize:vertical;box-sizing:border-box;"></textarea>
         <label style="font-size:11px;color:var(--text3);text-transform:uppercase;">Services proposes</label>
         <div style="display:flex;flex-wrap:wrap;gap:6px;" id="mkServicesCheckboxes">
-          <label style="display:flex;align-items:center;gap:4px;padding:6px 10px;background:#1a1a2e;border:1px solid var(--border2);border-radius:8px;font-size:12px;color:var(--text);cursor:pointer;"><input type="checkbox" value="Menage" class="mkServiceCb" style="accent-color:#6c63ff;"> Menage</label>
-          <label style="display:flex;align-items:center;gap:4px;padding:6px 10px;background:#1a1a2e;border:1px solid var(--border2);border-radius:8px;font-size:12px;color:var(--text);cursor:pointer;"><input type="checkbox" value="Linge" class="mkServiceCb" style="accent-color:#6c63ff;"> Linge</label>
-          <label style="display:flex;align-items:center;gap:4px;padding:6px 10px;background:#1a1a2e;border:1px solid var(--border2);border-radius:8px;font-size:12px;color:var(--text);cursor:pointer;"><input type="checkbox" value="Check-in" class="mkServiceCb" style="accent-color:#6c63ff;"> Check-in</label>
-          <label style="display:flex;align-items:center;gap:4px;padding:6px 10px;background:#1a1a2e;border:1px solid var(--border2);border-radius:8px;font-size:12px;color:var(--text);cursor:pointer;"><input type="checkbox" value="Jardinage" class="mkServiceCb" style="accent-color:#6c63ff;"> Jardinage</label>
-          <label style="display:flex;align-items:center;gap:4px;padding:6px 10px;background:#1a1a2e;border:1px solid var(--border2);border-radius:8px;font-size:12px;color:var(--text);cursor:pointer;"><input type="checkbox" value="Repassage" class="mkServiceCb" style="accent-color:#6c63ff;"> Repassage</label>
-          <label style="display:flex;align-items:center;gap:4px;padding:6px 10px;background:#1a1a2e;border:1px solid var(--border2);border-radius:8px;font-size:12px;color:var(--text);cursor:pointer;"><input type="checkbox" value="Courses" class="mkServiceCb" style="accent-color:#6c63ff;"> Courses</label>
+          <!-- Populated dynamically from SERVICE_CATALOG by renderMkServiceCheckboxes() -->
         </div>
         <div style="display:flex;gap:10px;">
           <div style="flex:1;">
@@ -1665,6 +1679,10 @@ async function loadPDF() {
       <div style="font-size:10px;color:var(--text3);margin-top:4px;">Montant facture au proprietaire pour chaque menage</div>
     </div>
 
+    <!-- Required Services -->
+    <label style="display:block;font-size:12px;color:var(--text3);margin-bottom:4px;text-transform:uppercase;letter-spacing:0.5px;">Services requis pour ce bien</label>
+    <div id="propServicesChecks" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;"></div>
+
     <!-- Cleaning Checklist -->
     <label style="display:block;font-size:12px;color:var(--text3);margin-bottom:4px;text-transform:uppercase;letter-spacing:0.5px;" data-i18n="prop.detail.checklist">Instructions de menage</label>
     <div id="propChecklist" style="background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:10px;margin-bottom:12px;max-height:200px;overflow-y:auto;"></div>
@@ -1757,6 +1775,41 @@ function toggleTheme(){const t=document.documentElement.getAttribute('data-theme
 (function(){const t=localStorage.getItem('mm_theme');if(t==='light'){document.documentElement.setAttribute('data-theme','light');}})();
 
 const COLORS = ['#3fb950','#58a6ff','#d29922','#f85149','#bc8cff','#79c0ff','#f778ba'];
+
+const SERVICE_CATALOG = [
+  { cat: 'menage', label: 'Menage', services: [
+    { id: 'cleaning_standard', label: 'Menage standard', icon: '🧹' },
+    { id: 'cleaning_deep', label: 'Menage en profondeur', icon: '🧽' },
+    { id: 'windows', label: 'Vitres', icon: '🪟' },
+  ]},
+  { cat: 'linge', label: 'Linge', services: [
+    { id: 'laundry', label: 'Linge', icon: '👕' },
+    { id: 'ironing', label: 'Repassage', icon: '👔' },
+    { id: 'pressing', label: 'Pressing', icon: '🧥' },
+  ]},
+  { cat: 'accueil', label: 'Accueil', services: [
+    { id: 'checkin', label: 'Check-in', icon: '🔑' },
+    { id: 'checkout', label: 'Check-out', icon: '🚪' },
+    { id: 'key_handover', label: 'Remise de cles', icon: '🗝️' },
+  ]},
+  { cat: 'exterieur', label: 'Exterieur', services: [
+    { id: 'gardening', label: 'Jardinage', icon: '🌿' },
+    { id: 'pool', label: 'Piscine', icon: '🏊' },
+    { id: 'snow', label: 'Deneigement', icon: '❄️' },
+  ]},
+  { cat: 'complementaire', label: 'Complementaire', services: [
+    { id: 'shopping', label: 'Courses', icon: '🛒' },
+    { id: 'handyman', label: 'Bricolage', icon: '🔧' },
+    { id: 'cooking', label: 'Cuisine/Chef', icon: '👨‍🍳' },
+  ]},
+  { cat: 'garde', label: 'Garde', services: [
+    { id: 'childcare', label: 'Garde d\'enfants', icon: '👶' },
+    { id: 'petcare', label: 'Garde d\'animaux', icon: '🐾' },
+  ]},
+];
+function getServiceLabel(id) { for (const c of SERVICE_CATALOG) for (const s of c.services) if (s.id === id) return s.icon + ' ' + s.label; return id; }
+function getServiceIcon(id) { for (const c of SERVICE_CATALOG) for (const s of c.services) if (s.id === id) return s.icon; return '📋'; }
+
 let fullConfig = { properties: [], activeProperty: null };
 let config = { airbnbIcalUrl:'',bookingIcalUrl:'',providers:[],property:'Mon logement' }; // active property shortcut
 let transmittedDates = [];
@@ -1896,6 +1949,8 @@ async function loadActiveProperty() {
   if (hasUrls && hasProviders && (!saved || saved.length === 0)) {
     setTimeout(() => generatePlanning(), 500);
   }
+  // Load service requests
+  loadServiceRequests();
 }
 
 async function switchProperty(propId) {
@@ -2041,12 +2096,12 @@ function syncAndSaveConfig() {
 
 /* ── Panel Collapse ── */
 function togglePanel(id) {
-  const map = { dashboard: ['bodyDashboard','chevDashboard'], config: ['bodyConfig','chevConfig'], providers: ['bodyProviders','chevProviders'], results: ['bodyResults','chevResults'], comm: ['bodyComm','chevComm'], history: ['bodyHistory','chevHistory'] };
+  const map = { dashboard: ['bodyDashboard','chevDashboard'], config: ['bodyConfig','chevConfig'], providers: ['bodyProviders','chevProviders'], services: ['bodyServices','chevServices'], results: ['bodyResults','chevResults'], comm: ['bodyComm','chevComm'], history: ['bodyHistory','chevHistory'] };
   const [bodyId, chevId] = map[id] || [null, null];
   if (!bodyId) return;
   const body = document.getElementById(bodyId);
   const chev = document.getElementById(chevId);
-  if (id === 'dashboard' || id === 'config' || id === 'comm' || id === 'providers' || id === 'history') {
+  if (id === 'dashboard' || id === 'config' || id === 'comm' || id === 'providers' || id === 'history' || id === 'services') {
     body.classList.toggle('collapsed');
     // Save panel state
     const states = JSON.parse(localStorage.getItem('mm_panels') || '{}');
@@ -2063,7 +2118,7 @@ function togglePanel(id) {
 
 function restorePanelStates() {
   const states = JSON.parse(localStorage.getItem('mm_panels') || '{}');
-  const map = { config: 'bodyConfig', providers: 'bodyProviders', comm: 'bodyComm', history: 'bodyHistory' };
+  const map = { config: 'bodyConfig', providers: 'bodyProviders', services: 'bodyServices', comm: 'bodyComm', history: 'bodyHistory' };
   // If sections 1 & 2 have been configured, collapse them on next visit
   const hasConfig = config.airbnbIcalUrl || config.bookingIcalUrl || (config.providers && config.providers.length);
   for (const [id, bodyId] of Object.entries(map)) {
@@ -2303,7 +2358,7 @@ async function showProviderMode() {
   if (headerEl) {
     const h1 = headerEl.querySelector('h1');
     if (h1) {
-      h1.innerHTML = 'Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.35);vertical-align:middle;">v3.17</span>';
+      h1.innerHTML = 'Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.35);vertical-align:middle;">v3.20</span>';
       appendRoleBadge(h1);
     }
     const sub = headerEl.querySelector('.sub-title');
@@ -2529,7 +2584,7 @@ async function showOwnerMode() {
   if (headerEl) {
     const h1 = headerEl.querySelector('h1');
     if (h1) {
-      h1.innerHTML = 'Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.35);vertical-align:middle;">v3.17</span>';
+      h1.innerHTML = 'Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.35);vertical-align:middle;">v3.20</span>';
       appendRoleBadge(h1);
     }
     document.querySelectorAll('.header-actions .btnHelp').forEach(btn => {
@@ -3604,17 +3659,25 @@ function updatePlanUI() {
   // Marketplace button always visible — premium check is in showMarketplace()
   // Update header with plan + role badges
   const h1 = document.querySelector('.header h1');
-  if (h1) {
-    // Remove existing badges
-    h1.querySelectorAll('.premiumBadge,.roleBadge').forEach(b => b.remove());
+  if (h1) h1.querySelectorAll('.premiumBadge,.roleBadge').forEach(b => b.remove());
+  const hCenter = document.getElementById('headerCenter');
+  if (hCenter) {
+    hCenter.innerHTML = '';
     // Plan badge
     if (isPremium) {
       const badgeText = plan === 'business' ? 'BUSINESS' : 'PRO';
-      const badgeColor = plan === 'business' ? 'background:#6c63ff;' : '';
-      h1.insertAdjacentHTML('beforeend', ' <span class="premiumBadge" style="' + badgeColor + '">' + badgeText + '</span>');
+      const badgeColor = plan === 'business' ? 'background:#6c63ff;' : 'background:var(--accent);';
+      hCenter.insertAdjacentHTML('beforeend', '<span class="premiumBadge" style="' + badgeColor + '">' + badgeText + '</span>');
+    } else {
+      hCenter.insertAdjacentHTML('beforeend', '<span class="premiumBadge" style="background:var(--surface2);color:var(--text3);cursor:pointer;" onclick="showPremiumModal()">FREE</span>');
     }
     // Role badge
-    appendRoleBadge(h1);
+    const roleLabels = { admin: 'Conciergerie', manager: 'Gestionnaire', owner: 'Proprietaire', provider: 'Prestataire' };
+    const roleColors = { admin: '#e94560', manager: '#e94560', owner: '#f59e0b', provider: '#34d399' };
+    const role = API.getRole();
+    if (role && roleLabels[role]) {
+      hCenter.insertAdjacentHTML('beforeend', '<span style="font-size:10px;padding:3px 8px;border-radius:4px;font-weight:700;background:' + roleColors[role] + '20;color:' + roleColors[role] + ';">' + roleLabels[role] + '</span>');
+    }
   }
   // Trial banner
   const trialBanner = document.getElementById('trialBanner');
@@ -5020,6 +5083,19 @@ function openPropDetail() {
   } else {
     ownerDiv.innerHTML = '';
   }
+  // Render service checkboxes
+  const svcDiv = document.getElementById('propServicesChecks');
+  if (svcDiv) {
+    const propServices = prop.required_services || [];
+    let shtml = '';
+    SERVICE_CATALOG.forEach(cat => {
+      cat.services.forEach(s => {
+        const checked = propServices.includes(s.id) ? 'checked' : '';
+        shtml += `<label style="display:flex;align-items:center;gap:4px;padding:4px 8px;background:var(--surface2);border:1px solid var(--border2);border-radius:6px;font-size:12px;cursor:pointer;"><input type="checkbox" class="propSvcCheck" value="${s.id}" ${checked} style="accent-color:#6c63ff;"> ${s.icon} ${s.label}</label>`;
+      });
+    });
+    svcDiv.innerHTML = shtml;
+  }
   document.getElementById('overlay').style.display = 'block';
   document.getElementById('propDetailModal').style.display = 'block';
 }
@@ -5090,6 +5166,7 @@ function savePropDetail() {
   const tpl = document.getElementById('propDetailTemplate').value.trim();
   prop.messageTemplate = tpl !== getDefaultTemplate() ? tpl : '';
   prop.checklist = propCheckItems.slice();
+  prop.required_services = [...document.querySelectorAll('.propSvcCheck:checked')].map(c => c.value);
   const img = document.getElementById('propPhotoImg');
   if (img.style.display !== 'none' && img.src && img.src.startsWith('data:')) {
     prop.photo = img.src;
@@ -7180,6 +7257,20 @@ async function saveMarketplaceProfile() {
   }
 }
 
+function renderMkServiceCheckboxes(checkedServices) {
+  const container = document.getElementById('mkServicesCheckboxes');
+  if (!container) return;
+  const checked = checkedServices || [];
+  let html = '';
+  SERVICE_CATALOG.forEach(cat => {
+    cat.services.forEach(s => {
+      const isChecked = checked.includes(s.id) ? 'checked' : '';
+      html += `<label style="display:flex;align-items:center;gap:4px;padding:6px 10px;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;font-size:12px;color:var(--text);cursor:pointer;"><input type="checkbox" value="${s.id}" class="mkServiceCb" style="accent-color:#6c63ff;" ${isChecked}> ${s.icon} ${s.label}</label>`;
+    });
+  });
+  container.innerHTML = html;
+}
+
 async function loadMarketplaceProfile() {
   try {
     const { data: { user } } = await sb.auth.getUser();
@@ -7200,6 +7291,9 @@ async function loadMarketplaceProfile() {
       const fields = document.getElementById('mkProfileFields');
       if (fields) fields.style.display = isVisible ? 'flex' : 'none';
     }
+    // Render dynamic service checkboxes from SERVICE_CATALOG
+    const services = data?.services || [];
+    renderMkServiceCheckboxes(services);
     // Populate extended fields if data exists
     if (data) {
       const descEl = document.getElementById('mkDescription');
@@ -7208,11 +7302,6 @@ async function loadMarketplaceProfile() {
       if (expEl) expEl.value = data.experience_years || '';
       const availEl = document.getElementById('mkAvailability');
       if (availEl) availEl.value = data.availability || 'available';
-      // Check service checkboxes
-      const services = data.services || [];
-      document.querySelectorAll('.mkServiceCb').forEach(cb => {
-        cb.checked = services.includes(cb.value);
-      });
     }
   } catch (e) {
     console.error('Load marketplace profile error:', e);
@@ -7225,6 +7314,142 @@ showAccountModal = async function() {
   await _origShowAccountModal();
   loadMarketplaceProfile();
 };
+
+// ─── Service Requests ───
+function showServiceRequestModal() {
+  const prop = API.getActiveProperty(fullConfig);
+  if (!prop) return showToast('Selectionnez une propriete');
+  let html = '<div style="padding:10px;">';
+  html += '<div style="font-size:16px;font-weight:700;color:var(--accent);margin-bottom:12px;text-align:center;">Demander un service</div>';
+  html += '<div style="font-size:12px;color:var(--text3);margin-bottom:12px;text-align:center;">Choisissez le service et la date souhaitee</div>';
+  // Service selection by category
+  html += '<label style="font-size:11px;color:var(--text3);text-transform:uppercase;">Service</label>';
+  html += '<select id="svcReqType" style="width:100%;padding:10px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:13px;margin-bottom:10px;">';
+  SERVICE_CATALOG.forEach(cat => {
+    html += `<optgroup label="${cat.label}">`;
+    cat.services.forEach(s => { html += `<option value="${s.id}">${s.icon} ${s.label}</option>`; });
+    html += '</optgroup>';
+  });
+  html += '</select>';
+  // Date
+  html += '<label style="font-size:11px;color:var(--text3);text-transform:uppercase;">Date souhaitee</label>';
+  html += '<input type="date" id="svcReqDate" style="width:100%;padding:10px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:13px;margin-bottom:10px;box-sizing:border-box;">';
+  // Priority
+  html += '<label style="font-size:11px;color:var(--text3);text-transform:uppercase;">Priorite</label>';
+  html += '<select id="svcReqPriority" style="width:100%;padding:10px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:13px;margin-bottom:10px;">';
+  html += '<option value="low">Basse - Quand possible</option>';
+  html += '<option value="normal" selected>Normale</option>';
+  html += '<option value="high">Haute - Urgent</option>';
+  html += '</select>';
+  // Description
+  html += '<label style="font-size:11px;color:var(--text3);text-transform:uppercase;">Description (optionnel)</label>';
+  html += '<textarea id="svcReqDesc" rows="3" placeholder="Details sur la demande..." style="width:100%;padding:10px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:13px;margin-bottom:14px;resize:vertical;box-sizing:border-box;font-family:inherit;"></textarea>';
+  // Buttons
+  html += '<div style="display:flex;gap:8px;">';
+  html += '<button class="btn btnOutline" style="flex:1;padding:12px;" onclick="closeMsg()">Annuler</button>';
+  html += '<button class="btn btnPrimary" style="flex:1;padding:12px;" onclick="submitServiceRequest()">Envoyer la demande</button>';
+  html += '</div></div>';
+  showMsg(html, true);
+  // Set default date to tomorrow
+  const tom = new Date(); tom.setDate(tom.getDate() + 1);
+  document.getElementById('svcReqDate').value = tom.toISOString().split('T')[0];
+}
+
+async function submitServiceRequest() {
+  const serviceType = document.getElementById('svcReqType').value;
+  const date = document.getElementById('svcReqDate').value;
+  const priority = document.getElementById('svcReqPriority').value;
+  const desc = document.getElementById('svcReqDesc').value.trim();
+  if (!date) return showToast('Choisissez une date');
+  const org = API.getOrg();
+  const prop = API.getActiveProperty(fullConfig);
+  const { data: { user } } = await sb.auth.getUser();
+  const catObj = SERVICE_CATALOG.find(c => c.services.some(s => s.id === serviceType));
+  const { error } = await sb.from('service_requests').insert({
+    org_id: org.id,
+    property_id: prop.id,
+    requester_id: user.id,
+    service_type: serviceType,
+    service_category: catObj ? catObj.cat : 'other',
+    description: desc,
+    requested_date: date,
+    priority: priority,
+    status: 'pending'
+  });
+  if (error) { console.error('Service request error:', error); return showToast('Erreur: ' + error.message); }
+  closeMsg();
+  showToast('Demande envoyee !');
+  loadServiceRequests();
+}
+
+async function loadServiceRequests() {
+  const org = API.getOrg();
+  if (!org) return;
+  const { data } = await sb.from('service_requests').select('*').eq('org_id', org.id).order('created_at', { ascending: false }).limit(50);
+  const requests = data || [];
+  const container = document.getElementById('serviceRequestsList');
+  if (!container) return;
+  // Update badge
+  const pendingCount = requests.filter(r => r.status === 'pending').length;
+  const badge = document.getElementById('svcBadge');
+  if (badge) {
+    if (pendingCount > 0) { badge.textContent = pendingCount; badge.style.display = 'inline'; }
+    else { badge.style.display = 'none'; }
+  }
+  if (!requests.length) {
+    container.innerHTML = '<div style="text-align:center;color:var(--text3);font-size:13px;padding:20px;">Aucune demande de service</div>';
+    return;
+  }
+  const role = API.getRole();
+  const providers = (API.getActiveProperty(fullConfig) || {}).providers || [];
+  let html = '';
+  requests.forEach(r => {
+    const statusColors = { pending: '#f59e0b', accepted: '#6c63ff', in_progress: '#3b82f6', done: '#34d399', refused: '#e94560' };
+    const statusLabels = { pending: 'En attente', accepted: 'Acceptee', in_progress: 'En cours', done: 'Terminee', refused: 'Refusee' };
+    const priorityIcons = { low: '🟢', normal: '🟡', high: '🔴' };
+    const color = statusColors[r.status] || '#888';
+    const label = statusLabels[r.status] || r.status;
+    const dateStr = r.requested_date ? new Date(r.requested_date).toLocaleDateString('fr-FR') : '';
+    html += `<div style="background:var(--surface2);border:1px solid var(--border2);border-left:3px solid ${color};border-radius:10px;padding:12px;margin-bottom:8px;">`;
+    html += `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">`;
+    html += `<div style="font-size:14px;font-weight:600;">${getServiceLabel(r.service_type)}</div>`;
+    html += `<span style="font-size:11px;padding:2px 8px;background:${color}20;color:${color};border-radius:4px;font-weight:600;">${label}</span>`;
+    html += `</div>`;
+    html += `<div style="display:flex;gap:12px;font-size:12px;color:var(--text3);margin-bottom:6px;">`;
+    html += `<span>📅 ${dateStr}</span>`;
+    html += `<span>${priorityIcons[r.priority] || '🟡'} ${r.priority === 'high' ? 'Urgent' : r.priority === 'low' ? 'Basse' : 'Normale'}</span>`;
+    if (r.assigned_provider) html += `<span>👤 ${r.assigned_provider}</span>`;
+    html += `</div>`;
+    if (r.description) html += `<div style="font-size:12px;color:var(--text2);margin-bottom:8px;">${r.description}</div>`;
+    // Action buttons based on role and status
+    if (role === 'admin' || role === 'manager') {
+      if (r.status === 'pending') {
+        html += `<div style="display:flex;gap:6px;flex-wrap:wrap;">`;
+        html += `<select id="svcAssign_${r.id}" style="padding:6px;background:var(--surface);color:var(--text);border:1px solid var(--border2);border-radius:6px;font-size:11px;">`;
+        html += `<option value="">Assigner a...</option>`;
+        providers.forEach(p => { html += `<option value="${p.name}">${p.name}</option>`; });
+        html += `</select>`;
+        html += `<button class="btn btnSmall btnSuccess" style="padding:4px 10px;font-size:11px;" onclick="updateServiceRequest('${r.id}','accepted',document.getElementById('svcAssign_${r.id}').value)">Accepter</button>`;
+        html += `<button class="btn btnSmall btnDanger" style="padding:4px 10px;font-size:11px;" onclick="updateServiceRequest('${r.id}','refused')">Refuser</button>`;
+        html += `</div>`;
+      } else if (r.status === 'accepted') {
+        html += `<button class="btn btnSmall" style="padding:4px 10px;font-size:11px;background:#3b82f6;color:#fff;" onclick="updateServiceRequest('${r.id}','in_progress')">Marquer en cours</button>`;
+      } else if (r.status === 'in_progress') {
+        html += `<button class="btn btnSmall btnSuccess" style="padding:4px 10px;font-size:11px;" onclick="updateServiceRequest('${r.id}','done')">Marquer termine</button>`;
+      }
+    }
+    html += `</div>`;
+  });
+  container.innerHTML = html;
+}
+
+async function updateServiceRequest(id, status, provider) {
+  const update = { status, updated_at: new Date().toISOString() };
+  if (provider) update.assigned_provider = provider;
+  await sb.from('service_requests').update(update).eq('id', id);
+  showToast('Demande mise a jour');
+  loadServiceRequests();
+}
 
 let _updateBannerShown = false;
 function showUpdateBanner() {
