@@ -915,7 +915,7 @@ async function loadPDF() {
 <body>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;pointer-events:none;">v6.06</div>
+<div id="versionBadge" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;pointer-events:none;">v6.07</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -925,7 +925,7 @@ async function loadPDF() {
     <!-- Broom that sweeps -->
     <div id="splashBroom" style="position:absolute;top:50%;left:-60px;font-size:48px;transform:translateY(-50%) rotate(-30deg);opacity:0;transition:all 0.8s cubic-bezier(0.25,0.46,0.45,0.94);">✨</div>
   </div>
-  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v6.06</span></div>
+  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v6.07</span></div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie pour locations</div>
   <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou</div>
   <!-- Loading bar -->
@@ -2139,7 +2139,7 @@ function renderPropertyDetailsInline() {
   // SECTION: Services
   html += `<div style="${sectionStyle}">`;
   html += `<div style="${sectionTitleStyle}">&#128736; Services requis</div>`;
-  html += `<div id="inlinePropServicesChecks" style="display:flex;flex-wrap:wrap;gap:6px;"></div>`;
+  html += `<div id="inlinePropServicesChecks"></div>`;
   html += `</div>`;
 
   // SECTION: Checklist
@@ -2203,18 +2203,74 @@ function renderPropertyDetailsInline() {
 
   container.innerHTML = html;
 
-  // Render services checkboxes
+  // Render services config
   const svcDiv = document.getElementById('inlinePropServicesChecks');
   if (svcDiv) {
+    const svcConfig = prop.serviceConfig || {};
     const propServices = prop.required_services || [];
+    const propProviders = prop.providers || [];
+    const freqOptions = [
+      { v: 'per_booking', l: 'A chaque location' },
+      { v: 'weekly', l: 'Hebdomadaire' },
+      { v: 'biweekly', l: 'Bi-mensuel' },
+      { v: 'monthly', l: 'Mensuel' },
+      { v: 'one_time', l: 'Ponctuel' }
+    ];
     let shtml = '';
     SERVICE_CATALOG.forEach(cat => {
+      shtml += `<div style="margin-bottom:10px;">`;
+      shtml += `<div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;font-weight:700;margin-bottom:6px;padding-left:2px;">${esc(cat.label)}</div>`;
       cat.services.forEach(s => {
-        const checked = propServices.includes(s.id) ? 'checked' : '';
-        shtml += `<label style="display:flex;align-items:center;gap:4px;padding:4px 8px;background:var(--surface2);border:1px solid var(--border2);border-radius:6px;font-size:12px;cursor:pointer;"><input type="checkbox" class="inlinePropSvcCheck" value="${s.id}" ${checked} style="accent-color:#6c63ff;"> ${s.icon} ${s.label}</label>`;
+        const cfg = svcConfig[s.id];
+        const isEnabled = cfg ? cfg.enabled : propServices.includes(s.id);
+        const freq = cfg ? cfg.frequency : 'per_booking';
+        const provider = cfg ? cfg.provider : '';
+        const price = cfg ? cfg.price : 0;
+        const checked = isEnabled ? 'checked' : '';
+        const detailDisplay = isEnabled ? 'flex' : 'none';
+        shtml += `<div class="svcConfigCard" style="border:1px solid var(--border);border-radius:8px;padding:10px;margin-bottom:6px;background:var(--surface2);">`;
+        shtml += `<div style="display:flex;align-items:center;gap:8px;margin-bottom:${isEnabled ? '6' : '0'}px;">`;
+        shtml += `<input type="checkbox" class="svcConfigCb" data-svc="${s.id}" ${checked} style="accent-color:#6c63ff;cursor:pointer;">`;
+        shtml += `<span style="font-size:13px;font-weight:500;">${s.icon} ${s.label}</span>`;
+        shtml += `</div>`;
+        shtml += `<div class="svcConfigDetails" style="display:${detailDisplay};gap:8px;flex-wrap:wrap;padding-left:26px;align-items:center;">`;
+        // Frequency select
+        shtml += `<select class="svcFreq" data-svc="${s.id}" style="padding:4px 8px;background:var(--surface);color:var(--text);border:1px solid var(--border2);border-radius:6px;font-size:12px;">`;
+        freqOptions.forEach(o => { shtml += `<option value="${o.v}" ${freq === o.v ? 'selected' : ''}>${o.l}</option>`; });
+        shtml += `</select>`;
+        // Provider select
+        shtml += `<select class="svcProvider" data-svc="${s.id}" style="padding:4px 8px;background:var(--surface);color:var(--text);border:1px solid var(--border2);border-radius:6px;font-size:12px;">`;
+        shtml += `<option value="">Auto</option>`;
+        propProviders.forEach(p => { shtml += `<option value="${esc(p.name)}" ${provider === p.name ? 'selected' : ''}>${esc(p.name)}</option>`; });
+        shtml += `</select>`;
+        // Price input
+        shtml += `<input type="number" class="svcPrice" data-svc="${s.id}" placeholder="Prix \u20ac" value="${price || ''}" min="0" step="1" style="width:70px;padding:4px 8px;background:var(--surface);color:var(--text);border:1px solid var(--border2);border-radius:6px;font-size:12px;">`;
+        shtml += `</div>`;
+        shtml += `</div>`;
       });
+      shtml += `</div>`;
     });
     svcDiv.innerHTML = shtml;
+    // Toggle details visibility on checkbox change
+    document.querySelectorAll('.svcConfigCb').forEach(cb => {
+      cb.addEventListener('change', function() {
+        const card = this.closest('.svcConfigCard');
+        const details = card.querySelector('.svcConfigDetails');
+        const headerDiv = this.parentElement;
+        if (details) details.style.display = this.checked ? 'flex' : 'none';
+        if (headerDiv) headerDiv.style.marginBottom = this.checked ? '6px' : '0';
+      });
+    });
+    // Auto-save with debounce on any service config change
+    let svcSaveTimer = null;
+    const autoSaveSvc = () => {
+      clearTimeout(svcSaveTimer);
+      svcSaveTimer = setTimeout(() => { saveInlinePropDetail(); }, 800);
+    };
+    document.querySelectorAll('.svcFreq, .svcProvider, .svcPrice').forEach(el => {
+      el.addEventListener('change', autoSaveSvc);
+      el.addEventListener('input', autoSaveSvc);
+    });
   }
 
   // Render checklist
@@ -2306,7 +2362,25 @@ function saveInlinePropDetail() {
   prop.accessCode = (document.getElementById('inlinePropAccessCode').value || '').trim();
   prop.consignes = (document.getElementById('inlinePropConsignes').value || '').trim();
   prop.checklist = inlinePropCheckItems.slice();
-  prop.required_services = [...document.querySelectorAll('.inlinePropSvcCheck:checked')].map(c => c.value);
+  // Collect service config
+  const svcConfig = {};
+  document.querySelectorAll('.svcConfigCb').forEach(cb => {
+    const svcId = cb.dataset.svc;
+    if (cb.checked) {
+      const freq = document.querySelector('.svcFreq[data-svc="' + svcId + '"]');
+      const prov = document.querySelector('.svcProvider[data-svc="' + svcId + '"]');
+      const price = document.querySelector('.svcPrice[data-svc="' + svcId + '"]');
+      svcConfig[svcId] = {
+        enabled: true,
+        frequency: freq ? freq.value : 'per_booking',
+        provider: prov ? prov.value : '',
+        price: price ? parseFloat(price.value) || 0 : 0
+      };
+    }
+  });
+  prop.serviceConfig = svcConfig;
+  // Maintain requiredServices for backward compatibility
+  prop.required_services = Object.keys(svcConfig);
   // Photo
   const img = document.getElementById('inlinePropPhotoImg');
   if (img && img.style.display !== 'none' && img.src && img.src.startsWith('data:')) {
