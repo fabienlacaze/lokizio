@@ -908,7 +908,7 @@ async function loadPDF() {
 <body>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;pointer-events:none;">v4.28</div>
+<div id="versionBadge" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;pointer-events:none;">v4.29</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -920,7 +920,7 @@ async function loadPDF() {
   </div>
   <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio</div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie</div>
-  <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou &mdash; v4.28</div>
+  <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou &mdash; v4.29</div>
   <!-- Loading bar -->
   <div style="width:200px;height:3px;background:rgba(255,255,255,0.1);border-radius:4px;margin-top:24px;overflow:hidden;">
     <div id="splashBar" style="width:0%;height:100%;background:linear-gradient(90deg,#e94560,#6c63ff);border-radius:4px;transition:width 1.5s ease;"></div>
@@ -1011,7 +1011,7 @@ async function loadPDF() {
   <div class="header-left">
     <div class="header-logo" style="width:28px;height:28px;background:linear-gradient(135deg,#e94560,#6c63ff);border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:900;color:#fff;">L</div>
     <div>
-      <h1>Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.35);vertical-align:middle;">v4.28</span></h1>
+      <h1>Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.35);vertical-align:middle;">v4.29</span></h1>
       <div class="subtitle" data-i18n="header.subtitle">Services et conciergerie</div>
     </div>
   </div>
@@ -1340,7 +1340,7 @@ async function loadPDF() {
 
   <!-- Footer -->
   <div translate="no" style="position:fixed;bottom:0;left:0;right:0;text-align:center;padding:4px 16px 2px;color:var(--text3);font-size:9px;line-height:1.4;background:linear-gradient(180deg,#0f0f1a 0%,#0a0a14 100%);z-index:101;">
-    <div style="font-weight:600;color:var(--text2);margin-bottom:4px;">Lokizio v4.28</div>
+    <div style="font-weight:600;color:var(--text2);margin-bottom:4px;">Lokizio v4.29</div>
     <div>Made with ❤️ by <a href="https://github.com/fabienlacaze" target="_blank" style="color:var(--accent2);text-decoration:none;">Fabidou</a></div>
     <div style="margin-top:4px;">
       <a href="privacy.html" target="_blank" style="color:var(--text3);text-decoration:none;margin:0 8px;">Confidentialite</a>
@@ -2303,8 +2303,7 @@ async function init() {
   document.getElementById('appMain').style.display = '';
   document.querySelector('.header').style.display = '';
   document.querySelector('.content').style.display = '';
-  const bottomNav = document.getElementById('bottomNav');
-  if (bottomNav) bottomNav.style.display = 'flex';
+  setupBottomNav('admin');
 
   fullConfig = await API.load_config();
   renderPropertySelector();
@@ -2393,8 +2392,7 @@ function appendRoleBadge(h1) {
 
 /* ── Provider Mode ── */
 async function showProviderMode() {
-  const bottomNav = document.getElementById('bottomNav');
-  if (bottomNav) bottomNav.style.display = 'none';
+  setupBottomNav('provider');
   const content = document.querySelector('.content');
   if (!content) return;
 
@@ -2481,7 +2479,7 @@ async function showProviderMode() {
   if (headerEl) {
     const h1 = headerEl.querySelector('h1');
     if (h1) {
-      h1.innerHTML = 'Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.35);vertical-align:middle;">v4.28</span>';
+      h1.innerHTML = 'Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.35);vertical-align:middle;">v4.29</span>';
       appendRoleBadge(h1);
     }
     const sub = headerEl.querySelector('.sub-title');
@@ -2532,12 +2530,21 @@ async function showProviderMode() {
 
   let html = '';
 
-  // Provider tabs: Ménages + Demandes
+  // Service requests count for nav badge
   const svcCount = myServiceRequests.length;
-  html += `<div style="display:flex;gap:6px;margin-bottom:12px;">
-    <button id="provTabCleaning" onclick="switchProviderTab('cleaning')" style="flex:1;padding:10px;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;border:2px solid #6c63ff;background:#6c63ff;color:#fff;transition:all 0.2s;">🧹 Menages <span style="background:rgba(255,255,255,0.25);padding:1px 6px;border-radius:8px;font-size:11px;">${allCleanings.length}</span></button>
-    <button id="provTabServices" onclick="switchProviderTab('services')" style="flex:1;padding:10px;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;border:2px solid var(--border2);background:var(--surface2);color:var(--text);transition:all 0.2s;position:relative;">📋 Demandes ${svcCount > 0 ? '<span style="background:#e94560;color:#fff;padding:1px 6px;border-radius:8px;font-size:11px;">' + svcCount + '</span>' : ''}</button>
-  </div>`;
+  // Update nav badge for services
+  setTimeout(() => {
+    const navSvcBadge = document.querySelector('#nav_services .nav-badge');
+    if (!navSvcBadge && svcCount > 0) {
+      const navSvc = document.getElementById('nav_services');
+      if (navSvc) {
+        const b = document.createElement('span');
+        b.className = 'nav-badge';
+        b.textContent = svcCount;
+        navSvc.appendChild(b);
+      }
+    }
+  }, 100);
 
   // ═══ TAB 1: Ménages ═══
   html += '<div id="provContentCleaning">';
@@ -2767,23 +2774,72 @@ async function showProviderMode() {
   }
 }
 
-/* ── Provider Tab Switching ── */
-function switchProviderTab(tab) {
+/* ── Bottom Nav Setup per Role ── */
+function setupBottomNav(role) {
+  const nav = document.getElementById('bottomNav');
+  if (!nav) return;
+  const configs = {
+    admin: [
+      { id: 'dashboard', icon: '📊', label: 'Dashboard' },
+      { id: 'properties', icon: '🏠', label: 'Biens' },
+      { id: 'team', icon: '👥', label: 'Equipe' },
+      { id: 'services', icon: '📋', label: 'Services' },
+      { id: 'planning', icon: '📅', label: 'Planning' },
+      { id: 'billing', icon: '💰', label: 'Factures' },
+    ],
+    provider: [
+      { id: 'cleaning', icon: '🧹', label: 'Menages' },
+      { id: 'services', icon: '📋', label: 'Demandes' },
+      { id: 'chat', icon: '💬', label: 'Messages' },
+    ],
+    owner: [
+      { id: 'overview', icon: '📊', label: 'Apercu' },
+      { id: 'properties', icon: '🏠', label: 'Biens' },
+      { id: 'planning', icon: '📅', label: 'Planning' },
+      { id: 'chat', icon: '💬', label: 'Messages' },
+    ],
+  };
+  const items = configs[role] || configs.admin;
+  let html = '';
+  items.forEach((item, i) => {
+    const active = i === 0 ? ' active' : '';
+    const fn = role === 'admin' ? 'switchMainTab' : role === 'provider' ? 'switchProviderNav' : 'switchOwnerNav';
+    html += '<div class="bottomNav-item' + active + '" onclick="' + fn + '(\'' + item.id + '\')" id="nav_' + item.id + '">';
+    html += '<span class="nav-icon">' + item.icon + '</span>';
+    if (item.id === 'services' && role === 'admin') html += '<span class="nav-badge" id="navServicesBadge" style="display:none;"></span>';
+    html += '<span>' + item.label + '</span>';
+    html += '</div>';
+  });
+  nav.innerHTML = html;
+  nav.style.display = 'flex';
+}
+
+/* ── Provider Nav Switching ── */
+function switchProviderNav(tab) {
   const cleaning = document.getElementById('provContentCleaning');
   const services = document.getElementById('provContentServices');
-  const btnC = document.getElementById('provTabCleaning');
-  const btnS = document.getElementById('provTabServices');
-  if (!cleaning || !services) return;
-  if (tab === 'cleaning') {
-    cleaning.style.display = ''; services.style.display = 'none';
-    if (btnC) { btnC.style.background = '#6c63ff'; btnC.style.color = '#fff'; btnC.style.borderColor = '#6c63ff'; }
-    if (btnS) { btnS.style.background = 'var(--surface2)'; btnS.style.color = 'var(--text)'; btnS.style.borderColor = 'var(--border2)'; }
-  } else {
-    cleaning.style.display = 'none'; services.style.display = '';
-    if (btnS) { btnS.style.background = '#6c63ff'; btnS.style.color = '#fff'; btnS.style.borderColor = '#6c63ff'; }
-    if (btnC) { btnC.style.background = 'var(--surface2)'; btnC.style.color = 'var(--text)'; btnC.style.borderColor = 'var(--border2)'; }
-  }
+  if (cleaning) cleaning.style.display = tab === 'cleaning' ? '' : 'none';
+  if (services) services.style.display = tab === 'services' ? '' : 'none';
+  if (tab === 'chat') { openProviderChat(); return; }
+  document.querySelectorAll('#bottomNav .bottomNav-item').forEach(n => n.classList.remove('active'));
+  const navEl = document.getElementById('nav_' + tab);
+  if (navEl) navEl.classList.add('active');
   window.scrollTo(0, 0);
+}
+
+/* ── Owner Nav Switching ── */
+function switchOwnerNav(tab) {
+  // Owner mode has a single content div, scroll to sections
+  if (tab === 'chat') { openOwnerChat(); return; }
+  document.querySelectorAll('#bottomNav .bottomNav-item').forEach(n => n.classList.remove('active'));
+  const navEl = document.getElementById('nav_' + tab);
+  if (navEl) navEl.classList.add('active');
+  window.scrollTo(0, 0);
+}
+
+/* ── Provider Tab Switching (legacy for inline buttons) ── */
+function switchProviderTab(tab) {
+  switchProviderNav(tab);
 }
 
 async function acceptServiceRequest(id) {
@@ -2809,8 +2865,7 @@ async function completeServiceRequest(id) {
 
 /* ── Owner Mode ── */
 async function showOwnerMode() {
-  const bottomNav = document.getElementById('bottomNav');
-  if (bottomNav) bottomNav.style.display = 'none';
+  setupBottomNav('owner');
   const content = document.querySelector('.content');
   if (!content) return;
   content.innerHTML = '';
@@ -2841,7 +2896,7 @@ async function showOwnerMode() {
   if (headerEl) {
     const h1 = headerEl.querySelector('h1');
     if (h1) {
-      h1.innerHTML = 'Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.35);vertical-align:middle;">v4.28</span>';
+      h1.innerHTML = 'Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.35);vertical-align:middle;">v4.29</span>';
       appendRoleBadge(h1);
     }
     document.querySelectorAll('.header-actions .btnHelp').forEach(btn => {
