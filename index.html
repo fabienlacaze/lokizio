@@ -891,7 +891,7 @@ async function loadPDF() {
 <body>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;pointer-events:none;">v3.13</div>
+<div id="versionBadge" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;pointer-events:none;">v3.14</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -903,7 +903,7 @@ async function loadPDF() {
   </div>
   <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio</div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie</div>
-  <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou &mdash; v3.13</div>
+  <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou &mdash; v3.14</div>
   <!-- Loading bar -->
   <div style="width:200px;height:3px;background:rgba(255,255,255,0.1);border-radius:4px;margin-top:24px;overflow:hidden;">
     <div id="splashBar" style="width:0%;height:100%;background:linear-gradient(90deg,#e94560,#6c63ff);border-radius:4px;transition:width 1.5s ease;"></div>
@@ -994,7 +994,7 @@ async function loadPDF() {
   <div class="header-left">
     <div class="header-logo" style="width:28px;height:28px;background:linear-gradient(135deg,#e94560,#6c63ff);border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:900;color:#fff;">L</div>
     <div>
-      <h1>Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.35);vertical-align:middle;">v3.13</span></h1>
+      <h1>Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.35);vertical-align:middle;">v3.14</span></h1>
       <div class="subtitle" data-i18n="header.subtitle">Services et conciergerie</div>
     </div>
   </div>
@@ -1090,21 +1090,15 @@ async function loadPDF() {
       <span class="panelChevron" id="chevConfig">&#9660;</span>
     </div>
     <div class="panelBody" id="bodyConfig">
-      <!-- Property name + actions -->
       <select id="propSelect" style="display:none;"></select>
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap;">
-        <input type="text" id="propNameInput" placeholder="Nom du logement" onchange="updatePropName(this.value)" style="flex:1;min-width:150px;padding:10px 14px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:15px;font-weight:600;">
-        <button class="btnLocation" onclick="openPropDetail()" title="Details" style="font-size:16px;border-color:rgba(255,255,255,0.25);">&#9998;</button>
-        <button class="btnLocation" onclick="openMapForProperty()" id="btnPropLocation" title="Position" style="font-size:16px;border-color:rgba(255,255,255,0.25);">&#128205;</button>
-        <button class="btnLocation" onclick="showIcalModal()" title="Calendriers iCal" style="font-size:16px;border-color:rgba(255,255,255,0.25);">&#128197;</button>
-        <!-- Property quick info (inline) -->
-        <span id="propQuickInfo" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;"></span>
-      </div>
-      <div id="propertySelector" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px;">
+      <input type="hidden" id="propNameInput">
+      <span id="propQuickInfo" style="display:none;"></span>
+      <button id="btnPropLocation" style="display:none;"></button>
+      <button id="btnRemoveProp" style="display:none;"></button>
+      <div id="propertyListView"></div>
+      <div style="margin-top:10px;">
         <button class="btn btnSmall btnSuccess" onclick="addNewProperty()" style="padding:6px 14px;font-size:12px;" data-i18n="property.add">+ Ajouter</button>
-        <button class="btn btnSmall btnDanger" id="btnRemoveProp" onclick="removeCurrentProperty()" style="padding:6px 10px;font-size:12px;display:none;">&#128465;</button>
       </div>
-      <!-- Hidden iCal list (rendered in modal) -->
       <div id="icalList" style="display:none;"></div>
     </div>
   </div>
@@ -1246,7 +1240,7 @@ async function loadPDF() {
 
   <!-- Footer -->
   <div translate="no" style="text-align:center;padding:20px 16px;color:var(--text3);font-size:11px;line-height:1.8;">
-    <div style="font-weight:600;color:var(--text2);margin-bottom:4px;">Lokizio v3.13</div>
+    <div style="font-weight:600;color:var(--text2);margin-bottom:4px;">Lokizio v3.14</div>
     <div>Made with ❤️ by <a href="https://github.com/fabienlacaze" target="_blank" style="color:var(--accent2);text-decoration:none;">Fabidou</a></div>
     <div style="margin-top:4px;">
       <a href="privacy.html" target="_blank" style="color:var(--text3);text-decoration:none;margin:0 8px;">Confidentialite</a>
@@ -1778,25 +1772,24 @@ let linens = []; // Jeux de linge: [{id, name, status:'available'|'used'|'pressi
 /* ── Property Management ── */
 function renderPropertySelector() {
   const props = fullConfig.properties || [];
-  const btnRemove = document.getElementById('btnRemoveProp');
-  if (btnRemove) btnRemove.style.display = props.length > 1 ? '' : 'none';
+  const activePropId = API.getActivePropertyId();
   const activeProp = API.getActiveProperty(fullConfig);
-  // Update custom dropdown button text
+  // Update dropdown button text
   const ddBtn = document.getElementById('propDropdownBtn');
   if (ddBtn && activeProp) ddBtn.innerHTML = '<span style="overflow:hidden;text-overflow:ellipsis;">' + esc(activeProp.name || 'Propriete') + '</span><span style="font-size:10px;opacity:0.6;flex-shrink:0;">&#9660;</span>';
-  // Build dropdown menu items
+  // Build dropdown menu
   const ddMenu = document.getElementById('propDropdownMenu');
   if (ddMenu) {
     let html = '';
     props.forEach(p => {
-      const isActive = p.id === API.getActivePropertyId();
+      const isActive = p.id === activePropId;
       html += `<div onclick="selectPropFromDropdown('${p.id}')" style="padding:10px 16px;cursor:pointer;font-size:14px;font-weight:${isActive?'700':'400'};color:${isActive?'var(--accent)':'var(--text)'};background:${isActive?'rgba(233,69,96,0.1)':'transparent'};transition:background 0.2s;border-bottom:1px solid var(--border);" onmouseover="this.style.background='rgba(255,255,255,0.06)'" onmouseout="this.style.background='${isActive?'rgba(233,69,96,0.1)':'transparent'}'">
         ${isActive ? '&#10003; ' : '&nbsp;&nbsp;&nbsp;'}${esc(p.name)}
       </div>`;
     });
     ddMenu.innerHTML = html;
   }
-  // Also fill hidden select for backward compat
+  // Hidden select for backward compat
   const sel = document.getElementById('propSelect');
   if (sel) {
     sel.innerHTML = '';
@@ -1804,10 +1797,37 @@ function renderPropertySelector() {
       const opt = document.createElement('option');
       opt.value = p.id;
       opt.textContent = p.name;
-      if (p.id === API.getActivePropertyId()) opt.selected = true;
+      if (p.id === activePropId) opt.selected = true;
       sel.appendChild(opt);
     }
   }
+  // Render property list view
+  const listDiv = document.getElementById('propertyListView');
+  if (listDiv) {
+    let html = '<table class="provTable" style="width:100%;">';
+    html += '<tr><th style="width:20px;"></th><th>Nom</th><th style="text-align:center;">Type</th><th style="text-align:center;">Adresse</th><th style="text-align:center;width:36px;">&#9998;</th><th style="text-align:center;width:36px;">&#128205;</th><th style="text-align:center;width:36px;">&#128197;</th><th style="text-align:center;width:30px;"></th></tr>';
+    const typeLabels = { apartment:'Appart.', house:'Maison', studio:'Studio', villa:'Villa', chalet:'Chalet', other:'Autre' };
+    props.forEach((p, i) => {
+      const isActive = p.id === activePropId;
+      const bgStyle = isActive ? 'background:rgba(233,69,96,0.08);' : '';
+      const shortAddr = p.address ? (p.address.length > 30 ? p.address.substring(0,30) + '...' : p.address) : '';
+      html += `<tr style="${bgStyle}cursor:pointer;" onclick="selectPropFromDropdown('${p.id}')">
+        <td><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${isActive ? 'var(--accent)' : 'var(--border2)'};"></span></td>
+        <td style="font-weight:${isActive?'700':'400'};color:${isActive?'var(--accent)':'var(--text)'};">${esc(p.name)}</td>
+        <td class="center" style="font-size:11px;color:var(--text3);">${typeLabels[p.type] || ''}</td>
+        <td class="center" style="font-size:11px;color:var(--text3);max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${esc(p.address || '')}">${shortAddr}</td>
+        <td class="center"><button class="btnLocation" onclick="event.stopPropagation();selectPropFromDropdown('${p.id}');setTimeout(openPropDetail,100)" title="Details" style="font-size:14px;">&#9998;</button></td>
+        <td class="center"><button class="btnLocation ${p.lat ? 'hasLocation' : ''}" onclick="event.stopPropagation();selectPropFromDropdown('${p.id}');setTimeout(openMapForProperty,100)" title="Position" style="font-size:14px;">&#128205;</button></td>
+        <td class="center"><button class="btnLocation" onclick="event.stopPropagation();selectPropFromDropdown('${p.id}');setTimeout(showIcalModal,100)" title="Calendriers" style="font-size:14px;">&#128197;</button></td>
+        <td class="center"><button class="btn btnSmall btnDanger" style="padding:4px 8px;" onclick="event.stopPropagation();selectPropFromDropdown('${p.id}');setTimeout(removeCurrentProperty,100)">&#10005;</button></td>
+      </tr>`;
+    });
+    html += '</table>';
+    listDiv.innerHTML = html;
+  }
+  // Update propNameInput for backward compat
+  const nameInput = document.getElementById('propNameInput');
+  if (nameInput && activeProp) nameInput.value = activeProp.name || '';
 }
 
 function togglePropDropdown() {
@@ -2282,7 +2302,7 @@ async function showProviderMode() {
   if (headerEl) {
     const h1 = headerEl.querySelector('h1');
     if (h1) {
-      h1.innerHTML = 'Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.35);vertical-align:middle;">v3.13</span>';
+      h1.innerHTML = 'Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.35);vertical-align:middle;">v3.14</span>';
       appendRoleBadge(h1);
     }
     const sub = headerEl.querySelector('.sub-title');
@@ -2508,7 +2528,7 @@ async function showOwnerMode() {
   if (headerEl) {
     const h1 = headerEl.querySelector('h1');
     if (h1) {
-      h1.innerHTML = 'Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.35);vertical-align:middle;">v3.13</span>';
+      h1.innerHTML = 'Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.35);vertical-align:middle;">v3.14</span>';
       appendRoleBadge(h1);
     }
     document.querySelectorAll('.header-actions .btnHelp').forEach(btn => {
