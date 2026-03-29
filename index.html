@@ -891,7 +891,7 @@ async function loadPDF() {
 <body>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;pointer-events:none;">v2.78</div>
+<div id="versionBadge" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;pointer-events:none;">v2.79</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -903,7 +903,7 @@ async function loadPDF() {
   </div>
   <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Cleaning Manager</div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Gestion des menages</div>
-  <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou &mdash; v2.78</div>
+  <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou &mdash; v2.79</div>
   <!-- Loading bar -->
   <div style="width:200px;height:3px;background:rgba(255,255,255,0.1);border-radius:4px;margin-top:24px;overflow:hidden;">
     <div id="splashBar" style="width:0%;height:100%;background:linear-gradient(90deg,#e94560,#6c63ff);border-radius:4px;transition:width 1.5s ease;"></div>
@@ -994,7 +994,7 @@ async function loadPDF() {
   <div class="header-left">
     <div class="header-logo"><svg width="24" height="24" viewBox="0 0 24 24" fill="none"><!-- Maison --><path d="M3 21V8l9-5 9 5v13H3z" stroke="#fff" stroke-width="1.5" fill="none"/><path d="M9 21v-6h6v6" stroke="#fff" stroke-width="1.5"/><path d="M7 11h2v2H7zM15 11h2v2h-2z" fill="rgba(255,255,255,0.5)"/><!-- Balai --><line x1="17" y1="6" x2="20" y2="19" stroke="#fff" stroke-width="1.2" stroke-linecap="round"/><path d="M18.5 16.5c1.2 1 2.2 2.5 1.5 3.5s-2.5 0-3-1c-.4-.8-.2-1.8.2-2.5z" fill="#fff" opacity="0.85"/></svg></div>
     <div>
-      <h1>Menage Manager <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.35);vertical-align:middle;">v2.78</span></h1>
+      <h1>Menage Manager <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.35);vertical-align:middle;">v2.79</span></h1>
       <div class="subtitle" data-i18n="header.subtitle">Gestion des menages</div>
     </div>
   </div>
@@ -1246,7 +1246,7 @@ async function loadPDF() {
 
   <!-- Footer -->
   <div translate="no" style="text-align:center;padding:20px 16px;color:var(--text3);font-size:11px;line-height:1.8;">
-    <div style="font-weight:600;color:var(--text2);margin-bottom:4px;">Cleaning Manager v2.78</div>
+    <div style="font-weight:600;color:var(--text2);margin-bottom:4px;">Cleaning Manager v2.79</div>
     <div>Made with ❤️ by <a href="https://github.com/fabienlacaze" target="_blank" style="color:var(--accent2);text-decoration:none;">Fabidou</a></div>
     <div style="margin-top:4px;">
       <a href="privacy.html" target="_blank" style="color:var(--text3);text-decoration:none;margin:0 8px;">Confidentialite</a>
@@ -2215,7 +2215,7 @@ async function showProviderMode() {
   if (headerEl) {
     const h1 = headerEl.querySelector('h1');
     if (h1) {
-      h1.innerHTML = 'Menage Manager <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.35);vertical-align:middle;">v2.78</span>';
+      h1.innerHTML = 'Menage Manager <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.35);vertical-align:middle;">v2.79</span>';
       appendRoleBadge(h1);
     }
     const sub = headerEl.querySelector('.sub-title');
@@ -2441,7 +2441,7 @@ async function showOwnerMode() {
   if (headerEl) {
     const h1 = headerEl.querySelector('h1');
     if (h1) {
-      h1.innerHTML = 'Menage Manager <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.35);vertical-align:middle;">v2.78</span>';
+      h1.innerHTML = 'Menage Manager <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.35);vertical-align:middle;">v2.79</span>';
       appendRoleBadge(h1);
     }
     document.querySelectorAll('.header-actions .btnHelp').forEach(btn => {
@@ -2925,7 +2925,7 @@ function showModifyResponsePopup(propId, date, provName, currentStatus) {
   }
   html += '<button class="btn btnOutline" style="padding:10px;font-size:13px;" onclick="closeMsg()">Annuler</button>';
   html += '</div></div>';
-  showMsg(html);
+  showMsg(html,true);
 }
 
 async function confirmModifyResponse(propId, date, provName, newStatus) {
@@ -3203,8 +3203,9 @@ async function changeRole(newRole) {
       html += '<div style="display:flex;flex-direction:column;gap:10px;">';
       html += '<button class="btn btnPrimary" style="padding:14px;font-size:14px;" onclick="doChangeRole(\'owner\',\'keep\')">Garder 19.99€/mois <span style="font-size:11px;opacity:0.7;display:block;">Toutes les fonctionnalites restent actives</span></button>';
       html += '<button class="btn btnOutline" style="padding:14px;font-size:14px;" onclick="doChangeRole(\'owner\',\'downgrade\')">Passer a 3.99€/mois <span style="font-size:11px;opacity:0.7;display:block;">Credit au prorata sur votre prochaine facture</span></button>';
+      html += '<button class="btn btnOutline" style="padding:14px;font-size:14px;" onclick="closeMsg()">Annuler</button>';
       html += '</div></div>';
-      showMsg(html);
+      showMsg(html,true);
       return;
     }
 
@@ -3215,11 +3216,11 @@ async function changeRole(newRole) {
       html += '<div style="font-size:16px;font-weight:700;color:#6c63ff;margin-bottom:12px;">Passer en mode Conciergerie</div>';
       html += '<div style="font-size:13px;color:var(--text2);margin-bottom:20px;">Choisissez votre formule :</div>';
       html += '<div style="display:flex;flex-direction:column;gap:10px;">';
-      html += '<button class="btn" style="padding:14px;font-size:14px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:10px;" onclick="doChangeRole(\'admin\',\'none\')">Gratuit <span style="font-size:11px;opacity:0.7;display:block;">2 prestataires, 1 bien, 5 generations/mois</span></button>';
+      html += '<button class="btn" style="padding:14px;font-size:14px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:10px;" onclick="doChangeRole(\'admin\',\'none\')">Gratuit <span style="font-size:11px;opacity:0.7;display:block;">1 bien, 2 prestataires, 5 generations/mois</span></button>';
       html += '<button class="btn btnPrimary" style="padding:14px;font-size:14px;background:linear-gradient(135deg,#6c63ff,#5a54e0);" onclick="doChangeRole(\'admin\',\'upgrade\')">Premium 19.99€/mois <span style="font-size:11px;opacity:0.7;display:block;">Illimite + Marketplace</span></button>';
       html += '<button class="btn btnOutline" style="padding:14px;font-size:14px;" onclick="closeMsg()">Annuler</button>';
       html += '</div></div>';
-      showMsg(html);
+      showMsg(html,true);
       return;
     }
 
@@ -3233,7 +3234,7 @@ async function changeRole(newRole) {
       html += '<button class="btn btnPrimary" style="padding:14px;font-size:14px;background:#34d399;" onclick="doChangeRole(\'provider\',\'keep\')">Confirmer</button>';
       html += '<button class="btn btnOutline" style="padding:14px;font-size:14px;" onclick="closeMsg()">Annuler</button>';
       html += '</div></div>';
-      showMsg(html);
+      showMsg(html,true);
       return;
     }
   }
@@ -6505,7 +6506,7 @@ function showToast(msg){
   setTimeout(()=>{t.style.transition='opacity 0.5s';t.style.opacity='0';},4200);
   setTimeout(()=>{t.style.display='none';t.style.opacity='1';t.style.transition='';},4800);
 }
-function showMsg(msg){document.getElementById('msgBody').innerHTML=msg;document.getElementById('overlay').style.display='block';document.getElementById('msgModal').style.display='block';}
+function showMsg(msg,hideOk){document.getElementById('msgBody').innerHTML=msg;document.getElementById('overlay').style.display='block';document.getElementById('msgModal').style.display='block';document.getElementById('msgModalBtns').style.display=hideOk?'none':'';}
 function closeMsg(){document.getElementById('overlay').style.display='none';document.getElementById('msgModal').style.display='none';document.getElementById('msgModalBtns').style.display='';}
 function showHelp(){document.getElementById('overlay').style.display='block';document.getElementById('helpModal').style.display='block';}
 
@@ -6664,7 +6665,7 @@ function showInviteModal() {
   html += '<button onclick="navigator.clipboard.writeText(\'' + appUrl + '\');this.textContent=\'Copie !\';setTimeout(()=>this.textContent=\'Copier\',2000)" style="padding:10px 16px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;">Copier</button>';
   html += '</div>';
   html += '</div>';
-  showMsg(html);
+  showMsg(html,true);
 }
 function showChangelog(){
   const log=JSON.parse(localStorage.getItem('mm_changelog')||'[]');
