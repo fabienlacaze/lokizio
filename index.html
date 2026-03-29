@@ -908,7 +908,7 @@ async function loadPDF() {
 <body>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;pointer-events:none;">v4.29</div>
+<div id="versionBadge" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;pointer-events:none;">v4.30</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -920,7 +920,7 @@ async function loadPDF() {
   </div>
   <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio</div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie</div>
-  <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou &mdash; v4.29</div>
+  <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou &mdash; v4.30</div>
   <!-- Loading bar -->
   <div style="width:200px;height:3px;background:rgba(255,255,255,0.1);border-radius:4px;margin-top:24px;overflow:hidden;">
     <div id="splashBar" style="width:0%;height:100%;background:linear-gradient(90deg,#e94560,#6c63ff);border-radius:4px;transition:width 1.5s ease;"></div>
@@ -1011,7 +1011,7 @@ async function loadPDF() {
   <div class="header-left">
     <div class="header-logo" style="width:28px;height:28px;background:linear-gradient(135deg,#e94560,#6c63ff);border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:900;color:#fff;">L</div>
     <div>
-      <h1>Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.35);vertical-align:middle;">v4.29</span></h1>
+      <h1>Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.35);vertical-align:middle;">v4.30</span></h1>
       <div class="subtitle" data-i18n="header.subtitle">Services et conciergerie</div>
     </div>
   </div>
@@ -1340,7 +1340,7 @@ async function loadPDF() {
 
   <!-- Footer -->
   <div translate="no" style="position:fixed;bottom:0;left:0;right:0;text-align:center;padding:4px 16px 2px;color:var(--text3);font-size:9px;line-height:1.4;background:linear-gradient(180deg,#0f0f1a 0%,#0a0a14 100%);z-index:101;">
-    <div style="font-weight:600;color:var(--text2);margin-bottom:4px;">Lokizio v4.29</div>
+    <div style="font-weight:600;color:var(--text2);margin-bottom:4px;">Lokizio v4.30</div>
     <div>Made with ❤️ by <a href="https://github.com/fabienlacaze" target="_blank" style="color:var(--accent2);text-decoration:none;">Fabidou</a></div>
     <div style="margin-top:4px;">
       <a href="privacy.html" target="_blank" style="color:var(--text3);text-decoration:none;margin:0 8px;">Confidentialite</a>
@@ -2479,7 +2479,7 @@ async function showProviderMode() {
   if (headerEl) {
     const h1 = headerEl.querySelector('h1');
     if (h1) {
-      h1.innerHTML = 'Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.35);vertical-align:middle;">v4.29</span>';
+      h1.innerHTML = 'Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.35);vertical-align:middle;">v4.30</span>';
       appendRoleBadge(h1);
     }
     const sub = headerEl.querySelector('.sub-title');
@@ -2549,17 +2549,17 @@ async function showProviderMode() {
   // ═══ TAB 1: Ménages ═══
   html += '<div id="provContentCleaning">';
 
-  // Stats bar
+  // Stats bar - with press effect
   html += `<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:10px;">
-    <div style="background:linear-gradient(135deg,#6c63ff,#5a54e0);border-radius:12px;padding:16px;text-align:center;">
+    <div style="background:linear-gradient(135deg,#6c63ff,#5a54e0);border-radius:12px;padding:16px;text-align:center;cursor:pointer;transition:transform 0.1s,opacity 0.1s;" onpointerdown="this.style.transform='scale(0.95)';this.style.opacity='0.85'" onpointerup="this.style.transform='';this.style.opacity=''" onpointerleave="this.style.transform='';this.style.opacity=''">
       <div style="font-size:24px;font-weight:800;color:#fff;">${allCleanings.length}</div>
       <div style="font-size:11px;color:rgba(255,255,255,0.8);">${t('kpi.upcoming_provider')}</div>
     </div>
-    <div style="background:linear-gradient(135deg,#34d399,#059669);border-radius:12px;padding:16px;text-align:center;">
+    <div style="background:linear-gradient(135deg,#34d399,#059669);border-radius:12px;padding:16px;text-align:center;cursor:pointer;transition:transform 0.1s,opacity 0.1s;" onpointerdown="this.style.transform='scale(0.95)';this.style.opacity='0.85'" onpointerup="this.style.transform='';this.style.opacity=''" onpointerleave="this.style.transform='';this.style.opacity=''">
       <div style="font-size:24px;font-weight:800;color:#fff;">${doneCount}</div>
       <div style="font-size:11px;color:rgba(255,255,255,0.8);">${t('kpi.done')}</div>
     </div>
-    <div style="background:linear-gradient(135deg,#f59e0b,#d97706);border-radius:12px;padding:16px;text-align:center;">
+    <div style="background:linear-gradient(135deg,#f59e0b,#d97706);border-radius:12px;padding:16px;text-align:center;cursor:pointer;transition:transform 0.1s,opacity 0.1s;" onpointerdown="this.style.transform='scale(0.95)';this.style.opacity='0.85'" onpointerup="this.style.transform='';this.style.opacity=''" onpointerleave="this.style.transform='';this.style.opacity=''">
       <div style="font-size:24px;font-weight:800;color:#fff;">${allCleanings.length - doneCount}</div>
       <div style="font-size:11px;color:rgba(255,255,255,0.8);">${t('kpi.remaining')}</div>
     </div>
@@ -2764,7 +2764,7 @@ async function showProviderMode() {
   html += '</div>'; // close provContentServices
 
   // Add floating chat button
-  html += `<button onclick="openProviderChat()" style="position:fixed;bottom:80px;right:20px;width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,#6c63ff,#5a54e0);color:#fff;border:none;font-size:24px;cursor:pointer;box-shadow:0 4px 12px rgba(108,99,255,0.4);z-index:50;">&#128172;</button>`;
+  html += `<button onclick="openProviderChat()" style="position:fixed;bottom:110px;right:20px;width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,#6c63ff,#5a54e0);color:#fff;border:none;font-size:24px;cursor:pointer;box-shadow:0 4px 12px rgba(108,99,255,0.4);z-index:50;">&#128172;</button>`;
 
   content.innerHTML = html;
 
@@ -2829,8 +2829,13 @@ function switchProviderNav(tab) {
 
 /* ── Owner Nav Switching ── */
 function switchOwnerNav(tab) {
-  // Owner mode has a single content div, scroll to sections
   if (tab === 'chat') { openOwnerChat(); return; }
+  const overview = document.getElementById('ownerContentOverview');
+  const properties = document.getElementById('ownerContentProperties');
+  const planning = document.getElementById('ownerContentPlanning');
+  if (overview) overview.style.display = tab === 'overview' ? '' : 'none';
+  if (properties) properties.style.display = tab === 'properties' ? '' : 'none';
+  if (planning) planning.style.display = tab === 'planning' ? '' : 'none';
   document.querySelectorAll('#bottomNav .bottomNav-item').forEach(n => n.classList.remove('active'));
   const navEl = document.getElementById('nav_' + tab);
   if (navEl) navEl.classList.add('active');
@@ -2896,7 +2901,7 @@ async function showOwnerMode() {
   if (headerEl) {
     const h1 = headerEl.querySelector('h1');
     if (h1) {
-      h1.innerHTML = 'Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.35);vertical-align:middle;">v4.29</span>';
+      h1.innerHTML = 'Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.35);vertical-align:middle;">v4.30</span>';
       appendRoleBadge(h1);
     }
     document.querySelectorAll('.header-actions .btnHelp').forEach(btn => {
@@ -2938,6 +2943,9 @@ async function showOwnerMode() {
 
   let html = '';
 
+  // ═══ TAB 1: Apercu (Overview) ═══
+  html += '<div id="ownerContentOverview">';
+
   // Org switcher (if owner belongs to multiple orgs)
   const memberships = API.getAllMemberships();
   if (memberships.length > 1) {
@@ -2960,17 +2968,17 @@ async function showOwnerMode() {
     </div>`;
   }
 
-  // KPI cards (no "properties" card for owner - they already know)
+  // KPI cards - clickable to navigate to planning/overview tabs
   html += `<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px;">
-    <div style="background:linear-gradient(135deg,#6c63ff,#5a54e0);border-radius:12px;padding:16px;text-align:center;">
+    <div onclick="switchOwnerNav('planning')" style="background:linear-gradient(135deg,#6c63ff,#5a54e0);border-radius:12px;padding:16px;text-align:center;cursor:pointer;transition:transform 0.1s,opacity 0.1s;" onpointerdown="this.style.transform='scale(0.95)';this.style.opacity='0.85'" onpointerup="this.style.transform='';this.style.opacity=''" onpointerleave="this.style.transform='';this.style.opacity=''">
       <div style="font-size:24px;font-weight:800;color:#fff;">${futureCleanings.length}</div>
       <div style="font-size:11px;color:rgba(255,255,255,0.8);">${t('kpi.upcoming')}</div>
     </div>
-    <div style="background:linear-gradient(135deg,#f59e0b,#d97706);border-radius:12px;padding:16px;text-align:center;">
+    <div onclick="switchOwnerNav('planning')" style="background:linear-gradient(135deg,#f59e0b,#d97706);border-radius:12px;padding:16px;text-align:center;cursor:pointer;transition:transform 0.1s,opacity 0.1s;" onpointerdown="this.style.transform='scale(0.95)';this.style.opacity='0.85'" onpointerup="this.style.transform='';this.style.opacity=''" onpointerleave="this.style.transform='';this.style.opacity=''">
       <div style="font-size:24px;font-weight:800;color:#fff;">${weekCleanings.length}</div>
       <div style="font-size:11px;color:rgba(255,255,255,0.8);">${t('kpi.this_week')}</div>
     </div>
-    <div style="background:linear-gradient(135deg,#34d399,#059669);border-radius:12px;padding:16px;text-align:center;">
+    <div style="background:linear-gradient(135deg,#34d399,#059669);border-radius:12px;padding:16px;text-align:center;cursor:pointer;transition:transform 0.1s,opacity 0.1s;" onpointerdown="this.style.transform='scale(0.95)';this.style.opacity='0.85'" onpointerup="this.style.transform='';this.style.opacity=''" onpointerleave="this.style.transform='';this.style.opacity=''">
       <div style="font-size:24px;font-weight:800;color:#fff;">${totalCost}€</div>
       <div style="font-size:11px;color:rgba(255,255,255,0.8);">${t('kpi.cost')}</div>
     </div>
@@ -2994,6 +3002,37 @@ async function showOwnerMode() {
       <a href="mailto:${_escHtml(adminEmail)}" style="background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:8px 12px;font-size:12px;color:var(--text);text-decoration:none;font-weight:600;">&#9993; Contacter</a>
     </div>`;
   }
+
+  // Today's cleanings summary in overview
+  const todayCleaningsOwner = allCleanings.filter(c => (c.cleaningDate || c.date) === today);
+  if (todayCleaningsOwner.length > 0) {
+    html += `<div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:12px;">
+      <div style="font-weight:700;font-size:14px;margin-bottom:10px;">&#128197; Aujourd'hui — ${todayCleaningsOwner.length} menage(s)</div>`;
+    todayCleaningsOwner.forEach(c => {
+      const key = c.propertyId + '_' + (c.cleaningDate || c.date) + '_' + (c.provider || '');
+      const v = validations[key];
+      const status = v ? v.status : 'pending';
+      const statusIcons = { done: '&#9989;', departed: '&#128682;', in_progress: '&#129529;', arrived: '&#127968;', accepted: '&#10003;&#10003;', seen: '&#128065;', sent: '&#9993;', refused: '&#10060;', pending: '&#9203;' };
+      const statusLabels = { done: 'Termine', departed: 'Parti', in_progress: 'En cours', arrived: 'Sur place', accepted: 'Accepte', seen: 'Lu', sent: 'Envoye', refused: 'Refuse', pending: 'En attente' };
+      const statusColors = { done: '#34d399', departed: '#34d399', in_progress: '#f59e0b', arrived: '#6c63ff', accepted: '#34d399', seen: '#6c63ff', sent: 'var(--text3)', refused: '#ef4444', pending: 'var(--text3)' };
+      html += `<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px solid var(--border);font-size:13px;">
+        <div style="flex:1;font-weight:600;">${esc(c.propertyName)}</div>
+        <div style="color:var(--text2);">${esc(c.provider || '?')}</div>
+        <span style="font-size:11px;color:${statusColors[status] || 'var(--text3)'};white-space:nowrap;">${statusIcons[status] || '&#9203;'} ${statusLabels[status] || ''}</span>
+      </div>`;
+    });
+    html += '</div>';
+  } else {
+    html += `<div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:12px;">
+      <div style="font-weight:700;font-size:14px;margin-bottom:6px;">&#128197; Aujourd'hui</div>
+      <div style="color:var(--text3);font-size:13px;">Aucun menage prevu aujourd'hui</div>
+    </div>`;
+  }
+
+  html += '</div>'; // close ownerContentOverview
+
+  // ═══ TAB 2: Biens (Properties) ═══
+  html += '<div id="ownerContentProperties" style="display:none;">';
 
   // Properties list
   for (const prop of properties) {
@@ -3049,25 +3088,74 @@ async function showOwnerMode() {
     html += '</div>';
   }
 
-  // Recent activity (Pro only)
+  html += '</div>'; // close ownerContentProperties
+
+  // ═══ TAB 3: Planning ═══
+  html += '<div id="ownerContentPlanning" style="display:none;">';
+
+  // Planning timeline - all future cleanings sorted by date
+  if (futureCleanings.length === 0) {
+    html += `<div style="text-align:center;padding:40px 20px;">
+      <div style="font-size:40px;margin-bottom:12px;">&#128197;</div>
+      <div style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:8px;">Aucun menage prevu</div>
+      <div style="font-size:13px;color:var(--text3);">Votre conciergerie n'a pas encore programme de menages.</div>
+    </div>`;
+  } else {
+    const sortedCleanings = [...futureCleanings].sort((a, b) => (a.cleaningDate || a.date || '').localeCompare(b.cleaningDate || b.date || ''));
+    let currentMonth = '';
+    sortedCleanings.forEach(c => {
+      const dateStr = c.cleaningDate || c.date;
+      const dateObj = new Date(dateStr + 'T00:00:00');
+      const monthKey = dateObj.toLocaleString('fr-FR', { month: 'long', year: 'numeric' });
+      if (monthKey !== currentMonth) {
+        currentMonth = monthKey;
+        html += `<div style="font-size:14px;font-weight:700;color:var(--accent);margin:16px 0 8px 4px;text-transform:capitalize;">${monthKey}</div>`;
+      }
+      const isToday2 = dateStr === today;
+      const key = c.propertyId + '_' + dateStr + '_' + (c.provider || '');
+      const v = validations[key];
+      const status = v ? v.status : 'pending';
+      const statusIcons = { done: '&#9989;', departed: '&#128682;', in_progress: '&#129529;', arrived: '&#127968;', accepted: '&#10003;&#10003;', seen: '&#128065;', sent: '&#9993;', refused: '&#10060;', pending: '&#9203;' };
+      const statusLabels = { done: 'Termine', departed: 'Parti', in_progress: 'En cours', arrived: 'Sur place', accepted: 'Accepte', seen: 'Lu', sent: 'Envoye', refused: 'Refuse', pending: 'En attente' };
+      const statusColors = { done: '#34d399', departed: '#34d399', in_progress: '#f59e0b', arrived: '#6c63ff', accepted: '#34d399', seen: '#6c63ff', sent: 'var(--text3)', refused: '#ef4444', pending: 'var(--text3)' };
+      const dayName = dateObj.toLocaleString('fr-FR', { weekday: 'short' });
+
+      html += `<div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:8px;${isToday2 ? 'border-left:3px solid #e94560;' : ''}display:flex;align-items:center;gap:12px;">
+        <div style="min-width:50px;text-align:center;">
+          <div style="font-size:10px;color:var(--text3);text-transform:uppercase;">${dayName}</div>
+          <div style="font-size:20px;font-weight:800;color:${isToday2 ? '#e94560' : 'var(--text)'};">${dateObj.getDate()}</div>
+        </div>
+        <div style="flex:1;">
+          <div style="font-weight:600;font-size:13px;color:var(--text);">${esc(c.propertyName)}${isToday2 ? ' <span style="background:#e94560;color:#fff;font-size:9px;padding:1px 5px;border-radius:4px;">AUJOURD\'HUI</span>' : ''}</div>
+          <div style="font-size:12px;color:var(--text3);margin-top:2px;">${esc(c.provider || '?')}</div>
+        </div>
+        <span style="font-size:11px;color:${statusColors[status] || 'var(--text3)'};white-space:nowrap;">${statusIcons[status] || '&#9203;'} ${statusLabels[status] || ''}</span>
+      </div>`;
+    });
+  }
+
+  html += '</div>'; // close ownerContentPlanning
+
+  // Recent activity (Pro only) — appended to overview tab via JS after render
+  let activityHtml = '';
   const ownerPlan = API.getPlan();
   const isOwnerPro = ownerPlan === 'pro' || ownerPlan === 'premium' || ownerPlan === 'business';
   if (isOwnerPro) {
     const { data: recentMsgs } = await sb.from('messages').select('*').eq('org_id', org.id).eq('sender_role', 'provider').order('created_at', { ascending: false }).limit(10);
     if (recentMsgs && recentMsgs.length) {
-      html += `<div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:12px;">
+      activityHtml += `<div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:12px;">
         <div style="font-weight:700;font-size:14px;margin-bottom:10px;">&#128276; Activite recente</div>`;
       recentMsgs.forEach(m => {
         const time = new Date(m.created_at).toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
-        html += `<div style="padding:6px 0;border-top:1px solid var(--border);font-size:12px;">
+        activityHtml += `<div style="padding:6px 0;border-top:1px solid var(--border);font-size:12px;">
           <span style="color:var(--text3);">${time}</span> — ${esc(m.body)}
         </div>`;
       });
-      html += '</div>';
+      activityHtml += '</div>';
     }
   } else {
     // Free: show locked activity section
-    html += `<div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:12px;position:relative;overflow:hidden;">
+    activityHtml += `<div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:12px;position:relative;overflow:hidden;">
       <div style="font-weight:700;font-size:14px;margin-bottom:10px;">&#128276; Activite recente</div>
       <div style="filter:blur(4px);pointer-events:none;">
         <div style="padding:6px 0;border-top:1px solid var(--border);font-size:12px;color:var(--text3);">28/03 16:14 — prestataire a confirme — menage termine</div>
@@ -3081,9 +3169,13 @@ async function showOwnerMode() {
   }
 
   // Chat button
-  html += `<button onclick="openOwnerChat()" style="position:fixed;bottom:70px;right:16px;width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,#6c63ff,#5a54e0);color:#fff;border:none;font-size:22px;cursor:pointer;box-shadow:0 4px 16px rgba(108,99,255,0.4);z-index:50;">&#128172;</button>`;
+  html += `<button onclick="openOwnerChat()" style="position:fixed;bottom:110px;right:16px;width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,#6c63ff,#5a54e0);color:#fff;border:none;font-size:22px;cursor:pointer;box-shadow:0 4px 16px rgba(108,99,255,0.4);z-index:50;">&#128172;</button>`;
 
   content.innerHTML = html;
+
+  // Append activity to overview tab after render
+  const overviewTab = document.getElementById('ownerContentOverview');
+  if (overviewTab && activityHtml) overviewTab.insertAdjacentHTML('beforeend', activityHtml);
 }
 
 async function openOwnerChat() {
