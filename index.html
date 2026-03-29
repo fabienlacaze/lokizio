@@ -910,7 +910,7 @@ async function loadPDF() {
 <body>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;pointer-events:none;">v5.22</div>
+<div id="versionBadge" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;pointer-events:none;">v5.23</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -920,7 +920,7 @@ async function loadPDF() {
     <!-- Broom that sweeps -->
     <div id="splashBroom" style="position:absolute;top:50%;left:-60px;font-size:48px;transform:translateY(-50%) rotate(-30deg);opacity:0;transition:all 0.8s cubic-bezier(0.25,0.46,0.45,0.94);">✨</div>
   </div>
-  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v5.22</span></div>
+  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v5.23</span></div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie pour locations</div>
   <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou</div>
   <!-- Loading bar -->
@@ -2054,19 +2054,17 @@ function renderTeamPropertySelector() { renderTabPropertySelector('teamPropertyS
 
 function switchTabProperty(propId) {
   _filterPropertyId = propId;
-  if (propId) API.setActiveProperty(propId);
-  // Re-render all property selectors
+  // Re-render all property selectors instantly
   renderTabPropertySelector('teamPropertySelector');
   renderTabPropertySelector('prestPropertySelector');
   renderTabPropertySelector('planningPropertySelector');
-  renderPropertySelector();
-  // Reload content if a specific property is selected
+  // Reload prestations (uses cached data, just re-filters)
+  loadAdminPrestations();
+  // If switching to a specific property, also update team/planning in background
   if (propId) {
-    loadActiveProperty().then(() => {
-      loadAdminPrestations();
-    });
-  } else {
-    loadAdminPrestations();
+    API.setActiveProperty(propId);
+    renderPropertySelector();
+    loadActiveProperty();
   }
 }
 
@@ -8863,34 +8861,55 @@ async function updateServiceRequest(id, status, provider) {
   loadServiceRequests();
 }
 
-async function loadAdminPrestations() {
+let _adminPrestCache = null;
+let _adminPrestCacheTime = 0;
+
+async function loadAdminPrestations(forceReload) {
   const org = API.getOrg();
   if (!org) return;
   const filtersEl = document.getElementById('adminPrestFilters');
   const listEl = document.getElementById('adminPrestList');
   if (!listEl) return;
 
-  // Load all properties
-  const { data: properties } = await sb.from('properties').select('*').eq('org_id', org.id);
-  const props = properties || [];
-  const propMap = {};
-  props.forEach(p => { propMap[p.id] = p; });
+  let props, plannings, svcRequests, validations, propMap;
+  const now = Date.now();
 
-  // Load all plannings (cleanings)
-  const propIds = props.map(p => p.id);
-  const { data: plannings } = propIds.length ? await sb.from('plannings').select('cleanings,property_id').in('property_id', propIds) : { data: [] };
-  const today = new Date().toISOString().split('T')[0];
+  // Use cache if available and less than 30s old
+  if (!forceReload && _adminPrestCache && (now - _adminPrestCacheTime) < 30000) {
+    props = _adminPrestCache.props;
+    plannings = _adminPrestCache.plannings;
+    svcRequests = _adminPrestCache.svcRequests;
+    validations = _adminPrestCache.validations;
+    propMap = _adminPrestCache.propMap;
+  } else {
+    // Load all properties
+    const { data: properties } = await sb.from('properties').select('*').eq('org_id', org.id);
+    props = properties || [];
+    propMap = {};
+    props.forEach(p => { propMap[p.id] = p; });
 
-  // Load service requests
-  const { data: svcData } = await sb.from('service_requests').select('*').eq('org_id', org.id).order('created_at', { ascending: false }).limit(100);
-  const svcRequests = svcData || [];
+    // Load all plannings (cleanings)
+    const propIds = props.map(p => p.id);
+    const { data: planData } = propIds.length ? await sb.from('plannings').select('cleanings,property_id').in('property_id', propIds) : { data: [] };
+    plannings = planData;
+    const today = new Date().toISOString().split('T')[0];
 
-  // Load validations
-  const validations = {};
-  for (const prop of props) {
-    const { data: vals } = await sb.from('cleaning_validations').select('*').eq('property_id', prop.id);
-    if (vals) vals.forEach(v => { validations[v.property_id + '_' + v.cleaning_date + '_' + v.provider_name] = v; });
+    // Load service requests
+    const { data: svcData } = await sb.from('service_requests').select('*').eq('org_id', org.id).order('created_at', { ascending: false }).limit(100);
+    svcRequests = svcData || [];
+
+    // Load validations
+    validations = {};
+    for (const prop of props) {
+      const { data: vals } = await sb.from('cleaning_validations').select('*').eq('property_id', prop.id);
+      if (vals) vals.forEach(v => { validations[v.property_id + '_' + v.cleaning_date + '_' + v.provider_name] = v; });
+    }
+
+    _adminPrestCache = { props, plannings, svcRequests, validations, propMap };
+    _adminPrestCacheTime = now;
   }
+
+  const today = new Date().toISOString().split('T')[0];
 
   // Build unified array (filtered by property if selected)
   const filterProp = _filterPropertyId;
