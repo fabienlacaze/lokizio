@@ -148,7 +148,7 @@ async function loadPDF() {
   .bottomNav-item.active { color: var(--accent); }
   .bottomNav-item .nav-icon { font-size: 20px; }
   .bottomNav-item .nav-badge {
-    position: absolute; top: 0; right: 2px;
+    position: absolute; top: -2px; left: 50%;
     background: #e94560; color: #fff; font-size: 9px; font-weight: 700;
     min-width: 16px; height: 16px; border-radius: 8px;
     display: flex; align-items: center; justify-content: center;
@@ -910,7 +910,7 @@ async function loadPDF() {
 <body>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;pointer-events:none;">v5.03</div>
+<div id="versionBadge" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;pointer-events:none;">v5.04</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -922,7 +922,7 @@ async function loadPDF() {
   </div>
   <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio</div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie</div>
-  <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou &mdash; v5.03</div>
+  <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou &mdash; v5.04</div>
   <!-- Loading bar -->
   <div style="width:200px;height:3px;background:rgba(255,255,255,0.1);border-radius:4px;margin-top:24px;overflow:hidden;">
     <div id="splashBar" style="width:0%;height:100%;background:linear-gradient(90deg,#e94560,#6c63ff);border-radius:4px;transition:width 1.5s ease;"></div>
@@ -1013,7 +1013,7 @@ async function loadPDF() {
   <div class="header-left">
     <div class="header-logo" style="width:28px;height:28px;background:linear-gradient(135deg,#e94560,#6c63ff);border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:900;color:#fff;">L</div>
     <div>
-      <h1>Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.35);vertical-align:middle;">v5.03</span></h1>
+      <h1>Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.35);vertical-align:middle;">v5.04</span></h1>
       <div class="subtitle" data-i18n="header.subtitle">Services et conciergerie</div>
     </div>
   </div>
@@ -1332,19 +1332,20 @@ async function loadPDF() {
 
   </div><!-- /tabPlanning -->
 
-  <!-- Footer -->
-  <div translate="no" style="position:fixed;bottom:0;left:0;right:0;text-align:center;padding:4px 16px 2px;color:var(--text3);font-size:9px;line-height:1.4;background:linear-gradient(180deg,#0f0f1a 0%,#0a0a14 100%);z-index:101;">
-    <div style="font-weight:600;color:var(--text2);margin-bottom:4px;">Lokizio v5.03</div>
-    <div>Made with ❤️ by <a href="https://github.com/fabienlacaze" target="_blank" style="color:var(--accent2);text-decoration:none;">Fabidou</a></div>
-    <div style="margin-top:4px;">
-      <a href="privacy.html" target="_blank" style="color:var(--text3);text-decoration:none;margin:0 8px;">Confidentialite</a>
-      <span>•</span>
-      <a href="mailto:cleaningmanager.service@outlook.com" style="color:var(--text3);text-decoration:none;margin:0 8px;">Contact</a>
-      <span>•</span>
-      <a href="#" id="footerPremiumLink" onclick="showPremiumModal();return false;" style="color:var(--accent2);text-decoration:none;margin:0 8px;">Premium</a>
-    </div>
-  </div>
 
+</div>
+
+<!-- Footer (outside .content so it survives innerHTML clearing) -->
+<div id="appFooter" translate="no" style="position:fixed;bottom:0;left:0;right:0;text-align:center;padding:4px 16px 2px;color:var(--text3);font-size:9px;line-height:1.4;background:linear-gradient(180deg,#0f0f1a 0%,#0a0a14 100%);z-index:101;">
+  <div style="font-weight:600;color:var(--text2);margin-bottom:4px;">Lokizio v5.04</div>
+  <div>Made with ❤️ by <a href="https://github.com/fabienlacaze" target="_blank" style="color:var(--accent2);text-decoration:none;">Fabidou</a></div>
+  <div style="margin-top:4px;">
+    <a href="privacy.html" target="_blank" style="color:var(--text3);text-decoration:none;margin:0 8px;">Confidentialite</a>
+    <span>•</span>
+    <a href="mailto:cleaningmanager.service@outlook.com" style="color:var(--text3);text-decoration:none;margin:0 8px;">Contact</a>
+    <span>•</span>
+    <a href="#" id="footerPremiumLink" onclick="showPremiumModal();return false;" style="color:var(--accent2);text-decoration:none;margin:0 8px;">Premium</a>
+  </div>
 </div>
 
 <div class="overlay" id="overlay" onclick="if(!window._wizardActive)closeAllModals()"></div>
@@ -2474,7 +2475,7 @@ async function showProviderMode() {
   if (headerEl) {
     const h1 = headerEl.querySelector('h1');
     if (h1) {
-      h1.innerHTML = 'Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.35);vertical-align:middle;">v5.03</span>';
+      h1.innerHTML = 'Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.35);vertical-align:middle;">v5.04</span>';
       appendRoleBadge(h1);
     }
     const sub = headerEl.querySelector('.sub-title');
@@ -2963,7 +2964,7 @@ async function showOwnerMode() {
   if (headerEl) {
     const h1 = headerEl.querySelector('h1');
     if (h1) {
-      h1.innerHTML = 'Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.35);vertical-align:middle;">v5.03</span>';
+      h1.innerHTML = 'Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.35);vertical-align:middle;">v5.04</span>';
       appendRoleBadge(h1);
     }
     document.querySelectorAll('.header-actions .btnHelp').forEach(btn => {
