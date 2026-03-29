@@ -169,7 +169,7 @@ async function loadPDF() {
   .header-actions { display: flex; gap: 8px; align-items: center; }
 
   /* ── Main Content ── */
-  .content { padding: 16px 16px 400px 16px; max-width: 900px; margin: 0 auto; display:flex; flex-direction:column; gap:14px; min-height: calc(100vh - 140px); }
+  .content { padding: 16px 16px 80px 16px; max-width: 900px; margin: 0 auto; display:flex; flex-direction:column; gap:14px; min-height: calc(100vh - 140px); }
 
   /* ── Notification Banner ── */
   .notifBanner {
@@ -537,7 +537,7 @@ async function loadPDF() {
     .header { padding: 12px 14px; }
     .header h1 { font-size: 16px; }
     .header .subtitle { font-size: 10px; }
-    .content { padding: 12px 10px 350px 10px; }
+    .content { padding: 12px 10px 80px 10px; }
     .panelHeader { padding: 14px 14px; }
     .panelBody { padding: 0 14px 14px 14px; }
     .urlRow { flex-direction: column; gap: 6px; }
@@ -570,7 +570,7 @@ async function loadPDF() {
     .header h1 { font-size: 15px; }
     .header .subtitle { display: none; }
     .header-logo { width: 34px; height: 34px; font-size: 16px; border-radius: 10px; }
-    .content { padding: 8px 4px 350px 4px; }
+    .content { padding: 8px 4px 80px 4px; }
     .templateGrid { grid-template-columns: 1fr !important; }
     .panel { border-radius: 12px; margin-bottom: 8px; }
     .panelHeader { padding: 12px 10px; }
@@ -643,7 +643,7 @@ async function loadPDF() {
   .adBanner { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-sm); margin-bottom:12px; min-height:60px; }
 
   /* Premium badge */
-  .premiumBadge { display:inline-block; background:linear-gradient(135deg,#fbbf24,#f59e0b); color:#000; font-size:10px; font-weight:700; padding:2px 8px; border-radius:20px; margin-left:8px; vertical-align:middle; }
+  .premiumBadge { display:inline-block; background:linear-gradient(135deg,#fbbf24,#f59e0b); color:#000; font-size:10px; font-weight:700; padding:2px 8px; border-radius:20px; margin-left:8px; vertical-align:middle; pointer-events:auto; }
 
   /* Premium modal */
   .pricingCards { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin:20px 0; }
@@ -908,7 +908,7 @@ async function loadPDF() {
 <body>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;pointer-events:none;">v4.20</div>
+<div id="versionBadge" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;pointer-events:none;">v4.21</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -920,7 +920,7 @@ async function loadPDF() {
   </div>
   <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio</div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie</div>
-  <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou &mdash; v4.20</div>
+  <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou &mdash; v4.21</div>
   <!-- Loading bar -->
   <div style="width:200px;height:3px;background:rgba(255,255,255,0.1);border-radius:4px;margin-top:24px;overflow:hidden;">
     <div id="splashBar" style="width:0%;height:100%;background:linear-gradient(90deg,#e94560,#6c63ff);border-radius:4px;transition:width 1.5s ease;"></div>
@@ -1011,11 +1011,11 @@ async function loadPDF() {
   <div class="header-left">
     <div class="header-logo" style="width:28px;height:28px;background:linear-gradient(135deg,#e94560,#6c63ff);border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:900;color:#fff;">L</div>
     <div>
-      <h1>Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.35);vertical-align:middle;">v4.20</span></h1>
+      <h1>Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.35);vertical-align:middle;">v4.21</span></h1>
       <div class="subtitle" data-i18n="header.subtitle">Services et conciergerie</div>
     </div>
   </div>
-  <div id="headerCenter" style="position:absolute;left:50%;transform:translateX(-50%);display:flex;align-items:center;"></div>
+  <div id="headerCenter" style="position:absolute;left:50%;transform:translateX(-50%);display:flex;align-items:center;pointer-events:none;"></div>
   <div class="header-actions">
     <button class="btnHelp" onclick="showLangModal()" title="Langue" id="langBtn" style="font-size:14px;padding:4px 8px;"><img src="https://flagcdn.com/w20/fr.png" width="20" height="15" id="langFlagImg" style="vertical-align:middle;"> <span style="font-size:11px;vertical-align:middle;" id="langCode">FR</span></button>
     <button class="btnHelp" onclick="showChangelog()" data-i18n-attr="title" data-i18n="header.changelog" title="Historique modifications" style="font-size:13px;">&#128221;</button>
@@ -1340,7 +1340,7 @@ async function loadPDF() {
 
   <!-- Footer -->
   <div translate="no" style="text-align:center;padding:20px 16px;color:var(--text3);font-size:11px;line-height:1.8;margin-top:auto;">
-    <div style="font-weight:600;color:var(--text2);margin-bottom:4px;">Lokizio v4.20</div>
+    <div style="font-weight:600;color:var(--text2);margin-bottom:4px;">Lokizio v4.21</div>
     <div>Made with ❤️ by <a href="https://github.com/fabienlacaze" target="_blank" style="color:var(--accent2);text-decoration:none;">Fabidou</a></div>
     <div style="margin-top:4px;">
       <a href="privacy.html" target="_blank" style="color:var(--text3);text-decoration:none;margin:0 8px;">Confidentialite</a>
@@ -2472,7 +2472,7 @@ async function showProviderMode() {
   if (headerEl) {
     const h1 = headerEl.querySelector('h1');
     if (h1) {
-      h1.innerHTML = 'Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.35);vertical-align:middle;">v4.20</span>';
+      h1.innerHTML = 'Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.35);vertical-align:middle;">v4.21</span>';
       appendRoleBadge(h1);
     }
     const sub = headerEl.querySelector('.sub-title');
@@ -2832,7 +2832,7 @@ async function showOwnerMode() {
   if (headerEl) {
     const h1 = headerEl.querySelector('h1');
     if (h1) {
-      h1.innerHTML = 'Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.35);vertical-align:middle;">v4.20</span>';
+      h1.innerHTML = 'Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.35);vertical-align:middle;">v4.21</span>';
       appendRoleBadge(h1);
     }
     document.querySelectorAll('.header-actions .btnHelp').forEach(btn => {
