@@ -366,6 +366,11 @@ async function loadPDF() {
   }
   .tabContent { padding: 16px 18px 18px 18px; }
 
+  /* ── Prestations Sub-Tabs ── */
+  .prestSubTab { padding:8px 14px; border-radius:8px; font-size:12px; font-weight:600; border:1px solid var(--border2); background:var(--surface2); color:var(--text); cursor:pointer; white-space:nowrap; transition:all 0.2s; font-family:'Inter',sans-serif; }
+  .prestSubTab:hover { border-color:var(--accent); color:var(--accent); }
+  .prestSubTab.active { background:#6c63ff; color:#fff; border-color:#6c63ff; }
+
   /* ── Results Table ── */
   .resultScroll { max-height: 600px; overflow-y: auto; overflow-x: auto; -webkit-overflow-scrolling: touch; border-radius: var(--radius-sm); }
   .resultTable { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 650px; }
@@ -910,7 +915,7 @@ async function loadPDF() {
 <body>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;pointer-events:none;">v5.23</div>
+<div id="versionBadge" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;pointer-events:none;">v6.00</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -920,7 +925,7 @@ async function loadPDF() {
     <!-- Broom that sweeps -->
     <div id="splashBroom" style="position:absolute;top:50%;left:-60px;font-size:48px;transform:translateY(-50%) rotate(-30deg);opacity:0;transition:all 0.8s cubic-bezier(0.25,0.46,0.45,0.94);">✨</div>
   </div>
-  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v5.23</span></div>
+  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v6.00</span></div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie pour locations</div>
   <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou</div>
   <!-- Loading bar -->
@@ -1189,15 +1194,97 @@ async function loadPDF() {
   <div class="tab-content" id="tabPrestations">
 
   <div id="prestPropertySelector" style="margin-bottom:8px;"></div>
-  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
-    <div style="font-size:16px;font-weight:700;color:var(--text);">📋 Prestations</div>
-    <button class="btn btnSmall btnPrimary" onclick="showServiceRequestModal()" style="padding:8px 14px;font-size:12px;">+ Demander</button>
-  </div>
-  <div id="adminPrestFilters"></div>
-  <div id="adminPrestList"><div style="text-align:center;padding:30px;color:var(--text3);">Chargement...</div></div>
 
-  <!-- Keep old container for loadServiceRequests compatibility -->
-  <div id="serviceRequestsList" style="display:none;"></div>
+  <!-- Sub-tab navigation -->
+  <div id="prestSubTabs" style="display:flex;gap:4px;margin-bottom:12px;overflow-x:auto;">
+    <button class="prestSubTab active" onclick="switchPrestSubTab('list')">&#128203; Liste</button>
+    <button class="prestSubTab" onclick="switchPrestSubTab('calendar')">&#128197; Calendrier</button>
+    <button class="prestSubTab" onclick="switchPrestSubTab('stats')">&#128200; Stats</button>
+    <button class="prestSubTab" onclick="switchPrestSubTab('comm')">&#128228; Transmission</button>
+    <button class="prestSubTab" onclick="switchPrestSubTab('history')">&#128214; Historique</button>
+  </div>
+
+  <!-- SUB-TAB: Liste -->
+  <div id="prestSubList" class="prestSubContent">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+      <div style="font-size:16px;font-weight:700;color:var(--text);">&#128203; Prestations</div>
+      <div style="display:flex;gap:6px;">
+        <button class="btn btnSmall" onclick="generatePlanning()" style="padding:8px 14px;font-size:12px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);">&#128260; Generer</button>
+        <button class="btn btnSmall btnPrimary" onclick="showServiceRequestModal()" style="padding:8px 14px;font-size:12px;">+ Demander</button>
+      </div>
+    </div>
+    <div id="adminPrestFilters"></div>
+    <div id="adminPrestList"><div style="text-align:center;padding:30px;color:var(--text3);">Chargement...</div></div>
+    <!-- List view from planning -->
+    <div id="filterBar" class="filterBar" style="padding: 4px 18px 8px; margin-top: 8px;"></div>
+    <div id="resultDiv" class="resultScroll">
+      <div class="emptyState" data-i18n="results.empty">Cliquez sur GENERER LE PLANNING pour afficher les menages</div>
+    </div>
+    <div id="summaryDiv" class="summaryBox hidden"></div>
+    <div id="summaryActions"></div>
+    <!-- Keep old container for loadServiceRequests compatibility -->
+    <div id="serviceRequestsList" style="display:none;"></div>
+  </div>
+
+  <!-- SUB-TAB: Calendrier -->
+  <div id="prestSubCalendar" class="prestSubContent" style="display:none;">
+    <div id="tabCalContent"><div class="calView" id="calView"></div></div>
+  </div>
+
+  <!-- SUB-TAB: Stats -->
+  <div id="prestSubStats" class="prestSubContent" style="display:none;">
+    <div id="tabStatsContent"><div id="statsDiv"><div class="emptyState" data-i18n="stats.empty">Generez un planning pour voir les statistiques.</div></div></div>
+  </div>
+
+  <!-- SUB-TAB: Communication / Transmission -->
+  <div id="prestSubComm" class="prestSubContent" style="display:none;">
+    <div id="bodyComm">
+      <!-- Free: CSV + Copier -->
+      <div class="lbl" style="margin-bottom:8px;">Gratuit</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;">
+        <button class="btn btnOutline" onclick="exportCSV()" style="padding:12px;">&#128196; <span data-i18n="results.csv">CSV</span></button>
+        <button class="btn btnOutline" onclick="copyPlanning()" style="padding:12px;">&#128203; <span data-i18n="results.copy">Copier</span></button>
+      </div>
+      <!-- Premium: WhatsApp, PDF, Partage -->
+      <div class="lbl" style="margin-bottom:8px;">Premium &#11088;</div>
+      <div id="commPremiumZone" style="position:relative;">
+        <div id="commPremLock" style="display:none;position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(15,15,26,0.7);display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:var(--radius-sm);z-index:2;cursor:pointer;" onclick="showPremiumModal('WhatsApp, PDF et Partage sont reserves aux utilisateurs Premium')"><span style="font-size:28px;">&#128274;</span><span style="color:#fff;font-size:12px;font-weight:600;margin-top:6px;">Debloquer</span></div>
+        <div id="commPremContent" style="">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
+            <button class="btn btnPrimary" onclick="showSendModal()" style="padding:14px;font-size:14px;background:linear-gradient(135deg,#6c63ff,#5a52d5);">&#128228; <span data-i18n="send.btn">Envoyer</span></button>
+            <button class="btn btnOutline" onclick="shareReadonly()" style="padding:14px;font-size:14px;">&#128279; <span data-i18n="comm.share">Partager</span></button>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+            <button class="btn btnOutline" onclick="exportPDF()" style="padding:12px;">&#128462; <span data-i18n="results.pdf">PDF</span></button>
+            <button class="btn btnOutline" onclick="generateInvoice()" style="padding:12px;">&#128176; <span>Facture</span></button>
+            <button class="btn btnOutline" onclick="showProviderLinks()" style="padding:12px;" translate="no">&#128279; <span data-i18n="comm.provlinks">Liens prestataires</span></button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SUB-TAB: Historique -->
+  <div id="prestSubHistory" class="prestSubContent" style="display:none;">
+    <div id="bodyHistory">
+      <div id="histPremiumZone" style="position:relative;min-height:120px;">
+        <div id="histPremLock" style="display:none;position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(15,15,26,0.85);border-radius:var(--radius-sm);z-index:2;cursor:pointer;flex-direction:column;align-items:center;justify-content:center;" onclick="showPremiumModal('L\'historique et le pressing sont reserves aux utilisateurs Premium')"><span style="font-size:32px;">&#128274;</span><span style="color:#fff;font-size:13px;font-weight:600;margin-top:8px;">Premium</span></div>
+        <div id="histPremContent">
+          <div class="tabBar" style="margin-bottom:10px;">
+            <button class="tabBtn active" id="tabHist" onclick="switchHistTab('history')">&#128214; <span data-i18n="results.tab.history">Historique</span></button>
+            <button class="tabBtn" id="tabPressing" onclick="switchHistTab('pressing')">&#128084; <span data-i18n="results.tab.pressing">Pressing</span></button>
+          </div>
+          <div id="tabHistContent">
+            <div id="historyDiv" style="max-height:500px;overflow-y:auto;"></div>
+            <div class="center mt10" id="clearHistBtn" style="display:none;"><button class="btn btnDanger btnSmall" onclick="clearHistory()">Effacer l'historique</button></div>
+          </div>
+          <div id="tabPressingContent" class="hidden">
+            <div id="pressingDiv"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 
   </div><!-- /tabPrestations -->
 
@@ -1236,108 +1323,7 @@ async function loadPDF() {
 
   </div><!-- /tabBilling -->
 
-  <!-- ═══ TAB: PLANNING ═══ -->
-  <div class="tab-content" id="tabPlanning">
-
-  <!-- Property selector for planning tab -->
-  <div id="planningPropertySelector" style="margin-bottom:8px;"></div>
-
-  <!-- ═══ SECTION 3: PLANNING ═══ -->
-  <div class="panel">
-    <div class="panelHeader" onclick="togglePanel('results')">
-      <div class="panelLeft">
-        <div class="stepBadge" style="background:linear-gradient(135deg,var(--success),#059669);">3</div>
-        <div class="panelTitle">&#128197; <span data-i18n="results.title">Planning</span><span class="helpTip" onclick="event.stopPropagation()">?<span class="helpBubble">Le planning est genere automatiquement a partir de vos calendriers. Cliquez Rafraichir pour forcer la mise a jour. Filtrez par prestataire.</span></span></div>
-      </div>
-      <button class="btn btnSmall" onclick="event.stopPropagation();generatePlanning()" id="btnGenerate" style="padding:6px 14px;font-size:11px;background:var(--accent);color:#fff;border:none;border-radius:8px;" data-i18n="generate.refresh">&#128260; Rafraichir</button>
-      <span class="panelChevron open" id="chevResults">&#9660;</span>
-    </div>
-    <div id="bodyResults">
-      <div class="tabBar">
-        <button class="tabBtn active" id="tabList" onclick="switchTab('list')">&#128203; <span data-i18n="results.tab.list">Liste</span></button>
-        <button class="tabBtn" id="tabCal" onclick="switchTab('calendar')">&#128197; <span data-i18n="results.tab.calendar">Calendrier</span></button>
-        <button class="tabBtn" id="tabStats" onclick="switchTab('stats')">&#128200; <span data-i18n="results.tab.stats">Stats</span></button>
-      </div>
-      <div class="tabContent">
-        <div id="tabListContent">
-          <div id="filterBar" class="filterBar" style="padding: 4px 18px 8px; margin-top: 8px;"></div>
-          <div id="resultDiv" class="resultScroll">
-            <div class="emptyState" data-i18n="results.empty">Cliquez sur GENERER LE PLANNING pour afficher les menages</div>
-          </div>
-          <div id="summaryDiv" class="summaryBox hidden"></div>
-          <div id="summaryActions"></div>
-        </div>
-        <div id="tabCalContent" class="hidden"><div class="calView" id="calView"></div></div>
-        <div id="tabStatsContent" class="hidden"><div id="statsDiv"><div class="emptyState" data-i18n="stats.empty">Generez un planning pour voir les statistiques.</div></div></div>
-      </div>
-    </div>
-  </div>
-
-  <!-- ═══ SECTION 4: COMMUNICATION & EXPORT ═══ -->
-  <div class="panel">
-    <div class="panelHeader" onclick="togglePanel('comm')">
-      <div class="panelLeft">
-        <div class="stepBadge" style="background:linear-gradient(135deg,#3b82f6,#1d4ed8);">4</div>
-        <div class="panelTitle">&#128172; <span data-i18n="comm.title">Communication & Export</span><span class="helpTip" onclick="event.stopPropagation()">?<span class="helpBubble">Exportez le planning en CSV ou envoyez-le via WhatsApp. Partagez un lien en lecture seule avec vos prestataires.</span></span></div>
-      </div>
-      <span class="panelChevron" id="chevComm">&#9660;</span>
-    </div>
-    <div class="panelBody collapsed" id="bodyComm">
-      <!-- Free: CSV + Copier -->
-      <div class="lbl" style="margin-bottom:8px;">Gratuit</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;">
-        <button class="btn btnOutline" onclick="exportCSV()" style="padding:12px;">&#128196; <span data-i18n="results.csv">CSV</span></button>
-        <button class="btn btnOutline" onclick="copyPlanning()" style="padding:12px;">&#128203; <span data-i18n="results.copy">Copier</span></button>
-      </div>
-      <!-- Premium: WhatsApp, PDF, Partage -->
-      <div class="lbl" style="margin-bottom:8px;">Premium &#11088;</div>
-      <div id="commPremiumZone" style="position:relative;">
-        <div id="commPremLock" style="display:none;position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(15,15,26,0.7);display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:var(--radius-sm);z-index:2;cursor:pointer;" onclick="showPremiumModal('WhatsApp, PDF et Partage sont reserves aux utilisateurs Premium')"><span style="font-size:28px;">&#128274;</span><span style="color:#fff;font-size:12px;font-weight:600;margin-top:6px;">Debloquer</span></div>
-        <div id="commPremContent" style="">
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
-            <button class="btn btnPrimary" onclick="showSendModal()" style="padding:14px;font-size:14px;background:linear-gradient(135deg,#6c63ff,#5a52d5);">&#128228; <span data-i18n="send.btn">Envoyer</span></button>
-            <button class="btn btnOutline" onclick="shareReadonly()" style="padding:14px;font-size:14px;">&#128279; <span data-i18n="comm.share">Partager</span></button>
-          </div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-            <button class="btn btnOutline" onclick="exportPDF()" style="padding:12px;">&#128462; <span data-i18n="results.pdf">PDF</span></button>
-            <button class="btn btnOutline" onclick="generateInvoice()" style="padding:12px;">&#128176; <span>Facture</span></button>
-            <button class="btn btnOutline" onclick="showProviderLinks()" style="padding:12px;" translate="no">&#128279; <span data-i18n="comm.provlinks">Liens prestataires</span></button>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- ═══ SECTION 5: HISTORIQUE & PRESSING ═══ -->
-  <div class="panel">
-    <div class="panelHeader" onclick="togglePanel('history')">
-      <div class="panelLeft">
-        <div class="stepBadge" style="background:linear-gradient(135deg,#f59e0b,#d97706);">5</div>
-        <div class="panelTitle">&#128214; <span data-i18n="section.history">Historique & Pressing</span><span class="helpTip" onclick="event.stopPropagation()">?<span class="helpBubble">Les menages passes sont archives automatiquement. Gerez vos jeux de linge dans l'onglet Pressing.</span></span></div>
-      </div>
-      <span class="panelChevron" id="chevHistory">&#9660;</span>
-    </div>
-    <div class="panelBody collapsed" id="bodyHistory">
-      <div id="histPremiumZone" style="position:relative;min-height:120px;">
-        <div id="histPremLock" style="display:none;position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(15,15,26,0.85);border-radius:var(--radius-sm);z-index:2;cursor:pointer;flex-direction:column;align-items:center;justify-content:center;" onclick="showPremiumModal('L\'historique et le pressing sont reserves aux utilisateurs Premium')"><span style="font-size:32px;">&#128274;</span><span style="color:#fff;font-size:13px;font-weight:600;margin-top:8px;">Premium</span></div>
-        <div id="histPremContent">
-      <div class="tabBar" style="margin-bottom:10px;">
-        <button class="tabBtn active" id="tabHist" onclick="switchHistTab('history')">&#128214; <span data-i18n="results.tab.history">Historique</span></button>
-        <button class="tabBtn" id="tabPressing" onclick="switchHistTab('pressing')">&#128084; <span data-i18n="results.tab.pressing">Pressing</span></button>
-      </div>
-      <div id="tabHistContent">
-        <div id="historyDiv" style="max-height:500px;overflow-y:auto;"></div>
-        <div class="center mt10" id="clearHistBtn" style="display:none;"><button class="btn btnDanger btnSmall" onclick="clearHistory()">Effacer l'historique</button></div>
-      </div>
-      <div id="tabPressingContent" class="hidden">
-        <div id="pressingDiv"></div>
-      </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  </div><!-- /tabPlanning -->
+  <!-- tabPlanning removed - content merged into tabPrestations -->
 
   <!-- ═══ TAB: MESSAGES ═══ -->
   <div class="tab-content" id="tabMessages">
@@ -1888,10 +1874,6 @@ async function loadPDF() {
     <span class="nav-badge" id="navServicesBadge" style="display:none;"></span>
     <span>Prestations</span>
   </div>
-  <div class="bottomNav-item" onclick="switchMainTab('planning')" id="navPlanning">
-    <span class="nav-icon">&#128197;</span>
-    <span>Planning</span>
-  </div>
   <div class="bottomNav-item" onclick="switchMainTab('billing')" id="navBilling">
     <span class="nav-icon">&#128176;</span>
     <span>Finances</span>
@@ -2057,15 +2039,47 @@ function switchTabProperty(propId) {
   // Re-render all property selectors instantly
   renderTabPropertySelector('teamPropertySelector');
   renderTabPropertySelector('prestPropertySelector');
-  renderTabPropertySelector('planningPropertySelector');
+  // Show loading overlay on content
+  showContentLoading();
   // Reload prestations (uses cached data, just re-filters)
   loadAdminPrestations();
   // If switching to a specific property, also update team/planning in background
   if (propId) {
     API.setActiveProperty(propId);
     renderPropertySelector();
-    loadActiveProperty();
+    loadActiveProperty().then(() => hideContentLoading());
+  } else {
+    setTimeout(hideContentLoading, 600);
   }
+}
+
+function showContentLoading() {
+  const content = document.querySelector('.content');
+  if (!content) return;
+  content.style.filter = 'blur(3px)';
+  content.style.opacity = '0.5';
+  content.style.pointerEvents = 'none';
+  content.style.transition = 'filter 0.3s, opacity 0.3s';
+  // Add spinner if not exists
+  if (!document.getElementById('contentSpinner')) {
+    const spinner = document.createElement('div');
+    spinner.id = 'contentSpinner';
+    spinner.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:9999;';
+    spinner.innerHTML = '<div style="width:40px;height:40px;border:3px solid rgba(108,99,255,0.2);border-top:3px solid #6c63ff;border-radius:50%;animation:spin 0.8s linear infinite;"></div>';
+    document.body.appendChild(spinner);
+  }
+}
+
+function hideContentLoading() {
+  const content = document.querySelector('.content');
+  if (content) {
+    content.style.filter = '';
+    content.style.opacity = '';
+    content.style.pointerEvents = '';
+    content.style.transition = 'filter 0.3s, opacity 0.3s';
+  }
+  const spinner = document.getElementById('contentSpinner');
+  if (spinner) spinner.remove();
 }
 
 async function loadActiveProperty() {
@@ -2265,29 +2279,24 @@ function syncAndSaveConfig() {
 
 /* ── Panel Collapse ── */
 function togglePanel(id) {
-  const map = { dashboard: ['bodyDashboard','chevDashboard'], config: ['bodyConfig','chevConfig'], providers: ['bodyProviders','chevProviders'], services: ['bodyServices','chevServices'], billing: ['bodyBilling','chevBilling'], results: ['bodyResults','chevResults'], comm: ['bodyComm','chevComm'], history: ['bodyHistory','chevHistory'] };
+  const map = { dashboard: ['bodyDashboard','chevDashboard'], config: ['bodyConfig','chevConfig'], providers: ['bodyProviders','chevProviders'], services: ['bodyServices','chevServices'], billing: ['bodyBilling','chevBilling'] };
   const [bodyId, chevId] = map[id] || [null, null];
   if (!bodyId) return;
   const body = document.getElementById(bodyId);
   const chev = document.getElementById(chevId);
-  if (id === 'dashboard' || id === 'config' || id === 'comm' || id === 'providers' || id === 'history' || id === 'services' || id === 'billing') {
+  if (id === 'dashboard' || id === 'config' || id === 'providers' || id === 'services' || id === 'billing') {
     body.classList.toggle('collapsed');
     // Save panel state
     const states = JSON.parse(localStorage.getItem('mm_panels') || '{}');
     states[id] = body.classList.contains('collapsed') ? 'closed' : 'open';
     localStorage.setItem('mm_panels', JSON.stringify(states));
-  } else if (id === 'results') {
-    const content = document.getElementById('bodyResults');
-    const items = content.querySelectorAll('.filterBar, .tabBar, .tabContent');
-    const hidden = items[0] && items[0].style.display === 'none';
-    items.forEach(el => { el.style.display = hidden ? '' : 'none'; });
   }
   chev.classList.toggle('open');
 }
 
 function restorePanelStates() {
   const states = JSON.parse(localStorage.getItem('mm_panels') || '{}');
-  const map = { config: 'bodyConfig', providers: 'bodyProviders', services: 'bodyServices', billing: 'bodyBilling', comm: 'bodyComm', history: 'bodyHistory' };
+  const map = { config: 'bodyConfig', providers: 'bodyProviders', services: 'bodyServices', billing: 'bodyBilling' };
   // If sections 1 & 2 have been configured, collapse them on next visit
   const hasConfig = config.airbnbIcalUrl || config.bookingIcalUrl || (config.providers && config.providers.length);
   for (const [id, bodyId] of Object.entries(map)) {
@@ -2422,11 +2431,11 @@ async function loadKpiCards() {
         <div style="font-size:24px;font-weight:800;color:#fff;">${(properties||[]).length}</div>
         <div style="font-size:11px;color:rgba(255,255,255,0.8);">${t('kpi.properties')}</div>
       </div>
-      <div onclick="switchMainTab('planning')" style="background:linear-gradient(135deg,#6c63ff,#5a54e0);border-radius:12px;padding:16px;text-align:center;cursor:pointer;transition:transform 0.15s;user-select:none;" onmousedown="this.style.transform='scale(0.96)'" onmouseup="this.style.transform=''" onmouseleave="this.style.transform=''">
+      <div onclick="switchMainTab('prestations')" style="background:linear-gradient(135deg,#6c63ff,#5a54e0);border-radius:12px;padding:16px;text-align:center;cursor:pointer;transition:transform 0.15s;user-select:none;" onmousedown="this.style.transform='scale(0.96)'" onmouseup="this.style.transform=''" onmouseleave="this.style.transform=''">
         <div style="font-size:24px;font-weight:800;color:#fff;">${future.length}</div>
         <div style="font-size:11px;color:rgba(255,255,255,0.8);">${t('kpi.upcoming')}</div>
       </div>
-      <div onclick="switchMainTab('planning')" style="background:linear-gradient(135deg,#f59e0b,#d97706);border-radius:12px;padding:16px;text-align:center;cursor:pointer;transition:transform 0.15s;user-select:none;" onmousedown="this.style.transform='scale(0.96)'" onmouseup="this.style.transform=''" onmouseleave="this.style.transform=''">
+      <div onclick="switchMainTab('prestations')" style="background:linear-gradient(135deg,#f59e0b,#d97706);border-radius:12px;padding:16px;text-align:center;cursor:pointer;transition:transform 0.15s;user-select:none;" onmousedown="this.style.transform='scale(0.96)'" onmouseup="this.style.transform=''" onmouseleave="this.style.transform=''">
         <div style="font-size:24px;font-weight:800;color:#fff;">${week.length}</div>
         <div style="font-size:11px;color:rgba(255,255,255,0.8);">${t('kpi.this_week')}</div>
       </div>
@@ -2945,7 +2954,6 @@ function setupBottomNav(role) {
       { id: 'properties', icon: '🏠', label: 'Biens' },
       { id: 'team', icon: '👥', label: 'Equipe' },
       { id: 'prestations', icon: '📋', label: 'Prestations' },
-      { id: 'planning', icon: '📅', label: 'Planning' },
       { id: 'billing', icon: '💰', label: 'Finances' },
       { id: 'messages', icon: '💬', label: 'Messages' },
     ],
@@ -7680,26 +7688,28 @@ function navTo(section) {
   // Scroll to section
   const targets = {
     config: 'panelConfig',
-    generate: 'btnGenerate',
-    results: 'bodyResults',
-    stats: 'tabStats',
-    more: 'bodyComm',
+    generate: 'prestSubList',
+    results: 'prestSubList',
+    stats: 'prestSubStats',
+    more: 'prestSubComm',
   };
   const targetId = targets[section];
+  // Switch to prestations tab and appropriate sub-tab
+  if (section === 'generate' || section === 'results') { switchMainTab('prestations'); switchPrestSubTab('list'); }
+  if (section === 'stats') { switchMainTab('prestations'); switchPrestSubTab('stats'); }
+  if (section === 'more') { switchMainTab('prestations'); switchPrestSubTab('comm'); }
   const el = document.getElementById(targetId);
   if (el) {
     el.scrollIntoView({ behavior: 'smooth', block: 'center' });
     // Open panel if collapsed
     if (section === 'config') { const body = document.getElementById('bodyConfig'); if (body && body.classList.contains('collapsed')) togglePanel('config'); }
-    if (section === 'results') { const body = document.getElementById('bodyResults'); if (body) { const items = body.querySelectorAll('.filterBar, .tabBar, .tabContent'); items.forEach(el => el.style.display = ''); } }
-    if (section === 'stats') switchTab('stats');
   }
 }
 
 /* ── Smooth scroll after generate ── */
 function scrollToResults() {
   setTimeout(() => {
-    const el = document.getElementById('bodyResults');
+    const el = document.getElementById('resultDiv') || document.getElementById('prestSubList');
     if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }, 300);
 }
@@ -7733,8 +7743,26 @@ function switchMainTab(tabId) {
   if (tabId === 'dashboard') renderDashboardContent();
   if (tabId === 'prestations') { renderTabPropertySelector('prestPropertySelector'); loadAdminPrestations(); }
   if (tabId === 'team') renderTabPropertySelector('teamPropertySelector');
-  if (tabId === 'planning') renderTabPropertySelector('planningPropertySelector');
   if (tabId === 'messages') initFullChat();
+}
+
+/* ── Prestations Sub-Tab Switching ── */
+function switchPrestSubTab(tab) {
+  document.querySelectorAll('.prestSubContent').forEach(el => el.style.display = 'none');
+  document.querySelectorAll('.prestSubTab').forEach(btn => btn.classList.remove('active'));
+  const idMap = { list: 'prestSubList', calendar: 'prestSubCalendar', stats: 'prestSubStats', comm: 'prestSubComm', history: 'prestSubHistory' };
+  const content = document.getElementById(idMap[tab]);
+  if (content) content.style.display = '';
+  // Activate clicked button
+  const btns = document.querySelectorAll('.prestSubTab');
+  const tabIndex = { list: 0, calendar: 1, stats: 2, comm: 3, history: 4 };
+  if (btns[tabIndex[tab]]) btns[tabIndex[tab]].classList.add('active');
+  // Refresh content on switch
+  if (tab === 'calendar') renderCalendar();
+  if (tab === 'stats') renderStats();
+  if (tab === 'history') { renderHistory(); renderPressing(); }
+  if (tab === 'list') loadAdminPrestations();
+  window.scrollTo(0, 0);
 }
 
 function renderDashboardContent() {
@@ -7760,16 +7788,12 @@ function renderDashboardContent() {
   }
 }
 
-/* ── Tabs (planning sub-tabs) ── */
+/* ── Tabs (legacy - redirects to prestSubTab system) ── */
 function switchTab(tab) {
   currentTab=tab;
-  const tabs={list:'tabList',calendar:'tabCal',stats:'tabStats',history:'tabHist',pressing:'tabPressing'};
-  const contents={list:'tabListContent',calendar:'tabCalContent',stats:'tabStatsContent',history:'tabHistContent',pressing:'tabPressingContent'};
-  Object.keys(tabs).forEach(t=>{
-    document.getElementById(tabs[t]).classList.toggle('active',tab===t);
-    document.getElementById(contents[t]).classList.toggle('hidden',tab!==t);
-  });
-  if(tab==='calendar')renderCalendar(); if(tab==='history')renderHistory(); if(tab==='stats')renderStats(); if(tab==='pressing')renderPressing();
+  // Map old tab names to new sub-tab names
+  const map = { list: 'list', calendar: 'calendar', stats: 'stats', history: 'history', pressing: 'history' };
+  switchPrestSubTab(map[tab] || tab);
 }
 
 /* ── Statistics ── */
