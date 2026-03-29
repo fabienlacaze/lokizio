@@ -153,6 +153,8 @@ async function loadPDF() {
     min-width: 16px; height: 16px; border-radius: 8px;
     display: flex; align-items: center; justify-content: center;
   }
+  .prestFilter { padding:6px 12px; border-radius:8px; font-size:11px; font-weight:600; border:1px solid var(--border2); background:var(--surface2); color:var(--text); cursor:pointer; }
+  .prestFilter.active { background:#6c63ff; color:#fff; border-color:#6c63ff; }
   .tab-content { display: none; }
   .tab-content.active { display: block; }
   .header-left { display: flex; align-items: center; gap: 12px; }
@@ -908,7 +910,7 @@ async function loadPDF() {
 <body>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;pointer-events:none;">v4.30</div>
+<div id="versionBadge" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;pointer-events:none;">v5.00</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -920,7 +922,7 @@ async function loadPDF() {
   </div>
   <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio</div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie</div>
-  <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou &mdash; v4.30</div>
+  <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou &mdash; v5.00</div>
   <!-- Loading bar -->
   <div style="width:200px;height:3px;background:rgba(255,255,255,0.1);border-radius:4px;margin-top:24px;overflow:hidden;">
     <div id="splashBar" style="width:0%;height:100%;background:linear-gradient(90deg,#e94560,#6c63ff);border-radius:4px;transition:width 1.5s ease;"></div>
@@ -1011,7 +1013,7 @@ async function loadPDF() {
   <div class="header-left">
     <div class="header-logo" style="width:28px;height:28px;background:linear-gradient(135deg,#e94560,#6c63ff);border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:900;color:#fff;">L</div>
     <div>
-      <h1>Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.35);vertical-align:middle;">v4.30</span></h1>
+      <h1>Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.35);vertical-align:middle;">v5.00</span></h1>
       <div class="subtitle" data-i18n="header.subtitle">Services et conciergerie</div>
     </div>
   </div>
@@ -1180,8 +1182,8 @@ async function loadPDF() {
 
   </div><!-- /tabTeam -->
 
-  <!-- ═══ TAB: SERVICES ═══ -->
-  <div class="tab-content" id="tabServices">
+  <!-- ═══ TAB: PRESTATIONS ═══ -->
+  <div class="tab-content" id="tabPrestations">
 
   <!-- ═══ SECTION: SERVICES ═══ -->
   <div class="panel" id="panelServices">
@@ -1201,7 +1203,7 @@ async function loadPDF() {
     </div>
   </div>
 
-  </div><!-- /tabServices -->
+  </div><!-- /tabPrestations -->
 
   <!-- ═══ TAB: BILLING ═══ -->
   <div class="tab-content" id="tabBilling">
@@ -1340,7 +1342,7 @@ async function loadPDF() {
 
   <!-- Footer -->
   <div translate="no" style="position:fixed;bottom:0;left:0;right:0;text-align:center;padding:4px 16px 2px;color:var(--text3);font-size:9px;line-height:1.4;background:linear-gradient(180deg,#0f0f1a 0%,#0a0a14 100%);z-index:101;">
-    <div style="font-weight:600;color:var(--text2);margin-bottom:4px;">Lokizio v4.30</div>
+    <div style="font-weight:600;color:var(--text2);margin-bottom:4px;">Lokizio v5.00</div>
     <div>Made with ❤️ by <a href="https://github.com/fabienlacaze" target="_blank" style="color:var(--accent2);text-decoration:none;">Fabidou</a></div>
     <div style="margin-top:4px;">
       <a href="privacy.html" target="_blank" style="color:var(--text3);text-decoration:none;margin:0 8px;">Confidentialite</a>
@@ -1854,10 +1856,10 @@ async function loadPDF() {
     <span class="nav-icon">&#128101;</span>
     <span>Equipe</span>
   </div>
-  <div class="bottomNav-item" onclick="switchMainTab('services')" id="navServices">
+  <div class="bottomNav-item" onclick="switchMainTab('prestations')" id="navPrestations">
     <span class="nav-icon">&#128203;</span>
     <span class="nav-badge" id="navServicesBadge" style="display:none;"></span>
-    <span>Services</span>
+    <span>Prestations</span>
   </div>
   <div class="bottomNav-item" onclick="switchMainTab('planning')" id="navPlanning">
     <span class="nav-icon">&#128197;</span>
@@ -2479,7 +2481,7 @@ async function showProviderMode() {
   if (headerEl) {
     const h1 = headerEl.querySelector('h1');
     if (h1) {
-      h1.innerHTML = 'Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.35);vertical-align:middle;">v4.30</span>';
+      h1.innerHTML = 'Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.35);vertical-align:middle;">v5.00</span>';
       appendRoleBadge(h1);
     }
     const sub = headerEl.querySelector('.sub-title');
@@ -2530,29 +2532,62 @@ async function showProviderMode() {
 
   let html = '';
 
-  // Service requests count for nav badge
-  const svcCount = myServiceRequests.length;
-  // Update nav badge for services
-  setTimeout(() => {
-    const navSvcBadge = document.querySelector('#nav_services .nav-badge');
-    if (!navSvcBadge && svcCount > 0) {
-      const navSvc = document.getElementById('nav_services');
-      if (navSvc) {
-        const b = document.createElement('span');
-        b.className = 'nav-badge';
-        b.textContent = svcCount;
-        navSvc.appendChild(b);
-      }
-    }
-  }, 100);
+  // Build unified prestations array
+  const unified = [];
+  allCleanings.forEach(c => {
+    const dateStr = c.cleaningDate || c.date;
+    const isToday = dateStr === today;
+    const key = dateStr + '_' + providerName;
+    const v = validations[key];
+    const validationStatus = v ? v.status : 'pending';
+    unified.push({
+      _source: 'cleaning',
+      type: 'cleaning_standard',
+      date: dateStr,
+      propertyName: c.propertyName,
+      propertyAddress: c.propertyAddress,
+      provider: c.provider,
+      status: validationStatus,
+      propertyId: c.propertyId,
+      checkinTime: c.checkinTime,
+      checkoutTime: c.checkoutTime,
+      checklist: c.checklist,
+      dayName: c.dayName,
+      isToday: isToday,
+      _original: c,
+      _validation: v
+    });
+  });
+  myServiceRequests.forEach(r => {
+    unified.push({
+      _source: 'service_request',
+      _id: r.id,
+      type: r.service_type,
+      date: r.preferred_date,
+      propertyName: r.property_name || '',
+      status: r.status,
+      notes: r.notes,
+    });
+  });
+  unified.sort((a, b) => (a.date || '').localeCompare(b.date || ''));
 
-  // ═══ TAB 1: Ménages ═══
-  html += '<div id="provContentCleaning">';
+  // Count by category for filters
+  const catCounts = { all: unified.length };
+  unified.forEach(u => {
+    const catObj = SERVICE_CATALOG.find(c => c.services.some(s => s.id === u.type));
+    const catKey = catObj ? catObj.cat : 'autre';
+    catCounts[catKey] = (catCounts[catKey] || 0) + 1;
+  });
+
+  // ═══ TAB 1: Apercu (Overview) ═══
+  html += '<div id="provContentOverview">';
 
   // Stats bar - with press effect
+  const totalPrestations = unified.length;
+  const donePrestations = unified.filter(u => u.status === 'done' || u.status === 'departed').length;
   html += `<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:10px;">
-    <div style="background:linear-gradient(135deg,#6c63ff,#5a54e0);border-radius:12px;padding:16px;text-align:center;cursor:pointer;transition:transform 0.1s,opacity 0.1s;" onpointerdown="this.style.transform='scale(0.95)';this.style.opacity='0.85'" onpointerup="this.style.transform='';this.style.opacity=''" onpointerleave="this.style.transform='';this.style.opacity=''">
-      <div style="font-size:24px;font-weight:800;color:#fff;">${allCleanings.length}</div>
+    <div onclick="switchProviderNav('prestations')" style="background:linear-gradient(135deg,#6c63ff,#5a54e0);border-radius:12px;padding:16px;text-align:center;cursor:pointer;transition:transform 0.1s,opacity 0.1s;" onpointerdown="this.style.transform='scale(0.95)';this.style.opacity='0.85'" onpointerup="this.style.transform='';this.style.opacity=''" onpointerleave="this.style.transform='';this.style.opacity=''">
+      <div style="font-size:24px;font-weight:800;color:#fff;">${totalPrestations}</div>
       <div style="font-size:11px;color:rgba(255,255,255,0.8);">${t('kpi.upcoming_provider')}</div>
     </div>
     <div style="background:linear-gradient(135deg,#34d399,#059669);border-radius:12px;padding:16px;text-align:center;cursor:pointer;transition:transform 0.1s,opacity 0.1s;" onpointerdown="this.style.transform='scale(0.95)';this.style.opacity='0.85'" onpointerup="this.style.transform='';this.style.opacity=''" onpointerleave="this.style.transform='';this.style.opacity=''">
@@ -2560,7 +2595,7 @@ async function showProviderMode() {
       <div style="font-size:11px;color:rgba(255,255,255,0.8);">${t('kpi.done')}</div>
     </div>
     <div style="background:linear-gradient(135deg,#f59e0b,#d97706);border-radius:12px;padding:16px;text-align:center;cursor:pointer;transition:transform 0.1s,opacity 0.1s;" onpointerdown="this.style.transform='scale(0.95)';this.style.opacity='0.85'" onpointerup="this.style.transform='';this.style.opacity=''" onpointerleave="this.style.transform='';this.style.opacity=''">
-      <div style="font-size:24px;font-weight:800;color:#fff;">${allCleanings.length - doneCount}</div>
+      <div style="font-size:24px;font-weight:800;color:#fff;">${totalPrestations - donePrestations}</div>
       <div style="font-size:11px;color:rgba(255,255,255,0.8);">${t('kpi.remaining')}</div>
     </div>
   </div>`;
@@ -2570,198 +2605,219 @@ async function showProviderMode() {
     html += `<div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:16px;display:flex;justify-content:space-around;text-align:center;">
       <div>
         <div style="font-size:11px;color:var(--text3);text-transform:uppercase;margin-bottom:4px;">Tarif/menage</div>
-        <div style="font-size:16px;font-weight:700;color:var(--text);">${providerPrice}€</div>
+        <div style="font-size:16px;font-weight:700;color:var(--text);">${providerPrice}&#8364;</div>
       </div>
       <div style="border-left:1px solid var(--border);"></div>
       <div>
         <div style="font-size:11px;color:var(--text3);text-transform:uppercase;margin-bottom:4px;">Gagne</div>
-        <div style="font-size:16px;font-weight:700;color:#34d399;">${earnedThisMonth}€</div>
+        <div style="font-size:16px;font-weight:700;color:#34d399;">${earnedThisMonth}&#8364;</div>
       </div>
       <div style="border-left:1px solid var(--border);"></div>
       <div>
         <div style="font-size:11px;color:var(--text3);text-transform:uppercase;margin-bottom:4px;">A venir</div>
-        <div style="font-size:16px;font-weight:700;color:#6c63ff;">${upcomingEarnings}€</div>
+        <div style="font-size:16px;font-weight:700;color:#6c63ff;">${upcomingEarnings}&#8364;</div>
       </div>
     </div>`;
   }
 
-  // Cleaning cards
-  if (allCleanings.length === 0) {
+  // Provider services/competences
+  if (providerServices.length > 0) {
+    html += '<div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:12px;">';
+    html += '<div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;margin-bottom:8px;">Vos competences</div>';
+    html += '<div style="display:flex;flex-wrap:wrap;gap:6px;">';
+    providerServices.forEach(sId => {
+      const label = getServiceLabel(sId);
+      html += '<span style="padding:4px 10px;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;font-size:12px;color:var(--text);">' + label + '</span>';
+    });
+    html += '</div></div>';
+  }
+
+  // Today's prestations summary
+  const todayItems = unified.filter(u => u.date === today);
+  if (todayItems.length > 0) {
+    html += `<div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:12px;">
+      <div style="font-weight:700;font-size:14px;margin-bottom:10px;">&#128197; Aujourd'hui — ${todayItems.length} prestation(s)</div>`;
+    todayItems.forEach(u => {
+      const svcLabel = getServiceLabel(u.type);
+      const statusIcons = { done: '&#9989;', departed: '&#128682;', in_progress: '&#129529;', arrived: '&#127968;', accepted: '&#9989;', seen: '&#128065;', sent: '&#9993;', refused: '&#10060;', pending: '&#9898;' };
+      const statusLabels = { done: 'Termine', departed: 'Parti', in_progress: 'En cours', arrived: 'Sur place', accepted: 'Accepte', seen: 'Lu', sent: 'Envoye', refused: 'Refuse', pending: 'A faire' };
+      const statusColors = { done: '#34d399', departed: '#34d399', in_progress: '#f59e0b', arrived: '#6c63ff', accepted: '#34d399', seen: '#6c63ff', sent: 'var(--text3)', refused: '#ef4444', pending: 'var(--text3)' };
+      html += `<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px solid var(--border);font-size:13px;">
+        <div style="flex:1;font-weight:600;">${svcLabel}</div>
+        <div style="color:var(--text2);">${esc(u.propertyName || '')}</div>
+        <span style="font-size:11px;color:${statusColors[u.status] || 'var(--text3)'};white-space:nowrap;">${statusIcons[u.status] || '&#9898;'} ${statusLabels[u.status] || ''}</span>
+      </div>`;
+    });
+    html += '</div>';
+  }
+
+  if (unified.length === 0) {
     html += `<div style="text-align:center;padding:60px 20px;">
       <div style="font-size:48px;margin-bottom:16px;">&#127881;</div>
-      <div style="font-size:18px;font-weight:700;color:var(--success);margin-bottom:8px;">Aucun menage a venir</div>
+      <div style="font-size:18px;font-weight:700;color:var(--success);margin-bottom:8px;">Aucune prestation a venir</div>
       <div style="font-size:13px;color:var(--text3);line-height:1.6;">
-        Vous n'avez pas de menage programme pour le moment.<br>
-        Votre conciergerie vous enverra une notification quand un menage vous sera assigne.
+        Vous n'avez pas de prestation programmee pour le moment.<br>
+        Votre conciergerie vous enverra une notification quand une prestation vous sera assignee.
       </div>
       <button onclick="showMarketplace().then(()=>{document.getElementById('mkRoleFilter').value='admin';filterMarketplace();})" style="margin-top:16px;padding:12px 24px;background:linear-gradient(135deg,#6c63ff,#5a54e0);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;">&#127970; Trouver une conciergerie</button>
     </div>`;
-  } else {
-    for (const c of allCleanings) {
-      const dateStr = c.cleaningDate || c.date;
-      const isToday = dateStr === today;
-      const key = dateStr + '_' + providerName;
-      const v = validations[key];
-      const status = v ? v.status : 'pending';
-      const statusIcons = { done: '&#9989;', departed: '&#128682;', in_progress: '&#129529;', arrived: '&#127968;', accepted: '&#9989;', seen: '&#128065;', sent: '&#9993;', refused: '&#10060;', pending: '&#9898;' };
-      const statusIcon = statusIcons[status] || '&#9898;';
-      const statusLabels = { done: 'Termine', departed: 'Parti', in_progress: 'Menage en cours', arrived: 'Sur place', accepted: 'Accepte ✓✓', seen: 'Lu ✓', sent: 'Envoye', refused: 'Refuse', pending: 'A faire' };
-      const statusLabel = statusLabels[status] || 'A faire';
-      const statusColors = { done: '#34d399', departed: '#34d399', in_progress: '#f59e0b', arrived: '#6c63ff', accepted: '#34d399', seen: '#6c63ff', sent: 'var(--text3)', refused: '#ef4444', pending: 'var(--text3)' };
-      const statusColor = statusColors[status] || 'var(--text3)';
-
-      html += `<div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:10px;${isToday ? 'border-left:3px solid #e94560;' : ''}">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-          <div>
-            <div style="font-weight:700;font-size:15px;color:var(--accent);">${c.dayName || ''} ${fmtDate(dateStr)}${isToday ? ' <span style="background:#e94560;color:#fff;font-size:10px;padding:2px 6px;border-radius:4px;">AUJOURD\'HUI</span>' : ''}</div>
-            <div style="font-size:12px;color:var(--text3);margin-top:2px;">${esc(c.propertyName)}${c.propertyAddress ? ' — <a href="https://www.google.com/maps/dir/?api=1&destination=' + encodeURIComponent(c.propertyAddress) + '" target="_blank" style="color:var(--accent2);text-decoration:none;">' + esc(c.propertyAddress) + ' &#128506;</a>' : ''}</div>
-            <div style="font-size:11px;color:var(--text2);margin-top:3px;">&#128336; Menage entre <b>${c.checkoutTime}</b> et <b>${c.checkinTime}</b></div>
-          </div>
-          <div style="text-align:right;">
-            <div style="font-size:12px;color:${statusColor};">${statusIcon} ${statusLabel}</div>
-          </div>
-        </div>`;
-
-      // Checklist
-      if (c.checklist && c.checklist.length > 0) {
-        html += '<div style="border-top:1px solid var(--border);padding-top:10px;margin-top:8px;">';
-        html += '<div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;margin-bottom:6px;">Checklist</div>';
-        c.checklist.forEach((item, ci) => {
-          const checkKey = 'prov_check_' + dateStr + '_' + ci;
-          const checked = localStorage.getItem(checkKey) === '1';
-          const itemText = typeof item === 'string' ? item : (item.text || item.name || '');
-          html += `<label style="display:flex;align-items:center;gap:8px;padding:5px 0;cursor:pointer;font-size:13px;color:${checked ? 'var(--success)' : 'var(--text)'};">
-            <input type="checkbox" ${checked ? 'checked' : ''} onchange="localStorage.setItem('${checkKey}',this.checked?'1':'0');this.parentElement.style.color=this.checked?'var(--success)':'var(--text)';" style="width:18px;height:18px;accent-color:var(--success);">
-            <span style="${checked ? 'text-decoration:line-through;opacity:0.6;' : ''}">${esc(itemText)}</span>
-          </label>`;
-        });
-        html += '</div>';
-      }
-
-      // Mark as seen automatically
-      if (status === 'sent' || status === 'pending') {
-        markCleaningAsSeen(c.propertyId, dateStr, providerName);
-      }
-
-      // Action buttons based on status
-      if (status === 'sent' || status === 'seen' || status === 'pending') {
-        // Step 1: Accept or Refuse
-        html += `<div style="display:flex;gap:8px;margin-top:12px;padding-top:10px;border-top:1px solid var(--border);">
-          <button onclick="acceptCleaning('${c.propertyId}','${dateStr}','${esc(providerName)}')" style="flex:1;padding:10px;background:#34d399;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">&#10003; Accepter</button>
-          <button onclick="refuseCleaning('${c.propertyId}','${dateStr}','${esc(providerName)}')" style="flex:1;padding:10px;background:#ef4444;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">&#10007; Refuser</button>
-        </div>`;
-      } else if (status === 'accepted') {
-        // Step 2: En route — only on the day of cleaning
-        if (isToday) {
-          html += `<div style="display:flex;gap:8px;margin-top:12px;padding-top:10px;border-top:1px solid var(--border);">
-            <button onclick="providerValidate('${c.propertyId}','${dateStr}','${esc(providerName)}','arrived',this)" style="flex:1;padding:12px;background:linear-gradient(135deg,#6c63ff,#5a54e0);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">&#128692; En route / Je suis arrive</button>
-          </div>`;
-        } else {
-          html += `<div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);font-size:11px;color:var(--text3);text-align:center;">Le jour du menage, vous pourrez signaler votre arrivee ici</div>`;
-        }
-        html += `<div style="text-align:center;margin-top:6px;"><button onclick="showModifyResponsePopup('${c.propertyId}','${dateStr}','${esc(providerName)}','accepted')" style="background:none;border:none;color:var(--text3);font-size:11px;cursor:pointer;text-decoration:underline;">&#9998; Modifier ma reponse</button></div>`;
-      } else if (status === 'arrived') {
-        // Step 3: Start cleaning
-        html += `<div style="display:flex;gap:8px;margin-top:12px;padding-top:10px;border-top:1px solid var(--border);">
-          <button onclick="providerValidate('${c.propertyId}','${dateStr}','${esc(providerName)}','in_progress',this)" style="flex:1;padding:12px;background:#f59e0b;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">&#129529; Commencer le menage</button>
-        </div>
-        <div style="margin-top:8px;">
-          <input type="file" accept="image/*" multiple onchange="providerUploadPhotos(this,'${c.propertyId}','${dateStr}','${esc(providerName)}')" style="font-size:11px;color:var(--text3);">
-          <span style="font-size:10px;color:var(--text3);margin-left:4px;">📷 Photos avant menage</span>
-        </div>`;
-      } else if (status === 'in_progress') {
-        // Step 4: Finish and leave
-        html += `<div style="display:flex;gap:8px;margin-top:12px;padding-top:10px;border-top:1px solid var(--border);">
-          <button onclick="providerValidate('${c.propertyId}','${dateStr}','${esc(providerName)}','departed',this)" style="flex:1;padding:12px;background:#34d399;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">&#128682; Menage termine — Je pars</button>
-        </div>
-        <div style="margin-top:8px;">
-          <input type="file" accept="image/*" multiple onchange="providerUploadPhotos(this,'${c.propertyId}','${dateStr}','${esc(providerName)}')" style="font-size:11px;color:var(--text3);">
-          <span style="font-size:10px;color:var(--text3);margin-left:4px;">📷 Photos apres menage</span>
-        </div>`;
-      } else if (status === 'refused') {
-        // Refused: allow to change mind
-        html += `<div style="display:flex;gap:8px;margin-top:12px;padding-top:10px;border-top:1px solid var(--border);">
-          <button onclick="showModifyResponsePopup('${c.propertyId}','${dateStr}','${esc(providerName)}','refused')" style="flex:1;padding:10px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">&#9998; Modifier ma reponse</button>
-        </div>`;
-      } else if (status === 'departed') {
-        // Step 5: Confirm done
-        html += `<div style="display:flex;gap:8px;margin-top:12px;padding-top:10px;border-top:1px solid var(--border);">
-          <button onclick="providerValidate('${c.propertyId}','${dateStr}','${esc(providerName)}','done',this)" style="flex:1;padding:12px;background:#059669;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">&#9989; Confirmer — Tout est OK</button>
-        </div>`;
-      }
-
-      // Photos
-      if (v && v.photos && v.photos.length) {
-        html += '<div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;">';
-        v.photos.forEach(p => { html += `<img src="${p}" style="width:60px;height:60px;object-fit:cover;border-radius:6px;border:1px solid var(--border);">`; });
-        html += '</div>';
-      }
-
-      html += '</div>';
-    }
   }
 
-  html += '</div>'; // close provContentCleaning
+  html += '</div>'; // close provContentOverview
 
-  // ═══ TAB 2: Demandes de services ═══
-  html += '<div id="provContentServices" style="display:none;">';
+  // ═══ TAB 2: Prestations (unified) ═══
+  html += '<div id="provContentPrestations" style="display:none;">';
 
-  if (myServiceRequests.length === 0) {
-    // Show provider's service capabilities
-    html += `<div style="text-align:center;padding:40px 20px;">
-      <div style="font-size:40px;margin-bottom:12px;">📋</div>
-      <div style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:8px;">Aucune demande</div>
-      <div style="font-size:13px;color:var(--text3);line-height:1.6;">Vous n'avez pas de demande de service en cours.</div>`;
-    if (providerServices.length > 0) {
-      html += '<div style="margin-top:16px;text-align:left;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 16px;">';
-      html += '<div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;margin-bottom:8px;">Vos competences</div>';
-      html += '<div style="display:flex;flex-wrap:wrap;gap:6px;">';
-      providerServices.forEach(sId => {
-        const label = getServiceLabel(sId);
-        html += '<span style="padding:4px 10px;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;font-size:12px;color:var(--text);">' + label + '</span>';
-      });
-      html += '</div></div>';
+  // Filter buttons
+  html += '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;">';
+  html += '<button class="prestFilter active" onclick="filterPrestations(\'all\')">Tout (' + catCounts.all + ')</button>';
+  SERVICE_CATALOG.forEach(cat => {
+    if (catCounts[cat.cat]) {
+      html += '<button class="prestFilter" onclick="filterPrestations(\'' + cat.cat + '\')">' + (cat.services[0] ? cat.services[0].icon : '') + ' ' + cat.label + ' (' + catCounts[cat.cat] + ')</button>';
     }
-    html += '</div>';
+  });
+  html += '</div>';
+
+  if (unified.length === 0) {
+    html += `<div style="text-align:center;padding:40px 20px;">
+      <div style="font-size:40px;margin-bottom:12px;">&#128203;</div>
+      <div style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:8px;">Aucune prestation</div>
+      <div style="font-size:13px;color:var(--text3);line-height:1.6;">Vous n'avez pas de prestation en cours.</div>
+    </div>`;
   } else {
-    // Group by category
-    SERVICE_CATALOG.forEach(cat => {
-      const items = svcByCategory[cat.cat];
-      if (!items || !items.length) return;
-      html += '<div style="margin-bottom:16px;">';
-      html += '<div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:8px;padding-left:4px;">' + cat.services[0]?.icon + ' ' + cat.label + ' <span style="color:var(--text3);font-weight:400;">(' + items.length + ')</span></div>';
-      items.forEach(r => {
-        const svcLabel = getServiceLabel(r.service_type);
+    for (const u of unified) {
+      const catObj = SERVICE_CATALOG.find(c => c.services.some(s => s.id === u.type));
+      const catKey = catObj ? catObj.cat : 'autre';
+
+      if (u._source === 'cleaning') {
+        // Cleaning card (same as before)
+        const c = u._original;
+        const dateStr = u.date;
+        const isToday = u.isToday;
+        const v = u._validation;
+        const status = u.status;
+        const statusIcons = { done: '&#9989;', departed: '&#128682;', in_progress: '&#129529;', arrived: '&#127968;', accepted: '&#9989;', seen: '&#128065;', sent: '&#9993;', refused: '&#10060;', pending: '&#9898;' };
+        const statusIcon = statusIcons[status] || '&#9898;';
+        const statusLabels = { done: 'Termine', departed: 'Parti', in_progress: 'Menage en cours', arrived: 'Sur place', accepted: 'Accepte &#10003;&#10003;', seen: 'Lu &#10003;', sent: 'Envoye', refused: 'Refuse', pending: 'A faire' };
+        const statusLabel = statusLabels[status] || 'A faire';
+        const statusColors = { done: '#34d399', departed: '#34d399', in_progress: '#f59e0b', arrived: '#6c63ff', accepted: '#34d399', seen: '#6c63ff', sent: 'var(--text3)', refused: '#ef4444', pending: 'var(--text3)' };
+        const statusColor = statusColors[status] || 'var(--text3)';
+
+        html += `<div class="prestCard" data-category="${catKey}" style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:10px;${isToday ? 'border-left:3px solid #e94560;' : ''}">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+            <div>
+              <div style="font-size:11px;color:var(--accent2);font-weight:600;margin-bottom:2px;">${getServiceLabel('cleaning_standard')}</div>
+              <div style="font-weight:700;font-size:15px;color:var(--accent);">${c.dayName || ''} ${fmtDate(dateStr)}${isToday ? ' <span style="background:#e94560;color:#fff;font-size:10px;padding:2px 6px;border-radius:4px;">AUJOURD\'HUI</span>' : ''}</div>
+              <div style="font-size:12px;color:var(--text3);margin-top:2px;">${esc(u.propertyName)}${u.propertyAddress ? ' — <a href="https://www.google.com/maps/dir/?api=1&destination=' + encodeURIComponent(u.propertyAddress) + '" target="_blank" style="color:var(--accent2);text-decoration:none;">' + esc(u.propertyAddress) + ' &#128506;</a>' : ''}</div>
+              <div style="font-size:11px;color:var(--text2);margin-top:3px;">&#128336; Menage entre <b>${u.checkoutTime}</b> et <b>${u.checkinTime}</b></div>
+            </div>
+            <div style="text-align:right;">
+              <div style="font-size:12px;color:${statusColor};">${statusIcon} ${statusLabel}</div>
+            </div>
+          </div>`;
+
+        // Checklist
+        if (u.checklist && u.checklist.length > 0) {
+          html += '<div style="border-top:1px solid var(--border);padding-top:10px;margin-top:8px;">';
+          html += '<div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;margin-bottom:6px;">Checklist</div>';
+          u.checklist.forEach((item, ci) => {
+            const checkKey = 'prov_check_' + dateStr + '_' + ci;
+            const checked = localStorage.getItem(checkKey) === '1';
+            const itemText = typeof item === 'string' ? item : (item.text || item.name || '');
+            html += `<label style="display:flex;align-items:center;gap:8px;padding:5px 0;cursor:pointer;font-size:13px;color:${checked ? 'var(--success)' : 'var(--text)'};">
+              <input type="checkbox" ${checked ? 'checked' : ''} onchange="localStorage.setItem('${checkKey}',this.checked?'1':'0');this.parentElement.style.color=this.checked?'var(--success)':'var(--text)';" style="width:18px;height:18px;accent-color:var(--success);">
+              <span style="${checked ? 'text-decoration:line-through;opacity:0.6;' : ''}">${esc(itemText)}</span>
+            </label>`;
+          });
+          html += '</div>';
+        }
+
+        // Mark as seen automatically
+        if (status === 'sent' || status === 'pending') {
+          markCleaningAsSeen(u.propertyId, dateStr, providerName);
+        }
+
+        // Action buttons based on status
+        if (status === 'sent' || status === 'seen' || status === 'pending') {
+          html += `<div style="display:flex;gap:8px;margin-top:12px;padding-top:10px;border-top:1px solid var(--border);">
+            <button onclick="acceptCleaning('${u.propertyId}','${dateStr}','${esc(providerName)}')" style="flex:1;padding:10px;background:#34d399;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">&#10003; Accepter</button>
+            <button onclick="refuseCleaning('${u.propertyId}','${dateStr}','${esc(providerName)}')" style="flex:1;padding:10px;background:#ef4444;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">&#10007; Refuser</button>
+          </div>`;
+        } else if (status === 'accepted') {
+          if (isToday) {
+            html += `<div style="display:flex;gap:8px;margin-top:12px;padding-top:10px;border-top:1px solid var(--border);">
+              <button onclick="providerValidate('${u.propertyId}','${dateStr}','${esc(providerName)}','arrived',this)" style="flex:1;padding:12px;background:linear-gradient(135deg,#6c63ff,#5a54e0);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">&#128692; En route / Je suis arrive</button>
+            </div>`;
+          } else {
+            html += `<div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);font-size:11px;color:var(--text3);text-align:center;">Le jour du menage, vous pourrez signaler votre arrivee ici</div>`;
+          }
+          html += `<div style="text-align:center;margin-top:6px;"><button onclick="showModifyResponsePopup('${u.propertyId}','${dateStr}','${esc(providerName)}','accepted')" style="background:none;border:none;color:var(--text3);font-size:11px;cursor:pointer;text-decoration:underline;">&#9998; Modifier ma reponse</button></div>`;
+        } else if (status === 'arrived') {
+          html += `<div style="display:flex;gap:8px;margin-top:12px;padding-top:10px;border-top:1px solid var(--border);">
+            <button onclick="providerValidate('${u.propertyId}','${dateStr}','${esc(providerName)}','in_progress',this)" style="flex:1;padding:12px;background:#f59e0b;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">&#129529; Commencer le menage</button>
+          </div>
+          <div style="margin-top:8px;">
+            <input type="file" accept="image/*" multiple onchange="providerUploadPhotos(this,'${u.propertyId}','${dateStr}','${esc(providerName)}')" style="font-size:11px;color:var(--text3);">
+            <span style="font-size:10px;color:var(--text3);margin-left:4px;">&#128247; Photos avant menage</span>
+          </div>`;
+        } else if (status === 'in_progress') {
+          html += `<div style="display:flex;gap:8px;margin-top:12px;padding-top:10px;border-top:1px solid var(--border);">
+            <button onclick="providerValidate('${u.propertyId}','${dateStr}','${esc(providerName)}','departed',this)" style="flex:1;padding:12px;background:#34d399;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">&#128682; Menage termine — Je pars</button>
+          </div>
+          <div style="margin-top:8px;">
+            <input type="file" accept="image/*" multiple onchange="providerUploadPhotos(this,'${u.propertyId}','${dateStr}','${esc(providerName)}')" style="font-size:11px;color:var(--text3);">
+            <span style="font-size:10px;color:var(--text3);margin-left:4px;">&#128247; Photos apres menage</span>
+          </div>`;
+        } else if (status === 'refused') {
+          html += `<div style="display:flex;gap:8px;margin-top:12px;padding-top:10px;border-top:1px solid var(--border);">
+            <button onclick="showModifyResponsePopup('${u.propertyId}','${dateStr}','${esc(providerName)}','refused')" style="flex:1;padding:10px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">&#9998; Modifier ma reponse</button>
+          </div>`;
+        } else if (status === 'departed') {
+          html += `<div style="display:flex;gap:8px;margin-top:12px;padding-top:10px;border-top:1px solid var(--border);">
+            <button onclick="providerValidate('${u.propertyId}','${dateStr}','${esc(providerName)}','done',this)" style="flex:1;padding:12px;background:#059669;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">&#9989; Confirmer — Tout est OK</button>
+          </div>`;
+        }
+
+        // Photos
+        if (v && v.photos && v.photos.length) {
+          html += '<div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;">';
+          v.photos.forEach(p => { html += `<img src="${p}" style="width:60px;height:60px;object-fit:cover;border-radius:6px;border:1px solid var(--border);">`; });
+          html += '</div>';
+        }
+
+        html += '</div>';
+
+      } else {
+        // Service request card
+        const r = u;
+        const svcLabel = getServiceLabel(r.type);
         const statusColors = { pending: '#f59e0b', accepted: '#6c63ff', in_progress: '#34d399' };
         const statusLabels = { pending: 'En attente', accepted: 'Accepte', in_progress: 'En cours' };
-        const propName = r.property_name || '';
-        const date = r.preferred_date || '';
-        html += '<div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:8px;">';
+        html += '<div class="prestCard" data-category="' + catKey + '" style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:8px;">';
         html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">';
         html += '<div style="font-weight:700;font-size:14px;color:var(--text);">' + svcLabel + '</div>';
         html += '<span style="font-size:11px;padding:3px 8px;border-radius:6px;background:' + (statusColors[r.status] || '#666') + '22;color:' + (statusColors[r.status] || '#666') + ';font-weight:600;">' + (statusLabels[r.status] || r.status) + '</span>';
         html += '</div>';
-        if (propName) html += '<div style="font-size:12px;color:var(--text3);margin-bottom:4px;">🏠 ' + esc(propName) + '</div>';
-        if (date) html += '<div style="font-size:12px;color:var(--text3);margin-bottom:4px;">📅 ' + fmtDate(date) + '</div>';
+        if (r.propertyName) html += '<div style="font-size:12px;color:var(--text3);margin-bottom:4px;">&#127968; ' + esc(r.propertyName) + '</div>';
+        if (r.date) html += '<div style="font-size:12px;color:var(--text3);margin-bottom:4px;">&#128197; ' + fmtDate(r.date) + '</div>';
         if (r.notes) html += '<div style="font-size:12px;color:var(--text2);margin-top:6px;padding:8px;background:var(--surface2);border-radius:8px;">' + esc(r.notes) + '</div>';
         // Action buttons
         if (r.status === 'pending') {
           html += '<div style="display:flex;gap:8px;margin-top:10px;">';
-          html += '<button onclick="acceptServiceRequest(\'' + r.id + '\')" style="flex:1;padding:10px;background:#34d399;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">✓ Accepter</button>';
-          html += '<button onclick="refuseServiceRequest(\'' + r.id + '\')" style="flex:1;padding:10px;background:#ef4444;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">✗ Refuser</button>';
+          html += '<button onclick="acceptServiceRequest(\'' + r._id + '\')" style="flex:1;padding:10px;background:#34d399;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">&#10003; Accepter</button>';
+          html += '<button onclick="refuseServiceRequest(\'' + r._id + '\')" style="flex:1;padding:10px;background:#ef4444;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">&#10007; Refuser</button>';
           html += '</div>';
         } else if (r.status === 'accepted') {
-          html += '<div style="margin-top:10px;"><button onclick="startServiceRequest(\'' + r.id + '\')" style="width:100%;padding:10px;background:#f59e0b;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">🔄 Commencer</button></div>';
+          html += '<div style="margin-top:10px;"><button onclick="startServiceRequest(\'' + r._id + '\')" style="width:100%;padding:10px;background:#f59e0b;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">&#128260; Commencer</button></div>';
         } else if (r.status === 'in_progress') {
-          html += '<div style="margin-top:10px;"><button onclick="completeServiceRequest(\'' + r.id + '\')" style="width:100%;padding:10px;background:#059669;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">✅ Termine</button></div>';
+          html += '<div style="margin-top:10px;"><button onclick="completeServiceRequest(\'' + r._id + '\')" style="width:100%;padding:10px;background:#059669;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">&#9989; Termine</button></div>';
         }
         html += '</div>';
-      });
-      html += '</div>';
-    });
+      }
+    }
   }
 
-  html += '</div>'; // close provContentServices
+  html += '</div>'; // close provContentPrestations
 
   // Add floating chat button
   html += `<button onclick="openProviderChat()" style="position:fixed;bottom:110px;right:20px;width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,#6c63ff,#5a54e0);color:#fff;border:none;font-size:24px;cursor:pointer;box-shadow:0 4px 12px rgba(108,99,255,0.4);z-index:50;">&#128172;</button>`;
@@ -2783,19 +2839,19 @@ function setupBottomNav(role) {
       { id: 'dashboard', icon: '📊', label: 'Dashboard' },
       { id: 'properties', icon: '🏠', label: 'Biens' },
       { id: 'team', icon: '👥', label: 'Equipe' },
-      { id: 'services', icon: '📋', label: 'Services' },
+      { id: 'prestations', icon: '📋', label: 'Prestations' },
       { id: 'planning', icon: '📅', label: 'Planning' },
       { id: 'billing', icon: '💰', label: 'Factures' },
     ],
     provider: [
-      { id: 'cleaning', icon: '🧹', label: 'Menages' },
-      { id: 'services', icon: '📋', label: 'Demandes' },
+      { id: 'overview', icon: '📊', label: 'Apercu' },
+      { id: 'prestations', icon: '📋', label: 'Prestations' },
       { id: 'chat', icon: '💬', label: 'Messages' },
     ],
     owner: [
       { id: 'overview', icon: '📊', label: 'Apercu' },
       { id: 'properties', icon: '🏠', label: 'Biens' },
-      { id: 'planning', icon: '📅', label: 'Planning' },
+      { id: 'prestations', icon: '📋', label: 'Prestations' },
       { id: 'chat', icon: '💬', label: 'Messages' },
     ],
   };
@@ -2806,7 +2862,7 @@ function setupBottomNav(role) {
     const fn = role === 'admin' ? 'switchMainTab' : role === 'provider' ? 'switchProviderNav' : 'switchOwnerNav';
     html += '<div class="bottomNav-item' + active + '" onclick="' + fn + '(\'' + item.id + '\')" id="nav_' + item.id + '">';
     html += '<span class="nav-icon">' + item.icon + '</span>';
-    if (item.id === 'services' && role === 'admin') html += '<span class="nav-badge" id="navServicesBadge" style="display:none;"></span>';
+    if (item.id === 'prestations' && role === 'admin') html += '<span class="nav-badge" id="navServicesBadge" style="display:none;"></span>';
     html += '<span>' + item.label + '</span>';
     html += '</div>';
   });
@@ -2816,10 +2872,10 @@ function setupBottomNav(role) {
 
 /* ── Provider Nav Switching ── */
 function switchProviderNav(tab) {
-  const cleaning = document.getElementById('provContentCleaning');
-  const services = document.getElementById('provContentServices');
-  if (cleaning) cleaning.style.display = tab === 'cleaning' ? '' : 'none';
-  if (services) services.style.display = tab === 'services' ? '' : 'none';
+  const overview = document.getElementById('provContentOverview');
+  const prestations = document.getElementById('provContentPrestations');
+  if (overview) overview.style.display = tab === 'overview' ? '' : 'none';
+  if (prestations) prestations.style.display = tab === 'prestations' ? '' : 'none';
   if (tab === 'chat') { openProviderChat(); return; }
   document.querySelectorAll('#bottomNav .bottomNav-item').forEach(n => n.classList.remove('active'));
   const navEl = document.getElementById('nav_' + tab);
@@ -2832,10 +2888,10 @@ function switchOwnerNav(tab) {
   if (tab === 'chat') { openOwnerChat(); return; }
   const overview = document.getElementById('ownerContentOverview');
   const properties = document.getElementById('ownerContentProperties');
-  const planning = document.getElementById('ownerContentPlanning');
+  const prestations = document.getElementById('ownerContentPrestations');
   if (overview) overview.style.display = tab === 'overview' ? '' : 'none';
   if (properties) properties.style.display = tab === 'properties' ? '' : 'none';
-  if (planning) planning.style.display = tab === 'planning' ? '' : 'none';
+  if (prestations) prestations.style.display = tab === 'prestations' ? '' : 'none';
   document.querySelectorAll('#bottomNav .bottomNav-item').forEach(n => n.classList.remove('active'));
   const navEl = document.getElementById('nav_' + tab);
   if (navEl) navEl.classList.add('active');
@@ -2845,6 +2901,19 @@ function switchOwnerNav(tab) {
 /* ── Provider Tab Switching (legacy for inline buttons) ── */
 function switchProviderTab(tab) {
   switchProviderNav(tab);
+}
+
+/* ── Prestations filter ── */
+function filterPrestations(cat) {
+  document.querySelectorAll('.prestFilter').forEach(b => b.classList.remove('active'));
+  event.target.classList.add('active');
+  document.querySelectorAll('.prestCard').forEach(card => {
+    if (cat === 'all' || card.getAttribute('data-category') === cat) {
+      card.style.display = '';
+    } else {
+      card.style.display = 'none';
+    }
+  });
 }
 
 async function acceptServiceRequest(id) {
@@ -2901,7 +2970,7 @@ async function showOwnerMode() {
   if (headerEl) {
     const h1 = headerEl.querySelector('h1');
     if (h1) {
-      h1.innerHTML = 'Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.35);vertical-align:middle;">v4.30</span>';
+      h1.innerHTML = 'Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.35);vertical-align:middle;">v5.00</span>';
       appendRoleBadge(h1);
     }
     document.querySelectorAll('.header-actions .btnHelp').forEach(btn => {
@@ -2941,6 +3010,50 @@ async function showOwnerMode() {
     if (vals) vals.forEach(v => { validations[v.property_id + '_' + v.cleaning_date + '_' + v.provider_name] = v; });
   }
 
+  // Load service requests for owner's properties
+  const { data: ownerSvcRequests } = await sb.from('service_requests').select('*').eq('org_id', org.id).in('status', ['pending','accepted','in_progress','done']);
+  const ownerPropertyIds = properties.map(p => p.id);
+  const ownerServiceRequests = (ownerSvcRequests || []).filter(r => ownerPropertyIds.includes(r.property_id));
+
+  // Build unified owner prestations
+  const ownerUnified = [];
+  futureCleanings.forEach(c => {
+    const dateStr = c.cleaningDate || c.date;
+    const key = c.propertyId + '_' + dateStr + '_' + (c.provider || '');
+    const v = validations[key];
+    ownerUnified.push({
+      _source: 'cleaning',
+      type: 'cleaning_standard',
+      date: dateStr,
+      propertyName: c.propertyName,
+      provider: c.provider,
+      status: v ? v.status : 'pending',
+      propertyId: c.propertyId,
+      _validation: v
+    });
+  });
+  ownerServiceRequests.forEach(r => {
+    ownerUnified.push({
+      _source: 'service_request',
+      _id: r.id,
+      type: r.service_type,
+      date: r.preferred_date,
+      propertyName: r.property_name || '',
+      status: r.status,
+      notes: r.notes,
+      provider: r.assigned_provider || '',
+    });
+  });
+  ownerUnified.sort((a, b) => (a.date || '').localeCompare(b.date || ''));
+
+  // Count by category for owner filters
+  const ownerCatCounts = { all: ownerUnified.length };
+  ownerUnified.forEach(u => {
+    const catObj = SERVICE_CATALOG.find(c => c.services.some(s => s.id === u.type));
+    const catKey = catObj ? catObj.cat : 'autre';
+    ownerCatCounts[catKey] = (ownerCatCounts[catKey] || 0) + 1;
+  });
+
   let html = '';
 
   // ═══ TAB 1: Apercu (Overview) ═══
@@ -2970,11 +3083,11 @@ async function showOwnerMode() {
 
   // KPI cards - clickable to navigate to planning/overview tabs
   html += `<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px;">
-    <div onclick="switchOwnerNav('planning')" style="background:linear-gradient(135deg,#6c63ff,#5a54e0);border-radius:12px;padding:16px;text-align:center;cursor:pointer;transition:transform 0.1s,opacity 0.1s;" onpointerdown="this.style.transform='scale(0.95)';this.style.opacity='0.85'" onpointerup="this.style.transform='';this.style.opacity=''" onpointerleave="this.style.transform='';this.style.opacity=''">
+    <div onclick="switchOwnerNav('prestations')" style="background:linear-gradient(135deg,#6c63ff,#5a54e0);border-radius:12px;padding:16px;text-align:center;cursor:pointer;transition:transform 0.1s,opacity 0.1s;" onpointerdown="this.style.transform='scale(0.95)';this.style.opacity='0.85'" onpointerup="this.style.transform='';this.style.opacity=''" onpointerleave="this.style.transform='';this.style.opacity=''">
       <div style="font-size:24px;font-weight:800;color:#fff;">${futureCleanings.length}</div>
       <div style="font-size:11px;color:rgba(255,255,255,0.8);">${t('kpi.upcoming')}</div>
     </div>
-    <div onclick="switchOwnerNav('planning')" style="background:linear-gradient(135deg,#f59e0b,#d97706);border-radius:12px;padding:16px;text-align:center;cursor:pointer;transition:transform 0.1s,opacity 0.1s;" onpointerdown="this.style.transform='scale(0.95)';this.style.opacity='0.85'" onpointerup="this.style.transform='';this.style.opacity=''" onpointerleave="this.style.transform='';this.style.opacity=''">
+    <div onclick="switchOwnerNav('prestations')" style="background:linear-gradient(135deg,#f59e0b,#d97706);border-radius:12px;padding:16px;text-align:center;cursor:pointer;transition:transform 0.1s,opacity 0.1s;" onpointerdown="this.style.transform='scale(0.95)';this.style.opacity='0.85'" onpointerup="this.style.transform='';this.style.opacity=''" onpointerleave="this.style.transform='';this.style.opacity=''">
       <div style="font-size:24px;font-weight:800;color:#fff;">${weekCleanings.length}</div>
       <div style="font-size:11px;color:rgba(255,255,255,0.8);">${t('kpi.this_week')}</div>
     </div>
@@ -3090,51 +3203,76 @@ async function showOwnerMode() {
 
   html += '</div>'; // close ownerContentProperties
 
-  // ═══ TAB 3: Planning ═══
-  html += '<div id="ownerContentPlanning" style="display:none;">';
+  // ═══ TAB 3: Prestations (unified) ═══
+  html += '<div id="ownerContentPrestations" style="display:none;">';
 
-  // Planning timeline - all future cleanings sorted by date
-  if (futureCleanings.length === 0) {
+  // Filter buttons
+  html += '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;">';
+  html += '<button class="prestFilter active" onclick="filterPrestations(\'all\')">Tout (' + ownerCatCounts.all + ')</button>';
+  SERVICE_CATALOG.forEach(cat => {
+    if (ownerCatCounts[cat.cat]) {
+      html += '<button class="prestFilter" onclick="filterPrestations(\'' + cat.cat + '\')">' + (cat.services[0] ? cat.services[0].icon : '') + ' ' + cat.label + ' (' + ownerCatCounts[cat.cat] + ')</button>';
+    }
+  });
+  html += '</div>';
+
+  if (ownerUnified.length === 0) {
     html += `<div style="text-align:center;padding:40px 20px;">
       <div style="font-size:40px;margin-bottom:12px;">&#128197;</div>
-      <div style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:8px;">Aucun menage prevu</div>
-      <div style="font-size:13px;color:var(--text3);">Votre conciergerie n'a pas encore programme de menages.</div>
+      <div style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:8px;">Aucune prestation prevue</div>
+      <div style="font-size:13px;color:var(--text3);">Votre conciergerie n'a pas encore programme de prestations.</div>
     </div>`;
   } else {
-    const sortedCleanings = [...futureCleanings].sort((a, b) => (a.cleaningDate || a.date || '').localeCompare(b.cleaningDate || b.date || ''));
     let currentMonth = '';
-    sortedCleanings.forEach(c => {
-      const dateStr = c.cleaningDate || c.date;
-      const dateObj = new Date(dateStr + 'T00:00:00');
-      const monthKey = dateObj.toLocaleString('fr-FR', { month: 'long', year: 'numeric' });
-      if (monthKey !== currentMonth) {
-        currentMonth = monthKey;
-        html += `<div style="font-size:14px;font-weight:700;color:var(--accent);margin:16px 0 8px 4px;text-transform:capitalize;">${monthKey}</div>`;
+    ownerUnified.forEach(u => {
+      const dateStr = u.date || '';
+      if (dateStr) {
+        const dateObj = new Date(dateStr + 'T00:00:00');
+        const monthKey = dateObj.toLocaleString('fr-FR', { month: 'long', year: 'numeric' });
+        if (monthKey !== currentMonth) {
+          currentMonth = monthKey;
+          html += `<div style="font-size:14px;font-weight:700;color:var(--accent);margin:16px 0 8px 4px;text-transform:capitalize;">${monthKey}</div>`;
+        }
       }
       const isToday2 = dateStr === today;
-      const key = c.propertyId + '_' + dateStr + '_' + (c.provider || '');
-      const v = validations[key];
-      const status = v ? v.status : 'pending';
+      const catObj = SERVICE_CATALOG.find(c => c.services.some(s => s.id === u.type));
+      const catKey = catObj ? catObj.cat : 'autre';
+      const svcLabel = getServiceLabel(u.type);
       const statusIcons = { done: '&#9989;', departed: '&#128682;', in_progress: '&#129529;', arrived: '&#127968;', accepted: '&#10003;&#10003;', seen: '&#128065;', sent: '&#9993;', refused: '&#10060;', pending: '&#9203;' };
       const statusLabels = { done: 'Termine', departed: 'Parti', in_progress: 'En cours', arrived: 'Sur place', accepted: 'Accepte', seen: 'Lu', sent: 'Envoye', refused: 'Refuse', pending: 'En attente' };
       const statusColors = { done: '#34d399', departed: '#34d399', in_progress: '#f59e0b', arrived: '#6c63ff', accepted: '#34d399', seen: '#6c63ff', sent: 'var(--text3)', refused: '#ef4444', pending: 'var(--text3)' };
-      const dayName = dateObj.toLocaleString('fr-FR', { weekday: 'short' });
 
-      html += `<div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:8px;${isToday2 ? 'border-left:3px solid #e94560;' : ''}display:flex;align-items:center;gap:12px;">
-        <div style="min-width:50px;text-align:center;">
-          <div style="font-size:10px;color:var(--text3);text-transform:uppercase;">${dayName}</div>
-          <div style="font-size:20px;font-weight:800;color:${isToday2 ? '#e94560' : 'var(--text)'};">${dateObj.getDate()}</div>
-        </div>
-        <div style="flex:1;">
-          <div style="font-weight:600;font-size:13px;color:var(--text);">${esc(c.propertyName)}${isToday2 ? ' <span style="background:#e94560;color:#fff;font-size:9px;padding:1px 5px;border-radius:4px;">AUJOURD\'HUI</span>' : ''}</div>
-          <div style="font-size:12px;color:var(--text3);margin-top:2px;">${esc(c.provider || '?')}</div>
-        </div>
-        <span style="font-size:11px;color:${statusColors[status] || 'var(--text3)'};white-space:nowrap;">${statusIcons[status] || '&#9203;'} ${statusLabels[status] || ''}</span>
-      </div>`;
+      if (dateStr) {
+        const dateObj = new Date(dateStr + 'T00:00:00');
+        const dayName = dateObj.toLocaleString('fr-FR', { weekday: 'short' });
+        html += `<div class="prestCard" data-category="${catKey}" style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:8px;${isToday2 ? 'border-left:3px solid #e94560;' : ''}display:flex;align-items:center;gap:12px;">
+          <div style="min-width:50px;text-align:center;">
+            <div style="font-size:10px;color:var(--text3);text-transform:uppercase;">${dayName}</div>
+            <div style="font-size:20px;font-weight:800;color:${isToday2 ? '#e94560' : 'var(--text)'};">${dateObj.getDate()}</div>
+          </div>
+          <div style="flex:1;">
+            <div style="font-size:11px;color:var(--accent2);font-weight:600;">${svcLabel}</div>
+            <div style="font-weight:600;font-size:13px;color:var(--text);">${esc(u.propertyName || '')}${isToday2 ? ' <span style="background:#e94560;color:#fff;font-size:9px;padding:1px 5px;border-radius:4px;">AUJOURD\'HUI</span>' : ''}</div>
+            <div style="font-size:12px;color:var(--text3);margin-top:2px;">${esc(u.provider || '?')}</div>
+            ${u.notes ? '<div style="font-size:11px;color:var(--text2);margin-top:2px;">' + esc(u.notes) + '</div>' : ''}
+          </div>
+          <span style="font-size:11px;color:${statusColors[u.status] || 'var(--text3)'};white-space:nowrap;">${statusIcons[u.status] || '&#9203;'} ${statusLabels[u.status] || ''}</span>
+        </div>`;
+      } else {
+        html += `<div class="prestCard" data-category="${catKey}" style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:8px;display:flex;align-items:center;gap:12px;">
+          <div style="flex:1;">
+            <div style="font-size:11px;color:var(--accent2);font-weight:600;">${svcLabel}</div>
+            <div style="font-weight:600;font-size:13px;color:var(--text);">${esc(u.propertyName || '')}</div>
+            <div style="font-size:12px;color:var(--text3);margin-top:2px;">${esc(u.provider || '?')}</div>
+            ${u.notes ? '<div style="font-size:11px;color:var(--text2);margin-top:2px;">' + esc(u.notes) + '</div>' : ''}
+          </div>
+          <span style="font-size:11px;color:${statusColors[u.status] || 'var(--text3)'};white-space:nowrap;">${statusIcons[u.status] || '&#9203;'} ${statusLabels[u.status] || ''}</span>
+        </div>`;
+      }
     });
   }
 
-  html += '</div>'; // close ownerContentPlanning
+  html += '</div>'; // close ownerContentPrestations
 
   // Recent activity (Pro only) — appended to overview tab via JS after render
   let activityHtml = '';
