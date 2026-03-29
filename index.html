@@ -910,7 +910,7 @@ async function loadPDF() {
 <body>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;pointer-events:none;">v5.18</div>
+<div id="versionBadge" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;pointer-events:none;">v5.20</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -920,7 +920,7 @@ async function loadPDF() {
     <!-- Broom that sweeps -->
     <div id="splashBroom" style="position:absolute;top:50%;left:-60px;font-size:48px;transform:translateY(-50%) rotate(-30deg);opacity:0;transition:all 0.8s cubic-bezier(0.25,0.46,0.45,0.94);">✨</div>
   </div>
-  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v5.18</span></div>
+  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v5.20</span></div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie pour locations</div>
   <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou</div>
   <!-- Loading bar -->
@@ -1188,6 +1188,7 @@ async function loadPDF() {
   <!-- ═══ TAB: PRESTATIONS ═══ -->
   <div class="tab-content" id="tabPrestations">
 
+  <div id="prestPropertySelector" style="margin-bottom:8px;"></div>
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
     <div style="font-size:16px;font-weight:700;color:var(--text);">📋 Prestations</div>
     <button class="btn btnSmall btnPrimary" onclick="showServiceRequestModal()" style="padding:8px 14px;font-size:12px;">+ Demander</button>
@@ -1237,6 +1238,9 @@ async function loadPDF() {
 
   <!-- ═══ TAB: PLANNING ═══ -->
   <div class="tab-content" id="tabPlanning">
+
+  <!-- Property selector for planning tab -->
+  <div id="planningPropertySelector" style="margin-bottom:8px;"></div>
 
   <!-- ═══ SECTION 3: PLANNING ═══ -->
   <div class="panel">
@@ -1339,14 +1343,15 @@ async function loadPDF() {
   <div class="tab-content" id="tabMessages">
     <div style="display:flex;flex-direction:column;height:calc(100vh - 210px);">
       <!-- Header -->
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
-        <div style="font-size:16px;font-weight:700;color:var(--text);">💬 Messages</div>
-        <select id="fullChatProvSelect" onchange="switchFullChatProvider(this.value)" style="padding:8px 14px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:13px;font-weight:600;min-width:160px;">
-          <option value="">-- Choisir un contact --</option>
-        </select>
-      </div>
+      <div style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:8px;">💬 Messages</div>
+      <!-- Contact cards -->
+      <div id="fullChatContacts" style="display:flex;gap:8px;overflow-x:auto;padding-bottom:8px;margin-bottom:8px;"></div>
+      <!-- Hidden select for sync -->
+      <select id="fullChatProvSelect" onchange="switchFullChatProvider(this.value)" style="display:none;"><option value=""></option></select>
       <!-- Messages area -->
-      <div id="fullChatMessages" style="flex:1;overflow-y:auto;padding:16px;background:var(--surface);border:1px solid var(--border);border-radius:12px;margin-bottom:10px;min-height:200px;"></div>
+      <div id="fullChatMessages" style="flex:1;overflow-y:auto;padding:16px;background:var(--surface);border:1px solid var(--border);border-radius:12px;margin-bottom:10px;min-height:200px;">
+        <div style="text-align:center;padding:40px;color:var(--text3);">Selectionnez un contact ci-dessus</div>
+      </div>
       <!-- Input -->
       <div style="display:flex;gap:8px;">
         <input type="text" id="fullChatInput" placeholder="Ecrire un message..." onkeydown="if(event.key==='Enter')sendFullChatMessage()" style="flex:1;padding:12px 16px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:12px;font-size:14px;font-family:'Inter',sans-serif;">
@@ -2027,8 +2032,8 @@ function selectPropFromDropdown(propId) {
   switchProperty(propId);
 }
 
-function renderTeamPropertySelector() {
-  const container = document.getElementById('teamPropertySelector');
+function renderTabPropertySelector(containerId) {
+  const container = document.getElementById(containerId);
   if (!container) return;
   const props = fullConfig.properties || [];
   const activePropId = API.getActivePropertyId();
@@ -2036,17 +2041,22 @@ function renderTeamPropertySelector() {
   let html = '<div style="display:flex;align-items:center;gap:8px;overflow-x:auto;padding-bottom:4px;">';
   props.forEach(p => {
     const isActive = p.id === activePropId;
-    html += '<button onclick="selectTeamProperty(\'' + p.id + '\')" style="padding:8px 16px;border-radius:10px;font-size:12px;font-weight:' + (isActive ? '700' : '500') + ';cursor:pointer;white-space:nowrap;border:' + (isActive ? '2px solid var(--accent)' : '1px solid var(--border2)') + ';background:' + (isActive ? 'var(--accent)15' : 'var(--surface2)') + ';color:' + (isActive ? 'var(--accent)' : 'var(--text)') + ';transition:all 0.2s;">🏠 ' + esc(p.name) + '</button>';
+    html += '<button onclick="switchTabProperty(\'' + p.id + '\')" style="padding:8px 16px;border-radius:10px;font-size:12px;font-weight:' + (isActive ? '700' : '500') + ';cursor:pointer;white-space:nowrap;border:' + (isActive ? '2px solid var(--accent)' : '1px solid var(--border2)') + ';background:' + (isActive ? 'rgba(233,69,96,0.15)' : 'var(--surface2)') + ';color:' + (isActive ? 'var(--accent)' : 'var(--text)') + ';transition:all 0.2s;">🏠 ' + esc(p.name) + '</button>';
   });
   html += '</div>';
   container.innerHTML = html;
 }
 
-function selectTeamProperty(propId) {
-  API.setActivePropertyId(propId);
+function renderTeamPropertySelector() { renderTabPropertySelector('teamPropertySelector'); }
+
+function switchTabProperty(propId) {
+  API.setActiveProperty(propId);
   loadActiveProperty().then(() => {
-    renderTeamPropertySelector();
+    renderTabPropertySelector('teamPropertySelector');
+    renderTabPropertySelector('prestPropertySelector');
+    renderTabPropertySelector('planningPropertySelector');
     renderPropertySelector();
+    loadAdminPrestations();
   });
 }
 
@@ -7714,8 +7724,9 @@ function switchMainTab(tabId) {
   window.scrollTo(0, 0);
   // Refresh content when switching tabs
   if (tabId === 'dashboard') renderDashboardContent();
-  if (tabId === 'prestations') loadAdminPrestations();
-  if (tabId === 'team') renderTeamPropertySelector();
+  if (tabId === 'prestations') { renderTabPropertySelector('prestPropertySelector'); loadAdminPrestations(); }
+  if (tabId === 'team') renderTabPropertySelector('teamPropertySelector');
+  if (tabId === 'planning') renderTabPropertySelector('planningPropertySelector');
   if (tabId === 'messages') initFullChat();
 }
 
@@ -9020,80 +9031,81 @@ let _fullChatProvider = '';
 
 // Admin full chat
 async function initFullChat() {
+  const contactsEl = document.getElementById('fullChatContacts');
   const sel = document.getElementById('fullChatProvSelect');
-  if (!sel) return;
-  sel.innerHTML = '<option value="">-- Choisir un contact --</option>';
+  if (!contactsEl) return;
 
-  // Load all members grouped by role
   const org = API.getOrg();
   if (!org) return;
+
+  // Collect all contacts
+  const contacts = [];
   try {
     const members = await API.loadMembers();
-    const providers = members.filter(m => m.role === 'provider');
-    const owners = members.filter(m => m.role === 'owner');
-    const admins = members.filter(m => m.role === 'admin' || m.role === 'manager');
+    const { data: { user } } = await sb.auth.getUser();
+    const provNames = new Set();
 
-    if (providers.length) {
-      sel.innerHTML += '<optgroup label="🧹 Prestataires">';
-      // Also add providers from config that may not be members
-      const provNames = new Set();
-      providers.forEach(m => {
-        const name = m.display_name || m.invited_email || 'Prestataire';
-        provNames.add(name);
-        sel.innerHTML += '<option value="' + esc(name) + '">🧹 ' + esc(name) + '</option>';
-      });
-      // Add config providers not yet as members
-      if (config && config.providers) {
-        config.providers.forEach(p => {
-          if (!provNames.has(p.name)) {
-            sel.innerHTML += '<option value="' + esc(p.name) + '">🧹 ' + esc(p.name) + '</option>';
-          }
-        });
-      }
-      sel.innerHTML += '</optgroup>';
-    } else if (config && config.providers && config.providers.length) {
-      sel.innerHTML += '<optgroup label="🧹 Prestataires">';
-      config.providers.forEach(p => {
-        sel.innerHTML += '<option value="' + esc(p.name) + '">🧹 ' + esc(p.name) + '</option>';
-      });
-      sel.innerHTML += '</optgroup>';
-    }
-
-    if (owners.length) {
-      sel.innerHTML += '<optgroup label="🏠 Proprietaires">';
-      owners.forEach(m => {
-        const name = m.display_name || m.invited_email || 'Proprietaire';
-        sel.innerHTML += '<option value="' + esc(name) + '">🏠 ' + esc(name) + '</option>';
-      });
-      sel.innerHTML += '</optgroup>';
-    }
-
-    if (admins.length > 1) {
-      sel.innerHTML += '<optgroup label="🏢 Gestionnaires">';
-      const { data: { user } } = await sb.auth.getUser();
-      admins.filter(m => m.user_id !== user.id).forEach(m => {
-        const name = m.display_name || m.invited_email || 'Gestionnaire';
-        sel.innerHTML += '<option value="' + esc(name) + '">🏢 ' + esc(name) + '</option>';
-      });
-      sel.innerHTML += '</optgroup>';
-    }
-  } catch(e) {
-    // Fallback to config providers
+    members.filter(m => m.role === 'provider').forEach(m => {
+      const name = m.display_name || m.invited_email || 'Prestataire';
+      if (!provNames.has(name)) { provNames.add(name); contacts.push({ name, role: 'provider', icon: '🧹', color: '#34d399' }); }
+    });
     if (config && config.providers) {
       config.providers.forEach(p => {
-        sel.innerHTML += '<option value="' + esc(p.name) + '">' + esc(p.name) + '</option>';
+        if (!provNames.has(p.name)) { provNames.add(p.name); contacts.push({ name: p.name, role: 'provider', icon: '🧹', color: '#34d399' }); }
       });
     }
+    members.filter(m => m.role === 'owner').forEach(m => {
+      const name = m.display_name || m.invited_email || 'Proprietaire';
+      contacts.push({ name, role: 'owner', icon: '🏠', color: '#f59e0b' });
+    });
+    members.filter(m => (m.role === 'admin' || m.role === 'manager') && m.user_id !== user.id).forEach(m => {
+      const name = m.display_name || m.invited_email || 'Gestionnaire';
+      contacts.push({ name, role: 'admin', icon: '🏢', color: '#6c63ff' });
+    });
+  } catch(e) {
+    if (config && config.providers) {
+      config.providers.forEach(p => contacts.push({ name: p.name, role: 'provider', icon: '🧹', color: '#34d399' }));
+    }
   }
-  // Sync with mini widget if a contact is already selected
+
+  // Render contact cards
   const currentContact = chatProviderName || _fullChatProvider;
+  let html = '';
+  contacts.forEach(c => {
+    const isActive = c.name === currentContact;
+    const initial = c.name.charAt(0).toUpperCase();
+    html += '<div onclick="selectFullChatContact(\'' + esc(c.name).replace(/'/g,"\\'") + '\')" style="display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 12px;border-radius:12px;cursor:pointer;min-width:60px;border:2px solid ' + (isActive ? c.color : 'transparent') + ';background:' + (isActive ? c.color + '15' : 'var(--surface2)') + ';transition:all 0.2s;">';
+    html += '<div style="width:36px;height:36px;border-radius:50%;background:' + c.color + '30;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:' + c.color + ';">' + initial + '</div>';
+    html += '<div style="font-size:10px;font-weight:600;color:' + (isActive ? c.color : 'var(--text)') + ';white-space:nowrap;max-width:70px;overflow:hidden;text-overflow:ellipsis;">' + esc(c.name) + '</div>';
+    html += '<div style="font-size:8px;color:var(--text3);">' + c.icon + '</div>';
+    html += '</div>';
+  });
+  contactsEl.innerHTML = html;
+
+  // Also update hidden select for sync
+  if (sel) {
+    sel.innerHTML = '<option value=""></option>';
+    contacts.forEach(c => { sel.innerHTML += '<option value="' + esc(c.name) + '">' + esc(c.name) + '</option>'; });
+  }
+
+  // Load messages for current contact
   if (currentContact) {
-    sel.value = currentContact;
+    if (sel) sel.value = currentContact;
     _fullChatProvider = currentContact;
     await loadFullChatMessages('fullChatMessages', currentContact);
     await markMessagesRead(currentContact);
     subscribeFullChat('fullChatMessages', currentContact);
   }
+}
+
+function selectFullChatContact(name) {
+  _fullChatProvider = name;
+  chatProviderName = name;
+  // Update mini widget select
+  const miniSel = document.getElementById('chatProvSelect');
+  if (miniSel) miniSel.value = name;
+  // Re-render contact cards to show active state
+  initFullChat();
 }
 
 async function switchFullChatProvider(name) {
