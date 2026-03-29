@@ -915,7 +915,7 @@ async function loadPDF() {
 <body>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;pointer-events:none;">v6.14</div>
+<div id="versionBadge" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;pointer-events:none;">v6.15</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -925,7 +925,7 @@ async function loadPDF() {
     <!-- Broom that sweeps -->
     <div id="splashBroom" style="position:absolute;top:50%;left:-60px;font-size:48px;transform:translateY(-50%) rotate(-30deg);opacity:0;transition:all 0.8s cubic-bezier(0.25,0.46,0.45,0.94);">✨</div>
   </div>
-  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v6.14</span></div>
+  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v6.15</span></div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie pour locations</div>
   <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou</div>
   <!-- Loading bar -->
@@ -2112,9 +2112,11 @@ function renderPropertyDetailsInline() {
     <select id="inlinePropType" onchange="recalcEstimate()" ${hasOwner ? 'disabled' : ''} style="${inputStyle}${hasOwner ? 'opacity:0.6;' : ''}">`;
   typeOptions.forEach(o => { html += `<option value="${o.v}" ${prop.type === o.v ? 'selected' : ''}>${o.l}</option>`; });
   html += `</select></div>`;
-  html += `<div style="flex:0.5;min-width:80px;"><label style="${labelStyle}">Pieces</label>
+  html += `<div style="flex:0.5;min-width:70px;"><label style="${labelStyle}">Pieces</label>
     <input id="inlinePropRooms" type="number" min="1" max="20" value="${prop.rooms || ''}" oninput="recalcEstimate()" ${hasOwner ? 'readonly disabled' : ''} style="${inputStyle}${hasOwner ? 'opacity:0.6;' : ''}"></div>`;
-  html += `<div style="flex:0.5;min-width:80px;"><label style="${labelStyle}">m&sup2;</label>
+  html += `<div style="flex:0.5;min-width:70px;"><label style="${labelStyle}">SdB</label>
+    <input id="inlinePropBathrooms" type="number" min="0" max="10" value="${prop.bathrooms || ''}" oninput="recalcEstimate()" ${hasOwner ? 'readonly disabled' : ''} style="${inputStyle}${hasOwner ? 'opacity:0.6;' : ''}"></div>`;
+  html += `<div style="flex:0.5;min-width:70px;"><label style="${labelStyle}">m&sup2;</label>
     <input id="inlinePropSurface" type="number" min="1" max="1000" value="${prop.surface || ''}" oninput="recalcEstimate()" ${hasOwner ? 'readonly disabled' : ''} style="${inputStyle}${hasOwner ? 'opacity:0.6;' : ''}"></div>`;
   html += `</div>`;
   html += `</div>`; // end general info section
@@ -2236,11 +2238,6 @@ function renderPropertyDetailsInline() {
         shtml += `<select class="svcFreq" data-svc="${s.id}" style="padding:4px 8px;background:var(--surface);color:var(--text);border:1px solid var(--border2);border-radius:6px;font-size:12px;">`;
         freqOptions.forEach(o => { shtml += `<option value="${o.v}" ${freq === o.v ? 'selected' : ''}>${o.l}</option>`; });
         shtml += `</select>`;
-        // Provider select
-        shtml += `<select class="svcProvider" data-svc="${s.id}" style="padding:4px 8px;background:var(--surface);color:var(--text);border:1px solid var(--border2);border-radius:6px;font-size:12px;">`;
-        shtml += `<option value="">Auto</option>`;
-        propProviders.forEach(p => { shtml += `<option value="${esc(p.name)}" ${provider === p.name ? 'selected' : ''}>${esc(p.name)}</option>`; });
-        shtml += `</select>`;
         // Price input
         shtml += `<input type="number" class="svcPrice" data-svc="${s.id}" placeholder="Prix \u20ac" value="${price || ''}" min="0" step="1" style="width:70px;padding:4px 8px;background:var(--surface);color:var(--text);border:1px solid var(--border2);border-radius:6px;font-size:12px;">`;
         shtml += `</div>`; // close svcConfigDetails
@@ -2347,6 +2344,7 @@ function removeInlineIcal(idx) {
 function recalcEstimate() {
   const type = document.getElementById('inlinePropType')?.value || 'apartment';
   const rooms = parseInt(document.getElementById('inlinePropRooms')?.value) || 0;
+  const bathrooms = parseInt(document.getElementById('inlinePropBathrooms')?.value) || 0;
   const surface = parseInt(document.getElementById('inlinePropSurface')?.value) || 0;
   if (!rooms && !surface) return;
 
@@ -2359,6 +2357,8 @@ function recalcEstimate() {
 
   // Adjust for rooms
   if (rooms > 1) { price += (rooms - 1) * 8; duration += (rooms - 1) * 15; }
+  // Adjust for bathrooms
+  if (bathrooms > 1) { price += (bathrooms - 1) * 10; duration += (bathrooms - 1) * 15; }
   // Adjust for surface
   if (surface > 50) { price += Math.floor((surface - 50) / 25) * 5; duration += Math.floor((surface - 50) / 25) * 10; }
 
@@ -2398,6 +2398,7 @@ function saveInlinePropDetail() {
   prop.address = (document.getElementById('inlinePropAddress').value || '').trim();
   prop.type = document.getElementById('inlinePropType').value;
   prop.rooms = parseInt(document.getElementById('inlinePropRooms').value) || 0;
+  prop.bathrooms = parseInt(document.getElementById('inlinePropBathrooms')?.value) || 0;
   prop.surface = parseInt(document.getElementById('inlinePropSurface').value) || 0;
   prop.cleaningPrice = parseInt(document.getElementById('inlinePropPrice').value) || 0;
   prop.ownerPrice = parseInt(document.getElementById('inlinePropOwnerPrice').value) || 0;
@@ -2414,12 +2415,10 @@ function saveInlinePropDetail() {
     const svcId = cb.dataset.svc;
     if (cb.checked) {
       const freq = document.querySelector('.svcFreq[data-svc="' + svcId + '"]');
-      const prov = document.querySelector('.svcProvider[data-svc="' + svcId + '"]');
       const price = document.querySelector('.svcPrice[data-svc="' + svcId + '"]');
       svcConfig[svcId] = {
         enabled: true,
         frequency: freq ? freq.value : 'booking_end',
-        provider: prov ? prov.value : '',
         price: price ? parseFloat(price.value) || 0 : 0
       };
     }
@@ -3531,6 +3530,7 @@ async function renderOwnerPropertyDetails() {
   typeOptions.forEach(o => { html += '<option value="' + o.v + '" ' + (prop.type === o.v ? 'selected' : '') + '>' + o.l + '</option>'; });
   html += '</select></div>';
   html += '<div style="flex:0.5;min-width:70px;"><label style="' + labelStyle + '">Pieces</label><input id="ownerPropRooms" type="number" min="1" max="20" value="' + (prop.rooms || '') + '" style="' + inputStyle + '"></div>';
+  html += '<div style="flex:0.5;min-width:70px;"><label style="' + labelStyle + '">SdB</label><input id="ownerPropBathrooms" type="number" min="0" max="10" value="' + (prop.bathrooms || '') + '" style="' + inputStyle + '"></div>';
   html += '<div style="flex:0.5;min-width:70px;"><label style="' + labelStyle + '">m²</label><input id="ownerPropSurface" type="number" min="1" max="1000" value="' + (prop.surface || '') + '" style="' + inputStyle + '"></div>';
   html += '</div></div>';
 
@@ -3568,6 +3568,7 @@ async function saveOwnerPropDetail() {
     address: document.getElementById('ownerPropAddress')?.value || '',
     type: document.getElementById('ownerPropType')?.value || 'apartment',
     rooms: parseInt(document.getElementById('ownerPropRooms')?.value) || 0,
+    bathrooms: parseInt(document.getElementById('ownerPropBathrooms')?.value) || 0,
     surface: parseInt(document.getElementById('ownerPropSurface')?.value) || 0,
     checkinTime: document.getElementById('ownerPropCheckin')?.value || '15:00',
     checkoutTime: document.getElementById('ownerPropCheckout')?.value || '11:00',
