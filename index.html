@@ -891,7 +891,7 @@ async function loadPDF() {
 <body>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;pointer-events:none;">v2.70</div>
+<div id="versionBadge" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;pointer-events:none;">v2.71</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -903,7 +903,7 @@ async function loadPDF() {
   </div>
   <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Cleaning Manager</div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Gestion des menages</div>
-  <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou &mdash; v2.70</div>
+  <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou &mdash; v2.71</div>
   <!-- Loading bar -->
   <div style="width:200px;height:3px;background:rgba(255,255,255,0.1);border-radius:4px;margin-top:24px;overflow:hidden;">
     <div id="splashBar" style="width:0%;height:100%;background:linear-gradient(90deg,#e94560,#6c63ff);border-radius:4px;transition:width 1.5s ease;"></div>
@@ -994,7 +994,7 @@ async function loadPDF() {
   <div class="header-left">
     <div class="header-logo"><svg width="24" height="24" viewBox="0 0 24 24" fill="none"><!-- Maison --><path d="M3 21V8l9-5 9 5v13H3z" stroke="#fff" stroke-width="1.5" fill="none"/><path d="M9 21v-6h6v6" stroke="#fff" stroke-width="1.5"/><path d="M7 11h2v2H7zM15 11h2v2h-2z" fill="rgba(255,255,255,0.5)"/><!-- Balai --><line x1="17" y1="6" x2="20" y2="19" stroke="#fff" stroke-width="1.2" stroke-linecap="round"/><path d="M18.5 16.5c1.2 1 2.2 2.5 1.5 3.5s-2.5 0-3-1c-.4-.8-.2-1.8.2-2.5z" fill="#fff" opacity="0.85"/></svg></div>
     <div>
-      <h1>Menage Manager <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.35);vertical-align:middle;">v2.70</span></h1>
+      <h1>Menage Manager <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.35);vertical-align:middle;">v2.71</span></h1>
       <div class="subtitle" data-i18n="header.subtitle">Gestion des menages</div>
     </div>
   </div>
@@ -1245,7 +1245,7 @@ async function loadPDF() {
 
   <!-- Footer -->
   <div translate="no" style="text-align:center;padding:20px 16px;color:var(--text3);font-size:11px;line-height:1.8;">
-    <div style="font-weight:600;color:var(--text2);margin-bottom:4px;">Cleaning Manager v2.70</div>
+    <div style="font-weight:600;color:var(--text2);margin-bottom:4px;">Cleaning Manager v2.71</div>
     <div>Made with ❤️ by <a href="https://github.com/fabienlacaze" target="_blank" style="color:var(--accent2);text-decoration:none;">Fabidou</a></div>
     <div style="margin-top:4px;">
       <a href="privacy.html" target="_blank" style="color:var(--text3);text-decoration:none;margin:0 8px;">Confidentialite</a>
@@ -2215,7 +2215,7 @@ async function showProviderMode() {
   if (headerEl) {
     const h1 = headerEl.querySelector('h1');
     if (h1) {
-      h1.innerHTML = 'Menage Manager <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.35);vertical-align:middle;">v2.70</span>';
+      h1.innerHTML = 'Menage Manager <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.35);vertical-align:middle;">v2.71</span>';
       appendRoleBadge(h1);
     }
     const sub = headerEl.querySelector('.sub-title');
@@ -2440,7 +2440,7 @@ async function showOwnerMode() {
   if (headerEl) {
     const h1 = headerEl.querySelector('h1');
     if (h1) {
-      h1.innerHTML = 'Menage Manager <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.35);vertical-align:middle;">v2.70</span>';
+      h1.innerHTML = 'Menage Manager <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.35);vertical-align:middle;">v2.71</span>';
       appendRoleBadge(h1);
     }
     document.querySelectorAll('.header-actions .btnHelp').forEach(btn => {
@@ -4500,11 +4500,11 @@ async function wizardSavePropertyDetails() {
 function wizardStep_IcalUrl() {
   const step = wizardData.roleId === 'concierge' ? '4/6' : '3/5';
   const platforms = [
-    { id: 'airbnb', name: 'Airbnb', color: '#e94560', url: 'https://www.airbnb.fr/hosting/listings', help: 'Calendrier > Tarifs et disponibilites > Exporter le calendrier', placeholder: 'https://www.airbnb.fr/calendar/ical/...' },
-    { id: 'booking', name: 'Booking', color: '#003580', url: 'https://admin.booking.com/hotel/hoteladmin/extranet_ng/manage/calendar.html', help: 'Extranet > Tarifs > Sync calendrier > Exporter', placeholder: 'https://ical.booking.com/v1/export/...' },
-    { id: 'vrbo', name: 'Vrbo', color: '#3b5cad', url: 'https://www.vrbo.com/owner/calendar', help: 'Calendrier > Importer/Exporter > Exporter', placeholder: 'https://www.vrbo.com/icalendar/...' },
-    { id: 'tripadvisor', name: 'Tripadvisor', color: '#00aa6c', url: 'https://www.tripadvisor.com/rentals', help: 'Calendrier > Synchroniser > Exporter iCal', placeholder: 'URL iCal Tripadvisor...' },
-    { id: 'other', name: 'Autre', color: '#666', url: '', help: 'Copiez l\'URL iCal de votre plateforme', placeholder: 'https://...' },
+    { id: 'airbnb', name: 'Airbnb', color: '#e94560', url: 'https://www.airbnb.fr/hosting/listings', guide: 'https://www.airbnb.com/help/article/99', help: 'Calendrier > Tarifs et disponibilites > Exporter le calendrier', placeholder: 'https://www.airbnb.fr/calendar/ical/...' },
+    { id: 'booking', name: 'Booking', color: '#003580', url: 'https://admin.booking.com/hotel/hoteladmin/extranet_ng/manage/calendar.html', guide: 'https://partnerhelp.booking.com/hc/en-us/articles/115005213509-How-to-export-or-import-a-calendar', help: 'Extranet > Tarifs > Sync calendrier > Exporter', placeholder: 'https://ical.booking.com/v1/export/...' },
+    { id: 'vrbo', name: 'Vrbo', color: '#3b5cad', url: 'https://www.vrbo.com/owner/calendar', guide: 'https://help.vrbo.com/articles/Export-your-reservation-calendar', help: 'Calendrier > Importer/Exporter > Exporter', placeholder: 'https://www.vrbo.com/icalendar/...' },
+    { id: 'tripadvisor', name: 'Tripadvisor', color: '#00aa6c', url: 'https://www.tripadvisor.com/rentals', guide: 'https://www.tripadvisor.com/RentalInsights/listing-101/score-more-bookings-with-calendar-sync', help: 'Calendrier > Synchroniser > Exporter iCal', placeholder: 'URL iCal Tripadvisor...' },
+    { id: 'other', name: 'Autre', color: '#666', url: '', guide: '', help: 'Copiez l\'URL iCal de votre plateforme', placeholder: 'https://...' },
   ];
   let html = '<div style="text-align:center;padding:10px;">';
   html += '<div style="font-size:32px;margin-bottom:8px;">&#128197;</div>';
@@ -4517,7 +4517,10 @@ function wizardStep_IcalUrl() {
     html += '<span style="background:' + p.color + ';color:#fff;padding:4px 10px;border-radius:6px;font-size:11px;font-weight:600;min-width:70px;text-align:center;">' + p.name + '</span>';
     html += '<input id="wiz_' + p.id + '" type="url" placeholder="' + p.placeholder + '" style="flex:1;padding:10px 12px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:11px;font-family:\'Inter\',sans-serif;">';
     if (p.url) {
-      html += '<a href="' + p.url + '" target="_blank" style="background:rgba(255,255,255,0.08);color:var(--text2);padding:8px 10px;border-radius:8px;font-size:10px;text-decoration:none;white-space:nowrap;border:1px solid var(--border2);" title="' + p.help + '">Ouvrir &#8599;</a>';
+      html += '<a href="' + p.url + '" target="_blank" style="background:rgba(255,255,255,0.08);color:var(--text2);padding:8px 10px;border-radius:8px;font-size:10px;text-decoration:none;white-space:nowrap;border:1px solid var(--border2);" title="Ouvrir ' + p.name + '">Ouvrir &#8599;</a>';
+    }
+    if (p.guide) {
+      html += '<a href="' + p.guide + '" target="_blank" style="background:rgba(108,99,255,0.15);color:#6c63ff;padding:8px 10px;border-radius:8px;font-size:10px;text-decoration:none;white-space:nowrap;border:1px solid rgba(108,99,255,0.3);font-weight:700;" title="Guide officiel ' + p.name + '">?</a>';
     }
     html += '</div>';
     html += '<div style="font-size:10px;color:var(--text3);text-align:left;margin:2px 0 0 82px;">' + p.help + '</div>';
