@@ -910,7 +910,7 @@ async function loadPDF() {
 <body>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;pointer-events:none;">v5.14</div>
+<div id="versionBadge" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;pointer-events:none;">v5.15</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -2856,11 +2856,11 @@ async function showProviderMode() {
   html += '</div></div>';
   // Detailed list of completed prestations
   html += '<div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:8px;">Historique des prestations terminees</div>';
-  const donePrestations = unified.filter(u => u.status === 'done' || u.status === 'departed');
-  if (donePrestations.length === 0) {
+  const doneList = unified.filter(u => u.status === 'done' || u.status === 'departed');
+  if (doneList.length === 0) {
     html += '<div style="text-align:center;padding:20px;color:var(--text3);font-size:13px;">Aucune prestation terminee</div>';
   } else {
-    donePrestations.forEach(u => {
+    doneList.forEach(u => {
       const svcLabel = getServiceLabel(u.type);
       html += '<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;background:var(--surface);border:1px solid var(--border);border-radius:8px;margin-bottom:6px;">';
       html += '<div><div style="font-weight:600;font-size:13px;">' + svcLabel + '</div><div style="font-size:11px;color:var(--text3);">' + (u.date ? fmtDate(u.date) : '') + ' — ' + esc(u.propertyName || '') + '</div></div>';
@@ -3565,7 +3565,14 @@ function closeChatWidget() {
 async function switchChatProvider(name) {
   if (!name) return;
   chatProviderName = name;
+  // Sync full page chat select
+  const fullSel = document.getElementById('fullChatProvSelect');
+  if (fullSel && fullSel.value !== name) fullSel.value = name;
+  _fullChatProvider = name;
   await loadChatMessages();
+  // Also update full page chat if visible
+  await loadFullChatMessages('fullChatMessages', name);
+  await markMessagesRead(name);
   subscribeChat();
   setTimeout(() => document.getElementById('chatInput').focus(), 200);
 }
@@ -9011,7 +9018,14 @@ async function initFullChat() {
 async function switchFullChatProvider(name) {
   if (!name) return;
   _fullChatProvider = name;
+  // Sync mini widget select
+  chatProviderName = name;
+  const miniSel = document.getElementById('chatProvSelect');
+  if (miniSel) miniSel.value = name;
   await loadFullChatMessages('fullChatMessages', name);
+  // Also update mini widget if open
+  await loadChatMessages();
+  await markMessagesRead(name);
   subscribeFullChat('fullChatMessages', name);
   setTimeout(() => { const i = document.getElementById('fullChatInput'); if (i) i.focus(); }, 200);
 }
@@ -9122,6 +9136,57 @@ function subscribeFullChat(containerId, provName) {
     .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, () => loadFullChatMessages(containerId, provName))
     .subscribe();
 }
+
+// Mark messages as read (safe - column may not exist)
+async function markMessagesRead(provName) {
+  try {
+    const { data: { user } } = await sb.auth.getUser();
+    const org = API.getOrg();
+    if (!org || !user) return;
+    await sb.from('messages')
+      .update({ read: true })
+      .eq('org_id', org.id)
+      .eq('sender_name', provName)
+      .neq('sender_id', user.id)
+      .eq('read', false);
+  } catch(e) { /* column may not exist yet */ }
+  updateUnreadBadge();
+}
+
+// Count unread messages and update nav badge
+async function updateUnreadBadge() {
+  try {
+    const org = API.getOrg();
+    if (!org) return;
+    const { data: { user } } = await sb.auth.getUser();
+    if (!user) return;
+    const { count, error } = await sb.from('messages')
+      .select('*', { count: 'exact', head: true })
+      .eq('org_id', org.id)
+      .neq('sender_id', user.id)
+      .eq('read', false);
+    if (error) return; // column doesn't exist yet
+    const unread = count || 0;
+    const navMsg = document.getElementById('nav_messages') || document.getElementById('nav_chat');
+    if (!navMsg) return;
+    let badge = navMsg.querySelector('.nav-badge');
+    if (unread > 0) {
+      if (!badge) {
+        badge = document.createElement('span');
+        badge.className = 'nav-badge';
+        navMsg.appendChild(badge);
+      }
+      badge.textContent = unread;
+      badge.style.display = 'flex';
+    } else if (badge) {
+      badge.style.display = 'none';
+    }
+  } catch(e) {}
+}
+
+// Check unread after app loads
+setTimeout(updateUnreadBadge, 5000);
+setInterval(updateUnreadBadge, 30000);
 
 async function forceUpdate() {
   // 1. Fetch remote version FIRST (before clearing anything)
