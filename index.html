@@ -891,7 +891,7 @@ async function loadPDF() {
 <body>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;pointer-events:none;">v2.80</div>
+<div id="versionBadge" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;pointer-events:none;">v2.81</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -903,7 +903,7 @@ async function loadPDF() {
   </div>
   <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Cleaning Manager</div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Gestion des menages</div>
-  <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou &mdash; v2.80</div>
+  <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou &mdash; v2.81</div>
   <!-- Loading bar -->
   <div style="width:200px;height:3px;background:rgba(255,255,255,0.1);border-radius:4px;margin-top:24px;overflow:hidden;">
     <div id="splashBar" style="width:0%;height:100%;background:linear-gradient(90deg,#e94560,#6c63ff);border-radius:4px;transition:width 1.5s ease;"></div>
@@ -994,7 +994,7 @@ async function loadPDF() {
   <div class="header-left">
     <div class="header-logo"><svg width="24" height="24" viewBox="0 0 24 24" fill="none"><!-- Maison --><path d="M3 21V8l9-5 9 5v13H3z" stroke="#fff" stroke-width="1.5" fill="none"/><path d="M9 21v-6h6v6" stroke="#fff" stroke-width="1.5"/><path d="M7 11h2v2H7zM15 11h2v2h-2z" fill="rgba(255,255,255,0.5)"/><!-- Balai --><line x1="17" y1="6" x2="20" y2="19" stroke="#fff" stroke-width="1.2" stroke-linecap="round"/><path d="M18.5 16.5c1.2 1 2.2 2.5 1.5 3.5s-2.5 0-3-1c-.4-.8-.2-1.8.2-2.5z" fill="#fff" opacity="0.85"/></svg></div>
     <div>
-      <h1>Menage Manager <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.35);vertical-align:middle;">v2.80</span></h1>
+      <h1>Menage Manager <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.35);vertical-align:middle;">v2.81</span></h1>
       <div class="subtitle" data-i18n="header.subtitle">Gestion des menages</div>
     </div>
   </div>
@@ -1246,7 +1246,7 @@ async function loadPDF() {
 
   <!-- Footer -->
   <div translate="no" style="text-align:center;padding:20px 16px;color:var(--text3);font-size:11px;line-height:1.8;">
-    <div style="font-weight:600;color:var(--text2);margin-bottom:4px;">Cleaning Manager v2.80</div>
+    <div style="font-weight:600;color:var(--text2);margin-bottom:4px;">Cleaning Manager v2.81</div>
     <div>Made with ❤️ by <a href="https://github.com/fabienlacaze" target="_blank" style="color:var(--accent2);text-decoration:none;">Fabidou</a></div>
     <div style="margin-top:4px;">
       <a href="privacy.html" target="_blank" style="color:var(--text3);text-decoration:none;margin:0 8px;">Confidentialite</a>
@@ -1909,11 +1909,8 @@ async function addNewProperty() {
     showPremiumModal('Vous avez atteint la limite de ' + limits.maxProperties + ' propriete(s). Passez a Premium pour en ajouter plus.');
     return;
   }
-  const name = await customPrompt(t('property.name_prompt') || 'Nom de la propriete :', '', {placeholder:'Ex: Appart Nice Centre'});
-  if (!name) return;
-  fullConfig = API.addProperty(fullConfig, name);
-  renderPropertySelector();
-  switchProperty(API.getActivePropertyId());
+  // Launch add property wizard
+  showAddPropertyWizard();
 }
 
 async function removeCurrentProperty() {
@@ -2215,7 +2212,7 @@ async function showProviderMode() {
   if (headerEl) {
     const h1 = headerEl.querySelector('h1');
     if (h1) {
-      h1.innerHTML = 'Menage Manager <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.35);vertical-align:middle;">v2.80</span>';
+      h1.innerHTML = 'Menage Manager <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.35);vertical-align:middle;">v2.81</span>';
       appendRoleBadge(h1);
     }
     const sub = headerEl.querySelector('.sub-title');
@@ -2441,7 +2438,7 @@ async function showOwnerMode() {
   if (headerEl) {
     const h1 = headerEl.querySelector('h1');
     if (h1) {
-      h1.innerHTML = 'Menage Manager <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.35);vertical-align:middle;">v2.80</span>';
+      h1.innerHTML = 'Menage Manager <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.35);vertical-align:middle;">v2.81</span>';
       appendRoleBadge(h1);
     }
     document.querySelectorAll('.header-actions .btnHelp').forEach(btn => {
@@ -6564,6 +6561,51 @@ async function switchOwnerOrg(orgId) {
   API.switchOrg(orgId);
   await API.load_plan();
   showOwnerMode();
+}
+
+function showAddPropertyWizard() {
+  let html = '<div style="padding:10px;">';
+  html += '<div style="text-align:center;margin-bottom:16px;">';
+  html += '<div style="font-size:32px;margin-bottom:8px;">&#127968;</div>';
+  html += '<div style="font-size:16px;font-weight:700;color:var(--accent);margin-bottom:4px;">Nouvelle propriete</div>';
+  html += '</div>';
+  html += '<label style="display:block;font-size:11px;color:var(--text3);margin-bottom:4px;text-transform:uppercase;">Nom du logement</label>';
+  html += '<input id="addPropName" type="text" placeholder="Ex: Appartement Nice Centre" style="width:100%;padding:12px 14px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;font-family:\'Inter\',sans-serif;box-sizing:border-box;margin-bottom:10px;">';
+  html += '<label style="display:block;font-size:11px;color:var(--text3);margin-bottom:4px;text-transform:uppercase;">Adresse</label>';
+  html += wizAddressFieldHTML('addPropAddress', 'addPropMap');
+  html += '<div style="display:flex;gap:10px;margin-top:16px;">';
+  html += '<button class="btn btnOutline" style="flex:1;padding:12px;" onclick="closeMsg()">Annuler</button>';
+  html += '<button class="btn btnPrimary" id="addPropNext" style="flex:1;padding:12px;opacity:0.4;pointer-events:none;" onclick="saveNewProperty()">Creer</button>';
+  html += '</div></div>';
+  showMsg(html, true);
+  setTimeout(() => {
+    document.getElementById('addPropName').focus();
+    initAddressAutocomplete('addPropAddress', 'addPropMap', 'newProp');
+    const check = () => {
+      const name = document.getElementById('addPropName')?.value?.trim();
+      const btn = document.getElementById('addPropNext');
+      if (btn) { btn.style.opacity = name && name.length > 1 ? '1' : '0.4'; btn.style.pointerEvents = name && name.length > 1 ? 'auto' : 'none'; }
+    };
+    document.getElementById('addPropName').addEventListener('input', check);
+  }, 200);
+}
+
+async function saveNewProperty() {
+  const name = document.getElementById('addPropName').value.trim();
+  if (!name) return;
+  const address = document.getElementById('addPropAddress')?.value?.trim() || '';
+  closeMsg();
+  fullConfig = API.addProperty(fullConfig, name);
+  // Update the new property with address and coordinates
+  const prop = API.getActiveProperty(fullConfig);
+  if (prop) {
+    prop.address = address;
+    if (wizardData.newProp_lat) { prop.lat = wizardData.newProp_lat; prop.lng = wizardData.newProp_lng; }
+    await API.save_config(fullConfig);
+  }
+  renderPropertySelector();
+  switchProperty(API.getActivePropertyId());
+  showToast('Propriete "' + name + '" creee !');
 }
 
 function showAddManualReservation() {
