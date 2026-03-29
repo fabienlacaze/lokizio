@@ -891,7 +891,7 @@ async function loadPDF() {
 <body>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;pointer-events:none;">v2.91</div>
+<div id="versionBadge" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;pointer-events:none;">v3.00</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -903,7 +903,7 @@ async function loadPDF() {
   </div>
   <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Cleaning Manager</div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Gestion des menages</div>
-  <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou &mdash; v2.91</div>
+  <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou &mdash; v3.00</div>
   <!-- Loading bar -->
   <div style="width:200px;height:3px;background:rgba(255,255,255,0.1);border-radius:4px;margin-top:24px;overflow:hidden;">
     <div id="splashBar" style="width:0%;height:100%;background:linear-gradient(90deg,#e94560,#6c63ff);border-radius:4px;transition:width 1.5s ease;"></div>
@@ -994,7 +994,7 @@ async function loadPDF() {
   <div class="header-left">
     <div class="header-logo"><svg width="24" height="24" viewBox="0 0 24 24" fill="none"><!-- Maison --><path d="M3 21V8l9-5 9 5v13H3z" stroke="#fff" stroke-width="1.5" fill="none"/><path d="M9 21v-6h6v6" stroke="#fff" stroke-width="1.5"/><path d="M7 11h2v2H7zM15 11h2v2h-2z" fill="rgba(255,255,255,0.5)"/><!-- Balai --><line x1="17" y1="6" x2="20" y2="19" stroke="#fff" stroke-width="1.2" stroke-linecap="round"/><path d="M18.5 16.5c1.2 1 2.2 2.5 1.5 3.5s-2.5 0-3-1c-.4-.8-.2-1.8.2-2.5z" fill="#fff" opacity="0.85"/></svg></div>
     <div>
-      <h1>Menage Manager <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.35);vertical-align:middle;">v2.91</span></h1>
+      <h1>Menage Manager <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.35);vertical-align:middle;">v3.00</span></h1>
       <div class="subtitle" data-i18n="header.subtitle">Gestion des menages</div>
     </div>
   </div>
@@ -1246,7 +1246,7 @@ async function loadPDF() {
 
   <!-- Footer -->
   <div translate="no" style="text-align:center;padding:20px 16px;color:var(--text3);font-size:11px;line-height:1.8;">
-    <div style="font-weight:600;color:var(--text2);margin-bottom:4px;">Cleaning Manager v2.91</div>
+    <div style="font-weight:600;color:var(--text2);margin-bottom:4px;">Cleaning Manager v3.00</div>
     <div>Made with ❤️ by <a href="https://github.com/fabienlacaze" target="_blank" style="color:var(--accent2);text-decoration:none;">Fabidou</a></div>
     <div style="margin-top:4px;">
       <a href="privacy.html" target="_blank" style="color:var(--text3);text-decoration:none;margin:0 8px;">Confidentialite</a>
@@ -1282,6 +1282,13 @@ async function loadPDF() {
         <option value="20" selected style="background:#1a1a2e;color:#f0f0f5;">20 km</option>
         <option value="50" style="background:#1a1a2e;color:#f0f0f5;">50 km</option>
         <option value="100" style="background:#1a1a2e;color:#f0f0f5;">100 km</option>
+      </select>
+      <select id="mkSortFilter" onchange="filterMarketplace()" style="padding:8px 12px;background:#1a1a2e;color:#f0f0f5;border:1px solid var(--border2);border-radius:8px;font-size:13px;">
+        <option value="recent" style="background:#1a1a2e;color:#f0f0f5;">Plus recents</option>
+        <option value="rating" style="background:#1a1a2e;color:#f0f0f5;">Meilleure note</option>
+        <option value="cleanings" style="background:#1a1a2e;color:#f0f0f5;">Plus d'experience</option>
+        <option value="price_asc" style="background:#1a1a2e;color:#f0f0f5;">Tarif croissant</option>
+        <option value="price_desc" style="background:#1a1a2e;color:#f0f0f5;">Tarif decroissant</option>
       </select>
     </div>
     <div id="mkResults" style="max-height:400px;overflow-y:auto;"></div>
@@ -1351,16 +1358,46 @@ async function loadPDF() {
         <button class="btn btnSmall btnSuccess" style="padding:8px;font-size:12px;align-self:flex-end;" onclick="saveProfile()">Enregistrer</button>
       </div>
     </div>
-    <div style="display:flex;align-items:center;justify-content:space-between;padding:12px;background:var(--surface2);border-radius:8px;margin-bottom:8px;">
-      <div>
-        <div style="font-size:13px;font-weight:600;">&#127758; Visible dans l'annuaire</div>
-        <div style="font-size:11px;color:var(--text3);">Les autres utilisateurs peuvent vous trouver</div>
+    <div style="padding:14px;background:var(--surface2);border-radius:10px;margin-bottom:8px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+        <div>
+          <div style="font-size:13px;font-weight:600;">&#127758; Visible dans l'annuaire</div>
+          <div style="font-size:11px;color:var(--text3);">Les autres utilisateurs peuvent vous trouver</div>
+        </div>
+        <label style="position:relative;width:44px;height:24px;cursor:pointer;">
+          <input type="checkbox" id="mkVisibleToggle" onchange="toggleMarketplaceVisibility(this.checked)" style="opacity:0;width:0;height:0;">
+          <span style="position:absolute;inset:0;background:var(--border2);border-radius:12px;transition:0.3s;"></span>
+          <span style="position:absolute;top:2px;left:2px;width:20px;height:20px;background:#fff;border-radius:50%;transition:0.3s;"></span>
+        </label>
       </div>
-      <label style="position:relative;width:44px;height:24px;cursor:pointer;">
-        <input type="checkbox" id="mkVisibleToggle" onchange="toggleMarketplaceVisibility(this.checked)" style="opacity:0;width:0;height:0;">
-        <span style="position:absolute;inset:0;background:var(--border2);border-radius:12px;transition:0.3s;"></span>
-        <span style="position:absolute;top:2px;left:2px;width:20px;height:20px;background:#fff;border-radius:50%;transition:0.3s;"></span>
-      </label>
+      <div id="mkProfileFields" style="display:none;flex-direction:column;gap:10px;border-top:1px solid var(--border2);padding-top:12px;">
+        <label style="font-size:11px;color:var(--text3);text-transform:uppercase;">Description</label>
+        <textarea id="mkDescription" placeholder="Decrivez votre activite, vos specialites..." rows="3" style="width:100%;padding:10px;background:#1a1a2e;color:#f0f0f5;border:1px solid var(--border2);border-radius:8px;font-size:13px;font-family:'Inter',sans-serif;resize:vertical;box-sizing:border-box;"></textarea>
+        <label style="font-size:11px;color:var(--text3);text-transform:uppercase;">Services proposes</label>
+        <div style="display:flex;flex-wrap:wrap;gap:6px;" id="mkServicesCheckboxes">
+          <label style="display:flex;align-items:center;gap:4px;padding:6px 10px;background:#1a1a2e;border:1px solid var(--border2);border-radius:8px;font-size:12px;color:var(--text);cursor:pointer;"><input type="checkbox" value="Menage" class="mkServiceCb" style="accent-color:#6c63ff;"> Menage</label>
+          <label style="display:flex;align-items:center;gap:4px;padding:6px 10px;background:#1a1a2e;border:1px solid var(--border2);border-radius:8px;font-size:12px;color:var(--text);cursor:pointer;"><input type="checkbox" value="Linge" class="mkServiceCb" style="accent-color:#6c63ff;"> Linge</label>
+          <label style="display:flex;align-items:center;gap:4px;padding:6px 10px;background:#1a1a2e;border:1px solid var(--border2);border-radius:8px;font-size:12px;color:var(--text);cursor:pointer;"><input type="checkbox" value="Check-in" class="mkServiceCb" style="accent-color:#6c63ff;"> Check-in</label>
+          <label style="display:flex;align-items:center;gap:4px;padding:6px 10px;background:#1a1a2e;border:1px solid var(--border2);border-radius:8px;font-size:12px;color:var(--text);cursor:pointer;"><input type="checkbox" value="Jardinage" class="mkServiceCb" style="accent-color:#6c63ff;"> Jardinage</label>
+          <label style="display:flex;align-items:center;gap:4px;padding:6px 10px;background:#1a1a2e;border:1px solid var(--border2);border-radius:8px;font-size:12px;color:var(--text);cursor:pointer;"><input type="checkbox" value="Repassage" class="mkServiceCb" style="accent-color:#6c63ff;"> Repassage</label>
+          <label style="display:flex;align-items:center;gap:4px;padding:6px 10px;background:#1a1a2e;border:1px solid var(--border2);border-radius:8px;font-size:12px;color:var(--text);cursor:pointer;"><input type="checkbox" value="Courses" class="mkServiceCb" style="accent-color:#6c63ff;"> Courses</label>
+        </div>
+        <div style="display:flex;gap:10px;">
+          <div style="flex:1;">
+            <label style="font-size:11px;color:var(--text3);text-transform:uppercase;display:block;margin-bottom:4px;">Annees d'experience</label>
+            <input type="number" id="mkExperienceYears" min="0" max="50" placeholder="0" style="width:100%;padding:8px 12px;background:#1a1a2e;color:#f0f0f5;border:1px solid var(--border2);border-radius:8px;font-size:13px;box-sizing:border-box;">
+          </div>
+          <div style="flex:1;">
+            <label style="font-size:11px;color:var(--text3);text-transform:uppercase;display:block;margin-bottom:4px;">Disponibilite</label>
+            <select id="mkAvailability" style="width:100%;padding:8px 12px;background:#1a1a2e;color:#f0f0f5;border:1px solid var(--border2);border-radius:8px;font-size:13px;box-sizing:border-box;">
+              <option value="available" style="background:#1a1a2e;color:#f0f0f5;">Disponible</option>
+              <option value="full" style="background:#1a1a2e;color:#f0f0f5;">Complet</option>
+              <option value="vacation" style="background:#1a1a2e;color:#f0f0f5;">En vacances</option>
+            </select>
+          </div>
+        </div>
+        <button class="btn btnPrimary" style="padding:10px;font-size:13px;margin-top:4px;" onclick="saveMarketplaceProfile()">&#128190; Sauvegarder le profil annuaire</button>
+      </div>
     </div>
     <div style="display:flex;flex-direction:column;gap:10px;">
       <button class="btn btnOutline" style="padding:12px;font-size:13px;" onclick="changePassword()">&#128274; Changer le mot de passe</button>
@@ -2243,7 +2280,7 @@ async function showProviderMode() {
   if (headerEl) {
     const h1 = headerEl.querySelector('h1');
     if (h1) {
-      h1.innerHTML = 'Menage Manager <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.35);vertical-align:middle;">v2.91</span>';
+      h1.innerHTML = 'Menage Manager <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.35);vertical-align:middle;">v3.00</span>';
       appendRoleBadge(h1);
     }
     const sub = headerEl.querySelector('.sub-title');
@@ -2469,7 +2506,7 @@ async function showOwnerMode() {
   if (headerEl) {
     const h1 = headerEl.querySelector('h1');
     if (h1) {
-      h1.innerHTML = 'Menage Manager <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.35);vertical-align:middle;">v2.91</span>';
+      h1.innerHTML = 'Menage Manager <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.35);vertical-align:middle;">v3.00</span>';
       appendRoleBadge(h1);
     }
     document.querySelectorAll('.header-actions .btnHelp').forEach(btn => {
@@ -6912,46 +6949,107 @@ function filterMarketplace() {
   const role = document.getElementById('mkRoleFilter').value;
   const city = document.getElementById('mkCityFilter').value.trim().toLowerCase();
   const radius = parseInt(document.getElementById('mkRadiusFilter').value) || 0;
+  const sort = document.getElementById('mkSortFilter')?.value || 'recent';
   let filtered = _mkAllProfiles;
   if (role) filtered = filtered.filter(p => p.role === role);
   if (city) filtered = filtered.filter(p => (p.city || '').toLowerCase().includes(city) || (p.postal_code || '').includes(city));
-  // Distance filtering (if user has coords and radius > 0)
-  if (radius > 0 && navigator.geolocation) {
-    // We'll do client-side distance calc if profiles have lat/lng
+  if (radius > 0) {
     filtered = filtered.filter(p => {
-      if (!p.lat || !p.lng) return true; // show profiles without coords
-      return true; // distance calc requires async geolocation, done in renderMarketplaceResults
+      if (!p.lat || !p.lng) return true;
+      return true;
     });
   }
+  // Sort
+  filtered = [...filtered];
+  if (sort === 'rating') {
+    filtered.sort((a, b) => (b.rating || 0) - (a.rating || 0));
+  } else if (sort === 'cleanings') {
+    filtered.sort((a, b) => (b.cleanings_done || 0) - (a.cleanings_done || 0));
+  } else if (sort === 'price_asc') {
+    filtered.sort((a, b) => (parseFloat(a.tarif) || 9999) - (parseFloat(b.tarif) || 9999));
+  } else if (sort === 'price_desc') {
+    filtered.sort((a, b) => (parseFloat(b.tarif) || 0) - (parseFloat(a.tarif) || 0));
+  } else {
+    filtered.sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
+  }
   renderMarketplaceResults(filtered);
+}
+
+function _mkStarRating(rating) {
+  const r = Math.round((rating || 0) * 2) / 2;
+  let stars = '';
+  for (let i = 1; i <= 5; i++) {
+    if (i <= r) stars += '<span style="color:#f59e0b;">&#9733;</span>';
+    else if (i - 0.5 <= r) stars += '<span style="color:#f59e0b;">&#9733;</span>';
+    else stars += '<span style="color:#444;">&#9733;</span>';
+  }
+  return stars;
+}
+
+function _mkIsNew(createdAt) {
+  if (!createdAt) return false;
+  const diff = Date.now() - new Date(createdAt).getTime();
+  return diff < 7 * 24 * 60 * 60 * 1000;
 }
 
 function renderMarketplaceResults(profiles) {
   const container = document.getElementById('mkResults');
   const myRole = API.getRole();
   if (!profiles.length) {
-    container.innerHTML = '<div style="text-align:center;padding:30px;color:var(--text3);">Aucun profil trouve</div>';
+    container.innerHTML = `<div style="text-align:center;padding:40px 20px;">
+      <div style="font-size:48px;margin-bottom:12px;opacity:0.4;">&#128269;</div>
+      <div style="font-size:16px;font-weight:600;color:var(--text);margin-bottom:8px;">Aucun profil trouve</div>
+      <div style="font-size:13px;color:var(--text3);line-height:1.6;">Essayez d'elargir votre recherche :<br>
+      &#8226; Supprimez le filtre de ville<br>
+      &#8226; Augmentez le rayon de recherche<br>
+      &#8226; Selectionnez "Tous les profils"</div>
+    </div>`;
     return;
   }
   const roleColors = { provider: '#34d399', owner: '#f59e0b', admin: '#e94560' };
   const roleLabels = { provider: 'Prestataire', owner: 'Proprietaire', admin: 'Conciergerie' };
+  const availLabels = { available: '&#128994; Disponible', full: '&#128308; Complet', vacation: '&#127796; En vacances' };
   let html = '';
   profiles.forEach(p => {
     const color = roleColors[p.role] || '#6c63ff';
     const label = roleLabels[p.role] || p.role;
-    html += `<div style="padding:14px;margin-bottom:10px;background:var(--surface2);border-radius:10px;border-left:3px solid ${color};">
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
-        <span style="font-weight:700;font-size:14px;color:var(--text);">${_escHtml(p.display_name || 'Sans nom')}</span>
-        <span style="font-size:10px;padding:2px 8px;border-radius:10px;background:${color};color:#fff;font-weight:600;">${label}</span>
-      </div>
-      ${p.city ? `<div style="font-size:12px;color:var(--text2);margin-bottom:4px;">&#128205; ${_escHtml(p.city)}${p.postal_code ? ' (' + _escHtml(p.postal_code) + ')' : ''}</div>` : ''}
-      ${p.tarif ? `<div style="font-size:12px;color:var(--text2);margin-bottom:4px;">&#128176; ${_escHtml(p.tarif)}</div>` : ''}
-      ${p.description ? `<div style="font-size:12px;color:var(--text3);margin-bottom:6px;">${_escHtml(p.description)}</div>` : ''}
-      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
-        ${p.phone ? `<a href="tel:${_escHtml(p.phone)}" style="font-size:12px;color:var(--accent);text-decoration:none;">&#128222; ${_escHtml(p.phone)}</a>` : ''}
-        ${p.email ? `<a href="mailto:${_escHtml(p.email)}" style="font-size:12px;color:var(--accent);text-decoration:none;">&#9993; ${_escHtml(p.email)}</a>` : ''}
-        ${(p.role === 'admin' && p.org_id && myRole === 'owner') ? `<button onclick="requestJoinOrg('${p.org_id}','${_escHtml(p.display_name)}')" style="margin-left:auto;padding:6px 14px;background:linear-gradient(135deg,#6c63ff,#5a54e0);color:#fff;border:none;border-radius:8px;font-size:11px;font-weight:600;cursor:pointer;">Rejoindre</button>` : ''}
-        ${(p.role === 'provider' && myRole === 'admin') ? `<button onclick="requestHireProvider('${p.user_id}','${_escHtml(p.display_name)}','${_escHtml(p.email)}')" style="margin-left:auto;padding:6px 14px;background:#34d399;color:#fff;border:none;border-radius:8px;font-size:11px;font-weight:600;cursor:pointer;">Inviter</button>` : ''}
+    const name = p.display_name || 'Sans nom';
+    const initial = (name.charAt(0) || '?').toUpperCase();
+    const isNew = _mkIsNew(p.created_at);
+    const services = p.services || [];
+    const starHtml = _mkStarRating(p.rating);
+    const availHtml = availLabels[p.availability] || '';
+
+    html += `<div style="padding:16px;margin-bottom:10px;background:var(--surface2);border-radius:12px;border-left:4px solid ${color};transition:transform 0.15s,box-shadow 0.15s;cursor:default;" onmouseenter="this.style.transform='translateY(-2px)';this.style.boxShadow='0 4px 20px rgba(0,0,0,0.3)';" onmouseleave="this.style.transform='';this.style.boxShadow='';">
+      <div style="display:flex;gap:12px;align-items:flex-start;">
+        <div style="width:44px;height:44px;border-radius:50%;background:${color};display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:#fff;flex-shrink:0;">${_escHtml(initial)}</div>
+        <div style="flex:1;min-width:0;">
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px;">
+            <span style="font-weight:700;font-size:15px;color:var(--text);">${_escHtml(name)}</span>
+            ${p.verified ? '<span title="Verifie" style="color:#34d399;font-size:14px;font-weight:700;">&#10003;</span>' : ''}
+            <span style="font-size:10px;padding:2px 8px;border-radius:10px;background:${color};color:#fff;font-weight:600;">${label}</span>
+            ${isNew ? '<span style="font-size:10px;padding:2px 8px;border-radius:10px;background:linear-gradient(135deg,#6c63ff,#a855f7);color:#fff;font-weight:600;">Nouveau</span>' : ''}
+          </div>
+          <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:6px;">
+            <span style="font-size:13px;">${starHtml}</span>
+            ${p.reviews_count ? `<span style="font-size:11px;color:var(--text3);">(${p.reviews_count} avis)</span>` : ''}
+            ${availHtml ? `<span style="font-size:11px;">${availHtml}</span>` : ''}
+          </div>
+          <div style="display:flex;gap:14px;flex-wrap:wrap;margin-bottom:6px;">
+            ${p.cleanings_done ? `<span style="font-size:11px;color:var(--text2);">&#128700; ${p.cleanings_done} menages</span>` : ''}
+            ${p.experience_years ? `<span style="font-size:11px;color:var(--text2);">&#128188; ${p.experience_years} ans exp.</span>` : ''}
+            ${p.tarif ? `<span style="font-size:11px;color:var(--text2);">&#128176; ${_escHtml(p.tarif)}</span>` : ''}
+          </div>
+          ${p.city ? `<div style="font-size:12px;color:var(--text2);margin-bottom:6px;">&#128205; ${_escHtml(p.city)}${p.postal_code ? ' (' + _escHtml(p.postal_code) + ')' : ''}</div>` : ''}
+          ${p.description ? `<div style="font-size:12px;color:var(--text3);margin-bottom:8px;line-height:1.5;overflow:hidden;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;">${_escHtml(p.description)}</div>` : ''}
+          ${services.length ? `<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px;">${services.map(s => `<span style="font-size:10px;padding:3px 8px;border-radius:12px;background:rgba(108,99,255,0.15);color:#a78bfa;font-weight:500;">${_escHtml(s)}</span>`).join('')}</div>` : ''}
+          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+            ${p.phone ? `<a href="tel:${_escHtml(p.phone)}" style="display:inline-flex;align-items:center;gap:4px;font-size:12px;color:#34d399;text-decoration:none;padding:5px 10px;background:rgba(52,211,153,0.1);border-radius:8px;border:1px solid rgba(52,211,153,0.2);transition:background 0.2s;" onmouseenter="this.style.background='rgba(52,211,153,0.2)'" onmouseleave="this.style.background='rgba(52,211,153,0.1)'">&#128222; Appeler</a>` : ''}
+            ${p.email ? `<a href="mailto:${_escHtml(p.email)}" style="display:inline-flex;align-items:center;gap:4px;font-size:12px;color:var(--accent);text-decoration:none;padding:5px 10px;background:rgba(108,99,255,0.1);border-radius:8px;border:1px solid rgba(108,99,255,0.2);transition:background 0.2s;" onmouseenter="this.style.background='rgba(108,99,255,0.2)'" onmouseleave="this.style.background='rgba(108,99,255,0.1)'">&#9993; Email</a>` : ''}
+            ${(p.role === 'admin' && p.org_id && myRole === 'owner') ? `<button onclick="requestJoinOrg('${p.org_id}','${_escHtml(p.display_name)}')" style="margin-left:auto;padding:7px 16px;background:linear-gradient(135deg,#6c63ff,#5a54e0);color:#fff;border:none;border-radius:8px;font-size:11px;font-weight:600;cursor:pointer;transition:opacity 0.2s;" onmouseenter="this.style.opacity='0.85'" onmouseleave="this.style.opacity='1'">Rejoindre</button>` : ''}
+            ${(p.role === 'provider' && myRole === 'admin') ? `<button onclick="requestHireProvider('${p.user_id}','${_escHtml(p.display_name)}','${_escHtml(p.email)}')" style="margin-left:auto;padding:7px 16px;background:linear-gradient(135deg,#34d399,#059669);color:#fff;border:none;border-radius:8px;font-size:11px;font-weight:600;cursor:pointer;transition:opacity 0.2s;" onmouseenter="this.style.opacity='0.85'" onmouseleave="this.style.opacity='1'">Inviter</button>` : ''}
+          </div>
+        </div>
       </div>
     </div>`;
   });
@@ -6969,10 +7067,12 @@ async function toggleMarketplaceVisibility(visible) {
     const { data: { user } } = await sb.auth.getUser();
     if (!user) return;
     const toggle = document.getElementById('mkVisibleToggle');
-    // Update toggle visual
     const spans = toggle.parentElement.querySelectorAll('span');
     if (spans[0]) spans[0].style.background = visible ? 'var(--success)' : 'var(--border2)';
     if (spans[1]) spans[1].style.left = visible ? '22px' : '2px';
+    // Show/hide extended profile fields
+    const fields = document.getElementById('mkProfileFields');
+    if (fields) fields.style.display = visible ? 'flex' : 'none';
 
     const profileData = {
       user_id: user.id,
@@ -6993,13 +7093,46 @@ async function toggleMarketplaceVisibility(visible) {
   }
 }
 
+async function saveMarketplaceProfile() {
+  try {
+    const { data: { user } } = await sb.auth.getUser();
+    if (!user) return;
+    const description = document.getElementById('mkDescription')?.value?.trim() || '';
+    const experienceYears = parseInt(document.getElementById('mkExperienceYears')?.value) || 0;
+    const availability = document.getElementById('mkAvailability')?.value || 'available';
+    const services = [];
+    document.querySelectorAll('.mkServiceCb:checked').forEach(cb => services.push(cb.value));
+
+    const profileData = {
+      user_id: user.id,
+      visible: document.getElementById('mkVisibleToggle')?.checked || false,
+      display_name: user.user_metadata?.display_name || user.email.split('@')[0],
+      email: user.email,
+      role: currentRole || 'admin',
+      description: description,
+      services: services,
+      experience_years: experienceYears,
+      availability: availability,
+      updated_at: new Date().toISOString()
+    };
+    const { error } = await sb
+      .from('marketplace_profiles')
+      .upsert(profileData, { onConflict: 'user_id' });
+    if (error) throw error;
+    showToast('Profil annuaire sauvegarde !');
+  } catch (e) {
+    console.error('Save marketplace profile error:', e);
+    showToast('Erreur lors de la sauvegarde');
+  }
+}
+
 async function loadMarketplaceProfile() {
   try {
     const { data: { user } } = await sb.auth.getUser();
     if (!user) return;
     const { data, error } = await sb
       .from('marketplace_profiles')
-      .select('visible')
+      .select('*')
       .eq('user_id', user.id)
       .maybeSingle();
     const toggle = document.getElementById('mkVisibleToggle');
@@ -7009,6 +7142,23 @@ async function loadMarketplaceProfile() {
       const spans = toggle.parentElement.querySelectorAll('span');
       if (spans[0]) spans[0].style.background = isVisible ? 'var(--success)' : 'var(--border2)';
       if (spans[1]) spans[1].style.left = isVisible ? '22px' : '2px';
+      // Show/hide extended fields
+      const fields = document.getElementById('mkProfileFields');
+      if (fields) fields.style.display = isVisible ? 'flex' : 'none';
+    }
+    // Populate extended fields if data exists
+    if (data) {
+      const descEl = document.getElementById('mkDescription');
+      if (descEl) descEl.value = data.description || '';
+      const expEl = document.getElementById('mkExperienceYears');
+      if (expEl) expEl.value = data.experience_years || '';
+      const availEl = document.getElementById('mkAvailability');
+      if (availEl) availEl.value = data.availability || 'available';
+      // Check service checkboxes
+      const services = data.services || [];
+      document.querySelectorAll('.mkServiceCb').forEach(cb => {
+        cb.checked = services.includes(cb.value);
+      });
     }
   } catch (e) {
     console.error('Load marketplace profile error:', e);
