@@ -28,7 +28,7 @@
 <script src="supabase_config.js?v=13"></script>
 <script src="i18n.js?v=25"></script>
 <script src="ical_parser.js?v=14"></script>
-<script src="api_bridge.js?v=22"></script>
+<script src="api_bridge.js?v=23"></script>
 <!-- Lazy-loaded: Leaflet, Chart.js, jsPDF (loaded on demand to improve startup) -->
 <script>
 function lazyLoad(url, type) {
@@ -891,7 +891,7 @@ async function loadPDF() {
 <body>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;pointer-events:none;">v2.75</div>
+<div id="versionBadge" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;pointer-events:none;">v2.76</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -903,7 +903,7 @@ async function loadPDF() {
   </div>
   <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Cleaning Manager</div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Gestion des menages</div>
-  <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou &mdash; v2.75</div>
+  <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou &mdash; v2.76</div>
   <!-- Loading bar -->
   <div style="width:200px;height:3px;background:rgba(255,255,255,0.1);border-radius:4px;margin-top:24px;overflow:hidden;">
     <div id="splashBar" style="width:0%;height:100%;background:linear-gradient(90deg,#e94560,#6c63ff);border-radius:4px;transition:width 1.5s ease;"></div>
@@ -994,7 +994,7 @@ async function loadPDF() {
   <div class="header-left">
     <div class="header-logo"><svg width="24" height="24" viewBox="0 0 24 24" fill="none"><!-- Maison --><path d="M3 21V8l9-5 9 5v13H3z" stroke="#fff" stroke-width="1.5" fill="none"/><path d="M9 21v-6h6v6" stroke="#fff" stroke-width="1.5"/><path d="M7 11h2v2H7zM15 11h2v2h-2z" fill="rgba(255,255,255,0.5)"/><!-- Balai --><line x1="17" y1="6" x2="20" y2="19" stroke="#fff" stroke-width="1.2" stroke-linecap="round"/><path d="M18.5 16.5c1.2 1 2.2 2.5 1.5 3.5s-2.5 0-3-1c-.4-.8-.2-1.8.2-2.5z" fill="#fff" opacity="0.85"/></svg></div>
     <div>
-      <h1>Menage Manager <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.35);vertical-align:middle;">v2.75</span></h1>
+      <h1>Menage Manager <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.35);vertical-align:middle;">v2.76</span></h1>
       <div class="subtitle" data-i18n="header.subtitle">Gestion des menages</div>
     </div>
   </div>
@@ -1246,7 +1246,7 @@ async function loadPDF() {
 
   <!-- Footer -->
   <div translate="no" style="text-align:center;padding:20px 16px;color:var(--text3);font-size:11px;line-height:1.8;">
-    <div style="font-weight:600;color:var(--text2);margin-bottom:4px;">Cleaning Manager v2.75</div>
+    <div style="font-weight:600;color:var(--text2);margin-bottom:4px;">Cleaning Manager v2.76</div>
     <div>Made with ❤️ by <a href="https://github.com/fabienlacaze" target="_blank" style="color:var(--accent2);text-decoration:none;">Fabidou</a></div>
     <div style="margin-top:4px;">
       <a href="privacy.html" target="_blank" style="color:var(--text3);text-decoration:none;margin:0 8px;">Confidentialite</a>
@@ -2215,7 +2215,7 @@ async function showProviderMode() {
   if (headerEl) {
     const h1 = headerEl.querySelector('h1');
     if (h1) {
-      h1.innerHTML = 'Menage Manager <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.35);vertical-align:middle;">v2.75</span>';
+      h1.innerHTML = 'Menage Manager <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.35);vertical-align:middle;">v2.76</span>';
       appendRoleBadge(h1);
     }
     const sub = headerEl.querySelector('.sub-title');
@@ -2289,8 +2289,9 @@ async function showProviderMode() {
       <div style="font-size:18px;font-weight:700;color:var(--success);margin-bottom:8px;">Aucun menage a venir</div>
       <div style="font-size:13px;color:var(--text3);line-height:1.6;">
         Vous n'avez pas de menage programme pour le moment.<br>
-        Votre gestionnaire vous enverra une notification quand un menage vous sera assigne.
+        Votre conciergerie vous enverra une notification quand un menage vous sera assigne.
       </div>
+      <button onclick="showMarketplace().then(()=>{document.getElementById('mkRoleFilter').value='admin';filterMarketplace();})" style="margin-top:16px;padding:12px 24px;background:linear-gradient(135deg,#6c63ff,#5a54e0);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;">&#127970; Trouver une conciergerie</button>
     </div>`;
   } else {
     for (const c of allCleanings) {
@@ -2440,7 +2441,7 @@ async function showOwnerMode() {
   if (headerEl) {
     const h1 = headerEl.querySelector('h1');
     if (h1) {
-      h1.innerHTML = 'Menage Manager <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.35);vertical-align:middle;">v2.75</span>';
+      h1.innerHTML = 'Menage Manager <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.35);vertical-align:middle;">v2.76</span>';
       appendRoleBadge(h1);
     }
     document.querySelectorAll('.header-actions .btnHelp').forEach(btn => {
@@ -3594,6 +3595,9 @@ function checkProviderLimit() {
 
 document.addEventListener('DOMContentLoaded', async () => {
   setLang(currentLang);
+  // Capture referral code from URL before it gets cleared
+  const refParam = new URLSearchParams(window.location.search).get('ref');
+  if (refParam) localStorage.setItem('mm_referral', refParam);
   // Handle email confirmation token from URL hash
   const hash = window.location.hash;
   if (hash && hash.includes('confirmation_token=')) {
@@ -4019,7 +4023,7 @@ function showOnboardingStep2() {
       id: 'owner',
       icon: '&#127968;',
       title: t('role.owner.title') || 'Je suis proprietaire',
-      desc: t('role.owner.desc') || 'Vous etes proprietaire et suivez les menages de vos biens.',
+      desc: t('role.owner.desc') || 'Vous etes proprietaire et voulez connaitre les dates de menages de vos biens.',
       plan: 'Gratuit (1 bien) / Pro 3.99€/mois + Marketplace',
       color: '#e94560',
     },
@@ -6615,7 +6619,9 @@ function getSourceClass(source) {
 }
 
 function showInviteModal() {
-  const appUrl = 'https://fabienlacaze.github.io/menage-manager-app/';
+  const org = API.getOrg();
+  const refCode = org?.referral_code || '';
+  const appUrl = 'https://fabienlacaze.github.io/menage-manager-app/' + (refCode ? '?ref=' + refCode : '');
   const role = API.getRole();
   const roleTexts = {
     admin: 'Je gere mes menages locatifs avec Cleaning Manager. Rejoins-moi !',
@@ -6629,9 +6635,11 @@ function showInviteModal() {
   const encodedSubject = encodeURIComponent('Decouvre Cleaning Manager');
 
   let html = '<div style="padding:10px;text-align:center;">';
-  html += '<div style="font-size:20px;margin-bottom:8px;">&#128279;</div>';
-  html += '<div style="font-size:16px;font-weight:700;color:var(--accent);margin-bottom:4px;">Inviter a rejoindre l\'app</div>';
-  html += '<div style="font-size:12px;color:var(--text3);margin-bottom:16px;">Plus on est nombreux, mieux c\'est !</div>';
+  html += '<div style="font-size:20px;margin-bottom:8px;">&#127873;</div>';
+  html += '<div style="font-size:16px;font-weight:700;color:var(--accent);margin-bottom:4px;">Parrainez et gagnez !</div>';
+  html += '<div style="font-size:12px;color:var(--text3);margin-bottom:6px;">Invitez un ami — vous recevez <b style="color:#6c63ff;">1 mois Business gratuit</b> quand il s\'inscrit.</div>';
+  if (refCode) html += '<div style="font-size:11px;color:var(--text3);margin-bottom:12px;">Votre code : <b style="color:var(--accent);">' + refCode + '</b>' + (org?.referral_rewards ? ' — <span style="color:#34d399;">' + org.referral_rewards + ' parrainage(s) &#10003;</span>' : '') + '</div>';
+  else html += '<div style="margin-bottom:12px;"></div>';
 
   // Share buttons
   html += '<div style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px;">';

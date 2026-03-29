@@ -41,7 +41,11 @@ const API = (function() {
         // Auto-create org + member + trial subscription
         const user = (await sb.auth.getUser()).data.user;
         const orgName = user.email ? user.email.split('@')[0] : 'Mon organisation';
-        const { data: newOrg, error: orgErr } = await sb.from('organizations').insert({ name: orgName, plan: 'business' }).select().single();
+        // Generate referral code
+        const refCode = orgName.replace(/[^a-z0-9]/gi,'').substring(0,8).toUpperCase() + Math.random().toString(36).substring(2,6).toUpperCase();
+        // Check if referred by someone
+        const urlRef = new URLSearchParams(window.location.search).get('ref') || localStorage.getItem('mm_referral') || '';
+        const { data: newOrg, error: orgErr } = await sb.from('organizations').insert({ name: orgName, plan: 'business', referral_code: refCode, referred_by: urlRef || null }).select().single();
         if (orgErr || !newOrg) { console.error('Onboarding org error:', orgErr); allMemberships = []; return null; }
         await sb.from('members').insert({ org_id: newOrg.id, user_id: userId, role: 'admin', invited_email: user.email, accepted: true });
         const trialEnd = new Date(); trialEnd.setDate(trialEnd.getDate() + 10);
@@ -54,6 +58,27 @@ const API = (function() {
         currentOrg = m2.organizations;
         currentMember = m2;
         currentRole = m2.role;
+        // Reward referrer if applicable
+        if (urlRef) {
+          const { data: referrerOrg } = await sb.from('organizations').select('id, referral_rewards').eq('referral_code', urlRef).single();
+          if (referrerOrg) {
+            const newRewards = (referrerOrg.referral_rewards || 0) + 1;
+            await sb.from('organizations').update({ referral_rewards: newRewards, plan: 'business' }).eq('id', referrerOrg.id);
+            // Extend referrer's subscription by 30 days
+            const { data: refMembers } = await sb.from('members').select('user_id').eq('org_id', referrerOrg.id).eq('role', 'admin').limit(1);
+            if (refMembers && refMembers.length) {
+              const { data: refSub } = await sb.from('subscriptions').select('*').eq('user_id', refMembers[0].user_id).single();
+              if (refSub) {
+                const currentEnd = refSub.current_period_end ? new Date(refSub.current_period_end) : new Date();
+                const newEnd = new Date(Math.max(currentEnd.getTime(), Date.now()));
+                newEnd.setDate(newEnd.getDate() + 30);
+                await sb.from('subscriptions').update({ plan: 'business', current_period_end: newEnd.toISOString() }).eq('user_id', refMembers[0].user_id);
+              }
+            }
+            console.log('Referrer rewarded: +30 days business');
+          }
+          localStorage.removeItem('mm_referral');
+        }
         console.log('Onboarding complete: org=' + currentOrg.name);
         return currentOrg;
       }
