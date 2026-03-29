@@ -908,7 +908,7 @@ async function loadPDF() {
 <body>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;pointer-events:none;">v4.18</div>
+<div id="versionBadge" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;pointer-events:none;">v4.19</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -920,7 +920,7 @@ async function loadPDF() {
   </div>
   <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio</div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie</div>
-  <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou &mdash; v4.18</div>
+  <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou &mdash; v4.19</div>
   <!-- Loading bar -->
   <div style="width:200px;height:3px;background:rgba(255,255,255,0.1);border-radius:4px;margin-top:24px;overflow:hidden;">
     <div id="splashBar" style="width:0%;height:100%;background:linear-gradient(90deg,#e94560,#6c63ff);border-radius:4px;transition:width 1.5s ease;"></div>
@@ -1011,7 +1011,7 @@ async function loadPDF() {
   <div class="header-left">
     <div class="header-logo" style="width:28px;height:28px;background:linear-gradient(135deg,#e94560,#6c63ff);border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:900;color:#fff;">L</div>
     <div>
-      <h1>Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.35);vertical-align:middle;">v4.18</span></h1>
+      <h1>Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.35);vertical-align:middle;">v4.19</span></h1>
       <div class="subtitle" data-i18n="header.subtitle">Services et conciergerie</div>
     </div>
   </div>
@@ -1340,7 +1340,7 @@ async function loadPDF() {
 
   <!-- Footer -->
   <div translate="no" style="text-align:center;padding:20px 16px;color:var(--text3);font-size:11px;line-height:1.8;">
-    <div style="font-weight:600;color:var(--text2);margin-bottom:4px;">Lokizio v4.18</div>
+    <div style="font-weight:600;color:var(--text2);margin-bottom:4px;">Lokizio v4.19</div>
     <div>Made with ❤️ by <a href="https://github.com/fabienlacaze" target="_blank" style="color:var(--accent2);text-decoration:none;">Fabidou</a></div>
     <div style="margin-top:4px;">
       <a href="privacy.html" target="_blank" style="color:var(--text3);text-decoration:none;margin:0 8px;">Confidentialite</a>
@@ -2472,7 +2472,7 @@ async function showProviderMode() {
   if (headerEl) {
     const h1 = headerEl.querySelector('h1');
     if (h1) {
-      h1.innerHTML = 'Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.35);vertical-align:middle;">v4.18</span>';
+      h1.innerHTML = 'Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.35);vertical-align:middle;">v4.19</span>';
       appendRoleBadge(h1);
     }
     const sub = headerEl.querySelector('.sub-title');
@@ -2832,7 +2832,7 @@ async function showOwnerMode() {
   if (headerEl) {
     const h1 = headerEl.querySelector('h1');
     if (h1) {
-      h1.innerHTML = 'Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.35);vertical-align:middle;">v4.18</span>';
+      h1.innerHTML = 'Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.35);vertical-align:middle;">v4.19</span>';
       appendRoleBadge(h1);
     }
     document.querySelectorAll('.header-actions .btnHelp').forEach(btn => {
@@ -8325,6 +8325,25 @@ function showUpdateBanner(version) {
   banner.style.cssText = 'position:fixed;top:68px;left:0;right:0;padding:10px 16px;background:linear-gradient(135deg,#6c63ff,#5a54e0);color:#fff;font-size:13px;font-weight:600;text-align:center;z-index:99999;';
   document.body.appendChild(banner);
 }
+// One-time update check 10s after load
+setTimeout(async () => {
+  try {
+    const resp = await fetch('sw.js?_t=' + Date.now(), { cache: 'no-store' });
+    const text = await resp.text();
+    const match = text.match(/APP_VERSION\s*=\s*'([^']+)'/);
+    if (!match || !match[1]) return;
+    const remoteVersion = match[1];
+    const badge = document.querySelector('#versionBadge');
+    const htmlVersion = badge ? badge.textContent.trim().replace('v','') : '';
+    // Up to date
+    if (remoteVersion === htmlVersion) { localStorage.setItem('lokizio_seen_version', remoteVersion); return; }
+    // Already seen this version
+    const seen = localStorage.getItem('lokizio_seen_version');
+    if (seen && seen >= remoteVersion) return;
+    showUpdateBanner(remoteVersion);
+  } catch(e) {}
+}, 10000);
+
 if('serviceWorker' in navigator){
   navigator.serviceWorker.register('sw.js').then(reg => {
     // Check for SW updates every 5 minutes
@@ -8334,7 +8353,6 @@ if('serviceWorker' in navigator){
       if (!newWorker) return;
       newWorker.addEventListener('statechange', async () => {
         if ((newWorker.state === 'installed' || newWorker.state === 'activated') && navigator.serviceWorker.controller) {
-          // Fetch remote version for the banner button
           try {
             const r = await fetch('sw.js?_t=' + Date.now(), { cache: 'no-store' });
             const t = await r.text();
@@ -8343,10 +8361,8 @@ if('serviceWorker' in navigator){
               const seenVersion = localStorage.getItem('lokizio_seen_version');
               if (seenVersion && seenVersion >= m[1]) return;
               showUpdateBanner(m[1]);
-            } else {
-              showUpdateBanner('');
             }
-          } catch(e) { showUpdateBanner(''); }
+          } catch(e) {}
         }
       });
     });
