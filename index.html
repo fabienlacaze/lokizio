@@ -919,7 +919,7 @@ async function loadPDF() {
 <body>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;pointer-events:none;">v6.25</div>
+<div id="versionBadge" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;pointer-events:none;">v6.26</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -929,7 +929,7 @@ async function loadPDF() {
     <!-- Broom that sweeps -->
     <div id="splashBroom" style="position:absolute;top:50%;left:-60px;font-size:48px;transform:translateY(-50%) rotate(-30deg);opacity:0;transition:all 0.8s cubic-bezier(0.25,0.46,0.45,0.94);">✨</div>
   </div>
-  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v6.25</span></div>
+  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v6.26</span></div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie pour locations</div>
   <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou</div>
   <!-- Loading bar -->
@@ -2089,7 +2089,7 @@ function switchBiensProperty(propId) {
 }
 
 /* ── Inline Property Details ── */
-function renderPropertyDetailsInline() {
+async function renderPropertyDetailsInline() {
   const container = document.getElementById('propertyDetailsInline');
   if (!container) return;
   const prop = API.getActiveProperty(fullConfig);
@@ -2115,12 +2115,34 @@ function renderPropertyDetailsInline() {
 
   // Owner info banner (if has owner)
   if (hasOwner) {
+    // Try to get owner member info for richer data
+    let ownerName = prop.owner_name || '';
+    let ownerEmail = prop.owner_email || '';
+    let ownerPhone = prop.owner_phone || '';
+    let ownerAddress = '';
+    if (prop.owner_member_id) {
+      try {
+        const members = await API.loadMembers();
+        const ownerMember = members.find(m => m.id === prop.owner_member_id);
+        if (ownerMember) {
+          if (ownerMember.display_name) ownerName = ownerMember.display_name;
+          if (ownerMember.invited_email) ownerEmail = ownerMember.invited_email;
+          if (ownerMember.phone) ownerPhone = ownerMember.phone;
+          if (ownerMember.address) ownerAddress = ownerMember.address;
+        }
+      } catch(e) {}
+    }
     html += `<div style="${sectionStyle}background:rgba(108,99,255,0.06);">`;
     html += `<div style="${sectionTitleStyle}">&#128100; Proprietaire</div>`;
     html += '<div style="display:flex;flex-direction:column;gap:4px;font-size:13px;">';
-    html += '<div style="color:var(--text);">' + (prop.owner_name || prop.owner_email || 'Non renseigne') + '</div>';
-    if (prop.owner_phone) html += '<div><a href="tel:' + prop.owner_phone + '" style="color:var(--accent2);text-decoration:none;">&#128222; ' + prop.owner_phone + '</a></div>';
-    if (prop.owner_email) html += '<div><a href="mailto:' + prop.owner_email + '" style="color:var(--accent2);text-decoration:none;">&#9993; ' + prop.owner_email + '</a></div>';
+    html += '<div style="font-weight:600;color:var(--text);font-size:14px;">👤 ' + esc(ownerName || ownerEmail || 'Non renseigne') + '</div>';
+    if (ownerEmail) html += '<div><a href="mailto:' + esc(ownerEmail) + '" style="color:var(--accent2);text-decoration:none;">✉️ ' + esc(ownerEmail) + '</a></div>';
+    if (ownerPhone) html += '<div><a href="tel:' + esc(ownerPhone) + '" style="color:var(--accent2);text-decoration:none;">📞 ' + esc(ownerPhone) + '</a></div>';
+    if (ownerAddress) html += '<div style="color:var(--text3);">📍 ' + esc(ownerAddress) + '</div>';
+    html += '<div style="margin-top:6px;display:flex;gap:8px;">';
+    if (ownerEmail) html += '<button class="btn btnSmall btnOutline" onclick="openChat(\'' + esc(ownerName || ownerEmail).replace(/'/g, "\\'") + '\')" style="padding:4px 10px;font-size:11px;">💬 Message</button>';
+    if (ownerPhone) html += '<a href="tel:' + esc(ownerPhone) + '" class="btn btnSmall btnOutline" style="padding:4px 10px;font-size:11px;text-decoration:none;">📞 Appeler</a>';
+    html += '</div>';
     html += '</div></div>';
   }
 
