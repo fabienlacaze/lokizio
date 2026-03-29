@@ -76,7 +76,7 @@ async function loadPDF() {
     --accent2: #6c63ff;
     --text: #f0f0f5;
     --text2: #9ca3af;
-    --text3: #6b7280;
+    --text3: #9ca3af;
     --success: #34d399;
     --warning: #fbbf24;
     --danger: #f87171;
@@ -915,7 +915,7 @@ async function loadPDF() {
 <body>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;pointer-events:none;">v6.03</div>
+<div id="versionBadge" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;pointer-events:none;">v6.04</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -925,7 +925,7 @@ async function loadPDF() {
     <!-- Broom that sweeps -->
     <div id="splashBroom" style="position:absolute;top:50%;left:-60px;font-size:48px;transform:translateY(-50%) rotate(-30deg);opacity:0;transition:all 0.8s cubic-bezier(0.25,0.46,0.45,0.94);">✨</div>
   </div>
-  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v6.03</span></div>
+  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v6.04</span></div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie pour locations</div>
   <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou</div>
   <!-- Loading bar -->
@@ -1036,7 +1036,7 @@ async function loadPDF() {
   </div>
 </div>
 
-<div class="content">
+<div class="content" role="main" aria-label="Contenu principal">
   <!-- Premium + Ad banner (shown for free users) -->
   <div id="premiumBanner" class="premiumBanner" style="display:none;flex-direction:column;gap:0;">
     <div style="display:flex;align-items:center;gap:12px;padding:10px 18px;">
@@ -1391,7 +1391,7 @@ async function loadPDF() {
 <div class="overlay" id="overlay" onclick="if(!window._wizardActive)closeAllModals()"></div>
 
 <!-- Marketplace Modal -->
-<div id="marketplaceModal" class="modal" style="max-width:700px;display:none;">
+<div id="marketplaceModal" class="modal" style="max-width:700px;display:none;" role="dialog" aria-modal="true">
   <div class="modalHeader" style="display:flex;justify-content:space-between;align-items:center;">
     <span>&#127758; Annuaire des professionnels</span>
     <button class="btn btnSmall" onclick="closeMarketplace()" style="padding:4px 10px;font-size:16px;">&#10005;</button>
@@ -1423,7 +1423,7 @@ async function loadPDF() {
     <div id="mkResults" style="max-height:400px;overflow-y:auto;"></div>
   </div>
 </div>
-<div class="modal" id="msgModal">
+<div class="modal" id="msgModal" role="dialog" aria-modal="true">
   <div class="modalHeader" id="msgTitle">Lokizio</div>
   <div class="modalBody" id="msgBody"></div>
   <div class="modalBtns" id="msgModalBtns"><button class="btn btnPrimary" style="padding:12px 32px;font-size:14px;" onclick="closeMsg()" data-i18n="modal.ok">OK</button></div>
@@ -1576,7 +1576,7 @@ async function loadPDF() {
     </div>
   </div>
 </div>
-<div class="modal" id="premiumModal" style="max-width:640px;">
+<div class="modal" id="premiumModal" style="max-width:640px;" role="dialog" aria-modal="true">
   <div class="modalHeader" style="display:flex;justify-content:space-between;align-items:center;">
     <span data-i18n="premium.modal.title">Choisissez votre plan</span>
     <button class="btn btnSmall" onclick="closePremiumModal()" style="padding:4px 10px;font-size:16px;">&#10005;</button>
@@ -1882,7 +1882,7 @@ async function loadPDF() {
 <button class="fab" id="fabGenerate" onclick="generatePlanning()" title="Generer le planning">&#9654;</button>
 
 <!-- Bottom Navigation Bar (mobile) -->
-<nav class="bottomNav" id="bottomNav">
+<nav class="bottomNav" id="bottomNav" role="navigation" aria-label="Navigation principale">
   <div class="bottomNav-item active" onclick="switchMainTab('dashboard')" id="navDashboard">
     <span class="nav-icon">&#128202;</span>
     <span>Dashboard</span>
@@ -1946,6 +1946,11 @@ const SERVICE_CATALOG = [
 ];
 function getServiceLabel(id) { for (const c of SERVICE_CATALOG) for (const s of c.services) if (s.id === id) return s.icon + ' ' + s.label; return id; }
 function getServiceIcon(id) { for (const c of SERVICE_CATALOG) for (const s of c.services) if (s.id === id) return s.icon; return '📋'; }
+
+// Global error boundary for unhandled promise rejections
+window.addEventListener('unhandledrejection', event => {
+  console.error('Unhandled promise rejection:', event.reason);
+});
 
 let fullConfig = { properties: [], activeProperty: null };
 let config = { airbnbIcalUrl:'',bookingIcalUrl:'',providers:[],property:'Mon logement' }; // active property shortcut
@@ -2272,7 +2277,7 @@ function updateInlineIcalUrl(idx, url) {
   if (!prop || !prop.icals || !prop.icals[idx]) return;
   prop.icals[idx].url = url.trim();
   syncIcalToOldFormat(prop);
-  syncAndSaveConfig();
+  _debouncedSaveConfig();
 }
 
 function removeInlineIcal(idx) {
@@ -2280,7 +2285,7 @@ function removeInlineIcal(idx) {
   if (!prop || !prop.icals) return;
   prop.icals.splice(idx, 1);
   syncIcalToOldFormat(prop);
-  syncAndSaveConfig();
+  _debouncedSaveConfig();
   renderPropertyDetailsInline();
 }
 
@@ -2402,6 +2407,7 @@ function hideContentLoading() {
 }
 
 async function loadActiveProperty() {
+  try {
   const prop = API.getActiveProperty(fullConfig);
   if (!prop) return;
   // Shortcut for compatibility
@@ -2454,6 +2460,7 @@ async function loadActiveProperty() {
   loadAdminPrestations();
   // Load invoices
   loadInvoices();
+  } catch(err) { console.error('loadActiveProperty error:', err); showToast('Erreur chargement: ' + (err.message || 'Probleme de connexion')); }
 }
 
 async function switchProperty(propId) {
@@ -2576,6 +2583,8 @@ async function removeCurrentProperty() {
 // Debounce utility
 function debounce(fn, wait) { let t; return function(...args) { clearTimeout(t); t = setTimeout(() => fn.apply(this, args), wait); }; }
 const debouncedSave = debounce(() => { syncAndSaveConfig(); }, 1500);
+const _debouncedSavePlanning = debounce(() => savePlanning(), 1500);
+const _debouncedSaveConfig = debounce(() => syncAndSaveConfig(), 1500);
 
 function syncAndSaveConfig() {
   syncProviders();
@@ -2594,7 +2603,7 @@ function syncAndSaveConfig() {
     const tplEl = document.getElementById('propDetailTemplate');
     if (tplEl) { const tpl = tplEl.value.trim(); prop.messageTemplate = tpl !== getDefaultTemplate() ? tpl : ''; }
   }
-  return API.save_config(fullConfig);
+  return API.save_config(fullConfig).catch(err => { console.error('syncAndSaveConfig error:', err); showToast('Erreur sauvegarde: ' + (err.message || 'Probleme de connexion')); });
 }
 
 /* ── Panel Collapse ── */
@@ -2787,6 +2796,7 @@ function appendRoleBadge(h1) {
 
 /* ── Provider Mode ── */
 async function showProviderMode() {
+  try {
   setupBottomNav('provider');
   const content = document.querySelector('.content');
   if (!content) return;
@@ -3177,7 +3187,7 @@ async function showProviderMode() {
         // Photos
         if (v && v.photos && v.photos.length) {
           html += '<div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;">';
-          v.photos.forEach(p => { html += `<img src="${p}" style="width:60px;height:60px;object-fit:cover;border-radius:6px;border:1px solid var(--border);">`; });
+          v.photos.forEach(p => { html += `<img src="${esc(p)}" style="width:60px;height:60px;object-fit:cover;border-radius:6px;border:1px solid var(--border);">`; });
           html += '</div>';
         }
 
@@ -3262,6 +3272,7 @@ async function showProviderMode() {
   if ('Notification' in window && Notification.permission === 'default') {
     Notification.requestPermission();
   }
+  } catch(err) { console.error('showProviderMode error:', err); showToast('Erreur chargement mode prestataire: ' + (err.message || 'Probleme de connexion')); }
 }
 
 /* ── Bottom Nav Setup per Role ── */
@@ -3391,6 +3402,7 @@ async function completeServiceRequest(id) {
 
 /* ── Owner Mode ── */
 async function showOwnerMode() {
+  try {
   setupBottomNav('owner');
   const content = document.querySelector('.content');
   if (!content) return;
@@ -3646,7 +3658,7 @@ async function showOwnerMode() {
     });
     if (recentPhotos.length) {
       html += '<div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;">';
-      recentPhotos.slice(0, 6).forEach(p => { html += `<img src="${p}" style="width:50px;height:50px;object-fit:cover;border-radius:6px;border:1px solid var(--border);">`; });
+      recentPhotos.slice(0, 6).forEach(p => { html += `<img src="${esc(p)}" style="width:50px;height:50px;object-fit:cover;border-radius:6px;border:1px solid var(--border);">`; });
       html += '</div>';
     }
 
@@ -3807,6 +3819,7 @@ async function showOwnerMode() {
   // Append activity to overview tab after render
   const overviewTab = document.getElementById('ownerContentOverview');
   if (overviewTab && activityHtml) overviewTab.insertAdjacentHTML('beforeend', activityHtml);
+  } catch(err) { console.error('showOwnerMode error:', err); showToast('Erreur chargement mode proprietaire: ' + (err.message || 'Probleme de connexion')); }
 }
 
 async function openOwnerChat() {
@@ -4052,7 +4065,7 @@ async function sendChatMessage() {
   const role = API.getRole();
   const prop = API.getActiveProperty(fullConfig);
 
-  await sb.from('messages').insert({
+  const { error: insertErr } = await sb.from('messages').insert({
     org_id: org.id,
     property_id: prop ? prop.id : null,
     sender_id: user.id,
@@ -4061,6 +4074,7 @@ async function sendChatMessage() {
     recipient_name: chatProviderName,
     body: body,
   });
+  if (insertErr) { console.error('sendChatMessage error:', insertErr); showToast('Erreur envoi: ' + (insertErr.message || 'Probleme de connexion')); return; }
 
   await loadChatMessages();
   // Sync full page chat
@@ -5285,10 +5299,6 @@ function showPremiumModal(reason) {
   document.getElementById('overlay').style.display = 'block';
   document.getElementById('premiumModal').style.display = 'block';
 }
-function closePremiumModal() {
-  document.getElementById('overlay').style.display = 'none';
-  document.getElementById('premiumModal').style.display = 'none';
-}
 async function upgradeToPremium() {
   const role = API.getRole();
   const priceId = (role === 'admin' || role === 'manager') ? STRIPE_PRICE_BUSINESS : STRIPE_PRICE_PRO;
@@ -5504,7 +5514,7 @@ function renderPressing() {
 
 function updatePropName(name) {
   const prop = API.getActiveProperty(fullConfig);
-  if (prop) { prop.name = name; renderPropertySelector(); syncAndSaveConfig(); }
+  if (prop) { prop.name = name; renderPropertySelector(); _debouncedSaveConfig(); }
 }
 
 /* ── iCal Platform Management ── */
@@ -6975,7 +6985,7 @@ async function renderProviders() {
     const color = COLORS[i] || '#888';
     const vacCount = p.vacations ? p.vacations.split('|').filter(v => v).length : 0;
     const isLinked = !!p._linked_member_id;
-    const roAttr = isLinked ? 'readonly style="opacity:0.6;cursor:default;"' : 'onchange="syncProviders();syncAndSaveConfig()"';
+    const roAttr = isLinked ? 'readonly style="opacity:0.6;cursor:default;"' : 'onchange="syncProviders();_debouncedSaveConfig()"';
     const avgRating = p._avg_rating || p._mk_rating || 0;
     const ratingDisplay = avgRating > 0 ? '⭐ ' + avgRating.toFixed(1) : '<span style="color:var(--text3);font-size:10px;">-</span>';
     const favIcon = p.favorite ? '📌' : '<span style="opacity:0.3;">📌</span>';
@@ -7236,7 +7246,7 @@ function submitProviderRating(i, stars) {
   if (!p.ratings) p.ratings = [];
   p.ratings.push(stars);
   p._avg_rating = p.ratings.reduce((s,r) => s + r, 0) / p.ratings.length;
-  syncAndSaveConfig();
+  _debouncedSaveConfig();
   closeMsg();
   renderProviders();
   showToast(stars + ' etoile(s) pour ' + p.name);
@@ -7245,7 +7255,7 @@ function toggleFavorite(i) {
   const p = config.providers[i];
   if (!p) return;
   p.favorite = !p.favorite;
-  syncAndSaveConfig();
+  _debouncedSaveConfig();
   renderProviders();
   showToast(p.favorite ? p.name + ' marque comme favori' : p.name + ' retire des favoris');
 }
@@ -7276,7 +7286,7 @@ function logAction(action, detail='') {
   localStorage.setItem('mm_changelog', JSON.stringify(log));
 }
 async function saveConfig() { const res = await syncAndSaveConfig(); if(res&&res.config) fullConfig=res.config; logAction('Config sauvegardee', (config.providers||[]).map(p=>p.name).join(', ')); showToast(t('config.saved')); }
-async function savePlanning() { if(cleanings.length>0) { await API.save_planning(cleanings); await API.save_reservations(reservations); logAction('Planning sauvegarde', cleanings.length+' menage(s)'); } }
+async function savePlanning() { if(cleanings.length>0) { try { await API.save_planning(cleanings); await API.save_reservations(reservations); logAction('Planning sauvegarde', cleanings.length+' menage(s)'); } catch(err) { console.error('savePlanning error:', err); showToast('Erreur sauvegarde planning: ' + (err.message || 'Probleme de connexion')); } } }
 
 /* ── Generate Planning ── */
 async function generatePlanning(isAuto) {
@@ -7342,6 +7352,10 @@ async function generatePlanning(isAuto) {
     detectNewCleaningsAndNotify(data);
     // Feature 4: Detect conflicts
     detectConflicts();
+  } catch(err) {
+    console.error('generatePlanning error:', err);
+    showToast('Erreur generation: ' + (err.message || 'Probleme de connexion'));
+    setStatus('<span style="color:var(--danger);font-weight:bold;">Erreur de generation</span>');
   } finally {
     btn.classList.remove('loading');
     btn.innerHTML='GENERER LE PLANNING';
@@ -7408,8 +7422,8 @@ function buildProvSelect(idx,selected) {
   config.providers.forEach(p=>{s+=`<option value="${esc(p.name)}"${p.name===selected?' selected':''}>${esc(p.name)}</option>`;});
   return s+'</select>';
 }
-function reassign(idx,newProv) { cleanings[idx].provider=newProv; const p=config.providers.find(pr=>pr.name===newProv); if(p)cleanings[idx].providerPhone=p.phone; renderResults(); savePlanning(); }
-function changeCleaningDate(idx,newDate) { cleanings[idx].cleaningDate=newDate; cleanings[idx].cleaningDateFR=fmtDate(newDate); renderResults(); savePlanning(); }
+function reassign(idx,newProv) { cleanings[idx].provider=newProv; const p=config.providers.find(pr=>pr.name===newProv); if(p)cleanings[idx].providerPhone=p.phone; renderResults(); _debouncedSavePlanning(); }
+function changeCleaningDate(idx,newDate) { cleanings[idx].cleaningDate=newDate; cleanings[idx].cleaningDateFR=fmtDate(newDate); renderResults(); _debouncedSavePlanning(); }
 async function toggleTransmit(idx) { const d=cleanings[idx].cleaningDate,pos=transmittedDates.indexOf(d); if(pos>=0)transmittedDates.splice(pos,1);else transmittedDates.push(d); await API.save_transmitted(transmittedDates); renderResults(); }
 
 /* ── Filter Bar ── */
@@ -8000,6 +8014,16 @@ function initParticles() {
   }
 }
 document.addEventListener('DOMContentLoaded', initParticles);
+
+/* ── Escape key to close modals ── */
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    const modals = document.querySelectorAll('.modal[style*="display: block"], .modal[style*="display:block"]');
+    if (modals.length) { closeAllModals(); return; }
+    const chatWidget = document.getElementById('chatWidget');
+    if (chatWidget && chatWidget.style.display === 'flex') { closeChatWidget(); return; }
+  }
+});
 
 /* ── Bottom Navigation ── */
 function navTo(section) {
@@ -9042,7 +9066,7 @@ async function showServiceRequestModal() {
   html += '<select id="svcReqProperty" style="width:100%;padding:10px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:13px;margin-bottom:10px;">';
   properties.forEach(p => {
     const selected = (activeProp && activeProp.id === p.id) ? ' selected' : (properties.length === 1 ? ' selected' : '');
-    html += '<option value="' + p.id + '"' + selected + '>' + (p.name || 'Sans nom') + '</option>';
+    html += '<option value="' + p.id + '"' + selected + '>' + esc(p.name || 'Sans nom') + '</option>';
   });
   html += '</select>';
   // Service selection by category
@@ -9113,6 +9137,7 @@ function updateSvcReqProviders() {
 }
 
 async function submitServiceRequest() {
+  try {
   const serviceType = document.getElementById('svcReqType').value;
   const date = document.getElementById('svcReqDate').value;
   const priority = document.getElementById('svcReqPriority').value;
@@ -9139,12 +9164,14 @@ async function submitServiceRequest() {
   closeMsg();
   showToast('Demande envoyee !');
   loadServiceRequests();
+  } catch(err) { console.error('submitServiceRequest error:', err); showToast('Erreur: ' + (err.message || 'Probleme de connexion')); }
 }
 
 async function loadServiceRequests() {
   const org = API.getOrg();
   if (!org) return;
-  const { data } = await sb.from('service_requests').select('*').eq('org_id', org.id).order('created_at', { ascending: false }).limit(50);
+  const { data, error: loadErr } = await sb.from('service_requests').select('*').eq('org_id', org.id).order('created_at', { ascending: false }).limit(50);
+  if (loadErr) { console.error('loadServiceRequests error:', loadErr); return; }
   const requests = data || [];
   const container = document.getElementById('serviceRequestsList');
   if (!container) return;
@@ -9182,9 +9209,9 @@ async function loadServiceRequests() {
     html += `<div style="display:flex;gap:12px;font-size:12px;color:var(--text3);margin-bottom:6px;">`;
     html += `<span>📅 ${dateStr}</span>`;
     html += `<span>${priorityIcons[r.priority] || '🟡'} ${r.priority === 'high' ? 'Urgent' : r.priority === 'low' ? 'Basse' : 'Normale'}</span>`;
-    if (r.assigned_provider) html += `<span>👤 ${r.assigned_provider}</span>`;
+    if (r.assigned_provider) html += `<span>👤 ${esc(r.assigned_provider)}</span>`;
     html += `</div>`;
-    if (r.description) html += `<div style="font-size:12px;color:var(--text2);margin-bottom:8px;">${r.description}</div>`;
+    if (r.description) html += `<div style="font-size:12px;color:var(--text2);margin-bottom:8px;">${esc(r.description)}</div>`;
     // Action buttons based on role and status
     if (role === 'admin' || role === 'manager') {
       if (r.status === 'pending') {
@@ -9195,12 +9222,12 @@ async function loadServiceRequests() {
         const otherProvs = providers.filter(p => !p.services || !p.services.includes(r.service_type));
         if (matchingProvs.length) {
           html += `<optgroup label="Competents">`;
-          matchingProvs.forEach(p => { html += `<option value="${p.name}">⭐ ${p.name}</option>`; });
+          matchingProvs.forEach(p => { html += `<option value="${esc(p.name)}">⭐ ${esc(p.name)}</option>`; });
           html += `</optgroup>`;
         }
         if (otherProvs.length) {
           html += `<optgroup label="Autres">`;
-          otherProvs.forEach(p => { html += `<option value="${p.name}">${p.name}</option>`; });
+          otherProvs.forEach(p => { html += `<option value="${esc(p.name)}">${esc(p.name)}</option>`; });
           html += `</optgroup>`;
         }
         html += `</select>`;
@@ -9230,6 +9257,7 @@ let _adminPrestCache = null;
 let _adminPrestCacheTime = 0;
 
 async function loadAdminPrestations(forceReload) {
+  try {
   const org = API.getOrg();
   if (!org) return;
   const filtersEl = document.getElementById('adminPrestFilters');
@@ -9395,8 +9423,8 @@ async function loadAdminPrestations(forceReload) {
         html += '<option value="">Assigner a...</option>';
         const matching = allProviders.filter(p => p.services && p.services.includes(u.type));
         const others = allProviders.filter(p => !p.services || !p.services.includes(u.type));
-        if (matching.length) { html += '<optgroup label="Competents">'; matching.forEach(p => { html += '<option value="' + p.name + '">⭐ ' + p.name + '</option>'; }); html += '</optgroup>'; }
-        if (others.length) { html += '<optgroup label="Autres">'; others.forEach(p => { html += '<option value="' + p.name + '">' + p.name + '</option>'; }); html += '</optgroup>'; }
+        if (matching.length) { html += '<optgroup label="Competents">'; matching.forEach(p => { html += '<option value="' + esc(p.name) + '">⭐ ' + esc(p.name) + '</option>'; }); html += '</optgroup>'; }
+        if (others.length) { html += '<optgroup label="Autres">'; others.forEach(p => { html += '<option value="' + esc(p.name) + '">' + esc(p.name) + '</option>'; }); html += '</optgroup>'; }
         html += '</select>';
         html += '<button class="btn btnSmall btnSuccess" style="padding:4px 10px;font-size:11px;" onclick="updateServiceRequest(\'' + u._id + '\',\'accepted\',document.getElementById(\'svcAssign_' + u._id + '\').value);setTimeout(loadAdminPrestations,500)">Accepter</button>';
         html += '<button class="btn btnSmall btnDanger" style="padding:4px 10px;font-size:11px;" onclick="updateServiceRequest(\'' + u._id + '\',\'refused\');setTimeout(loadAdminPrestations,500)">Refuser</button>';
@@ -9410,6 +9438,7 @@ async function loadAdminPrestations(forceReload) {
     html += '</div>';
   });
   listEl.innerHTML = html;
+  } catch(err) { console.error('loadAdminPrestations error:', err); showToast('Erreur chargement prestations: ' + (err.message || 'Probleme de connexion')); }
 }
 
 function filterAdminPrest(cat, btn) {
@@ -9526,10 +9555,11 @@ async function sendFullChatMessage() {
   input.value = '';
   const { data: { user } } = await sb.auth.getUser();
   const org = API.getOrg();
-  await sb.from('messages').insert({
+  const { error: insertErr } = await sb.from('messages').insert({
     org_id: org.id, sender_id: user.id, sender_name: 'Gestionnaire',
     sender_role: 'admin', recipient_name: _fullChatProvider, body: body,
   });
+  if (insertErr) { console.error('sendFullChatMessage error:', insertErr); showToast('Erreur envoi: ' + (insertErr.message || 'Probleme de connexion')); return; }
   await loadFullChatMessages('fullChatMessages', _fullChatProvider);
   // Sync mini widget
   if (chatProviderName === _fullChatProvider) loadChatMessages();
@@ -9560,10 +9590,11 @@ async function sendProvFullChatMessage() {
   input.value = '';
   const { data: { user } } = await sb.auth.getUser();
   const org = API.getOrg();
-  await sb.from('messages').insert({
+  const { error: insertErr } = await sb.from('messages').insert({
     org_id: org.id, sender_id: user.id, sender_name: _fullChatProvider,
     sender_role: 'provider', recipient_name: 'gestionnaire', body: body,
   });
+  if (insertErr) { console.error('sendProvFullChatMessage error:', insertErr); showToast('Erreur envoi: ' + (insertErr.message || 'Probleme de connexion')); return; }
   await loadFullChatMessages('provFullChatMessages', _fullChatProvider);
 }
 
@@ -9583,10 +9614,11 @@ async function sendOwnerFullChatMessage() {
   const org = API.getOrg();
   const member = API.getMember();
   const senderName = member?.display_name || user.email.split('@')[0];
-  await sb.from('messages').insert({
+  const { error: insertErr } = await sb.from('messages').insert({
     org_id: org.id, sender_id: user.id, sender_name: senderName,
     sender_role: 'owner', recipient_name: 'gestionnaire', body: body,
   });
+  if (insertErr) { console.error('sendOwnerFullChatMessage error:', insertErr); showToast('Erreur envoi: ' + (insertErr.message || 'Probleme de connexion')); return; }
   await loadFullChatMessages('ownerFullChatMessages', 'gestionnaire');
 }
 
