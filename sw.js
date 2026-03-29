@@ -45,7 +45,7 @@ self.addEventListener('fetch', event => {
 // Push notification handler
 self.addEventListener('push', event => {
   const data = event.data ? event.data.json() : {};
-  const title = data.title || 'Cleaning Manager';
+  const title = data.title || 'Lokizio';
   const options = {
     body: data.body || 'Nouveau menage assigne',
     icon: '/menage-manager-app/icons/icon-192.png',

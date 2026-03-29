@@ -9,24 +9,24 @@
 <link rel="manifest" href="manifest.json">
 <link rel="icon" type="image/png" href="icons/icon-192.png">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
-<title>Cleaning Manager - Gestion des menages locatifs | Airbnb & Booking</title>
+<title>Lokizio - Services et conciergerie pour locations | Airbnb & Booking</title>
 <meta name="description" content="Gerez automatiquement vos menages Airbnb et Booking. Assignez vos prestataires, generez le planning, communiquez via WhatsApp. Gratuit.">
 <meta name="keywords" content="menage, cleaning, airbnb, booking, location courte duree, prestataire, planning, gestion, ical">
 <meta name="author" content="Fabidou">
 <!-- Open Graph -->
-<meta property="og:title" content="Cleaning Manager - Gestion des menages locatifs">
+<meta property="og:title" content="Lokizio - Services et conciergerie pour locations">
 <meta property="og:description" content="Gerez automatiquement vos menages Airbnb et Booking. Assignez vos prestataires, generez le planning.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://fabienlacaze.github.io/menage-manager-app/">
 <meta property="og:image" content="https://fabienlacaze.github.io/menage-manager-app/icons/icon-512.png">
 <!-- Twitter Card -->
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="Cleaning Manager">
+<meta name="twitter:title" content="Lokizio">
 <meta name="twitter:description" content="Gestion automatique des menages pour locations Airbnb & Booking.">
 <meta name="google" content="notranslate">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="supabase_config.js?v=13"></script>
-<script src="i18n.js?v=25"></script>
+<script src="i18n.js?v=26"></script>
 <script src="ical_parser.js?v=14"></script>
 <script src="api_bridge.js?v=24"></script>
 <!-- Lazy-loaded: Leaflet, Chart.js, jsPDF (loaded on demand to improve startup) -->
@@ -891,7 +891,7 @@ async function loadPDF() {
 <body>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;pointer-events:none;">v3.01</div>
+<div id="versionBadge" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;pointer-events:none;">v3.10</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -901,9 +901,9 @@ async function loadPDF() {
     <!-- Broom that sweeps -->
     <div id="splashBroom" style="position:absolute;top:50%;left:-60px;font-size:48px;transform:translateY(-50%) rotate(-30deg);opacity:0;transition:all 0.8s cubic-bezier(0.25,0.46,0.45,0.94);">🧹</div>
   </div>
-  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Cleaning Manager</div>
-  <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Gestion des menages</div>
-  <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou &mdash; v3.01</div>
+  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio</div>
+  <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie</div>
+  <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou &mdash; v3.10</div>
   <!-- Loading bar -->
   <div style="width:200px;height:3px;background:rgba(255,255,255,0.1);border-radius:4px;margin-top:24px;overflow:hidden;">
     <div id="splashBar" style="width:0%;height:100%;background:linear-gradient(90deg,#e94560,#6c63ff);border-radius:4px;transition:width 1.5s ease;"></div>
@@ -950,8 +950,8 @@ async function loadPDF() {
   <div style="background:var(--surface);padding:36px;border-radius:16px;width:380px;border:1px solid var(--border);box-shadow:0 8px 32px rgba(0,0,0,0.4);">
     <div style="text-align:center;margin-bottom:24px;">
       <div style="width:60px;height:60px;background:linear-gradient(135deg,#e94560,#6c63ff);border-radius:16px;display:inline-flex;align-items:center;justify-content:center;font-size:26px;font-weight:800;color:#fff;margin-bottom:12px;">M</div>
-      <h1 style="color:#fff;font-size:22px;margin-bottom:4px;">Menage Manager</h1>
-      <p style="color:var(--text3);font-size:12px;" data-i18n="auth.subtitle">Gestion des menages locatifs</p>
+      <h1 style="color:#fff;font-size:22px;margin-bottom:4px;">Lokizio</h1>
+      <p style="color:var(--text3);font-size:12px;" data-i18n="auth.subtitle">Services et conciergerie pour locations</p>
     </div>
     <!-- Language flags -->
     <div style="display:flex;justify-content:center;gap:12px;margin-bottom:16px;">
@@ -994,8 +994,8 @@ async function loadPDF() {
   <div class="header-left">
     <div class="header-logo"><svg width="24" height="24" viewBox="0 0 24 24" fill="none"><!-- Maison --><path d="M3 21V8l9-5 9 5v13H3z" stroke="#fff" stroke-width="1.5" fill="none"/><path d="M9 21v-6h6v6" stroke="#fff" stroke-width="1.5"/><path d="M7 11h2v2H7zM15 11h2v2h-2z" fill="rgba(255,255,255,0.5)"/><!-- Balai --><line x1="17" y1="6" x2="20" y2="19" stroke="#fff" stroke-width="1.2" stroke-linecap="round"/><path d="M18.5 16.5c1.2 1 2.2 2.5 1.5 3.5s-2.5 0-3-1c-.4-.8-.2-1.8.2-2.5z" fill="#fff" opacity="0.85"/></svg></div>
     <div>
-      <h1>Menage Manager <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.35);vertical-align:middle;">v3.01</span></h1>
-      <div class="subtitle" data-i18n="header.subtitle">Gestion des menages</div>
+      <h1>Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.35);vertical-align:middle;">v3.10</span></h1>
+      <div class="subtitle" data-i18n="header.subtitle">Services et conciergerie</div>
     </div>
   </div>
   <div class="header-actions">
@@ -1030,7 +1030,7 @@ async function loadPDF() {
   <div id="trialBanner" style="display:none;background:linear-gradient(135deg,#6c63ff,#e94560);padding:10px 20px;text-align:center;font-size:13px;color:#fff;font-weight:600;"></div>
   <div id="notifBanner" class="notifBanner hidden"></div>
   <div id="installBanner" class="installBanner" style="display:none;">
-    <div class="installText"><span data-i18n="install.title">Installer Menage Manager</span><small data-i18n="install.subtitle">Acces rapide depuis l'ecran d'accueil</small></div>
+    <div class="installText"><span data-i18n="install.title">Installer Lokizio</span><small data-i18n="install.subtitle">Acces rapide depuis l'ecran d'accueil</small></div>
     <button class="btnInstall" onclick="installPWA()" data-i18n="install.btn">Installer</button>
     <button class="btnDismiss" onclick="dismissInstall()">&times;</button>
   </div>
@@ -1246,7 +1246,7 @@ async function loadPDF() {
 
   <!-- Footer -->
   <div translate="no" style="text-align:center;padding:20px 16px;color:var(--text3);font-size:11px;line-height:1.8;">
-    <div style="font-weight:600;color:var(--text2);margin-bottom:4px;">Cleaning Manager v3.01</div>
+    <div style="font-weight:600;color:var(--text2);margin-bottom:4px;">Lokizio v3.10</div>
     <div>Made with ❤️ by <a href="https://github.com/fabienlacaze" target="_blank" style="color:var(--accent2);text-decoration:none;">Fabidou</a></div>
     <div style="margin-top:4px;">
       <a href="privacy.html" target="_blank" style="color:var(--text3);text-decoration:none;margin:0 8px;">Confidentialite</a>
@@ -1295,7 +1295,7 @@ async function loadPDF() {
   </div>
 </div>
 <div class="modal" id="msgModal">
-  <div class="modalHeader" id="msgTitle">Menage Manager</div>
+  <div class="modalHeader" id="msgTitle">Lokizio</div>
   <div class="modalBody" id="msgBody"></div>
   <div class="modalBtns" id="msgModalBtns"><button class="btn btnPrimary" style="padding:12px 32px;font-size:14px;" onclick="closeMsg()" data-i18n="modal.ok">OK</button></div>
 </div>
@@ -2281,7 +2281,7 @@ async function showProviderMode() {
   if (headerEl) {
     const h1 = headerEl.querySelector('h1');
     if (h1) {
-      h1.innerHTML = 'Menage Manager <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.35);vertical-align:middle;">v3.01</span>';
+      h1.innerHTML = 'Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.35);vertical-align:middle;">v3.10</span>';
       appendRoleBadge(h1);
     }
     const sub = headerEl.querySelector('.sub-title');
@@ -2507,7 +2507,7 @@ async function showOwnerMode() {
   if (headerEl) {
     const h1 = headerEl.querySelector('h1');
     if (h1) {
-      h1.innerHTML = 'Menage Manager <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.35);vertical-align:middle;">v3.01</span>';
+      h1.innerHTML = 'Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.35);vertical-align:middle;">v3.10</span>';
       appendRoleBadge(h1);
     }
     document.querySelectorAll('.header-actions .btnHelp').forEach(btn => {
@@ -3416,7 +3416,7 @@ async function inviteTeamMember() {
     // Show invitation link to copy
     const appUrl = window.location.origin + window.location.pathname;
     const roleLabels = { owner: 'proprietaire', provider: 'prestataire', manager: 'gestionnaire' };
-    const msg = `Bonjour,\n\nVous etes invite(e) en tant que ${roleLabels[role] || role} sur Cleaning Manager.\n\n1. Creez un compte sur : ${appUrl}\n2. Utilisez l'email : ${email}\n3. Votre acces sera automatiquement configure.\n\n-- Cleaning Manager`;
+    const msg = `Bonjour,\n\nVous etes invite(e) en tant que ${roleLabels[role] || role} sur Lokizio.\n\n1. Creez un compte sur : ${appUrl}\n2. Utilisez l'email : ${email}\n3. Votre acces sera automatiquement configure.\n\n-- Lokizio`;
 
     await customConfirm(
       'Invitation creee pour ' + email + ' (role: ' + (roleLabels[role] || role) + ').\n\nEnvoyez-lui ce lien pour creer son compte :\n' + appUrl + '\n\nAvec l\'email : ' + email,
@@ -3734,7 +3734,7 @@ if (isIOS && !isStandalone && !localStorage.getItem('mm_install_dismissed')) {
   document.addEventListener('DOMContentLoaded', () => {
     const b = document.getElementById('installBanner');
     if (b) {
-      b.querySelector('.installText').innerHTML = 'Installer Menage Manager<small>Appuyez sur <b>Partager</b> puis <b>Sur l\'ecran d\'accueil</b></small>';
+      b.querySelector('.installText').innerHTML = 'Installer Lokizio<small>Appuyez sur <b>Partager</b> puis <b>Sur l\'ecran d\'accueil</b></small>';
       b.querySelector('.btnInstall').style.display = 'none';
       b.style.display = 'flex';
     }
@@ -3755,7 +3755,7 @@ function shareReadonly() {
   const base = location.href.replace(/\/[^\/]*$/, '');
   const url = base + '/view.html?readonly=' + token;
   if (navigator.share) {
-    navigator.share({ title: 'Planning Menage Manager', url: url });
+    navigator.share({ title: 'Planning Lokizio', url: url });
   } else {
     navigator.clipboard.writeText(url).then(() => showToast(t('share.link.copied')));
   }
@@ -4093,7 +4093,7 @@ function showOnboarding() {
 function showOnboardingStep2() {
   // Step 2: Role selection
   let html = '<div style="text-align:center;padding:10px;">';
-  html += '<div style="font-size:18px;font-weight:700;color:var(--accent);margin-bottom:6px;">' + (t('onboarding.welcome') || 'Bienvenue sur Cleaning Manager !') + '</div>';
+  html += '<div style="font-size:18px;font-weight:700;color:var(--accent);margin-bottom:6px;">' + (t('onboarding.welcome') || 'Bienvenue sur Lokizio !') + '</div>';
   html += '<div style="color:var(--text3);font-size:12px;margin-bottom:16px;">' + (t('onboarding.role_question') || 'Quel est votre profil ?') + '</div>';
 
   const roles = [
@@ -5361,9 +5361,9 @@ function showInviteOwnerByEmail() {
   html += '<button onclick="navigator.clipboard.writeText(\'' + inviteUrl + '\');this.textContent=\'Copie !\';setTimeout(()=>this.textContent=\'Copier\',2000)" style="padding:10px 14px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;">Copier</button>';
   html += '</div>';
   html += '<div style="display:flex;flex-direction:column;gap:8px;">';
-  const msg = encodeURIComponent('Gerez les menages de votre bien avec Cleaning Manager !\n' + inviteUrl);
+  const msg = encodeURIComponent('Gerez les menages de votre bien avec Lokizio !\n' + inviteUrl);
   html += '<a href="https://wa.me/?text=' + msg + '" target="_blank" style="display:flex;align-items:center;justify-content:center;gap:8px;padding:12px;background:#25D366;color:#fff;border-radius:10px;text-decoration:none;font-weight:600;font-size:13px;">&#128172; Envoyer via WhatsApp</a>';
-  html += '<a href="mailto:?subject=' + encodeURIComponent('Invitation Cleaning Manager') + '&body=' + msg + '" style="display:flex;align-items:center;justify-content:center;gap:8px;padding:12px;background:#e94560;color:#fff;border-radius:10px;text-decoration:none;font-weight:600;font-size:13px;">&#9993; Envoyer par Email</a>';
+  html += '<a href="mailto:?subject=' + encodeURIComponent('Invitation Lokizio') + '&body=' + msg + '" style="display:flex;align-items:center;justify-content:center;gap:8px;padding:12px;background:#e94560;color:#fff;border-radius:10px;text-decoration:none;font-weight:600;font-size:13px;">&#9993; Envoyer par Email</a>';
   html += '</div>';
   html += '<div style="font-size:11px;color:var(--text3);margin-top:12px;">Il choisira "Proprietaire" a l\'inscription. Vous pourrez ensuite l\'ajouter a votre equipe.</div>';
   html += '<button class="btn btnOutline" style="margin-top:12px;padding:10px;width:100%;font-size:13px;" onclick="closeMsg()">Annuler</button>';
@@ -5384,9 +5384,9 @@ function showInviteProviderByEmail() {
   html += '<button onclick="navigator.clipboard.writeText(\'' + inviteUrl + '\');this.textContent=\'Copie !\';setTimeout(()=>this.textContent=\'Copier\',2000)" style="padding:10px 14px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;">Copier</button>';
   html += '</div>';
   html += '<div style="display:flex;flex-direction:column;gap:8px;">';
-  const msg = encodeURIComponent('Rejoignez notre equipe de menage sur Cleaning Manager !\n' + inviteUrl);
+  const msg = encodeURIComponent('Rejoignez notre equipe de menage sur Lokizio !\n' + inviteUrl);
   html += '<a href="https://wa.me/?text=' + msg + '" target="_blank" style="display:flex;align-items:center;justify-content:center;gap:8px;padding:12px;background:#25D366;color:#fff;border-radius:10px;text-decoration:none;font-weight:600;font-size:13px;">&#128172; Envoyer via WhatsApp</a>';
-  html += '<a href="mailto:?subject=' + encodeURIComponent('Invitation Cleaning Manager') + '&body=' + msg + '" style="display:flex;align-items:center;justify-content:center;gap:8px;padding:12px;background:#e94560;color:#fff;border-radius:10px;text-decoration:none;font-weight:600;font-size:13px;">&#9993; Envoyer par Email</a>';
+  html += '<a href="mailto:?subject=' + encodeURIComponent('Invitation Lokizio') + '&body=' + msg + '" style="display:flex;align-items:center;justify-content:center;gap:8px;padding:12px;background:#e94560;color:#fff;border-radius:10px;text-decoration:none;font-weight:600;font-size:13px;">&#9993; Envoyer par Email</a>';
   html += '</div>';
   html += '<div style="font-size:11px;color:var(--text3);margin-top:12px;">Il choisira "Prestataire" a l\'inscription et vous pourrez l\'ajouter a votre equipe.</div>';
   html += '<button class="btn btnOutline" style="margin-top:12px;padding:10px;width:100%;font-size:13px;" onclick="closeMsg()">Annuler</button>';
@@ -5699,7 +5699,7 @@ async function exportPDF() {
   doc.setFillColor(233,69,96);doc.rect(0,35,w,2,'F');
   doc.setFillColor(233,69,96);doc.roundedRect(12,8,20,20,4,4,'F');
   doc.setFontSize(14);doc.setTextColor(255,255,255);doc.text('CM',15.5,21);
-  doc.setFontSize(16);doc.text('Cleaning Manager',36,18);
+  doc.setFontSize(16);doc.text('Lokizio',36,18);
   doc.setFontSize(9);doc.setTextColor(180,180,200);
   doc.text(prop?prop.name:'',36,25);
   doc.text(new Date().toLocaleDateString('fr-FR'),36,30);
@@ -5716,7 +5716,7 @@ async function exportPDF() {
   // Footer
   doc.setFillColor(26,26,46);doc.rect(0,pageH-16,w,16,'F');
   doc.setFontSize(8);doc.setTextColor(150,150,170);
-  doc.text('Cleaning Manager - fabienlacaze.github.io/menage-manager-app',14,pageH-6);
+  doc.text('Lokizio - fabienlacaze.github.io/menage-manager-app',14,pageH-6);
   doc.setTextColor(233,69,96);
   doc.textWithLink('Ouvrir',w-25,pageH-6,{url:'https://fabienlacaze.github.io/menage-manager-app/'});
   const fname=currentFilter?'planning_'+currentFilter+'.pdf':'planning.pdf';
@@ -5756,7 +5756,7 @@ async function generateInvoice() {
   // Invoice details
   let y = 52;
   doc.setFontSize(11); doc.setTextColor(50, 50, 70);
-  doc.text('De : Cleaning Manager', 14, y);
+  doc.text('De : Lokizio', 14, y);
   doc.text('Pour : ' + propName, 14, y + 7);
   y += 20;
 
@@ -5809,7 +5809,7 @@ async function generateInvoice() {
   doc.setFont(undefined, 'normal');
   doc.setFillColor(26, 26, 46); doc.rect(0, pageH - 16, w, 16, 'F');
   doc.setFontSize(8); doc.setTextColor(150, 150, 170);
-  doc.text('Cleaning Manager - Facture generee automatiquement', 14, pageH - 6);
+  doc.text('Lokizio - Facture generee automatiquement', 14, pageH - 6);
 
   const fname = 'facture_' + propName.replace(/\s/g, '_') + '_' + now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '.pdf';
   doc.save(fname);
@@ -5832,7 +5832,7 @@ async function generateInvoice() {
 function copyPlanning() { if(!cleanings.length){showMsg('Aucun planning a copier.');return;} const filtered=currentFilter?cleanings.filter(c=>c.provider===currentFilter):cleanings; if(!filtered.length){showMsg(t('export.filter.empty'));return;} let txt=currentFilter?`PLANNING MENAGES - ${currentFilter.toUpperCase()}\n`:'PLANNING MENAGES\n'; txt+='='.repeat(txt.trim().length)+'\n\n'; filtered.forEach(c=>{txt+=`Menage: ${c.cleaningDateFR} (arrivee: ${c.dateFR})`;if(!currentFilter)txt+=` | ${c.provider}`;txt+='\n';}); navigator.clipboard.writeText(txt).then(()=>{showToast(currentFilter?`Liste de ${currentFilter} copiee (${filtered.length})`:`Planning copie (${filtered.length})`);}); }
 
 function getDefaultTemplate() {
-  return 'Bonjour {nom},\n\nVoici votre planning de menages pour "{propriete}" :\n\n{planning}\n{total} menage(s) au total.\n\nConsultez votre planning en ligne :\n{lien}\n\n-- Cleaning Manager';
+  return 'Bonjour {nom},\n\nVoici votre planning de menages pour "{propriete}" :\n\n{planning}\n{total} menage(s) au total.\n\nConsultez votre planning en ligne :\n{lien}\n\n-- Lokizio';
 }
 
 function resetTemplate() {
@@ -6001,7 +6001,7 @@ async function sendViaChannel(channel) {
       else { await navigator.clipboard.writeText(txt).catch(() => {}); }
       break;
     case 'telegram':
-      window.open(`https://t.me/share/url?url=${encodeURIComponent('Cleaning Manager')}&text=${encoded}`, '_blank');
+      window.open(`https://t.me/share/url?url=${encodeURIComponent('Lokizio')}&text=${encoded}`, '_blank');
       break;
     case 'sms':
       window.open(`sms:${intlPhone}?body=${encoded}`, '_blank');
@@ -6113,7 +6113,7 @@ async function notifyAllProviders() {
     const prov = (config.providers || []).find(p => p.name === provName);
     if (!prov || !prov.phone) continue;
     const dates = provCleanings.map(c => '- ' + (c.cleaningDateFR || c.dateFR) + ' (' + (c.source || '') + ')').join('\n');
-    const msg = `Bonjour ${provName},\n\nNouveau(x) menage(s) pour "${propName}" :\n\n${dates}\n\n${provCleanings.length} menage(s) au total.\n\n-- Cleaning Manager`;
+    const msg = `Bonjour ${provName},\n\nNouveau(x) menage(s) pour "${propName}" :\n\n${dates}\n\n${provCleanings.length} menage(s) au total.\n\n-- Lokizio`;
     let phone = prov.phone.replace(/[\s.\-]/g, '');
     if (phone.startsWith('0') && phone.length === 10) phone = '+33' + phone.substring(1);
     window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, '_blank');
@@ -6295,7 +6295,7 @@ function checkReminders() {
   const remaining = [];
   reminders.forEach(r => {
     if (new Date(r.remindAt) <= now) {
-      new Notification('Menage Manager', { body: 'Menage dans 2 jours : ' + r.provider + ' le ' + r.cleaningDateFR, icon: 'icons/icon-192.png' });
+      new Notification('Lokizio', { body: 'Menage dans 2 jours : ' + r.provider + ' le ' + r.cleaningDateFR, icon: 'icons/icon-192.png' });
     } else { remaining.push(r); }
   });
   localStorage.setItem('mm_reminders', JSON.stringify(remaining));
@@ -6865,15 +6865,15 @@ function showInviteModal() {
   const appUrl = 'https://fabienlacaze.github.io/menage-manager-app/' + (refCode ? '?ref=' + refCode : '');
   const role = API.getRole();
   const roleTexts = {
-    admin: 'Je gere mes menages locatifs avec Cleaning Manager. Rejoins-moi !',
-    owner: 'Mon gestionnaire utilise Cleaning Manager pour organiser les menages. Essaie-le !',
-    provider: 'Je recois mes missions de menage via Cleaning Manager. Rejoins-moi !'
+    admin: 'Je gere mes menages locatifs avec Lokizio. Rejoins-moi !',
+    owner: 'Mon gestionnaire utilise Lokizio pour organiser les menages. Essaie-le !',
+    provider: 'Je recois mes missions de menage via Lokizio. Rejoins-moi !'
   };
-  const msg = roleTexts[role] || 'Decouvre Cleaning Manager, l\'app de gestion des menages locatifs !';
+  const msg = roleTexts[role] || 'Decouvre Lokizio, l\'app de gestion des menages locatifs !';
   const fullMsg = msg + '\n' + appUrl;
   const encodedMsg = encodeURIComponent(fullMsg);
   const encodedUrl = encodeURIComponent(appUrl);
-  const encodedSubject = encodeURIComponent('Decouvre Cleaning Manager');
+  const encodedSubject = encodeURIComponent('Decouvre Lokizio');
 
   let html = '<div style="padding:10px;text-align:center;">';
   html += '<div style="font-size:20px;margin-bottom:8px;">&#127873;</div>';

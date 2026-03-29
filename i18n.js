@@ -1,11 +1,11 @@
 /**
- * i18n.js - Internationalization system for Menage Manager
+ * i18n.js - Internationalization system for Lokizio
  * Supports French (fr) and English (en) with flag toggle.
  */
 const I18N = {
   fr: {
     // Auth
-    'auth.title': 'Menage Manager',
+    'auth.title': 'Lokizio',
     'auth.subtitle': 'Gestion des menages locatifs',
     'auth.tab.login': 'Se connecter',
     'auth.tab.register': 'Creer un compte',
@@ -39,7 +39,7 @@ const I18N = {
     'header.logout': 'Deconnexion',
 
     // Install banner
-    'install.title': 'Installer Menage Manager',
+    'install.title': 'Installer Lokizio',
     'install.subtitle': 'Acces rapide depuis l\'ecran d\'accueil',
     'install.btn': 'Installer',
 
@@ -355,7 +355,7 @@ const I18N = {
     'results.loading': 'Chargement en cours...',
 
     // Onboarding
-    'onboarding.welcome': 'Bienvenue sur Cleaning Manager !',
+    'onboarding.welcome': 'Bienvenue sur Lokizio !',
     'onboarding.role_question': 'Quel est votre profil ?',
     'onboarding.steps': 'Pour commencer :',
     'onboarding.step1': 'Renseignez le nom et collez les URLs iCal de vos plateformes (Airbnb, Booking...)',
@@ -398,7 +398,7 @@ const I18N = {
 
   en: {
     // Auth
-    'auth.title': 'Menage Manager',
+    'auth.title': 'Lokizio',
     'auth.subtitle': 'Rental cleaning management',
     'auth.tab.login': 'Sign in',
     'auth.tab.register': 'Create account',
@@ -432,7 +432,7 @@ const I18N = {
     'header.logout': 'Sign out',
 
     // Install banner
-    'install.title': 'Install Menage Manager',
+    'install.title': 'Install Lokizio',
     'install.subtitle': 'Quick access from home screen',
     'install.btn': 'Install',
 
@@ -747,7 +747,7 @@ const I18N = {
     'results.loading': 'Loading...',
 
     // Onboarding
-    'onboarding.welcome': 'Welcome to Cleaning Manager!',
+    'onboarding.welcome': 'Welcome to Lokizio!',
     'onboarding.role_question': 'What is your profile?',
     'onboarding.steps': 'To get started:',
     'onboarding.step1': 'Enter the name and paste iCal URLs from your platforms (Airbnb, Booking...)',
@@ -790,7 +790,7 @@ const I18N = {
 
   // ═══ ESPAÑOL ═══
   es: {
-    'auth.title': 'Menage Manager', 'auth.subtitle': 'Gestion de limpieza de alquileres',
+    'auth.title': 'Lokizio', 'auth.subtitle': 'Gestion de limpieza de alquileres',
     'auth.tab.login': 'Iniciar sesion', 'auth.tab.register': 'Crear cuenta',
     'auth.email': 'Email', 'auth.password': 'Contrasena', 'auth.password.placeholder': '6 caracteres minimo',
     'auth.login.btn': 'Iniciar sesion', 'auth.register.btn': 'Crear mi cuenta',
@@ -822,12 +822,12 @@ const I18N = {
     'modal.close': 'Cerrar', 'modal.ok': 'OK',
     'status.ready': 'Listo', 'status.restored': 'Planificacion restaurada',
     'ad.label': 'Publicidad', 'calendar.today': 'Hoy',
-    'install.title': 'Instalar Menage Manager', 'install.btn': 'Instalar',
+    'install.title': 'Instalar Lokizio', 'install.btn': 'Instalar',
   },
 
   // ═══ PORTUGUES ═══
   pt: {
-    'auth.title': 'Menage Manager', 'auth.subtitle': 'Gestao de limpeza de alugueis',
+    'auth.title': 'Lokizio', 'auth.subtitle': 'Gestao de limpeza de alugueis',
     'auth.tab.login': 'Entrar', 'auth.tab.register': 'Criar conta',
     'auth.email': 'Email', 'auth.password': 'Senha', 'auth.password.placeholder': '6 caracteres minimo',
     'auth.login.btn': 'Entrar', 'auth.register.btn': 'Criar minha conta',
@@ -859,12 +859,12 @@ const I18N = {
     'modal.close': 'Fechar', 'modal.ok': 'OK',
     'status.ready': 'Pronto', 'status.restored': 'Planejamento restaurado',
     'ad.label': 'Publicidade', 'calendar.today': 'Hoje',
-    'install.title': 'Instalar Menage Manager', 'install.btn': 'Instalar',
+    'install.title': 'Instalar Lokizio', 'install.btn': 'Instalar',
   },
 
   // ═══ ITALIANO ═══
   it: {
-    'auth.title': 'Menage Manager', 'auth.subtitle': 'Gestione pulizie affitti',
+    'auth.title': 'Lokizio', 'auth.subtitle': 'Gestione pulizie affitti',
     'auth.tab.login': 'Accedi', 'auth.tab.register': 'Crea account',
     'auth.email': 'Email', 'auth.password': 'Password', 'auth.password.placeholder': '6 caratteri minimo',
     'auth.login.btn': 'Accedi', 'auth.register.btn': 'Crea il mio account',
@@ -896,12 +896,12 @@ const I18N = {
     'modal.close': 'Chiudi', 'modal.ok': 'OK',
     'status.ready': 'Pronto', 'status.restored': 'Pianificazione ripristinata',
     'ad.label': 'Pubblicita', 'calendar.today': 'Oggi',
-    'install.title': 'Installa Menage Manager', 'install.btn': 'Installa',
+    'install.title': 'Installa Lokizio', 'install.btn': 'Installa',
   },
 
   // ═══ DEUTSCH ═══
   de: {
-    'auth.title': 'Menage Manager', 'auth.subtitle': 'Reinigungsverwaltung fur Ferienwohnungen',
+    'auth.title': 'Lokizio', 'auth.subtitle': 'Reinigungsverwaltung fur Ferienwohnungen',
     'auth.tab.login': 'Anmelden', 'auth.tab.register': 'Konto erstellen',
     'auth.email': 'Email', 'auth.password': 'Passwort', 'auth.password.placeholder': 'Mindestens 6 Zeichen',
     'auth.login.btn': 'Anmelden', 'auth.register.btn': 'Konto erstellen',
@@ -933,7 +933,7 @@ const I18N = {
     'modal.close': 'Schliessen', 'modal.ok': 'OK',
     'status.ready': 'Bereit', 'status.restored': 'Planung wiederhergestellt',
     'ad.label': 'Werbung', 'calendar.today': 'Heute',
-    'install.title': 'Menage Manager installieren', 'install.btn': 'Installieren',
+    'install.title': 'Lokizio installieren', 'install.btn': 'Installieren',
   }
 };
 

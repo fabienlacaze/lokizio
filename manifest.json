@@ -1,7 +1,7 @@
 {
-    "name": "Menage Manager",
-    "short_name": "Menage",
-    "description": "Gestion des menages Airbnb & Booking",
+    "name": "Lokizio",
+    "short_name": "Lokizio",
+    "description": "Services et conciergerie pour locations - Airbnb, Booking & plus",
     "start_url": ".",
     "scope": ".",
     "display": "standalone",

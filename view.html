@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="theme-color" content="#1a1a2e">
-<title>Planning - Cleaning Manager</title>
+<title>Planning - Lokizio</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <!-- No SDK needed - direct REST API calls -->
 <style>
@@ -32,7 +32,7 @@
 <body>
 <div class="container">
   <div class="header">
-    <h1>Cleaning Manager</h1>
+    <h1>Lokizio</h1>
     <div class="sub" id="subtitle">Chargement...</div>
   </div>
   <div id="pushBanner" style="display:none;background:linear-gradient(135deg,#6c63ff,#5a54e0);padding:14px 18px;border-radius:12px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;gap:10px;">
@@ -298,10 +298,10 @@ async function loadData() {
     if (providerName) {
       displayCleanings = matchedPlanning.filter(c => c.provider === providerName);
       subtitle.textContent = `Planning de ${esc(providerName)} - ${esc(property)}`;
-      document.title = `Planning ${providerName} - Cleaning Manager`;
+      document.title = `Planning ${providerName} - Lokizio`;
     } else {
       subtitle.textContent = `Planning complet - ${esc(property)}`;
-      document.title = `Planning ${property} - Cleaning Manager`;
+      document.title = `Planning ${property} - Lokizio`;
     }
 
     // Sort by date
