@@ -145,7 +145,7 @@ async function loadPDF() {
     transition: all 0.2s; color: var(--text3); font-size: 10px; font-weight: 600;
     min-width: 50px; position: relative;
   }
-  .bottomNav-item.active { color: var(--accent); }
+  .bottomNav-item.active { color: var(--accent); background: rgba(108,99,255,0.15); }
   .bottomNav-item .nav-icon { font-size: 20px; }
   .bottomNav-item .nav-badge {
     position: absolute; top: -2px; left: 50%;
@@ -910,7 +910,7 @@ async function loadPDF() {
 <body>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;pointer-events:none;">v5.08</div>
+<div id="versionBadge" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;pointer-events:none;">v5.09</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -922,7 +922,7 @@ async function loadPDF() {
   </div>
   <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio</div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie</div>
-  <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou &mdash; v5.08</div>
+  <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou &mdash; v5.09</div>
   <!-- Loading bar -->
   <div style="width:200px;height:3px;background:rgba(255,255,255,0.1);border-radius:4px;margin-top:24px;overflow:hidden;">
     <div id="splashBar" style="width:0%;height:100%;background:linear-gradient(90deg,#e94560,#6c63ff);border-radius:4px;transition:width 1.5s ease;"></div>
@@ -1013,7 +1013,7 @@ async function loadPDF() {
   <div class="header-left">
     <div class="header-logo" style="width:28px;height:28px;background:linear-gradient(135deg,#e94560,#6c63ff);border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:900;color:#fff;">L</div>
     <div>
-      <h1>Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.35);vertical-align:middle;">v5.08</span></h1>
+      <h1>Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.35);vertical-align:middle;">v5.09</span></h1>
       <div class="subtitle" data-i18n="header.subtitle">Services et conciergerie</div>
     </div>
   </div>
@@ -1337,7 +1337,7 @@ async function loadPDF() {
 
 <!-- Footer (outside .content so it survives innerHTML clearing) -->
 <div id="appFooter" translate="no" style="position:fixed;bottom:0;left:0;right:0;text-align:center;padding:4px 16px 2px;color:var(--text3);font-size:9px;line-height:1.4;background:linear-gradient(180deg,#0f0f1a 0%,#0a0a14 100%);z-index:101;">
-  <div style="font-weight:600;color:var(--text2);margin-bottom:4px;">Lokizio v5.08</div>
+  <div style="font-weight:600;color:var(--text2);margin-bottom:4px;">Lokizio v5.09</div>
   <div>Made with ❤️ by <a href="https://github.com/fabienlacaze" target="_blank" style="color:var(--accent2);text-decoration:none;">Fabidou</a></div>
   <div style="margin-top:4px;">
     <a href="privacy.html" target="_blank" style="color:var(--text3);text-decoration:none;margin:0 8px;">Confidentialite</a>
@@ -1636,20 +1636,26 @@ async function loadPDF() {
 </div>
 
 <!-- Chat Widget (floating bottom-right) -->
-<div id="chatWidget" style="display:none;position:fixed;bottom:100px;right:16px;width:340px;max-height:calc(100vh - 180px);background:var(--surface);border:1px solid var(--border2);border-radius:16px;box-shadow:0 8px 32px rgba(0,0,0,0.5);z-index:200;flex-direction:column;overflow:hidden;">
+<div id="chatWidget" style="display:none;position:fixed;top:68px;left:0;right:0;bottom:50px;background:var(--bg);z-index:200;flex-direction:column;overflow:hidden;">
+  <!-- Chat header -->
   <div style="background:linear-gradient(135deg,#6c63ff,#5a54e0);padding:12px 16px;display:flex;align-items:center;justify-content:space-between;">
-    <div style="display:flex;align-items:center;gap:8px;">
-      <span style="font-size:18px;">&#128172;</span>
-      <select id="chatProvSelect" onchange="switchChatProvider(this.value)" style="background:rgba(255,255,255,0.15);color:#fff;border:none;padding:6px 12px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;appearance:none;-webkit-appearance:none;padding-right:24px;background-image:url('data:image/svg+xml;charset=UTF-8,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2210%22 height=%226%22 viewBox=%220 0 10 6%22%3E%3Cpath fill=%22%23ffffff%22 d=%22M0 0l5 5 5-5%22/%3E%3C/svg%3E');background-repeat:no-repeat;background-position:right 8px center;">
+    <div style="display:flex;align-items:center;gap:10px;">
+      <span style="font-size:20px;">💬</span>
+      <span style="color:#fff;font-weight:700;font-size:15px;">Messages</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px;">
+      <select id="chatProvSelect" onchange="switchChatProvider(this.value)" style="background:rgba(255,255,255,0.15);color:#fff;border:none;padding:8px 14px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;min-width:140px;">
         <option value="" style="background:#1a1a2e;color:#f0f0f5;">-- Choisir --</option>
       </select>
+      <button onclick="closeChatWidget()" style="background:rgba(255,255,255,0.15);border:none;color:#fff;font-size:16px;cursor:pointer;padding:6px 10px;border-radius:8px;">✕</button>
     </div>
-    <button onclick="closeChatWidget()" style="background:none;border:none;color:rgba(255,255,255,0.8);font-size:18px;cursor:pointer;">&times;</button>
   </div>
-  <div id="chatMessages" style="flex:1;overflow-y:auto;padding:10px;min-height:180px;max-height:300px;background:var(--bg);"></div>
-  <div style="padding:8px 10px;border-top:1px solid var(--border2);display:flex;gap:6px;">
-    <input type="text" id="chatInput" placeholder="Message..." onkeydown="if(event.key==='Enter')sendChatMessage()" style="flex:1;padding:8px 12px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:12px;font-family:'Inter',sans-serif;">
-    <button onclick="sendChatMessage()" style="background:linear-gradient(135deg,#6c63ff,#5a54e0);color:#fff;border:none;padding:8px 14px;border-radius:8px;font-size:14px;cursor:pointer;">&#9993;</button>
+  <!-- Chat messages -->
+  <div id="chatMessages" style="flex:1;overflow-y:auto;padding:16px;background:var(--bg);"></div>
+  <!-- Chat input -->
+  <div style="padding:12px 16px;border-top:1px solid var(--border2);display:flex;gap:8px;background:var(--surface);">
+    <input type="text" id="chatInput" placeholder="Ecrire un message..." onkeydown="if(event.key==='Enter')sendChatMessage()" style="flex:1;padding:12px 16px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:12px;font-size:14px;font-family:'Inter',sans-serif;">
+    <button onclick="sendChatMessage()" style="background:linear-gradient(135deg,#6c63ff,#5a54e0);color:#fff;border:none;padding:12px 18px;border-radius:12px;font-size:16px;cursor:pointer;">➤</button>
   </div>
 </div>
 <button id="chatFab" onclick="toggleChatWidget()" style="display:none;position:fixed;bottom:110px;right:16px;width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,#6c63ff,#5a54e0);color:#fff;border:none;font-size:22px;cursor:pointer;box-shadow:0 4px 16px rgba(108,99,255,0.4);z-index:150;">&#128172;</button>
@@ -2475,7 +2481,7 @@ async function showProviderMode() {
   if (headerEl) {
     const h1 = headerEl.querySelector('h1');
     if (h1) {
-      h1.innerHTML = 'Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.35);vertical-align:middle;">v5.08</span>';
+      h1.innerHTML = 'Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.35);vertical-align:middle;">v5.09</span>';
       appendRoleBadge(h1);
     }
     const sub = headerEl.querySelector('.sub-title');
@@ -2972,7 +2978,7 @@ async function showOwnerMode() {
   if (headerEl) {
     const h1 = headerEl.querySelector('h1');
     if (h1) {
-      h1.innerHTML = 'Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.35);vertical-align:middle;">v5.08</span>';
+      h1.innerHTML = 'Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.35);vertical-align:middle;">v5.09</span>';
       appendRoleBadge(h1);
     }
     document.querySelectorAll('.header-actions .btnHelp').forEach(btn => {
@@ -3320,10 +3326,9 @@ async function showOwnerMode() {
 
 async function openOwnerChat() {
   chatProviderName = 'gestionnaire';
-  document.getElementById('chatWidget').style.display = 'flex';
-  document.getElementById('chatFab').style.display = 'none';
   const sel = document.getElementById('chatProvSelect');
   if (sel) { sel.innerHTML = '<option value="gestionnaire">Gestionnaire</option>'; sel.value = 'gestionnaire'; }
+  toggleChatWidget();
   await loadChatMessages();
   subscribeChat();
 }
@@ -3433,13 +3438,24 @@ function toggleChatWidget() {
     closeChatWidget();
   } else {
     widget.style.display = 'flex';
-    fab.style.display = 'none';
+    if (fab) fab.style.display = 'none';
+    // Hide nav/footer when chat is fullscreen
+    const nav = document.getElementById('bottomNav');
+    const footer = document.getElementById('appFooter');
+    if (nav) nav.style.display = 'none';
+    if (footer) footer.style.display = 'none';
   }
 }
 
 function closeChatWidget() {
   document.getElementById('chatWidget').style.display = 'none';
-  document.getElementById('chatFab').style.display = '';
+  const fab = document.getElementById('chatFab');
+  if (fab) fab.style.display = '';
+  // Restore nav/footer
+  const nav = document.getElementById('bottomNav');
+  const footer = document.getElementById('appFooter');
+  if (nav) nav.style.display = 'flex';
+  if (footer) footer.style.display = '';
   if (chatRealtimeSub) { sb.removeChannel(chatRealtimeSub); chatRealtimeSub = null; }
 }
 
@@ -3574,9 +3590,10 @@ async function openProviderChat() {
     }
   }
   chatProviderName = myName;
+  const sel = document.getElementById('chatProvSelect');
+  if (sel) { sel.innerHTML = '<option value="gestionnaire">Gestionnaire</option>'; sel.value = 'gestionnaire'; }
+  toggleChatWidget();
   document.getElementById('chatInput').value = '';
-  const widget = document.getElementById('chatWidget');
-  if (widget) widget.style.display = 'flex';
   await loadChatMessages();
   if (chatRealtimeSub) sb.removeChannel(chatRealtimeSub);
   chatRealtimeSub = sb.channel('chat_prov_' + myName)
