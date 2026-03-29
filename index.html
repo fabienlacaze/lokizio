@@ -910,7 +910,7 @@ async function loadPDF() {
 <body>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;pointer-events:none;">v5.13</div>
+<div id="versionBadge" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;pointer-events:none;">v5.14</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -1886,7 +1886,7 @@ async function loadPDF() {
   </div>
   <div class="bottomNav-item" onclick="switchMainTab('billing')" id="navBilling">
     <span class="nav-icon">&#128176;</span>
-    <span>Factures</span>
+    <span>Finances</span>
   </div>
 </nav>
 
@@ -2843,6 +2843,33 @@ async function showProviderMode() {
   html += '</div>'; // close provContentPrestations
 
   // Add floating chat button
+  // Billing page
+  html += '<div id="provContentBilling" style="display:none;">';
+  html += '<div style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:12px;">💰 Mes revenus</div>';
+  // Financial recap
+  html += '<div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:12px;">';
+  html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">';
+  html += '<div style="text-align:center;"><div style="font-size:11px;color:var(--text3);text-transform:uppercase;margin-bottom:4px;">Tarif / prestation</div><div style="font-size:20px;font-weight:700;color:var(--text);">' + providerPrice + '€</div></div>';
+  html += '<div style="text-align:center;"><div style="font-size:11px;color:var(--text3);text-transform:uppercase;margin-bottom:4px;">Total gagne</div><div style="font-size:20px;font-weight:700;color:#34d399;">' + earnedThisMonth + '€</div></div>';
+  html += '<div style="text-align:center;"><div style="font-size:11px;color:var(--text3);text-transform:uppercase;margin-bottom:4px;">A venir</div><div style="font-size:20px;font-weight:700;color:#6c63ff;">' + upcomingEarnings + '€</div></div>';
+  html += '<div style="text-align:center;"><div style="font-size:11px;color:var(--text3);text-transform:uppercase;margin-bottom:4px;">Prestations terminees</div><div style="font-size:20px;font-weight:700;color:var(--text);">' + doneCount + '</div></div>';
+  html += '</div></div>';
+  // Detailed list of completed prestations
+  html += '<div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:8px;">Historique des prestations terminees</div>';
+  const donePrestations = unified.filter(u => u.status === 'done' || u.status === 'departed');
+  if (donePrestations.length === 0) {
+    html += '<div style="text-align:center;padding:20px;color:var(--text3);font-size:13px;">Aucune prestation terminee</div>';
+  } else {
+    donePrestations.forEach(u => {
+      const svcLabel = getServiceLabel(u.type);
+      html += '<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;background:var(--surface);border:1px solid var(--border);border-radius:8px;margin-bottom:6px;">';
+      html += '<div><div style="font-weight:600;font-size:13px;">' + svcLabel + '</div><div style="font-size:11px;color:var(--text3);">' + (u.date ? fmtDate(u.date) : '') + ' — ' + esc(u.propertyName || '') + '</div></div>';
+      html += '<div style="font-weight:700;color:#34d399;">' + providerPrice + '€</div>';
+      html += '</div>';
+    });
+  }
+  html += '</div>';
+
   // Chat page (hidden, shown by nav Messages tab)
   html += '<div id="provContentChat" style="display:none;">';
   html += '<div style="display:flex;flex-direction:column;height:calc(100vh - 210px);">';
@@ -2875,18 +2902,20 @@ function setupBottomNav(role) {
       { id: 'team', icon: '👥', label: 'Equipe' },
       { id: 'prestations', icon: '📋', label: 'Prestations' },
       { id: 'planning', icon: '📅', label: 'Planning' },
-      { id: 'billing', icon: '💰', label: 'Factures' },
+      { id: 'billing', icon: '💰', label: 'Finances' },
       { id: 'messages', icon: '💬', label: 'Messages' },
     ],
     provider: [
       { id: 'overview', icon: '📊', label: 'Apercu' },
       { id: 'prestations', icon: '📋', label: 'Prestations' },
+      { id: 'billing', icon: '💰', label: 'Finances' },
       { id: 'chat', icon: '💬', label: 'Messages' },
     ],
     owner: [
       { id: 'overview', icon: '📊', label: 'Apercu' },
       { id: 'properties', icon: '🏠', label: 'Biens' },
       { id: 'prestations', icon: '📋', label: 'Prestations' },
+      { id: 'billing', icon: '💰', label: 'Finances' },
       { id: 'chat', icon: '💬', label: 'Messages' },
     ],
   };
@@ -2917,8 +2946,10 @@ function setupBottomNav(role) {
 function switchProviderNav(tab) {
   const overview = document.getElementById('provContentOverview');
   const prestations = document.getElementById('provContentPrestations');
+  const billing = document.getElementById('provContentBilling');
   const chatPage = document.getElementById('provContentChat');
   if (overview) overview.style.display = tab === 'overview' ? '' : 'none';
+  if (billing) billing.style.display = tab === 'billing' ? '' : 'none';
   if (prestations) prestations.style.display = tab === 'prestations' ? '' : 'none';
   if (chatPage) chatPage.style.display = tab === 'chat' ? '' : 'none';
   if (tab === 'chat') initProviderFullChat();
@@ -2933,10 +2964,12 @@ function switchOwnerNav(tab) {
   const overview = document.getElementById('ownerContentOverview');
   const properties = document.getElementById('ownerContentProperties');
   const prestations = document.getElementById('ownerContentPrestations');
+  const billing = document.getElementById('ownerContentBilling');
   const chatPage = document.getElementById('ownerContentChat');
   if (overview) overview.style.display = tab === 'overview' ? '' : 'none';
   if (properties) properties.style.display = tab === 'properties' ? '' : 'none';
   if (prestations) prestations.style.display = tab === 'prestations' ? '' : 'none';
+  if (billing) billing.style.display = tab === 'billing' ? '' : 'none';
   if (chatPage) chatPage.style.display = tab === 'chat' ? '' : 'none';
   if (tab === 'chat') initOwnerFullChat();
   document.querySelectorAll('#bottomNav .bottomNav-item').forEach(n => n.classList.remove('active'));
@@ -3361,6 +3394,30 @@ async function showOwnerMode() {
 
   // Chat button
   // Chat page (hidden, shown by nav Messages tab)
+  // Billing page
+  html += '<div id="ownerContentBilling" style="display:none;">';
+  html += '<div style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:12px;">💰 Mes factures</div>';
+  html += '<div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:12px;">';
+  html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">';
+  html += '<div style="text-align:center;"><div style="font-size:11px;color:var(--text3);text-transform:uppercase;margin-bottom:4px;">Cout total prevu</div><div style="font-size:20px;font-weight:700;color:#f59e0b;">' + totalCost + '€</div></div>';
+  html += '<div style="text-align:center;"><div style="font-size:11px;color:var(--text3);text-transform:uppercase;margin-bottom:4px;">Prestations a venir</div><div style="font-size:20px;font-weight:700;color:var(--text);">' + futureCleanings.length + '</div></div>';
+  html += '</div></div>';
+  // List of upcoming prestations with costs
+  html += '<div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:8px;">Prestations a facturer</div>';
+  if (futureCleanings.length === 0) {
+    html += '<div style="text-align:center;padding:20px;color:var(--text3);font-size:13px;">Aucune prestation prevue</div>';
+  } else {
+    futureCleanings.slice(0, 20).forEach(c => {
+      const prop = properties.find(p => p.id === c.propertyId);
+      const price = prop && prop.ownerPrice > 0 ? prop.ownerPrice : 0;
+      html += '<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;background:var(--surface);border:1px solid var(--border);border-radius:8px;margin-bottom:6px;">';
+      html += '<div><div style="font-weight:600;font-size:13px;">' + esc(c.propertyName || '') + '</div><div style="font-size:11px;color:var(--text3);">' + fmtDate(c.cleaningDate || c.date) + ' — ' + esc(c.provider || 'Non assigne') + '</div></div>';
+      html += '<div style="font-weight:700;color:#f59e0b;">' + (price > 0 ? price + '€' : '-') + '</div>';
+      html += '</div>';
+    });
+  }
+  html += '</div>';
+
   html += '<div id="ownerContentChat" style="display:none;">';
   html += '<div style="display:flex;flex-direction:column;height:calc(100vh - 210px);">';
   html += '<div style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:12px;">💬 Messages — Gestionnaire</div>';
