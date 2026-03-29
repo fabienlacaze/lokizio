@@ -910,7 +910,7 @@ async function loadPDF() {
 <body>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;pointer-events:none;">v5.02</div>
+<div id="versionBadge" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;pointer-events:none;">v5.03</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -922,7 +922,7 @@ async function loadPDF() {
   </div>
   <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio</div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie</div>
-  <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou &mdash; v5.02</div>
+  <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou &mdash; v5.03</div>
   <!-- Loading bar -->
   <div style="width:200px;height:3px;background:rgba(255,255,255,0.1);border-radius:4px;margin-top:24px;overflow:hidden;">
     <div id="splashBar" style="width:0%;height:100%;background:linear-gradient(90deg,#e94560,#6c63ff);border-radius:4px;transition:width 1.5s ease;"></div>
@@ -1013,7 +1013,7 @@ async function loadPDF() {
   <div class="header-left">
     <div class="header-logo" style="width:28px;height:28px;background:linear-gradient(135deg,#e94560,#6c63ff);border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:900;color:#fff;">L</div>
     <div>
-      <h1>Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.35);vertical-align:middle;">v5.02</span></h1>
+      <h1>Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.35);vertical-align:middle;">v5.03</span></h1>
       <div class="subtitle" data-i18n="header.subtitle">Services et conciergerie</div>
     </div>
   </div>
@@ -1185,23 +1185,15 @@ async function loadPDF() {
   <!-- ═══ TAB: PRESTATIONS ═══ -->
   <div class="tab-content" id="tabPrestations">
 
-  <!-- ═══ SECTION: SERVICES ═══ -->
-  <div class="panel" id="panelServices">
-    <div class="panelHeader" onclick="togglePanel('services')">
-      <div class="panelLeft">
-        <div class="stepBadge" style="background:#6c63ff;">&#128203;</div>
-        <div class="panelTitle">&#128203; Demandes de services <span id="svcBadge" style="display:none;background:#e94560;color:#fff;font-size:10px;padding:1px 6px;border-radius:10px;margin-left:6px;font-weight:700;"></span></div>
-      </div>
-      <span class="panelChevron" id="chevServices">&#9660;</span>
-    </div>
-    <div class="panelBody collapsed" id="bodyServices">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
-        <div style="font-size:12px;color:var(--text3);">Demandes de services ponctuels</div>
-        <button class="btn btnSmall btnPrimary" onclick="showServiceRequestModal()" style="padding:6px 12px;font-size:12px;">+ Demander</button>
-      </div>
-      <div id="serviceRequestsList"></div>
-    </div>
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+    <div style="font-size:16px;font-weight:700;color:var(--text);">📋 Prestations</div>
+    <button class="btn btnSmall btnPrimary" onclick="showServiceRequestModal()" style="padding:8px 14px;font-size:12px;">+ Demander</button>
   </div>
+  <div id="adminPrestFilters"></div>
+  <div id="adminPrestList"><div style="text-align:center;padding:30px;color:var(--text3);">Chargement...</div></div>
+
+  <!-- Keep old container for loadServiceRequests compatibility -->
+  <div id="serviceRequestsList" style="display:none;"></div>
 
   </div><!-- /tabPrestations -->
 
@@ -1342,7 +1334,7 @@ async function loadPDF() {
 
   <!-- Footer -->
   <div translate="no" style="position:fixed;bottom:0;left:0;right:0;text-align:center;padding:4px 16px 2px;color:var(--text3);font-size:9px;line-height:1.4;background:linear-gradient(180deg,#0f0f1a 0%,#0a0a14 100%);z-index:101;">
-    <div style="font-weight:600;color:var(--text2);margin-bottom:4px;">Lokizio v5.02</div>
+    <div style="font-weight:600;color:var(--text2);margin-bottom:4px;">Lokizio v5.03</div>
     <div>Made with ❤️ by <a href="https://github.com/fabienlacaze" target="_blank" style="color:var(--accent2);text-decoration:none;">Fabidou</a></div>
     <div style="margin-top:4px;">
       <a href="privacy.html" target="_blank" style="color:var(--text3);text-decoration:none;margin:0 8px;">Confidentialite</a>
@@ -2052,8 +2044,9 @@ async function loadActiveProperty() {
   if (hasUrls && hasProviders && (!saved || saved.length === 0)) {
     setTimeout(() => generatePlanning(), 500);
   }
-  // Load service requests
+  // Load service requests + unified prestations
   loadServiceRequests();
+  loadAdminPrestations();
   // Load invoices
   loadInvoices();
 }
@@ -2481,7 +2474,7 @@ async function showProviderMode() {
   if (headerEl) {
     const h1 = headerEl.querySelector('h1');
     if (h1) {
-      h1.innerHTML = 'Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.35);vertical-align:middle;">v5.02</span>';
+      h1.innerHTML = 'Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.35);vertical-align:middle;">v5.03</span>';
       appendRoleBadge(h1);
     }
     const sub = headerEl.querySelector('.sub-title');
@@ -2970,7 +2963,7 @@ async function showOwnerMode() {
   if (headerEl) {
     const h1 = headerEl.querySelector('h1');
     if (h1) {
-      h1.innerHTML = 'Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.35);vertical-align:middle;">v5.02</span>';
+      h1.innerHTML = 'Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.35);vertical-align:middle;">v5.03</span>';
       appendRoleBadge(h1);
     }
     document.querySelectorAll('.header-actions .btnHelp').forEach(btn => {
@@ -7486,13 +7479,14 @@ function switchMainTab(tabId) {
   // Show selected tab
   const tab = document.getElementById('tab' + tabId.charAt(0).toUpperCase() + tabId.slice(1));
   if (tab) tab.classList.add('active');
-  // Activate nav item
-  const nav = document.getElementById('nav' + tabId.charAt(0).toUpperCase() + tabId.slice(1));
+  // Activate nav item (try both naming conventions)
+  const nav = document.getElementById('nav' + tabId.charAt(0).toUpperCase() + tabId.slice(1)) || document.getElementById('nav_' + tabId);
   if (nav) nav.classList.add('active');
   // Scroll to top
   window.scrollTo(0, 0);
-  // Refresh dashboard content when switching to dashboard
+  // Refresh content when switching tabs
   if (tabId === 'dashboard') renderDashboardContent();
+  if (tabId === 'prestations') loadAdminPrestations();
 }
 
 function renderDashboardContent() {
@@ -8582,6 +8576,177 @@ async function updateServiceRequest(id, status, provider) {
   await sb.from('service_requests').update(update).eq('id', id);
   showToast('Demande mise a jour');
   loadServiceRequests();
+}
+
+async function loadAdminPrestations() {
+  const org = API.getOrg();
+  if (!org) return;
+  const filtersEl = document.getElementById('adminPrestFilters');
+  const listEl = document.getElementById('adminPrestList');
+  if (!listEl) return;
+
+  // Load all properties
+  const { data: properties } = await sb.from('properties').select('*').eq('org_id', org.id);
+  const props = properties || [];
+  const propMap = {};
+  props.forEach(p => { propMap[p.id] = p; });
+
+  // Load all plannings (cleanings)
+  const propIds = props.map(p => p.id);
+  const { data: plannings } = propIds.length ? await sb.from('plannings').select('cleanings,property_id').in('property_id', propIds) : { data: [] };
+  const today = new Date().toISOString().split('T')[0];
+
+  // Load service requests
+  const { data: svcData } = await sb.from('service_requests').select('*').eq('org_id', org.id).order('created_at', { ascending: false }).limit(100);
+  const svcRequests = svcData || [];
+
+  // Load validations
+  const validations = {};
+  for (const prop of props) {
+    const { data: vals } = await sb.from('cleaning_validations').select('*').eq('property_id', prop.id);
+    if (vals) vals.forEach(v => { validations[v.property_id + '_' + v.cleaning_date + '_' + v.provider_name] = v; });
+  }
+
+  // Build unified array
+  const unified = [];
+  (plannings || []).forEach(plan => {
+    const prop = propMap[plan.property_id];
+    if (!plan.cleanings || !prop) return;
+    plan.cleanings.forEach(c => {
+      const dateStr = c.cleaningDate || c.date;
+      if (dateStr < today) return;
+      const vKey = prop.id + '_' + dateStr + '_' + (c.provider || '');
+      const v = validations[vKey];
+      unified.push({
+        _source: 'cleaning',
+        type: 'cleaning_standard',
+        date: dateStr,
+        propertyName: prop.name,
+        propertyId: prop.id,
+        provider: c.provider || '',
+        status: v ? v.status : (c._status || 'pending'),
+        source: c.source || '',
+        dayName: c.dayName || '',
+      });
+    });
+  });
+  svcRequests.forEach(r => {
+    const prop = propMap[r.property_id];
+    unified.push({
+      _source: 'service_request',
+      _id: r.id,
+      type: r.service_type || 'cleaning_standard',
+      date: r.requested_date || r.preferred_date || '',
+      propertyName: prop ? prop.name : (r.property_name || ''),
+      propertyId: r.property_id,
+      provider: r.assigned_provider || '',
+      status: r.status,
+      priority: r.priority,
+      description: r.description || r.notes || '',
+    });
+  });
+  unified.sort((a, b) => (a.date || '').localeCompare(b.date || ''));
+
+  // Count by category
+  const counts = { all: unified.length };
+  unified.forEach(u => {
+    const catObj = SERVICE_CATALOG.find(c => c.services.some(s => s.id === u.type));
+    const cat = catObj ? catObj.cat : 'autre';
+    counts[cat] = (counts[cat] || 0) + 1;
+  });
+
+  // Render filters
+  if (filtersEl) {
+    let fHtml = '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;">';
+    fHtml += '<button class="prestFilter active" onclick="filterAdminPrest(\'all\',this)">Tout (' + counts.all + ')</button>';
+    SERVICE_CATALOG.forEach(cat => {
+      if (counts[cat.cat]) {
+        fHtml += '<button class="prestFilter" onclick="filterAdminPrest(\'' + cat.cat + '\',this)">' + cat.services[0].icon + ' ' + cat.label + ' (' + counts[cat.cat] + ')</button>';
+      }
+    });
+    fHtml += '</div>';
+    filtersEl.innerHTML = fHtml;
+  }
+
+  // Update nav badge
+  const pendingCount = unified.filter(u => u.status === 'pending').length;
+  const navBadge = document.querySelector('#nav_prestations .nav-badge');
+  if (navBadge) {
+    if (pendingCount > 0) { navBadge.textContent = pendingCount; navBadge.style.display = 'flex'; }
+    else { navBadge.style.display = 'none'; }
+  }
+
+  // Render list
+  if (unified.length === 0) {
+    listEl.innerHTML = '<div style="text-align:center;padding:30px;color:var(--text3);font-size:13px;">Aucune prestation</div>';
+    return;
+  }
+
+  const providers = props.length ? (props[0].providers || []) : [];
+  const statusColors = { pending: '#f59e0b', accepted: '#6c63ff', in_progress: '#3b82f6', done: '#34d399', refused: '#e94560', sent: '#888', seen: '#6c63ff', arrived: '#6c63ff', departed: '#34d399' };
+  const statusLabels = { pending: 'En attente', accepted: 'Accepte', in_progress: 'En cours', done: 'Termine', refused: 'Refuse', sent: 'Envoye', seen: 'Lu', arrived: 'Sur place', departed: 'Parti' };
+
+  let html = '';
+  unified.forEach(u => {
+    const catObj = SERVICE_CATALOG.find(c => c.services.some(s => s.id === u.type));
+    const cat = catObj ? catObj.cat : 'autre';
+    const color = statusColors[u.status] || '#888';
+    const label = statusLabels[u.status] || u.status;
+    const svcLabel = getServiceLabel(u.type);
+    const dateStr = u.date ? fmtDate(u.date) : '';
+    const isToday = u.date === today;
+
+    html += '<div class="adminPrestCard" data-category="' + cat + '" style="background:var(--surface);border:1px solid var(--border);border-left:3px solid ' + color + ';border-radius:10px;padding:12px;margin-bottom:8px;' + (isToday ? 'border-left-color:#e94560;' : '') + '">';
+    html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">';
+    html += '<div><span style="font-size:14px;font-weight:600;">' + svcLabel + '</span>';
+    if (u.source) html += ' <span style="font-size:10px;padding:2px 6px;border-radius:4px;background:' + (u.source.toLowerCase().includes('airbnb') ? '#e94560' : '#2563eb') + ';color:#fff;font-weight:600;">' + esc(u.source).toUpperCase() + '</span>';
+    if (isToday) html += ' <span style="font-size:10px;padding:2px 6px;border-radius:4px;background:#e94560;color:#fff;">AUJOURD\'HUI</span>';
+    html += '</div>';
+    html += '<span style="font-size:11px;padding:2px 8px;background:' + color + '20;color:' + color + ';border-radius:4px;font-weight:600;">' + label + '</span>';
+    html += '</div>';
+    html += '<div style="display:flex;gap:12px;font-size:12px;color:var(--text3);">';
+    if (dateStr) html += '<span>📅 ' + dateStr + '</span>';
+    if (u.propertyName) html += '<span>🏠 ' + esc(u.propertyName) + '</span>';
+    if (u.provider) html += '<span>👤 ' + esc(u.provider) + '</span>';
+    if (u.priority) { const pi = { low: '🟢', normal: '🟡', high: '🔴' }; html += '<span>' + (pi[u.priority] || '') + '</span>'; }
+    html += '</div>';
+    if (u.description) html += '<div style="font-size:12px;color:var(--text2);margin-top:6px;">' + esc(u.description) + '</div>';
+
+    // Action buttons for service requests
+    if (u._source === 'service_request') {
+      if (u.status === 'pending') {
+        // Load all providers from all properties for assignment
+        let allProviders = [];
+        props.forEach(p => { (p.providers || []).forEach(pv => { if (!allProviders.find(x => x.name === pv.name)) allProviders.push(pv); }); });
+        html += '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;">';
+        html += '<select id="svcAssign_' + u._id + '" style="padding:6px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:6px;font-size:11px;">';
+        html += '<option value="">Assigner a...</option>';
+        const matching = allProviders.filter(p => p.services && p.services.includes(u.type));
+        const others = allProviders.filter(p => !p.services || !p.services.includes(u.type));
+        if (matching.length) { html += '<optgroup label="Competents">'; matching.forEach(p => { html += '<option value="' + p.name + '">⭐ ' + p.name + '</option>'; }); html += '</optgroup>'; }
+        if (others.length) { html += '<optgroup label="Autres">'; others.forEach(p => { html += '<option value="' + p.name + '">' + p.name + '</option>'; }); html += '</optgroup>'; }
+        html += '</select>';
+        html += '<button class="btn btnSmall btnSuccess" style="padding:4px 10px;font-size:11px;" onclick="updateServiceRequest(\'' + u._id + '\',\'accepted\',document.getElementById(\'svcAssign_' + u._id + '\').value);setTimeout(loadAdminPrestations,500)">Accepter</button>';
+        html += '<button class="btn btnSmall btnDanger" style="padding:4px 10px;font-size:11px;" onclick="updateServiceRequest(\'' + u._id + '\',\'refused\');setTimeout(loadAdminPrestations,500)">Refuser</button>';
+        html += '</div>';
+      } else if (u.status === 'accepted') {
+        html += '<div style="margin-top:8px;"><button class="btn btnSmall" style="padding:4px 10px;font-size:11px;background:#3b82f6;color:#fff;" onclick="updateServiceRequest(\'' + u._id + '\',\'in_progress\');setTimeout(loadAdminPrestations,500)">Marquer en cours</button></div>';
+      } else if (u.status === 'in_progress') {
+        html += '<div style="margin-top:8px;"><button class="btn btnSmall btnSuccess" style="padding:4px 10px;font-size:11px;" onclick="updateServiceRequest(\'' + u._id + '\',\'done\');setTimeout(loadAdminPrestations,500)">Marquer termine</button></div>';
+      }
+    }
+    html += '</div>';
+  });
+  listEl.innerHTML = html;
+}
+
+function filterAdminPrest(cat, btn) {
+  document.querySelectorAll('#adminPrestFilters .prestFilter').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  document.querySelectorAll('.adminPrestCard').forEach(card => {
+    if (cat === 'all' || card.dataset.category === cat) card.style.display = '';
+    else card.style.display = 'none';
+  });
 }
 
 async function forceUpdate() {
