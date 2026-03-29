@@ -915,7 +915,7 @@ async function loadPDF() {
 <body>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;pointer-events:none;">v6.18</div>
+<div id="versionBadge" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;pointer-events:none;">v6.19</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -925,7 +925,7 @@ async function loadPDF() {
     <!-- Broom that sweeps -->
     <div id="splashBroom" style="position:absolute;top:50%;left:-60px;font-size:48px;transform:translateY(-50%) rotate(-30deg);opacity:0;transition:all 0.8s cubic-bezier(0.25,0.46,0.45,0.94);">✨</div>
   </div>
-  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v6.18</span></div>
+  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v6.19</span></div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie pour locations</div>
   <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou</div>
   <!-- Loading bar -->
@@ -9568,11 +9568,13 @@ async function loadServiceRequests() {
         html += `<button class="btn btnSmall btnDanger" style="padding:4px 10px;font-size:11px;" onclick="updateServiceRequest('${r.id}','refused')">Refuser</button>`;
         html += `</div>`;
       } else if (r.status === 'assigned') {
-        html += `<div style="font-size:11px;color:#8b5cf6;font-style:italic;">En attente de reponse du prestataire...</div>`;
+        html += `<div style="font-size:11px;color:#8b5cf6;font-style:italic;">⏳ En attente de reponse du prestataire...</div>`;
       } else if (r.status === 'accepted') {
-        html += `<button class="btn btnSmall" style="padding:4px 10px;font-size:11px;background:#3b82f6;color:#fff;" onclick="updateServiceRequest('${r.id}','in_progress')">Marquer en cours</button>`;
+        html += `<div style="font-size:11px;color:#34d399;font-style:italic;">✅ Prestation acceptee par le prestataire</div>`;
       } else if (r.status === 'in_progress') {
-        html += `<button class="btn btnSmall btnSuccess" style="padding:4px 10px;font-size:11px;" onclick="updateServiceRequest('${r.id}','done')">Marquer termine</button>`;
+        html += `<div style="font-size:11px;color:#3b82f6;font-style:italic;">🔄 Prestation en cours...</div>`;
+      } else if (r.status === 'done') {
+        html += `<div style="font-size:11px;color:#34d399;font-style:italic;">✅ Prestation terminee</div>`;
       } else if (r.status === 'refused') {
         html += `<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px;">`;
         html += `<select id="svcReassign2_${r.id}" style="padding:6px;background:var(--surface);color:var(--text);border:1px solid var(--border2);border-radius:6px;font-size:11px;"><option value="">Reassigner...</option>`;
@@ -9741,13 +9743,35 @@ async function loadAdminPrestations(forceReload) {
     counts[cat] = (counts[cat] || 0) + 1;
   });
 
+  // Count by status
+  const statusCounts = {};
+  unified.forEach(u => { statusCounts[u.status] = (statusCounts[u.status] || 0) + 1; });
+
   // Render filters
   if (filtersEl) {
-    let fHtml = '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;">';
-    fHtml += '<button class="prestFilter active" onclick="filterAdminPrest(\'all\',this)">Tout (' + counts.all + ')</button>';
+    // Row 1: Category filters
+    let fHtml = '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px;">';
+    fHtml += '<button class="prestFilter active" data-filter-type="cat" onclick="filterAdminPrest(\'all\',this)">Tout (' + counts.all + ')</button>';
     SERVICE_CATALOG.forEach(cat => {
       if (counts[cat.cat]) {
-        fHtml += '<button class="prestFilter" onclick="filterAdminPrest(\'' + cat.cat + '\',this)">' + cat.services[0].icon + ' ' + cat.label + ' (' + counts[cat.cat] + ')</button>';
+        fHtml += '<button class="prestFilter" data-filter-type="cat" onclick="filterAdminPrest(\'' + cat.cat + '\',this)">' + cat.services[0].icon + ' ' + cat.label + ' (' + counts[cat.cat] + ')</button>';
+      }
+    });
+    fHtml += '</div>';
+    // Row 2: Status filters
+    const statusDefs = [
+      { id: 'pending', label: 'En attente', color: '#f59e0b', icon: '⏳' },
+      { id: 'assigned', label: 'Assigne', color: '#8b5cf6', icon: '📨' },
+      { id: 'accepted', label: 'Accepte', color: '#34d399', icon: '✅' },
+      { id: 'in_progress', label: 'En cours', color: '#3b82f6', icon: '🔄' },
+      { id: 'done', label: 'Termine', color: '#059669', icon: '✓' },
+      { id: 'refused', label: 'Refuse', color: '#ef4444', icon: '❌' },
+    ];
+    fHtml += '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;">';
+    fHtml += '<button class="prestFilter active" data-filter-type="status" onclick="filterAdminPrestStatus(\'all\',this)" style="font-size:10px;padding:4px 10px;">Tous statuts</button>';
+    statusDefs.forEach(s => {
+      if (statusCounts[s.id]) {
+        fHtml += '<button class="prestFilter" data-filter-type="status" onclick="filterAdminPrestStatus(\'' + s.id + '\',this)" style="font-size:10px;padding:4px 10px;border-color:' + s.color + '30;">' + s.icon + ' ' + s.label + ' (' + statusCounts[s.id] + ')</button>';
       }
     });
     fHtml += '</div>';
@@ -9782,7 +9806,7 @@ async function loadAdminPrestations(forceReload) {
     const dateStr = u.date ? fmtDate(u.date) : '';
     const isToday = u.date === today;
 
-    html += '<div class="adminPrestCard" data-category="' + cat + '" style="background:var(--surface);border:1px solid var(--border);border-left:3px solid ' + color + ';border-radius:10px;padding:12px;margin-bottom:8px;' + (isToday ? 'border-left-color:#e94560;' : '') + '">';
+    html += '<div class="adminPrestCard" data-category="' + cat + '" data-status="' + u.status + '" style="background:var(--surface);border:1px solid var(--border);border-left:3px solid ' + color + ';border-radius:10px;padding:12px;margin-bottom:8px;' + (isToday ? 'border-left-color:#e94560;' : '') + '">';
     html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">';
     html += '<div><span style="font-size:14px;font-weight:600;">' + svcLabel + '</span>';
     if (u.source) html += ' <span style="font-size:10px;padding:2px 6px;border-radius:4px;background:' + (u.source.toLowerCase().includes('airbnb') ? '#e94560' : '#2563eb') + ';color:#fff;font-weight:600;">' + esc(u.source).toUpperCase() + '</span>';
@@ -9818,9 +9842,11 @@ async function loadAdminPrestations(forceReload) {
       } else if (u.status === 'assigned') {
         html += '<div style="margin-top:8px;font-size:11px;color:#8b5cf6;font-style:italic;">⏳ En attente de reponse du prestataire...</div>';
       } else if (u.status === 'accepted') {
-        html += '<div style="margin-top:8px;"><button class="btn btnSmall" style="padding:4px 10px;font-size:11px;background:#3b82f6;color:#fff;" onclick="updateServiceRequest(\'' + u._id + '\',\'in_progress\');setTimeout(()=>loadAdminPrestations(true),500)">Marquer en cours</button></div>';
+        html += '<div style="margin-top:8px;font-size:11px;color:#34d399;font-style:italic;">✅ Prestation acceptee par le prestataire</div>';
       } else if (u.status === 'in_progress') {
-        html += '<div style="margin-top:8px;"><button class="btn btnSmall btnSuccess" style="padding:4px 10px;font-size:11px;" onclick="updateServiceRequest(\'' + u._id + '\',\'done\');setTimeout(()=>loadAdminPrestations(true),500)">Marquer termine</button></div>';
+        html += '<div style="margin-top:8px;font-size:11px;color:#3b82f6;font-style:italic;">🔄 Prestation en cours...</div>';
+      } else if (u.status === 'done') {
+        html += '<div style="margin-top:8px;font-size:11px;color:#34d399;font-style:italic;">✅ Prestation terminee</div>';
       } else if (u.status === 'refused') {
         // Reassign option when provider refused
         let allProviders = [];
@@ -9840,12 +9866,28 @@ async function loadAdminPrestations(forceReload) {
   } catch(err) { console.error('loadAdminPrestations error:', err); showToast('Erreur chargement prestations: ' + (err.message || 'Probleme de connexion')); }
 }
 
+let _adminPrestFilterCat = 'all';
+let _adminPrestFilterStatus = 'all';
+
 function filterAdminPrest(cat, btn) {
-  document.querySelectorAll('#adminPrestFilters .prestFilter').forEach(b => b.classList.remove('active'));
+  _adminPrestFilterCat = cat;
+  document.querySelectorAll('#adminPrestFilters .prestFilter[data-filter-type="cat"]').forEach(b => b.classList.remove('active'));
   if (btn) btn.classList.add('active');
+  applyAdminPrestFilters();
+}
+
+function filterAdminPrestStatus(status, btn) {
+  _adminPrestFilterStatus = status;
+  document.querySelectorAll('#adminPrestFilters .prestFilter[data-filter-type="status"]').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  applyAdminPrestFilters();
+}
+
+function applyAdminPrestFilters() {
   document.querySelectorAll('.adminPrestCard').forEach(card => {
-    if (cat === 'all' || card.dataset.category === cat) card.style.display = '';
-    else card.style.display = 'none';
+    const catMatch = _adminPrestFilterCat === 'all' || card.dataset.category === _adminPrestFilterCat;
+    const statusMatch = _adminPrestFilterStatus === 'all' || card.dataset.status === _adminPrestFilterStatus;
+    card.style.display = (catMatch && statusMatch) ? '' : 'none';
   });
 }
 
