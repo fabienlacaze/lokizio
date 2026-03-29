@@ -891,7 +891,7 @@ async function loadPDF() {
 <body>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;pointer-events:none;">v3.29</div>
+<div id="versionBadge" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;pointer-events:none;">v3.30</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -903,7 +903,7 @@ async function loadPDF() {
   </div>
   <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio</div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie</div>
-  <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou &mdash; v3.29</div>
+  <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou &mdash; v3.30</div>
   <!-- Loading bar -->
   <div style="width:200px;height:3px;background:rgba(255,255,255,0.1);border-radius:4px;margin-top:24px;overflow:hidden;">
     <div id="splashBar" style="width:0%;height:100%;background:linear-gradient(90deg,#e94560,#6c63ff);border-radius:4px;transition:width 1.5s ease;"></div>
@@ -994,7 +994,7 @@ async function loadPDF() {
   <div class="header-left">
     <div class="header-logo" style="width:28px;height:28px;background:linear-gradient(135deg,#e94560,#6c63ff);border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:900;color:#fff;">L</div>
     <div>
-      <h1>Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.35);vertical-align:middle;">v3.29</span></h1>
+      <h1>Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.35);vertical-align:middle;">v3.30</span></h1>
       <div class="subtitle" data-i18n="header.subtitle">Services et conciergerie</div>
     </div>
   </div>
@@ -1289,7 +1289,7 @@ async function loadPDF() {
 
   <!-- Footer -->
   <div translate="no" style="text-align:center;padding:20px 16px;color:var(--text3);font-size:11px;line-height:1.8;">
-    <div style="font-weight:600;color:var(--text2);margin-bottom:4px;">Lokizio v3.29</div>
+    <div style="font-weight:600;color:var(--text2);margin-bottom:4px;">Lokizio v3.30</div>
     <div>Made with ❤️ by <a href="https://github.com/fabienlacaze" target="_blank" style="color:var(--accent2);text-decoration:none;">Fabidou</a></div>
     <div style="margin-top:4px;">
       <a href="privacy.html" target="_blank" style="color:var(--text3);text-decoration:none;margin:0 8px;">Confidentialite</a>
@@ -2406,7 +2406,7 @@ async function showProviderMode() {
   if (headerEl) {
     const h1 = headerEl.querySelector('h1');
     if (h1) {
-      h1.innerHTML = 'Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.35);vertical-align:middle;">v3.29</span>';
+      h1.innerHTML = 'Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.35);vertical-align:middle;">v3.30</span>';
       appendRoleBadge(h1);
     }
     const sub = headerEl.querySelector('.sub-title');
@@ -2632,7 +2632,7 @@ async function showOwnerMode() {
   if (headerEl) {
     const h1 = headerEl.querySelector('h1');
     if (h1) {
-      h1.innerHTML = 'Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.35);vertical-align:middle;">v3.29</span>';
+      h1.innerHTML = 'Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.35);vertical-align:middle;">v3.30</span>';
       appendRoleBadge(h1);
     }
     document.querySelectorAll('.header-actions .btnHelp').forEach(btn => {
@@ -5876,10 +5876,13 @@ function toISO(d) { return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2
 /* ── Providers ── */
 async function renderProviders() {
   const providers = config.providers || [];
-  // Enrich providers from members table (centralized profile)
+  // Enrich providers from members table + marketplace profiles
   try {
     const members = await API.loadMembers();
     const provMembers = members.filter(m => m.role === 'provider');
+    // Load marketplace profiles for services
+    let mkProfiles = [];
+    try { const { data } = await sb.from('marketplace_profiles').select('user_id,services,rating,reviews_count'); mkProfiles = data || []; } catch(e) {}
     providers.forEach(p => {
       const linked = provMembers.find(m => m.invited_email === p.email || m.display_name === p.name);
       if (linked) {
@@ -5888,21 +5891,39 @@ async function renderProviders() {
         if (linked.address) p.address = linked.address;
         if (linked.lat) { p.lat = linked.lat; p.lng = linked.lng; }
         p._linked_member_id = linked.id;
+        // Enrich services from marketplace profile
+        const mkp = mkProfiles.find(m => m.user_id === linked.user_id);
+        if (mkp) {
+          if (mkp.services) p.services = mkp.services;
+          if (mkp.rating) p._mk_rating = mkp.rating;
+          if (mkp.reviews_count) p._mk_reviews = mkp.reviews_count;
+        }
       }
     });
   } catch(e) { console.log('Enrich providers:', e); }
+  // Sort: favorites first, then by rating
+  providers.sort((a, b) => {
+    if (a.favorite && !b.favorite) return -1;
+    if (!a.favorite && b.favorite) return 1;
+    return (b._avg_rating || 0) - (a._avg_rating || 0);
+  });
   let html = '<table class="provTable">';
-  html += '<tr><th style="width:20px;"></th><th style="text-align:center;">Nom</th><th style="text-align:center;">Tel</th><th style="text-align:center;width:65px;">%</th><th style="text-align:center;width:70px;">Tarif</th><th style="text-align:center;width:70px;">Vacances</th><th style="text-align:center;width:36px;font-size:11px;">✏️</th><th style="text-align:center;width:36px;font-size:11px;">📍</th><th style="text-align:center;width:36px;font-size:11px;">💬</th><th style="text-align:center;width:30px;"></th></tr>';
+  html += '<tr><th style="width:20px;"></th><th style="text-align:center;">Nom</th><th style="text-align:center;">Tel</th><th style="text-align:center;width:50px;">⭐</th><th style="text-align:center;width:30px;">📌</th><th style="text-align:center;width:65px;">%</th><th style="text-align:center;width:70px;">Tarif</th><th style="text-align:center;width:70px;">Vacances</th><th style="text-align:center;width:36px;font-size:11px;">✏️</th><th style="text-align:center;width:36px;font-size:11px;">📍</th><th style="text-align:center;width:36px;font-size:11px;">💬</th><th style="text-align:center;width:30px;"></th></tr>';
   let totalPct = 0;
   providers.forEach((p, i) => {
     const color = COLORS[i] || '#888';
     const vacCount = p.vacations ? p.vacations.split('|').filter(v => v).length : 0;
     const isLinked = !!p._linked_member_id;
     const roAttr = isLinked ? 'readonly style="opacity:0.6;cursor:default;"' : 'onchange="syncProviders();syncAndSaveConfig()"';
+    const avgRating = p._avg_rating || p._mk_rating || 0;
+    const ratingDisplay = avgRating > 0 ? '⭐ ' + avgRating.toFixed(1) : '<span style="color:var(--text3);font-size:10px;">-</span>';
+    const favIcon = p.favorite ? '📌' : '<span style="opacity:0.3;">📌</span>';
     html += `<tr>
       <td><span class="provDot" style="background:${color}"></span></td>
       <td><input type="text" class="provInput" id="pn_${i}" value="${esc(p.name)}" ${roAttr}></td>
       <td><input type="text" class="provInput" id="pp_${i}" value="${esc(p.phone)}" ${roAttr}></td>
+      <td class="center" style="font-size:12px;cursor:pointer;" onclick="rateProvider(${i})" title="Noter">${ratingDisplay}</td>
+      <td class="center" style="cursor:pointer;" onclick="toggleFavorite(${i})" title="Favori">${favIcon}</td>
       <td><input type="text" class="provInput pctInput" id="ppct_${i}" value="${p.percentage}" onchange="redistributePct(${i})"></td>
       <td><input type="text" class="provInput pctInput" id="pprice_${i}" value="${p.price||''}" placeholder="0"></td>
       <td class="center"><button class="btn btnSmall" onclick="showVacModal(${i})">${vacCount > 0 ? vacCount+' per.' : (t('vacation.none') || 'None')}</button></td>
@@ -6129,6 +6150,42 @@ function autoBalancePercentages() {
     p.percentage = base + (i < remainder ? 1 : 0);
   });
   renderProviders();
+}
+function rateProvider(i) {
+  const p = config.providers[i];
+  if (!p) return;
+  const ratings = p.ratings || [];
+  const avg = ratings.length ? (ratings.reduce((s,r) => s + r, 0) / ratings.length).toFixed(1) : 'Aucune';
+  let html = '<div style="padding:10px;text-align:center;">';
+  html += '<div style="font-size:16px;font-weight:700;color:#f59e0b;margin-bottom:8px;">Noter ' + esc(p.name) + '</div>';
+  html += '<div style="font-size:13px;color:var(--text3);margin-bottom:12px;">Moyenne actuelle : ' + avg + (ratings.length ? ' (' + ratings.length + ' avis)' : '') + '</div>';
+  html += '<div style="display:flex;justify-content:center;gap:8px;margin-bottom:14px;">';
+  for (let s = 1; s <= 5; s++) {
+    html += '<span onclick="submitProviderRating(' + i + ',' + s + ')" style="font-size:32px;cursor:pointer;transition:transform 0.2s;" onmouseover="this.style.transform=\'scale(1.3)\'" onmouseout="this.style.transform=\'scale(1)\'">' + (s <= (p._avg_rating || 0) ? '⭐' : '☆') + '</span>';
+  }
+  html += '</div>';
+  html += '<button class="btn btnOutline" style="padding:8px 20px;" onclick="closeMsg()">Fermer</button>';
+  html += '</div>';
+  showMsg(html, true);
+}
+function submitProviderRating(i, stars) {
+  const p = config.providers[i];
+  if (!p) return;
+  if (!p.ratings) p.ratings = [];
+  p.ratings.push(stars);
+  p._avg_rating = p.ratings.reduce((s,r) => s + r, 0) / p.ratings.length;
+  syncAndSaveConfig();
+  closeMsg();
+  renderProviders();
+  showToast(stars + ' etoile(s) pour ' + p.name);
+}
+function toggleFavorite(i) {
+  const p = config.providers[i];
+  if (!p) return;
+  p.favorite = !p.favorite;
+  syncAndSaveConfig();
+  renderProviders();
+  showToast(p.favorite ? p.name + ' marque comme favori' : p.name + ' retire des favoris');
 }
 async function removeProvider(i) { const name=config.providers[i]?.name||''; const ok=await customConfirm((t('provider.remove_confirm') || 'Remove provider') + ' "'+name+'" ?', t('btn.delete') || 'Delete'); if(!ok)return; syncProviders(); config.providers.splice(i,1); autoBalancePercentages(); autoRegenerateIfNeeded(); }
 
@@ -7925,7 +7982,18 @@ async function loadServiceRequests() {
         html += `<div style="display:flex;gap:6px;flex-wrap:wrap;">`;
         html += `<select id="svcAssign_${r.id}" style="padding:6px;background:var(--surface);color:var(--text);border:1px solid var(--border2);border-radius:6px;font-size:11px;">`;
         html += `<option value="">Assigner a...</option>`;
-        providers.forEach(p => { html += `<option value="${p.name}">${p.name}</option>`; });
+        const matchingProvs = providers.filter(p => p.services && p.services.includes(r.service_type));
+        const otherProvs = providers.filter(p => !p.services || !p.services.includes(r.service_type));
+        if (matchingProvs.length) {
+          html += `<optgroup label="Competents">`;
+          matchingProvs.forEach(p => { html += `<option value="${p.name}">⭐ ${p.name}</option>`; });
+          html += `</optgroup>`;
+        }
+        if (otherProvs.length) {
+          html += `<optgroup label="Autres">`;
+          otherProvs.forEach(p => { html += `<option value="${p.name}">${p.name}</option>`; });
+          html += `</optgroup>`;
+        }
         html += `</select>`;
         html += `<button class="btn btnSmall btnSuccess" style="padding:4px 10px;font-size:11px;" onclick="updateServiceRequest('${r.id}','accepted',document.getElementById('svcAssign_${r.id}').value)">Accepter</button>`;
         html += `<button class="btn btnSmall btnDanger" style="padding:4px 10px;font-size:11px;" onclick="updateServiceRequest('${r.id}','refused')">Refuser</button>`;
@@ -7950,7 +8018,7 @@ async function updateServiceRequest(id, status, provider) {
 }
 
 let _updateBannerShown = false;
-const CURRENT_VERSION = 'v3.29';
+const CURRENT_VERSION = 'v3.30';
 function showUpdateBanner() {
   if (_updateBannerShown) return;
   _updateBannerShown = true;
