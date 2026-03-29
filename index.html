@@ -17,8 +17,8 @@
 <meta property="og:title" content="Lokizio - Services et conciergerie pour locations">
 <meta property="og:description" content="Gerez automatiquement vos menages Airbnb et Booking. Assignez vos prestataires, generez le planning.">
 <meta property="og:type" content="website">
-<meta property="og:url" content="https://fabienlacaze.github.io/menage-manager-app/">
-<meta property="og:image" content="https://fabienlacaze.github.io/menage-manager-app/icons/icon-512.png">
+<meta property="og:url" content="https://fabienlacaze.github.io/lokizio/">
+<meta property="og:image" content="https://fabienlacaze.github.io/lokizio/icons/icon-512.png">
 <!-- Twitter Card -->
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Lokizio">
@@ -891,19 +891,19 @@ async function loadPDF() {
 <body>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;pointer-events:none;">v3.10</div>
+<div id="versionBadge" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;pointer-events:none;">v3.11</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
   <div style="position:relative;width:120px;height:120px;margin-bottom:24px;">
     <!-- Logo M -->
-    <div id="splashLogo" style="width:120px;height:120px;background:linear-gradient(135deg,#e94560,#6c63ff);border-radius:28px;display:flex;align-items:center;justify-content:center;font-size:64px;font-weight:900;color:#fff;box-shadow:0 8px 40px rgba(233,69,96,0.4);transition:transform 0.3s ease;">M</div>
+    <div id="splashLogo" style="width:120px;height:120px;background:linear-gradient(135deg,#e94560,#6c63ff);border-radius:28px;display:flex;align-items:center;justify-content:center;font-size:64px;font-weight:900;color:#fff;box-shadow:0 8px 40px rgba(233,69,96,0.4);transition:transform 0.3s ease;">L</div>
     <!-- Broom that sweeps -->
-    <div id="splashBroom" style="position:absolute;top:50%;left:-60px;font-size:48px;transform:translateY(-50%) rotate(-30deg);opacity:0;transition:all 0.8s cubic-bezier(0.25,0.46,0.45,0.94);">🧹</div>
+    <div id="splashBroom" style="position:absolute;top:50%;left:-60px;font-size:48px;transform:translateY(-50%) rotate(-30deg);opacity:0;transition:all 0.8s cubic-bezier(0.25,0.46,0.45,0.94);">✨</div>
   </div>
   <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio</div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie</div>
-  <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou &mdash; v3.10</div>
+  <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou &mdash; v3.11</div>
   <!-- Loading bar -->
   <div style="width:200px;height:3px;background:rgba(255,255,255,0.1);border-radius:4px;margin-top:24px;overflow:hidden;">
     <div id="splashBar" style="width:0%;height:100%;background:linear-gradient(90deg,#e94560,#6c63ff);border-radius:4px;transition:width 1.5s ease;"></div>
@@ -949,7 +949,7 @@ async function loadPDF() {
 <div id="authScreen" style="display:none;justify-content:center;align-items:center;min-height:100vh;padding:20px;">
   <div style="background:var(--surface);padding:36px;border-radius:16px;width:380px;border:1px solid var(--border);box-shadow:0 8px 32px rgba(0,0,0,0.4);">
     <div style="text-align:center;margin-bottom:24px;">
-      <div style="width:60px;height:60px;background:linear-gradient(135deg,#e94560,#6c63ff);border-radius:16px;display:inline-flex;align-items:center;justify-content:center;font-size:26px;font-weight:800;color:#fff;margin-bottom:12px;">M</div>
+      <div style="width:60px;height:60px;background:linear-gradient(135deg,#e94560,#6c63ff);border-radius:16px;display:inline-flex;align-items:center;justify-content:center;font-size:26px;font-weight:800;color:#fff;margin-bottom:12px;">L</div>
       <h1 style="color:#fff;font-size:22px;margin-bottom:4px;">Lokizio</h1>
       <p style="color:var(--text3);font-size:12px;" data-i18n="auth.subtitle">Services et conciergerie pour locations</p>
     </div>
@@ -992,9 +992,9 @@ async function loadPDF() {
 <div id="appMain" style="display:none;">
 <div class="header">
   <div class="header-left">
-    <div class="header-logo"><svg width="24" height="24" viewBox="0 0 24 24" fill="none"><!-- Maison --><path d="M3 21V8l9-5 9 5v13H3z" stroke="#fff" stroke-width="1.5" fill="none"/><path d="M9 21v-6h6v6" stroke="#fff" stroke-width="1.5"/><path d="M7 11h2v2H7zM15 11h2v2h-2z" fill="rgba(255,255,255,0.5)"/><!-- Balai --><line x1="17" y1="6" x2="20" y2="19" stroke="#fff" stroke-width="1.2" stroke-linecap="round"/><path d="M18.5 16.5c1.2 1 2.2 2.5 1.5 3.5s-2.5 0-3-1c-.4-.8-.2-1.8.2-2.5z" fill="#fff" opacity="0.85"/></svg></div>
+    <div class="header-logo" style="width:28px;height:28px;background:linear-gradient(135deg,#e94560,#6c63ff);border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:900;color:#fff;">L</div>
     <div>
-      <h1>Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.35);vertical-align:middle;">v3.10</span></h1>
+      <h1>Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.35);vertical-align:middle;">v3.11</span></h1>
       <div class="subtitle" data-i18n="header.subtitle">Services et conciergerie</div>
     </div>
   </div>
@@ -1246,7 +1246,7 @@ async function loadPDF() {
 
   <!-- Footer -->
   <div translate="no" style="text-align:center;padding:20px 16px;color:var(--text3);font-size:11px;line-height:1.8;">
-    <div style="font-weight:600;color:var(--text2);margin-bottom:4px;">Lokizio v3.10</div>
+    <div style="font-weight:600;color:var(--text2);margin-bottom:4px;">Lokizio v3.11</div>
     <div>Made with ❤️ by <a href="https://github.com/fabienlacaze" target="_blank" style="color:var(--accent2);text-decoration:none;">Fabidou</a></div>
     <div style="margin-top:4px;">
       <a href="privacy.html" target="_blank" style="color:var(--text3);text-decoration:none;margin:0 8px;">Confidentialite</a>
@@ -2281,7 +2281,7 @@ async function showProviderMode() {
   if (headerEl) {
     const h1 = headerEl.querySelector('h1');
     if (h1) {
-      h1.innerHTML = 'Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.35);vertical-align:middle;">v3.10</span>';
+      h1.innerHTML = 'Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.35);vertical-align:middle;">v3.11</span>';
       appendRoleBadge(h1);
     }
     const sub = headerEl.querySelector('.sub-title');
@@ -2507,7 +2507,7 @@ async function showOwnerMode() {
   if (headerEl) {
     const h1 = headerEl.querySelector('h1');
     if (h1) {
-      h1.innerHTML = 'Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.35);vertical-align:middle;">v3.10</span>';
+      h1.innerHTML = 'Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.35);vertical-align:middle;">v3.11</span>';
       appendRoleBadge(h1);
     }
     document.querySelectorAll('.header-actions .btnHelp').forEach(btn => {
@@ -3526,7 +3526,7 @@ function showDeleteAnimation() {
   overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:999999;display:flex;flex-direction:column;align-items:center;justify-content:center;';
   overlay.innerHTML = `
     <div style="position:relative;width:300px;height:200px;">
-      <div id="delLogo" style="position:absolute;left:50%;top:40%;transform:translate(-50%,-50%);width:80px;height:80px;background:linear-gradient(135deg,#e94560,#6c63ff);border-radius:20px;display:flex;align-items:center;justify-content:center;font-size:40px;font-weight:900;color:#fff;transition:all 1.5s cubic-bezier(0.25,0.46,0.45,0.94);">M</div>
+      <div id="delLogo" style="position:absolute;left:50%;top:40%;transform:translate(-50%,-50%);width:80px;height:80px;background:linear-gradient(135deg,#e94560,#6c63ff);border-radius:20px;display:flex;align-items:center;justify-content:center;font-size:40px;font-weight:900;color:#fff;transition:all 1.5s cubic-bezier(0.25,0.46,0.45,0.94);">L</div>
       <div id="delBroom" style="position:absolute;left:-60px;top:35%;font-size:48px;transform:translateY(-50%) rotate(-20deg);transition:all 1.5s cubic-bezier(0.25,0.46,0.45,0.94);">🧹</div>
       <div id="delTrash" style="position:absolute;right:20px;bottom:0;font-size:56px;transition:transform 0.3s ease;">🗑️</div>
     </div>
@@ -5348,7 +5348,7 @@ function showAddProviderForm() {
   setTimeout(() => document.getElementById('txtNewName').focus(), 100);
 }
 function showInviteOwnerByEmail() {
-  const appUrl = 'https://fabienlacaze.github.io/menage-manager-app/';
+  const appUrl = 'https://fabienlacaze.github.io/lokizio/';
   const org = API.getOrg();
   const refCode = org?.referral_code || '';
   const inviteUrl = appUrl + (refCode ? '?ref=' + refCode : '');
@@ -5371,7 +5371,7 @@ function showInviteOwnerByEmail() {
   showMsg(html, true);
 }
 function showInviteProviderByEmail() {
-  const appUrl = 'https://fabienlacaze.github.io/menage-manager-app/';
+  const appUrl = 'https://fabienlacaze.github.io/lokizio/';
   const org = API.getOrg();
   const refCode = org?.referral_code || '';
   const inviteUrl = appUrl + (refCode ? '?ref=' + refCode : '');
@@ -5716,9 +5716,9 @@ async function exportPDF() {
   // Footer
   doc.setFillColor(26,26,46);doc.rect(0,pageH-16,w,16,'F');
   doc.setFontSize(8);doc.setTextColor(150,150,170);
-  doc.text('Lokizio - fabienlacaze.github.io/menage-manager-app',14,pageH-6);
+  doc.text('Lokizio - fabienlacaze.github.io/lokizio',14,pageH-6);
   doc.setTextColor(233,69,96);
-  doc.textWithLink('Ouvrir',w-25,pageH-6,{url:'https://fabienlacaze.github.io/menage-manager-app/'});
+  doc.textWithLink('Ouvrir',w-25,pageH-6,{url:'https://fabienlacaze.github.io/lokizio/'});
   const fname=currentFilter?'planning_'+currentFilter+'.pdf':'planning.pdf';
   doc.save(fname);showToast(t('export.pdf.success')||'PDF exporte');
 }
@@ -5856,7 +5856,7 @@ function previewTemplate() {
     exPlan = '- Lun 01/01/2026 (Airbnb)\n- Mer 03/01/2026 (Booking)\n';
   }
   const total = exCleanings.length || 2;
-  const link = 'https://fabienlacaze.github.io/menage-manager-app/view.html?provider=abc123';
+  const link = 'https://fabienlacaze.github.io/lokizio/view.html?provider=abc123';
   const result = tpl
     .replace(/\{nom\}/g, exampleProv)
     .replace(/\{propriete\}/g, propName)
@@ -6007,7 +6007,7 @@ async function sendViaChannel(channel) {
       window.open(`sms:${intlPhone}?body=${encoded}`, '_blank');
       break;
     case 'messenger':
-      window.open(`fb-messenger://share/?link=${encodeURIComponent('https://fabienlacaze.github.io/menage-manager-app/')}&quote=${encoded}`, '_blank');
+      window.open(`fb-messenger://share/?link=${encodeURIComponent('https://fabienlacaze.github.io/lokizio/')}&quote=${encoded}`, '_blank');
       break;
     case 'email':
       const provEmail = p ? (p.email || '') : '';
@@ -6862,7 +6862,7 @@ function getSourceClass(source) {
 function showInviteModal() {
   const org = API.getOrg();
   const refCode = org?.referral_code || '';
-  const appUrl = 'https://fabienlacaze.github.io/menage-manager-app/' + (refCode ? '?ref=' + refCode : '');
+  const appUrl = 'https://fabienlacaze.github.io/lokizio/' + (refCode ? '?ref=' + refCode : '');
   const role = API.getRole();
   const roleTexts = {
     admin: 'Je gere mes menages locatifs avec Lokizio. Rejoins-moi !',

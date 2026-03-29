@@ -1,4 +1,4 @@
-const CACHE_NAME = 'menage-manager-v4';
+const CACHE_NAME = 'lokizio-v1';
 
 // Only cache static assets, never JS files or API calls
 const CACHEABLE = /\.(png|jpg|jpeg|svg|gif|woff2?|ttf|eot)$/;
@@ -48,10 +48,10 @@ self.addEventListener('push', event => {
   const title = data.title || 'Lokizio';
   const options = {
     body: data.body || 'Nouveau menage assigne',
-    icon: '/menage-manager-app/icons/icon-192.png',
-    badge: '/menage-manager-app/icons/icon-192.png',
+    icon: '/lokizio/icons/icon-192.png',
+    badge: '/lokizio/icons/icon-192.png',
     vibrate: [200, 100, 200],
-    data: { url: data.url || '/menage-manager-app/view.html' },
+    data: { url: data.url || '/lokizio/view.html' },
     actions: [
       { action: 'open', title: 'Voir' },
       { action: 'dismiss', title: 'Fermer' }
@@ -63,11 +63,11 @@ self.addEventListener('push', event => {
 // Click on notification
 self.addEventListener('notificationclick', event => {
   event.notification.close();
-  const url = event.notification.data && event.notification.data.url ? event.notification.data.url : '/menage-manager-app/';
+  const url = event.notification.data && event.notification.data.url ? event.notification.data.url : '/lokizio/';
   event.waitUntil(
     clients.matchAll({ type: 'window' }).then(windowClients => {
       for (const client of windowClients) {
-        if (client.url.includes('menage-manager-app') && 'focus' in client) return client.focus();
+        if (client.url.includes('lokizio') && 'focus' in client) return client.focus();
       }
       return clients.openWindow(url);
     })
