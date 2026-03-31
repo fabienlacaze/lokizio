@@ -1,4 +1,4 @@
-const APP_VERSION = '6.37';
+const APP_VERSION = '6.38';
 const CACHE_NAME = 'lokizio-v' + APP_VERSION;
 
 // App shell files to cache for offline support
@@ -37,9 +37,10 @@ self.addEventListener('fetch', event => {
   if (event.request.method !== 'GET') return;
   const url = new URL(event.request.url);
 
-  // Never cache API calls, Supabase, or Edge Functions
+  // Never intercept: API calls, Supabase, Edge Functions, sw.js itself
   if (url.hostname.includes('supabase') || url.pathname.startsWith('/rest/') ||
-      url.pathname.startsWith('/auth/') || url.pathname.startsWith('/functions/')) {
+      url.pathname.startsWith('/auth/') || url.pathname.startsWith('/functions/') ||
+      url.pathname.endsWith('sw.js')) {
     return;
   }
 
