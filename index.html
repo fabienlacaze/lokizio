@@ -961,7 +961,7 @@ async function loadPDF() {
 <body>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v6.93</div>
+<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v6.94</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -971,7 +971,7 @@ async function loadPDF() {
     <!-- Broom that sweeps -->
     <div id="splashBroom" style="position:absolute;top:50%;left:-60px;font-size:48px;transform:translateY(-50%) rotate(-30deg);opacity:0;transition:all 0.8s cubic-bezier(0.25,0.46,0.45,0.94);">✨</div>
   </div>
-  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v6.93</span></div>
+  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v6.94</span></div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie pour locations</div>
   <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou</div>
   <!-- Loading bar -->
@@ -1630,7 +1630,7 @@ async function loadPDF() {
       </div>
       <div id="mkProfileFields" style="display:none;flex-direction:column;gap:10px;border-top:1px solid var(--border2);padding-top:12px;">
         <label style="font-size:11px;color:var(--text3);text-transform:uppercase;">Description</label>
-        <textarea id="mkDescription" placeholder="Decrivez votre activite, vos specialites..." rows="3" style="width:100%;padding:10px;background:#1a1a2e;color:#f0f0f5;border:1px solid var(--border2);border-radius:8px;font-size:13px;font-family:'Inter',sans-serif;resize:vertical;box-sizing:border-box;"></textarea>
+        <textarea id="mkDescription" placeholder="Decrivez votre activite, vos specialites..." rows="3" onchange="autoSaveMarketplaceField()" style="width:100%;padding:10px;background:#1a1a2e;color:#f0f0f5;border:1px solid var(--border2);border-radius:8px;font-size:13px;font-family:'Inter',sans-serif;resize:vertical;box-sizing:border-box;"></textarea>
         <label style="font-size:11px;color:var(--text3);text-transform:uppercase;">Services proposes</label>
         <div style="display:flex;flex-wrap:wrap;gap:6px;" id="mkServicesCheckboxes">
           <!-- Populated dynamically from SERVICE_CATALOG by renderMkServiceCheckboxes() -->
@@ -1638,18 +1638,18 @@ async function loadPDF() {
         <div style="display:flex;gap:10px;">
           <div style="flex:1;">
             <label style="font-size:11px;color:var(--text3);text-transform:uppercase;display:block;margin-bottom:4px;">Annees d'experience</label>
-            <input type="number" id="mkExperienceYears" min="0" max="50" placeholder="0" style="width:100%;padding:8px 12px;background:#1a1a2e;color:#f0f0f5;border:1px solid var(--border2);border-radius:8px;font-size:13px;box-sizing:border-box;">
+            <input type="number" id="mkExperienceYears" min="0" max="50" placeholder="0" onchange="autoSaveMarketplaceField()" style="width:100%;padding:8px 12px;background:#1a1a2e;color:#f0f0f5;border:1px solid var(--border2);border-radius:8px;font-size:13px;box-sizing:border-box;">
           </div>
           <div style="flex:1;">
             <label style="font-size:11px;color:var(--text3);text-transform:uppercase;display:block;margin-bottom:4px;">Disponibilite</label>
-            <select id="mkAvailability" style="width:100%;padding:8px 12px;background:#1a1a2e;color:#f0f0f5;border:1px solid var(--border2);border-radius:8px;font-size:13px;box-sizing:border-box;">
+            <select id="mkAvailability" onchange="autoSaveMarketplaceField()" style="width:100%;padding:8px 12px;background:#1a1a2e;color:#f0f0f5;border:1px solid var(--border2);border-radius:8px;font-size:13px;box-sizing:border-box;">
               <option value="available" style="background:#1a1a2e;color:#f0f0f5;">Disponible</option>
               <option value="full" style="background:#1a1a2e;color:#f0f0f5;">Complet</option>
               <option value="vacation" style="background:#1a1a2e;color:#f0f0f5;">En vacances</option>
             </select>
           </div>
         </div>
-        <button class="btn btnPrimary" style="padding:10px;font-size:13px;margin-top:4px;" onclick="saveMarketplaceProfile()">&#128190; Sauvegarder le profil annuaire</button>
+        <div style="font-size:10px;color:var(--text3);margin-top:4px;text-align:center;">Sauvegarde automatique</div>
       </div>
     </div>
     <div style="display:flex;flex-direction:column;gap:10px;">
@@ -3208,27 +3208,11 @@ async function publishToMarketplace() {
     });
     if (error) { showToast('Erreur: ' + error.message); return; }
     showToast('Profil publie sur l\'annuaire !');
-    // Show edit modal
-    let html = '<div style="padding:10px;text-align:center;">';
-    html += '<div style="font-size:20px;margin-bottom:8px;">&#9989;</div>';
-    html += '<div style="font-size:16px;font-weight:700;color:#34d399;margin-bottom:8px;">Inscrit sur l\'annuaire !</div>';
-    html += '<div style="font-size:13px;color:var(--text3);margin-bottom:16px;">Les conciergeries peuvent maintenant vous trouver et vous inviter.</div>';
-    const phone = member?.phone || '';
-    const inputStyle = 'width:100%;padding:10px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:13px;margin-bottom:8px;box-sizing:border-box;';
-    html += '<div style="font-size:12px;color:var(--text2);margin-bottom:12px;">Completez votre profil pour etre mieux reference :</div>';
-    html += '<label style="font-size:11px;color:var(--text3);display:block;margin-bottom:3px;">Nom</label>';
-    html += '<input type="text" value="' + esc(name) + '" readonly style="' + inputStyle + 'opacity:0.6;">';
-    html += '<label style="font-size:11px;color:var(--text3);display:block;margin-bottom:3px;">Email</label>';
-    html += '<input type="text" value="' + esc(email) + '" readonly style="' + inputStyle + 'opacity:0.6;">';
-    html += '<label style="font-size:11px;color:var(--text3);display:block;margin-bottom:3px;">Telephone</label>';
-    html += '<input id="mkPhone" type="tel" value="' + esc(phone) + '" placeholder="06 12 34 56 78" style="' + inputStyle + '">';
-    html += '<label style="font-size:11px;color:var(--text3);display:block;margin-bottom:3px;">Ville</label>';
-    html += '<input id="mkCity" type="text" placeholder="Ex: Nice, Paris..." style="' + inputStyle + '">';
-    html += '<label style="font-size:11px;color:var(--text3);display:block;margin-bottom:3px;">Description</label>';
-    html += '<textarea id="mkDesc" placeholder="Presentez vos services, votre experience..." rows="3" style="' + inputStyle + 'font-family:Inter,sans-serif;resize:vertical;"></textarea>';
-    html += '<button class="btn btnPrimary" style="width:100%;padding:12px;margin-top:4px;" onclick="saveMarketplaceProfile()">Enregistrer</button>';
-    html += '</div>';
-    showMsg(html, true);
+    // Update button text
+    const btn = document.getElementById('mkPublishBtn');
+    if (btn) { btn.innerHTML = '&#128221; Modifier mon profil annuaire'; btn.style.background = 'linear-gradient(135deg,#6c63ff,#5a54e0)'; }
+    // Open edit form with pre-filled data
+    showEditMarketplaceProfile(user, name, email);
   } catch(e) { console.error('publishToMarketplace error:', e); showToast('Erreur'); }
 }
 
@@ -3242,15 +3226,14 @@ async function showEditMarketplaceProfile(user, name, email) {
   let html = '<div style="padding:10px;">';
   html += '<div style="font-size:16px;font-weight:700;color:#6c63ff;margin-bottom:12px;text-align:center;">&#128221; Mon profil annuaire</div>';
   html += '<label style="font-size:11px;color:var(--text3);display:block;margin-bottom:3px;">Telephone</label>';
-  html += '<input id="mkPhone" type="tel" value="' + esc(phone) + '" placeholder="06 12 34 56 78" style="' + inputStyle + '">';
+  html += '<input id="mkPhone" type="tel" value="' + esc(phone) + '" placeholder="06 12 34 56 78" onchange="saveMarketplaceProfile()" style="' + inputStyle + '">';
   html += '<label style="font-size:11px;color:var(--text3);display:block;margin-bottom:3px;">Ville</label>';
-  html += '<input id="mkCity" type="text" value="' + esc(city) + '" placeholder="Ex: Nice, Paris..." style="' + inputStyle + '">';
+  html += '<input id="mkCity" type="text" value="' + esc(city) + '" placeholder="Ex: Nice, Paris..." onchange="saveMarketplaceProfile()" style="' + inputStyle + '">';
   html += '<label style="font-size:11px;color:var(--text3);display:block;margin-bottom:3px;">Description</label>';
-  html += '<textarea id="mkDesc" placeholder="Presentez vos services..." rows="3" style="' + inputStyle + 'font-family:Inter,sans-serif;resize:vertical;">' + esc(desc) + '</textarea>';
-  html += '<div style="display:flex;gap:8px;margin-top:4px;">';
-  html += '<button class="btn btnOutline" style="flex:1;padding:12px;" onclick="closeMsg()">Fermer</button>';
-  html += '<button class="btn btnPrimary" style="flex:1;padding:12px;" onclick="saveMarketplaceProfile()">Enregistrer</button>';
-  html += '</div></div>';
+  html += '<textarea id="mkDesc" placeholder="Presentez vos services..." rows="3" onchange="saveMarketplaceProfile()" style="' + inputStyle + 'font-family:Inter,sans-serif;resize:vertical;">' + esc(desc) + '</textarea>';
+  html += '<div style="font-size:10px;color:var(--text3);text-align:center;margin-top:4px;">Sauvegarde automatique</div>';
+  html += '<button class="btn btnOutline" style="width:100%;padding:12px;margin-top:8px;" onclick="closeMsg()">Fermer</button>';
+  html += '</div>';
   showMsg(html, true);
 }
 
@@ -10991,7 +10974,28 @@ async function toggleMarketplaceVisibility(visible) {
   }
 }
 
-// Old saveMarketplaceProfile removed — now at line ~3235
+// Auto-save marketplace profile fields from "Mon compte" modal
+async function autoSaveMarketplaceField() {
+  try {
+    const { data: { user } } = await sb.auth.getUser();
+    if (!user) return;
+    const description = document.getElementById('mkDescription')?.value?.trim() || '';
+    const experienceYears = parseInt(document.getElementById('mkExperienceYears')?.value) || 0;
+    const availability = document.getElementById('mkAvailability')?.value || 'available';
+    const services = [];
+    document.querySelectorAll('.mkServiceCb:checked').forEach(cb => services.push(cb.value));
+    const { error } = await sb.from('marketplace_profiles').upsert({
+      user_id: user.id,
+      display_name: user.user_metadata?.display_name || user.email?.split('@')[0] || '',
+      email: user.email,
+      role: API.getRole() || 'provider',
+      description, services, experience_years: experienceYears, availability,
+      visible: document.getElementById('mkVisibleToggle')?.checked || false,
+      updated_at: new Date().toISOString()
+    }, { onConflict: 'user_id' });
+    if (!error) showToast('Profil sauvegarde');
+  } catch(e) { console.error('autoSaveMarketplaceField:', e); }
+}
 
 function renderMkServiceCheckboxes(checkedServices) {
   const container = document.getElementById('mkServicesCheckboxes');
