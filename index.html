@@ -961,7 +961,7 @@ async function loadPDF() {
 <body>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v6.95</div>
+<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v6.96</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -971,7 +971,7 @@ async function loadPDF() {
     <!-- Broom that sweeps -->
     <div id="splashBroom" style="position:absolute;top:50%;left:-60px;font-size:48px;transform:translateY(-50%) rotate(-30deg);opacity:0;transition:all 0.8s cubic-bezier(0.25,0.46,0.45,0.94);">✨</div>
   </div>
-  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v6.95</span></div>
+  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v6.96</span></div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie pour locations</div>
   <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou</div>
   <!-- Loading bar -->
@@ -10814,12 +10814,32 @@ async function showMarketplace(prefillAddress) {
     }
   }
   try {
-    const { data, error } = await sb
+    // Load marketplace profiles (visible ones)
+    const { data: mkData, error: mkErr } = await sb
       .from('marketplace_profiles')
       .select('*')
       .eq('visible', true);
-    if (error) throw error;
-    _mkAllProfiles = data || [];
+    if (mkErr) throw mkErr;
+    _mkAllProfiles = mkData || [];
+
+    // Also load org members who are not yet on marketplace (as basic profiles)
+    const { data: allMembers } = await sb.from('members').select('*').eq('org_id', API.getOrg()?.id);
+    if (allMembers) {
+      const mkUserIds = _mkAllProfiles.map(p => p.user_id);
+      allMembers.forEach(m => {
+        if (!mkUserIds.includes(m.user_id) && m.role !== 'admin') {
+          _mkAllProfiles.push({
+            user_id: m.user_id,
+            display_name: m.display_name || m.invited_email || '',
+            email: m.invited_email || '',
+            role: m.role,
+            org_id: m.org_id,
+            visible: true,
+            _fromMembers: true
+          });
+        }
+      });
+    }
     filterMarketplace();
   } catch (e) {
     console.error('Marketplace load error:', e);
@@ -10839,7 +10859,7 @@ function filterMarketplace() {
   const sort = document.getElementById('mkSortFilter')?.value || 'recent';
   let filtered = _mkAllProfiles;
   if (role) filtered = filtered.filter(p => p.role === role);
-  if (city) filtered = filtered.filter(p => (p.city || '').toLowerCase().includes(city) || (p.postal_code || '').includes(city));
+  if (city) filtered = filtered.filter(p => !p.city || (p.city || '').toLowerCase().includes(city) || (p.postal_code || '').includes(city) || (p.display_name || '').toLowerCase().includes(city));
   if (radius > 0) {
     filtered = filtered.filter(p => {
       if (!p.lat || !p.lng) return true;
