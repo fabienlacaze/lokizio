@@ -933,7 +933,7 @@ async function loadPDF() {
 <body>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;pointer-events:none;">v6.32</div>
+<div id="versionBadge" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;pointer-events:none;">v6.33</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -943,7 +943,7 @@ async function loadPDF() {
     <!-- Broom that sweeps -->
     <div id="splashBroom" style="position:absolute;top:50%;left:-60px;font-size:48px;transform:translateY(-50%) rotate(-30deg);opacity:0;transition:all 0.8s cubic-bezier(0.25,0.46,0.45,0.94);">✨</div>
   </div>
-  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v6.32</span></div>
+  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v6.33</span></div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie pour locations</div>
   <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou</div>
   <!-- Loading bar -->
@@ -10041,15 +10041,9 @@ async function loadAdminPrestations(forceReload) {
   });
   svcRequests.forEach(r => {
     if (filterProp && r.property_id !== filterProp) return;
-    // Archive past prestations: hide if date is past AND status is terminal
+    // Hide past prestations (date before today)
     const rDate = r.requested_date || r.preferred_date || '';
-    const isTerminal = ['done', 'cancelled', 'refused'].includes(r.status);
-    if (rDate && rDate < today && isTerminal) return; // Archived
-    if (rDate && rDate < today && !isTerminal) {
-      // Past but not terminal — auto-archive as done if date is more than 1 day past
-      const daysPast = Math.floor((new Date(today) - new Date(rDate)) / 86400000);
-      if (daysPast > 1) return; // Hide old unfinished ones too
-    }
+    if (rDate && rDate < today) return;
     const prop = propMap[r.property_id];
     unified.push({
       _source: 'service_request',
@@ -10104,7 +10098,7 @@ async function loadAdminPrestations(forceReload) {
     // Status pills
     statusDefs.forEach(s => {
       if (statusCounts[s.id]) {
-        fHtml += '<button class="prestFilter" data-filter-type="status" onclick="filterAdminPrestStatus(\'' + s.id + '\',this)" style="border-color:' + s.color + '40;color:' + s.color + ';">' + s.label + ' ' + statusCounts[s.id] + '</button>';
+        fHtml += '<button class="prestFilter" data-filter-type="status" onclick="filterAdminPrestStatus(\'' + s.id + '\',this)" style="border-color:' + s.color + '40;color:' + s.color + ';">' + s.label + ' (' + statusCounts[s.id] + ')</button>';
       }
     });
     fHtml += '</div>';
@@ -10132,14 +10126,23 @@ async function loadAdminPrestations(forceReload) {
   let html = '';
   const months = ['Jan','Fev','Mar','Avr','Mai','Jun','Jul','Aou','Sep','Oct','Nov','Dec'];
   const days = ['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'];
+  let lastDateGroup = '';
   unified.forEach(u => {
+    // Date separator
+    if (u.date && u.date !== lastDateGroup) {
+      lastDateGroup = u.date;
+      const gd = new Date(u.date + 'T12:00:00');
+      const isGdToday = u.date === today;
+      const gdLabel = isGdToday ? 'Aujourd\'hui' : gd.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
+      html += '<div style="font-size:12px;font-weight:700;color:' + (isGdToday ? 'var(--accent)' : 'var(--text3)') + ';margin:12px 0 4px 4px;text-transform:capitalize;">' + gdLabel + '</div>';
+    }
     const catObj = SERVICE_CATALOG.find(c => c.services.some(s => s.id === u.type));
     const cat = catObj ? catObj.cat : 'autre';
     const color = statusColors[u.status] || '#888';
     const label = statusLabels[u.status] || u.status;
     const svcObj = (catObj ? catObj.services : []).find(s => s.id === u.type);
-    const svcLabel = getServiceLabel(u.type);
-    const svcIcon = svcObj ? svcObj.icon : (catObj ? catObj.services[0].icon : '📋');
+    const svcName = svcObj ? svcObj.label : u.type;
+    const svcIcon = svcObj ? svcObj.icon : '📋';
     const isToday = u.date === today;
 
     // Parse date for calendar block
@@ -10162,7 +10165,7 @@ async function loadAdminPrestations(forceReload) {
     // Body
     html += '<div class="card-body">';
     html += '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">';
-    html += '<div class="card-title">' + svcIcon + ' ' + svcLabel;
+    html += '<div class="card-title">' + svcIcon + ' ' + esc(svcName);
     if (u.source) html += ' <span style="font-size:9px;padding:1px 5px;border-radius:3px;background:' + (u.source.toLowerCase().includes('airbnb') ? '#e9456030' : '#2563eb30') + ';color:' + (u.source.toLowerCase().includes('airbnb') ? '#e94560' : '#2563eb') + ';font-weight:700;">' + esc(u.source).toUpperCase() + '</span>';
     if (isToday) html += ' <span style="font-size:9px;padding:1px 5px;border-radius:3px;background:#e9456020;color:#e94560;font-weight:700;">AUJOURD\'HUI</span>';
     html += '</div>';
@@ -10195,7 +10198,7 @@ async function loadAdminPrestations(forceReload) {
         html += '</select>';
         html += '<button class="btn btnSmall btnSuccess" style="padding:5px 12px;font-size:11px;" onclick="updateServiceRequest(\'' + u._id + '\',\'assigned\',document.getElementById(\'svcAssign_' + u._id + '\').value);setTimeout(()=>loadAdminPrestations(true),500)">Assigner</button>';
         html += '<button class="btn btnSmall btnDanger" style="padding:5px 12px;font-size:11px;" onclick="updateServiceRequest(\'' + u._id + '\',\'refused\');setTimeout(()=>loadAdminPrestations(true),500)">Refuser</button>';
-        html += '<button class="btn btnSmall" style="padding:5px 12px;font-size:11px;background:transparent;color:#ef4444;border:1px solid #ef444440;" onclick="showCancelModal(\'' + u._id + '\',\'' + (u.date || '') + '\',\'' + esc(svcLabel).replace(/'/g,"\\'") + '\',' + cancelPrice + ')">Annuler</button>';
+        html += '<a href="#" onclick="showCancelModal(\'' + u._id + '\',\'' + (u.date || '') + '\',\'' + esc(svcName).replace(/'/g,"\\'") + '\',' + cancelPrice + ');return false;" style="font-size:11px;color:#ef4444;text-decoration:none;padding:5px 8px;">Annuler</a>';
         html += '</div>';
       } else if (u.status === 'refused') {
         let allProviders = [];
@@ -10210,7 +10213,7 @@ async function loadAdminPrestations(forceReload) {
       } else if (cancellable && u.status !== 'refused') {
         // Assigned or accepted — show cancel button
         html += '<div class="card-actions">';
-        html += '<button class="btn btnSmall" style="padding:5px 12px;font-size:11px;background:transparent;color:#ef4444;border:1px solid #ef444440;" onclick="showCancelModal(\'' + u._id + '\',\'' + (u.date || '') + '\',\'' + esc(svcLabel).replace(/'/g,"\\'") + '\',' + cancelPrice + ')">&#10006; Annuler la prestation</button>';
+        html += '<a href="#" onclick="showCancelModal(\'' + u._id + '\',\'' + (u.date || '') + '\',\'' + esc(svcName).replace(/'/g,"\\'") + '\',' + cancelPrice + ');return false;" style="font-size:11px;color:#ef4444;text-decoration:none;padding:5px 8px;">&#10006; Annuler</a>';
         html += '</div>';
       } else if (u.status === 'cancelled') {
         html += '<div style="padding:8px 12px;font-size:11px;color:#ef4444;border-top:1px solid var(--border);">';
