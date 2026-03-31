@@ -933,7 +933,7 @@ async function loadPDF() {
 <body>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;pointer-events:none;">v6.40</div>
+<div id="versionBadge" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;pointer-events:none;">v6.41</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -943,7 +943,7 @@ async function loadPDF() {
     <!-- Broom that sweeps -->
     <div id="splashBroom" style="position:absolute;top:50%;left:-60px;font-size:48px;transform:translateY(-50%) rotate(-30deg);opacity:0;transition:all 0.8s cubic-bezier(0.25,0.46,0.45,0.94);">✨</div>
   </div>
-  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v6.40</span></div>
+  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v6.41</span></div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie pour locations</div>
   <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou</div>
   <!-- Loading bar -->
@@ -10202,13 +10202,19 @@ async function loadAdminPrestations(forceReload) {
       if (matching.length) { matching.forEach(p => { html += '<option value="' + esc(p.name) + '">' + esc(p.name) + '</option>'; }); }
       if (others.length) { others.forEach(p => { html += '<option value="' + esc(p.name) + '">' + esc(p.name) + '</option>'; }); }
       html += '</select>';
-      html += '<button style="padding:3px 8px;font-size:10px;font-weight:600;border:none;border-radius:4px;cursor:pointer;background:rgba(52,211,153,0.15);color:#34d399;" onclick="updateServiceRequest(\'' + u._id + '\',\'assigned\',document.getElementById(\'svcAssign_' + u._id + '\').value);setTimeout(()=>loadAdminPrestations(true),500)" title="Assigner">&#10003;</button>';
-      html += '<button style="padding:3px 8px;font-size:10px;font-weight:600;border:none;border-radius:4px;cursor:pointer;background:rgba(239,68,68,0.15);color:#ef4444;" onclick="updateServiceRequest(\'' + u._id + '\',\'refused\');setTimeout(()=>loadAdminPrestations(true),500)" title="Refuser">&#10007;</button>';
+      html += '<button style="padding:3px 10px;font-size:10px;font-weight:600;border:none;border-radius:4px;cursor:pointer;background:rgba(108,99,255,0.15);color:#6c63ff;" onclick="updateServiceRequest(\'' + u._id + '\',\'assigned\',document.getElementById(\'svcAssign_' + u._id + '\').value);setTimeout(()=>loadAdminPrestations(true),500)">OK</button>';
+      // More actions menu
+      html += '<div style="position:relative;display:inline-block;">';
+      html += '<button onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display===\'block\'?\'none\':\'block\'" style="padding:3px 6px;font-size:12px;border:none;border-radius:4px;cursor:pointer;background:transparent;color:var(--text3);" title="Plus d\'actions">&#8942;</button>';
+      html += '<div style="display:none;position:absolute;right:0;top:100%;background:var(--surface);border:1px solid var(--border2);border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,0.4);z-index:100;min-width:140px;overflow:hidden;">';
+      html += '<div onclick="updateServiceRequest(\'' + u._id + '\',\'refused\');setTimeout(()=>loadAdminPrestations(true),500)" style="padding:8px 14px;font-size:11px;color:#ef4444;cursor:pointer;border-bottom:1px solid var(--border);" onmouseover="this.style.background=\'rgba(255,255,255,0.05)\'" onmouseout="this.style.background=\'\'">&#10007; Refuser</div>';
+      html += '<div onclick="showCancelModal(\'' + u._id + '\',\'' + (u.date || '') + '\',\'' + esc(svcName).replace(/'/g,"\\'") + '\',' + cancelPrice + ')" style="padding:8px 14px;font-size:11px;color:var(--text3);cursor:pointer;" onmouseover="this.style.background=\'rgba(255,255,255,0.05)\'" onmouseout="this.style.background=\'\'">&#128465; Annuler</div>';
+      html += '</div></div>';
     } else {
       html += '<span class="card-status" style="background:' + color + '18;color:' + color + ';">' + label + '</span>';
-    }
-    if (cancellable) {
-      html += '<a href="#" onclick="showCancelModal(\'' + u._id + '\',\'' + (u.date || '') + '\',\'' + esc(svcName).replace(/'/g,"\\'") + '\',' + cancelPrice + ');return false;" style="font-size:10px;color:var(--text3);text-decoration:none;padding:2px;" title="Annuler">&#128465;</a>';
+      if (cancellable && u.status !== 'pending') {
+        html += '<a href="#" onclick="showCancelModal(\'' + u._id + '\',\'' + (u.date || '') + '\',\'' + esc(svcName).replace(/'/g,"\\'") + '\',' + cancelPrice + ');return false;" style="font-size:10px;color:var(--text3);text-decoration:none;padding:2px;" title="Annuler">&#128465;</a>';
+      }
     }
     html += '</div>';
     html += '</div>';
