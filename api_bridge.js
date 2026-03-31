@@ -186,13 +186,10 @@ const API = (function() {
   }
 
   async function savePlanningData(propId, field, value) {
-    // Check if planning exists
-    const { data: existing } = await sb.from('plannings').select('id').eq('property_id', propId).single();
-    if (existing) {
-      await sb.from('plannings').update({ [field]: value, updated_at: new Date().toISOString() }).eq('property_id', propId);
-    } else {
-      await sb.from('plannings').insert({ property_id: propId, [field]: value });
-    }
+    await sb.from('plannings').upsert(
+      { property_id: propId, [field]: value, updated_at: new Date().toISOString() },
+      { onConflict: 'property_id' }
+    );
   }
 
   // ─── LEGACY FALLBACK ───
@@ -546,8 +543,16 @@ const API = (function() {
       const today = new Date().toISOString().split('T')[0];
       const weekEnd = new Date(Date.now() + 7 * 86400000).toISOString().split('T')[0];
 
+      // Load all plannings in a single query instead of N+1
+      const propIds = props.map(p => p.id);
+      const { data: allPlannings } = propIds.length
+        ? await sb.from('plannings').select('*').in('property_id', propIds)
+        : { data: [] };
+      const planMap = {};
+      (allPlannings || []).forEach(p => { planMap[p.property_id] = p; });
+
       for (const prop of props) {
-        const p = await loadPlanning(prop.id);
+        const p = planMap[prop.id] || { cleanings: [] };
         const cleanings = (p.cleanings || []).map(c => ({ ...c, propertyId: prop.id, propertyName: prop.name }));
         allCleanings.push(...cleanings);
       }

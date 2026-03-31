@@ -2,7 +2,7 @@
 <html lang="fr" translate="no">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="theme-color" content="#1a1a2e">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -24,11 +24,11 @@
 <meta name="twitter:title" content="Lokizio">
 <meta name="twitter:description" content="Gestion automatique des menages pour locations Airbnb & Booking.">
 <meta name="google" content="notranslate">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js" integrity="sha384-HS/sUFZexXk91zcjy7zGIBg3tNDxgxF8YbcifixByxxtxQoF2o8GBBT9p6DdGlAR" crossorigin="anonymous"></script>
 <script src="supabase_config.js?v=13"></script>
 <script src="i18n.js?v=28"></script>
 <script src="ical_parser.js?v=14"></script>
-<script src="api_bridge.js?v=24"></script>
+<script src="api_bridge.js?v=25"></script>
 <!-- Lazy-loaded: Leaflet, Chart.js, jsPDF (loaded on demand to improve startup) -->
 <script>
 function lazyLoad(url, type) {
@@ -933,7 +933,7 @@ async function loadPDF() {
 <body>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;pointer-events:none;">v6.29</div>
+<div id="versionBadge" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;pointer-events:none;">v6.30</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -943,7 +943,7 @@ async function loadPDF() {
     <!-- Broom that sweeps -->
     <div id="splashBroom" style="position:absolute;top:50%;left:-60px;font-size:48px;transform:translateY(-50%) rotate(-30deg);opacity:0;transition:all 0.8s cubic-bezier(0.25,0.46,0.45,0.94);">✨</div>
   </div>
-  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v6.29</span></div>
+  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v6.30</span></div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie pour locations</div>
   <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou</div>
   <!-- Loading bar -->
@@ -1059,9 +1059,9 @@ async function loadPDF() {
     <button class="btnHelp" onclick="showHelp()" title="Aide" style="display:none;">?</button>
     <button class="btnHelp" onclick="toggleTheme()" title="Theme" id="themeBtn" style="display:none;">&#9788;</button>
     <!-- Visible buttons -->
-    <button class="btnHelp" onclick="showInviteModal()" title="Inviter" style="font-size:13px;">&#128279;</button>
-    <button class="btnHelp" onclick="showAccountModal()" title="Mon compte" style="font-size:13px;">&#9881;</button>
-    <button class="btnHelp" onclick="customConfirm(t('auth.logout.confirm')||'Se deconnecter ?','Deconnexion').then(ok=>{if(ok)authLogout()})" data-i18n-attr="title" data-i18n="header.logout" title="Deconnexion" style="font-size:13px;">&#9211;</button>
+    <button class="btnHelp" onclick="showInviteModal()" title="Inviter" aria-label="Inviter un membre" style="font-size:13px;">&#128279;</button>
+    <button class="btnHelp" onclick="showAccountModal()" title="Mon compte" aria-label="Mon compte" style="font-size:13px;">&#9881;</button>
+    <button class="btnHelp" onclick="customConfirm(t('auth.logout.confirm')||'Se deconnecter ?','Deconnexion').then(ok=>{if(ok)authLogout()})" data-i18n-attr="title" data-i18n="header.logout" title="Deconnexion" aria-label="Deconnexion" style="font-size:13px;">&#9211;</button>
   </div>
 </div>
 
@@ -2007,7 +2007,7 @@ let currentFilter = '';
 let vacPopupIdx = -1;
 let currentTab = 'list';
 let calYear, calMonth;
-let history = [];
+let cleaningHistory = [];
 let reservations = [];
 let linens = []; // Jeux de linge: [{id, name, status:'available'|'used'|'pressing', lastUsed:'', history:[]}]
 
@@ -2618,7 +2618,7 @@ async function loadActiveProperty() {
     readonlyToken: prop.readonlyToken || '',
   };
   transmittedDates = await API.load_transmitted();
-  history = await API.load_history();
+  cleaningHistory = await API.load_history();
   linens = await API.load_linens();
   const nameInput = document.getElementById('propNameInput');
   if (nameInput) nameInput.value = prop.name || '';
@@ -4632,15 +4632,16 @@ async function authLogin() {
   const errEl = document.getElementById('authError');
   errEl.textContent = ''; errEl.style.color = '#e94560';
   if (!email || !pass) { errEl.textContent = t('auth.fill.all'); return; }
-  const { error } = await sb.auth.signInWithPassword({ email, password: pass });
-  if (error) { errEl.textContent = error.message === 'Invalid login credentials' ? t('auth.login.invalid') : error.message; return; }
-  // Remember credentials
-  if (remember) {
-    localStorage.setItem('mm_remember_email', email);
-  } else {
-    localStorage.removeItem('mm_remember_email');
+  try {
+    const { error } = await sb.auth.signInWithPassword({ email, password: pass });
+    if (error) { errEl.textContent = error.message === 'Invalid login credentials' ? t('auth.login.invalid') : error.message; return; }
+    if (remember) { localStorage.setItem('mm_remember_email', email); }
+    else { localStorage.removeItem('mm_remember_email'); }
+    checkAuth();
+  } catch (e) {
+    console.error('Login error:', e);
+    errEl.textContent = 'Erreur de connexion. Verifiez votre reseau.';
   }
-  checkAuth();
 }
 async function authRegister() {
   const email = document.getElementById('authEmail').value.trim();
@@ -4712,10 +4713,15 @@ async function forgotPassword() {
   const errEl = document.getElementById('authError');
   if (!email) { errEl.textContent = t('auth.fill.all'); return; }
   errEl.textContent = '';
-  const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo: window.location.origin + window.location.pathname });
-  if (error) { errEl.textContent = error.message; return; }
-  errEl.style.color = '#34d399';
-  errEl.textContent = t('auth.reset.sent') || 'Email de reinitialisation envoye ! Verifiez votre boite mail.';
+  try {
+    const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo: window.location.origin + window.location.pathname });
+    if (error) { errEl.textContent = error.message; return; }
+    errEl.style.color = '#34d399';
+    errEl.textContent = t('auth.reset.sent') || 'Email de reinitialisation envoye ! Verifiez votre boite mail.';
+  } catch (e) {
+    console.error('Reset password error:', e);
+    errEl.textContent = 'Erreur de connexion. Verifiez votre reseau.';
+  }
 }
 async function authLogout() {
   await sb.auth.signOut();
@@ -8623,7 +8629,7 @@ function buildMonthlyData() {
   const MONTH_NAMES=['Jan','Fev','Mar','Avr','Mai','Juin','Juil','Aout','Sep','Oct','Nov','Dec'];
   const allEntries = [];
   // From history
-  history.forEach(h => {
+  cleaningHistory.forEach(h => {
     const d = h.cleaningDate || h.date;
     if(d && d.length >= 7) allEntries.push({month: d.substring(0,7), provider: h.provider});
   });
@@ -8642,7 +8648,7 @@ function buildMonthlyData() {
   // Actually dedup by full cleaningDate+provider
   const seenFull = new Set();
   const allFull = [];
-  history.forEach(h => {
+  cleaningHistory.forEach(h => {
     const d = h.cleaningDate || h.date;
     if(!d) return;
     const key = d + '|' + h.provider;
@@ -8918,18 +8924,18 @@ function hideCalTooltip() {
 /* ── History ── */
 async function archivePastCleanings() {
   const today=new Date().toISOString().substring(0,10);const saved=await API.load_planning();if(!saved||!saved.length)return;let changed=false;
-  saved.forEach(c=>{const d=c.cleaningDate||c.date;if(d<today){const exists=history.some(h=>h.cleaningDate===d&&h.provider===c.provider);if(!exists){history.push({cleaningDate:d,cleaningDateFR:fmtDate(d),date:c.date,dateFR:fmtDate(c.date),checkoutDate:c.checkoutDate,checkoutDateFR:fmtDate(c.checkoutDate),provider:c.provider,source:c.source,dayName:c.dayName,archivedOn:today});changed=true;}}});
-  if(changed){history.sort((a,b)=>b.cleaningDate.localeCompare(a.cleaningDate));await API.save_history(history);}
+  saved.forEach(c=>{const d=c.cleaningDate||c.date;if(d<today){const exists=cleaningHistory.some(h=>h.cleaningDate===d&&h.provider===c.provider);if(!exists){cleaningHistory.push({cleaningDate:d,cleaningDateFR:fmtDate(d),date:c.date,dateFR:fmtDate(c.date),checkoutDate:c.checkoutDate,checkoutDateFR:fmtDate(c.checkoutDate),provider:c.provider,source:c.source,dayName:c.dayName,archivedOn:today});changed=true;}}});
+  if(changed){cleaningHistory.sort((a,b)=>b.cleaningDate.localeCompare(a.cleaningDate));await API.save_history(cleaningHistory);}
 }
 function renderHistory() {
   const clearBtn=document.getElementById('clearHistBtn');
-  if(!history.length){document.getElementById('historyDiv').innerHTML='<div class="emptyState">Aucun historique disponible.</div>';if(clearBtn)clearBtn.style.display='none';return;}
+  if(!cleaningHistory.length){document.getElementById('historyDiv').innerHTML='<div class="emptyState">Aucun historique disponible.</div>';if(clearBtn)clearBtn.style.display='none';return;}
   if(clearBtn)clearBtn.style.display='';
   let html='<table class="histTable"><tr><th>#</th><th>Date menage</th><th>Arrivee</th><th>Depart</th><th>Prestataire</th><th>Source</th></tr>';
-  history.forEach((h,i)=>{const color=getProvColor(h.provider);html+=`<tr><td style="color:var(--text3)">${i+1}</td><td style="font-weight:600;color:var(--accent);">${h.cleaningDateFR||fmtDate(h.cleaningDate)}</td><td>${h.dayName||''} ${h.dateFR||fmtDate(h.date)}</td><td style="color:var(--text2)">${h.checkoutDateFR||fmtDate(h.checkoutDate)}</td><td><span class="provDot" style="background:${color}"></span>${esc(h.provider)}</td><td><span class="srcBadge ${getSourceClass(h.source)}">${esc(h.source)}</span></td></tr>`;});
+  cleaningHistory.forEach((h,i)=>{const color=getProvColor(h.provider);html+=`<tr><td style="color:var(--text3)">${i+1}</td><td style="font-weight:600;color:var(--accent);">${h.cleaningDateFR||fmtDate(h.cleaningDate)}</td><td>${h.dayName||''} ${h.dateFR||fmtDate(h.date)}</td><td style="color:var(--text2)">${h.checkoutDateFR||fmtDate(h.checkoutDate)}</td><td><span class="provDot" style="background:${color}"></span>${esc(h.provider)}</td><td><span class="srcBadge ${getSourceClass(h.source)}">${esc(h.source)}</span></td></tr>`;});
   html+='</table>';document.getElementById('historyDiv').innerHTML=html;
 }
-async function clearHistory(){history=[];await API.save_history([]);renderHistory();showToast('Historique efface');}
+async function clearHistory(){cleaningHistory=[];await API.save_history([]);renderHistory();showToast('Historique efface');}
 
 /* ── Utilities ── */
 function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
@@ -9948,10 +9954,10 @@ async function loadAdminPrestations(forceReload) {
     const { data: svcData } = await sb.from('service_requests').select('*').eq('org_id', org.id).order('created_at', { ascending: false }).limit(100);
     svcRequests = svcData || [];
 
-    // Load validations
+    // Load all validations in a single query instead of N+1
     validations = {};
-    for (const prop of props) {
-      const { data: vals } = await sb.from('cleaning_validations').select('*').eq('property_id', prop.id);
+    if (propIds.length) {
+      const { data: vals } = await sb.from('cleaning_validations').select('*').in('property_id', propIds);
       if (vals) vals.forEach(v => { validations[v.property_id + '_' + v.cleaning_date + '_' + v.provider_name] = v; });
     }
 

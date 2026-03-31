@@ -6,7 +6,6 @@
 <meta name="theme-color" content="#1a1a2e">
 <title>Planning - Lokizio</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<!-- No SDK needed - direct REST API calls -->
 <style>
   :root { --bg:#0f0f1a; --surface:#1a1a2e; --surface2:#16213e; --border:rgba(255,255,255,0.06); --border2:rgba(255,255,255,0.1); --accent:#e94560; --text:#f0f0f5; --text2:#9ca3af; --text3:#6b7280; --success:#34d399; }
   * { box-sizing:border-box; margin:0; padding:0; }
@@ -35,7 +34,7 @@
     <h1>Lokizio</h1>
     <div class="sub" id="subtitle">Chargement...</div>
   </div>
-  <div id="pushBanner" style="display:none;background:linear-gradient(135deg,#6c63ff,#5a54e0);padding:14px 18px;border-radius:12px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;gap:10px;">
+  <div id="pushBanner" style="display:none;background:linear-gradient(135deg,#6c63ff,#5a54e0);padding:14px 18px;border-radius:12px;margin-bottom:16px;align-items:center;justify-content:space-between;gap:10px;">
     <div style="color:#fff;font-size:13px;">&#128276; Activez les notifications pour etre prevenu de vos prochains menages</div>
     <button onclick="subscribePush()" style="background:#fff;color:#6c63ff;border:none;padding:8px 16px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;">Activer</button>
   </div>
@@ -55,6 +54,10 @@ function fmtDate(iso) {
   if (!iso) return '';
   const [y,m,d] = iso.split('-');
   return `${d}/${m}/${y}`;
+}
+function isValidPhotoUrl(url) {
+  if (!url) return false;
+  return url.startsWith('data:image/') || (url.startsWith('https://') && /\.(jpg|jpeg|png|gif|webp)(\?|$)/i.test(url));
 }
 
 let validations = {};
@@ -82,76 +85,48 @@ async function subscribePush() {
     await navigator.serviceWorker.ready;
     const perm = await Notification.requestPermission();
     if (perm !== 'granted') { alert('Permission refusee.'); return; }
-
     const sub = await reg.pushManager.subscribe({
       userVisibleOnly: true,
       applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
     });
     const subJson = sub.toJSON();
-
-    // Save to Supabase
     await fetch(`${SUPABASE_URL_VIEW}/rest/v1/push_subscriptions`, {
       method: 'POST',
-      headers: {
-        'apikey': ANON_KEY,
-        'Authorization': 'Bearer ' + ANON_KEY,
-        'Content-Type': 'application/json',
-        'Prefer': 'return=minimal',
-      },
-      body: JSON.stringify({
-        provider_token: token,
-        endpoint: subJson.endpoint,
-        p256dh: subJson.keys.p256dh,
-        auth: subJson.keys.auth,
-      })
+      headers: { 'apikey': ANON_KEY, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+      body: JSON.stringify({ provider_token: token, endpoint: subJson.endpoint, p256dh: subJson.keys.p256dh, auth: subJson.keys.auth })
     });
-
-    document.getElementById('pushBanner').innerHTML = '<div style="color:#fff;font-size:13px;text-align:center;width:100%;">&#9989; Notifications activees ! Vous serez prevenu de vos prochains menages.</div>';
+    document.getElementById('pushBanner').innerHTML = '<div style="color:#fff;font-size:13px;text-align:center;width:100%;">&#9989; Notifications activees !</div>';
     setTimeout(() => { document.getElementById('pushBanner').style.display = 'none'; }, 5000);
   } catch (e) {
     console.error('Push subscribe error:', e);
-    alert('Erreur: ' + e.message);
+    alert('Erreur lors de l\'activation des notifications.');
   }
 }
 
 function showPushBanner() {
   if (!('PushManager' in window)) return;
-  if (Notification.permission === 'granted') {
-    // Already subscribed, hide banner
-    document.getElementById('pushBanner').style.display = 'none';
-    return;
-  }
-  if (Notification.permission === 'denied') {
-    document.getElementById('pushBanner').style.display = 'none';
-    return;
-  }
+  if (Notification.permission !== 'default') { document.getElementById('pushBanner').style.display = 'none'; return; }
   document.getElementById('pushBanner').style.display = 'flex';
 }
 
 async function loadValidations(propId) {
   try {
-    const resp = await fetch(`${SUPABASE_URL_VIEW}/rest/v1/cleaning_validations?property_id=eq.${propId}&select=*`, {
+    const resp = await fetch(`${SUPABASE_URL_VIEW}/rest/v1/cleaning_validations?property_id=eq.${encodeURIComponent(propId)}&select=*`, {
       headers: { 'apikey': ANON_KEY }
     });
     const data = await resp.json();
     if (Array.isArray(data)) {
-      data.forEach(v => {
-        validations[v.cleaning_date + '_' + v.provider_name] = v;
-      });
+      data.forEach(v => { validations[v.cleaning_date + '_' + v.provider_name] = v; });
     }
   } catch (e) { console.error('loadValidations:', e); }
 }
 
 async function validateCleaning(date, provider, status) {
+  if (!matchedPropertyId) return;
   try {
     const resp = await fetch(`${SUPABASE_URL_VIEW}/rest/v1/cleaning_validations`, {
       method: 'POST',
-      headers: {
-        'apikey': ANON_KEY,
-        'Authorization': 'Bearer ' + ANON_KEY,
-        'Content-Type': 'application/json',
-        'Prefer': 'return=representation',
-      },
+      headers: { 'apikey': ANON_KEY, 'Content-Type': 'application/json', 'Prefer': 'return=representation' },
       body: JSON.stringify({
         property_id: matchedPropertyId,
         cleaning_date: date,
@@ -163,28 +138,28 @@ async function validateCleaning(date, provider, status) {
     const data = await resp.json();
     if (data && !data.error) {
       validations[date + '_' + provider] = data[0] || data;
-      loadData(); // Refresh
+      loadData();
     }
-  } catch (e) { console.error('validateCleaning:', e); alert('Erreur: ' + e.message); }
+  } catch (e) { console.error('validateCleaning:', e); }
 }
 
 async function uploadPhotos(input, date, provider) {
-  // Convert to base64 and store in validation
   const files = input.files;
   if (!files.length) return;
   const photos = [];
   for (const file of files) {
+    if (!file.type.startsWith('image/')) continue;
+    if (file.size > 5 * 1024 * 1024) continue; // Max 5MB
     const reader = new FileReader();
     const b64 = await new Promise(resolve => { reader.onload = e => resolve(e.target.result); reader.readAsDataURL(file); });
     photos.push(b64);
   }
-  // Update validation with photos
   const key = date + '_' + provider;
   const existing = validations[key];
   if (existing && existing.id) {
-    await fetch(`${SUPABASE_URL_VIEW}/rest/v1/cleaning_validations?id=eq.${existing.id}`, {
+    await fetch(`${SUPABASE_URL_VIEW}/rest/v1/cleaning_validations?id=eq.${encodeURIComponent(existing.id)}`, {
       method: 'PATCH',
-      headers: { 'apikey': ANON_KEY, 'Authorization': 'Bearer ' + ANON_KEY, 'Content-Type': 'application/json' },
+      headers: { 'apikey': ANON_KEY, 'Content-Type': 'application/json' },
       body: JSON.stringify({ photos: [...(existing.photos||[]), ...photos] }),
     });
   }
@@ -207,13 +182,13 @@ async function loadData() {
     let matchedProp = null;
     let matchedPlanning = [];
 
-    // Phase 2: Search in properties table by token (secure - only returns matching property)
+    // SECURE: Query by token directly — only returns matching property
     if (readonlyToken) {
       const resp = await fetch(`${SUPABASE_URL_VIEW}/rest/v1/properties?readonly_token=eq.${encodeURIComponent(readonlyToken)}&select=id,name,providers,checklist,plannings(cleanings,transmitted)`, {
         headers: { 'apikey': ANON_KEY }
       });
       const props = await resp.json();
-      if (props && props.length > 0) {
+      if (Array.isArray(props) && props.length > 0) {
         const p = props[0];
         found = true;
         matchedProp = { id: p.id, name: p.name, providers: p.providers || [], checklist: p.checklist || [] };
@@ -222,65 +197,23 @@ async function loadData() {
     }
 
     if (providerToken && !found) {
-      // Search all properties for this provider token
-      const resp = await fetch(`${SUPABASE_URL_VIEW}/rest/v1/properties?select=id,name,providers,checklist,plannings(cleanings)`, {
+      // SECURE: Use Edge Function to find property by provider token server-side
+      // Fallback: query properties that contain this token via RPC or filter
+      // For now, query with providers filter containing the token
+      const resp = await fetch(`${SUPABASE_URL_VIEW}/rest/v1/properties?providers=cs.[{"token":"${encodeURIComponent(providerToken)}"}]&select=id,name,providers,checklist,plannings(cleanings)`, {
         headers: { 'apikey': ANON_KEY }
       });
-      const allProps = await resp.json();
-      if (Array.isArray(allProps)) {
-        for (const p of allProps) {
-          const prov = (p.providers || []).find(pr => pr.token === providerToken);
-          if (prov) {
-            found = true;
-            matchedProp = { id: p.id, name: p.name, providers: p.providers || [], checklist: p.checklist || [] };
-            providerName = prov.name;
-            matchedPlanning = (p.plannings && p.plannings[0]) ? (p.plannings[0].cleanings || []) : [];
-            break;
-          }
+      const props = await resp.json();
+      if (Array.isArray(props) && props.length > 0) {
+        const p = props[0];
+        const prov = (p.providers || []).find(pr => pr.token === providerToken);
+        if (prov) {
+          found = true;
+          matchedProp = { id: p.id, name: p.name, providers: p.providers || [], checklist: p.checklist || [] };
+          providerName = prov.name;
+          matchedPlanning = (p.plannings && p.plannings[0]) ? (p.plannings[0].cleanings || []) : [];
         }
       }
-    }
-
-    // Fallback: legacy user_data table
-    if (!found) {
-      const resp = await fetch(`${SUPABASE_URL_VIEW}/rest/v1/user_data?select=config,planning`, {
-        headers: { 'apikey': ANON_KEY }
-      });
-      const allData = await resp.json();
-      for (const row of allData) {
-        const cfg = row.config || {};
-        const props = cfg.properties || [];
-        const planningData = row.planning || {};
-        for (const prop of props) {
-          if (readonlyToken && prop.readonlyToken === readonlyToken) {
-            found = true; matchedProp = prop;
-            matchedPlanning = Array.isArray(planningData) ? planningData : (planningData[prop.id] || []);
-            break;
-          }
-          if (providerToken) {
-            const prov = (prop.providers || []).find(p => p.token === providerToken);
-            if (prov) {
-              found = true; matchedProp = prop; providerName = prov.name;
-              matchedPlanning = Array.isArray(planningData) ? planningData : (planningData[prop.id] || []);
-              break;
-            }
-          }
-        }
-        if (!found && !props.length) {
-          if (readonlyToken && cfg.readonlyToken === readonlyToken) {
-            found = true; matchedPlanning = Array.isArray(row.planning) ? row.planning : [];
-            matchedProp = { name: cfg.property || 'Planning', providers: cfg.providers || [] };
-          }
-          if (providerToken) {
-            const prov = (cfg.providers || []).find(p => p.token === providerToken);
-            if (prov) {
-              found = true; providerName = prov.name;
-              matchedPlanning = Array.isArray(row.planning) ? row.planning : [];
-            matchedProp = { name: cfg.property || 'Planning', providers: cfg.providers || [] };
-          }
-        }
-      }
-      if (found) break;
     }
 
     if (!found) {
@@ -290,24 +223,19 @@ async function loadData() {
     }
 
     const property = (matchedProp && matchedProp.name) || 'Planning';
-    // Load validations for this property
     if (matchedProp && matchedProp.id) { matchedPropertyId = matchedProp.id; await loadValidations(matchedProp.id); }
 
-    // Filter for provider view
     let displayCleanings = matchedPlanning;
     if (providerName) {
       displayCleanings = matchedPlanning.filter(c => c.provider === providerName);
-      subtitle.textContent = `Planning de ${esc(providerName)} - ${esc(property)}`;
-      document.title = `Planning ${providerName} - Lokizio`;
+      subtitle.textContent = 'Planning de ' + esc(providerName) + ' - ' + esc(property);
+      document.title = 'Planning ' + providerName + ' - Lokizio';
     } else {
-      subtitle.textContent = `Planning complet - ${esc(property)}`;
-      document.title = `Planning ${property} - Lokizio`;
+      subtitle.textContent = 'Planning complet - ' + esc(property);
+      document.title = 'Planning ' + property + ' - Lokizio';
     }
 
-    // Sort by date
     displayCleanings.sort((a, b) => (a.date || '').localeCompare(b.date || ''));
-
-    // Filter future only
     const today = new Date().toISOString().split('T')[0];
     displayCleanings = displayCleanings.filter(c => (c.date || '') >= today);
 
@@ -316,15 +244,13 @@ async function loadData() {
       return;
     }
 
-    // Get checklist from property
     const checklist = (matchedProp && matchedProp.checklist) || [];
+    let html = '<div class="info">' + displayCleanings.length + ' menage(s) a venir</div>';
 
-    let html = `<div class="info">${displayCleanings.length} menage(s) a venir</div>`;
     for (const c of displayCleanings) {
       const source = (c.source || '').toLowerCase();
       const badgeClass = source.includes('airbnb') ? 'airbnb' : source.includes('booking') ? 'booking' : '';
       const isProvider = !!providerToken;
-      const today = new Date().toISOString().split('T')[0];
       const isToday = (c.cleaningDate || c.date) === today;
       const isPast = (c.cleaningDate || c.date) < today;
       const cleaningId = (c.cleaningDate || c.date) + '_' + (c.provider || '');
@@ -332,56 +258,63 @@ async function loadData() {
       const statusIcon = validation ? (validation.status === 'done' ? '&#9989;' : validation.status === 'in_progress' ? '&#9203;' : '&#9898;') : '&#9898;';
       const statusText = validation ? (validation.status === 'done' ? 'Termine' : validation.status === 'in_progress' ? 'En cours' : 'A faire') : 'A faire';
       const statusColor = validation && validation.status === 'done' ? '#34d399' : validation && validation.status === 'in_progress' ? '#f59e0b' : 'var(--text3)';
+      const escDate = esc(c.cleaningDate || c.date || '');
+      const escProv = esc(c.provider || '');
 
-      html += `
-        <div class="card" style="flex-direction:column;align-items:stretch;${isToday ? 'border-left:3px solid #e94560;' : ''}">
-          <div style="display:flex;justify-content:space-between;align-items:center;">
-            <div>
-              <div class="date">${esc(c.dayName || '')} ${fmtDate(c.date)}</div>
-              <div class="details">
-                <span class="badge ${badgeClass}">${esc(c.source || '')}</span>
-                Arrivee: ${fmtDate(c.date)} &rarr; Depart: ${fmtDate(c.checkoutDate)}
-              </div>
-            </div>
-            <div style="text-align:right;">
-              <div class="provider">${esc(c.provider || '?')}</div>
-              <div style="font-size:11px;color:${statusColor};margin-top:4px;">${statusIcon} ${statusText}</div>
-            </div>
-          </div>
-          ${isProvider && !isPast && (!validation || validation.status !== 'done') ? `
-            <div style="display:flex;gap:8px;margin-top:10px;padding-top:10px;border-top:1px solid var(--border);">
-              <button onclick="validateCleaning('${c.cleaningDate||c.date}','${esc(c.provider||'')}','in_progress')" style="flex:1;padding:10px;background:#f59e0b;color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;">&#128692; En route</button>
-              <button onclick="validateCleaning('${c.cleaningDate||c.date}','${esc(c.provider||'')}','done')" style="flex:1;padding:10px;background:#34d399;color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;">&#9989; Termine</button>
-            </div>
-            <div style="margin-top:8px;">
-              <input type="file" accept="image/*" multiple id="photos_${cleaningId.replace(/[^a-zA-Z0-9]/g,'_')}" style="font-size:11px;color:var(--text3);" onchange="uploadPhotos(this,'${c.cleaningDate||c.date}','${esc(c.provider||'')}')">
-            </div>
-          ` : ''}
-          ${validation && validation.photos && validation.photos.length ? `
-            <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;">
-              ${validation.photos.map(p => `<img src="${p}" style="width:60px;height:60px;object-fit:cover;border-radius:6px;border:1px solid var(--border);">`).join('')}
-            </div>
-          ` : ''}
-          ${isProvider && checklist.length > 0 && isToday ? `
-            <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);">
-              <div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;margin-bottom:6px;">Checklist</div>
-              ${checklist.map((item, ci) => {
-                const checkKey = cleaningId + '_check_' + ci;
-                const checked = localStorage.getItem(checkKey) === '1';
-                return `<label style="display:flex;align-items:center;gap:8px;padding:6px 0;cursor:pointer;font-size:13px;color:${checked?'var(--success)':'var(--text)'};">
-                  <input type="checkbox" ${checked?'checked':''} onchange="localStorage.setItem('${checkKey}',this.checked?'1':'0');this.parentElement.style.color=this.checked?'var(--success)':'var(--text)';" style="width:18px;height:18px;accent-color:var(--success);">
-                  <span style="${checked?'text-decoration:line-through;opacity:0.6;':''}}">${esc(typeof item === 'string' ? item : (item.text || item.name || ''))}</span>
-                </label>`;
-              }).join('')}
-              <div style="margin-top:6px;font-size:11px;color:var(--text3);" id="checkProgress_${cleaningId.replace(/[^a-zA-Z0-9]/g,'_')}"></div>
-            </div>
-          ` : ''}
-        </div>`;
+      html += '<div class="card" style="flex-direction:column;align-items:stretch;' + (isToday ? 'border-left:3px solid #e94560;' : '') + '">';
+      html += '<div style="display:flex;justify-content:space-between;align-items:center;">';
+      html += '<div>';
+      html += '<div class="date">' + esc(c.dayName || '') + ' ' + fmtDate(c.date) + '</div>';
+      html += '<div class="details"><span class="badge ' + badgeClass + '">' + esc(c.source || '') + '</span> Arrivee: ' + fmtDate(c.date) + ' &rarr; Depart: ' + fmtDate(c.checkoutDate) + '</div>';
+      html += '</div>';
+      html += '<div style="text-align:right;">';
+      html += '<div class="provider">' + escProv + '</div>';
+      html += '<div style="font-size:11px;color:' + statusColor + ';margin-top:4px;">' + statusIcon + ' ' + statusText + '</div>';
+      html += '</div></div>';
+
+      if (isProvider && !isPast && (!validation || validation.status !== 'done')) {
+        html += '<div style="display:flex;gap:8px;margin-top:10px;padding-top:10px;border-top:1px solid var(--border);">';
+        html += '<button onclick="validateCleaning(\'' + escDate + '\',\'' + escProv + '\',\'in_progress\')" style="flex:1;padding:10px;background:#f59e0b;color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;">&#128692; En route</button>';
+        html += '<button onclick="validateCleaning(\'' + escDate + '\',\'' + escProv + '\',\'done\')" style="flex:1;padding:10px;background:#34d399;color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;">&#9989; Termine</button>';
+        html += '</div>';
+        html += '<div style="margin-top:8px;"><input type="file" accept="image/*" multiple style="font-size:11px;color:var(--text3);" onchange="uploadPhotos(this,\'' + escDate + '\',\'' + escProv + '\')"></div>';
+      }
+
+      // Photos — validated URLs only
+      if (validation && validation.photos && validation.photos.length) {
+        html += '<div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;">';
+        validation.photos.forEach(function(p) {
+          if (isValidPhotoUrl(p)) {
+            html += '<img src="' + esc(p) + '" style="width:60px;height:60px;object-fit:cover;border-radius:6px;border:1px solid var(--border);">';
+          }
+        });
+        html += '</div>';
+      }
+
+      // Checklist
+      if (isProvider && checklist.length > 0 && isToday) {
+        const safeCleaningId = cleaningId.replace(/[^a-zA-Z0-9]/g, '_');
+        html += '<div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);">';
+        html += '<div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;margin-bottom:6px;">Checklist</div>';
+        checklist.forEach(function(item, ci) {
+          const checkKey = safeCleaningId + '_check_' + ci;
+          const checked = localStorage.getItem(checkKey) === '1';
+          const itemText = esc(typeof item === 'string' ? item : (item.text || item.name || ''));
+          html += '<label style="display:flex;align-items:center;gap:8px;padding:6px 0;cursor:pointer;font-size:13px;color:' + (checked ? 'var(--success)' : 'var(--text)') + ';">';
+          html += '<input type="checkbox" ' + (checked ? 'checked' : '') + ' onchange="localStorage.setItem(\'' + checkKey + '\',this.checked?\'1\':\'0\');this.parentElement.style.color=this.checked?\'var(--success)\':\'var(--text)\';" style="width:18px;height:18px;accent-color:var(--success);">';
+          html += '<span style="' + (checked ? 'text-decoration:line-through;opacity:0.6;' : '') + '">' + itemText + '</span>';
+          html += '</label>';
+        });
+        html += '</div>';
+      }
+
+      html += '</div>'; // card
     }
     content.innerHTML = html;
 
   } catch (e) {
-    content.innerHTML = `<div class="error">Erreur: ${e.message}</div>`;
+    console.error('loadData error:', e);
+    content.innerHTML = '<div class="error">Erreur de chargement. Veuillez reessayer.</div>';
     subtitle.textContent = 'Erreur';
   }
 }
