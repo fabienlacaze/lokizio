@@ -961,7 +961,7 @@ async function loadPDF() {
 <body>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v6.69</div>
+<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v6.70</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -971,7 +971,7 @@ async function loadPDF() {
     <!-- Broom that sweeps -->
     <div id="splashBroom" style="position:absolute;top:50%;left:-60px;font-size:48px;transform:translateY(-50%) rotate(-30deg);opacity:0;transition:all 0.8s cubic-bezier(0.25,0.46,0.45,0.94);">✨</div>
   </div>
-  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v6.69</span></div>
+  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v6.70</span></div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie pour locations</div>
   <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou</div>
   <!-- Loading bar -->
@@ -10730,15 +10730,17 @@ function showCancelModal(requestId, dateStr, svcLabel, price) {
   if (penalty.daysUntil >= 0) {
     html += '<div style="font-size:12px;color:var(--text3);">Dans ' + penalty.daysUntil + ' jour' + (penalty.daysUntil > 1 ? 's' : '') + '</div>';
   }
+  if (price > 0) html += '<div style="font-size:12px;color:var(--text3);">Prix de la prestation : <b style="color:var(--text);">' + price.toFixed(2) + '€</b></div>';
   html += '</div>';
-  // Cancellation policy
+  // Cancellation policy with all prices
   html += '<div style="font-size:12px;font-weight:600;color:var(--text);margin-bottom:8px;">Conditions d\'annulation :</div>';
   html += '<div style="font-size:11px;color:var(--text3);line-height:1.8;margin-bottom:12px;">';
   CANCEL_POLICY.forEach(rule => {
     const active = penalty.percent === rule.percent;
-    html += '<div style="' + (active ? 'color:var(--accent);font-weight:700;' : '') + '">';
-    html += (active ? '&#9654; ' : '&nbsp;&nbsp; ') + rule.label;
-    if (active && price > 0) html += ' = <b>' + penaltyAmount.toFixed(2) + '€</b>';
+    const ruleAmount = price > 0 ? Math.round(price * rule.percent / 100 * 100) / 100 : 0;
+    html += '<div style="display:flex;justify-content:space-between;padding:2px 0;' + (active ? 'color:var(--accent);font-weight:700;' : '') + '">';
+    html += '<span>' + (active ? '&#9654; ' : '&nbsp;&nbsp; ') + rule.label + '</span>';
+    if (price > 0) html += '<span style="' + (active ? 'color:var(--accent);' : 'color:var(--text3);') + '">' + (ruleAmount > 0 ? ruleAmount.toFixed(2) + '€' : 'Gratuit') + '</span>';
     html += '</div>';
   });
   html += '</div>';
@@ -10756,7 +10758,11 @@ function showCancelModal(requestId, dateStr, svcLabel, price) {
   }
   html += '<div style="display:flex;gap:8px;">';
   html += '<button class="btn btnOutline" style="flex:1;padding:12px;" onclick="closeMsg()">Retour</button>';
-  html += '<button class="btn" style="flex:1;padding:12px;background:#ef4444;color:#fff;border:none;font-weight:700;" onclick="confirmCancelPrestation(\'' + requestId + '\',' + penalty.percent + ',' + penaltyAmount + ')">Confirmer l\'annulation</button>';
+  if (requestId) {
+    html += '<button class="btn" style="flex:1;padding:12px;background:#ef4444;color:#fff;border:none;font-weight:700;" onclick="confirmCancelPrestation(\'' + requestId + '\',' + penalty.percent + ',' + penaltyAmount + ')">Confirmer l\'annulation</button>';
+  } else {
+    html += '<button class="btn" style="flex:1;padding:12px;background:var(--text3);color:#fff;border:none;font-weight:700;" disabled>Annulation non disponible</button>';
+  }
   html += '</div></div>';
   showMsg(html, true);
 }
