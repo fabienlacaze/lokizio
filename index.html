@@ -933,7 +933,7 @@ async function loadPDF() {
 <body>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;pointer-events:none;">v6.53</div>
+<div id="versionBadge" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;pointer-events:none;">v6.54</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -943,7 +943,7 @@ async function loadPDF() {
     <!-- Broom that sweeps -->
     <div id="splashBroom" style="position:absolute;top:50%;left:-60px;font-size:48px;transform:translateY(-50%) rotate(-30deg);opacity:0;transition:all 0.8s cubic-bezier(0.25,0.46,0.45,0.94);">✨</div>
   </div>
-  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v6.53</span></div>
+  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v6.54</span></div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie pour locations</div>
   <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou</div>
   <!-- Loading bar -->
@@ -1098,40 +1098,7 @@ async function loadPDF() {
     <button onclick="switchMainTab('prestations');setTimeout(()=>{switchPrestSubTab('comm');setTimeout(()=>exportPDF(),200)},100)" style="display:flex;align-items:center;gap:6px;padding:10px 16px;background:var(--surface);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:12px;font-weight:600;cursor:pointer;transition:all 0.2s;" onmouseover="this.style.borderColor='#6c63ff'" onmouseout="this.style.borderColor='var(--border)'">📄 <span>PDF</span></button>
   </div>
 
-  <!-- ═══ DASHBOARD CONCIERGERIE ═══ -->
-  <div class="panel" id="panelDashboard" style="display:none;">
-    <div class="panelHeader" onclick="togglePanel('dashboard')">
-      <div class="panelLeft">
-        <div class="stepBadge" style="background:linear-gradient(135deg,#6c63ff,#e94560);">&#9733;</div>
-        <div class="panelTitle">&#128202; Dashboard</div>
-      </div>
-      <span class="panelChevron open" id="chevDashboard">&#9660;</span>
-    </div>
-    <div class="panelBody" id="bodyDashboard">
-      <div id="dashboardContent" style="padding:4px 0;">
-        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:16px;">
-          <div class="dashCard" id="dashToday" style="background:linear-gradient(135deg,#e94560,#c73e54);border-radius:12px;padding:16px;text-align:center;">
-            <div style="font-size:28px;font-weight:800;color:#fff;" id="dashTodayCount">0</div>
-            <div style="font-size:11px;color:rgba(255,255,255,0.8);" data-i18n="dash.today">Menages aujourd'hui</div>
-          </div>
-          <div class="dashCard" style="background:linear-gradient(135deg,#6c63ff,#5a54e0);border-radius:12px;padding:16px;text-align:center;">
-            <div style="font-size:28px;font-weight:800;color:#fff;" id="dashWeekCount">0</div>
-            <div style="font-size:11px;color:rgba(255,255,255,0.8);" data-i18n="dash.week">Cette semaine</div>
-          </div>
-          <div class="dashCard" style="background:linear-gradient(135deg,#0f3460,#16213e);border-radius:12px;padding:16px;text-align:center;">
-            <div style="font-size:28px;font-weight:800;color:#fff;" id="dashPropsCount">0</div>
-            <div style="font-size:11px;color:rgba(255,255,255,0.8);" data-i18n="dash.properties">Proprietes</div>
-          </div>
-          <div class="dashCard" style="background:linear-gradient(135deg,#34d399,#059669);border-radius:12px;padding:16px;text-align:center;">
-            <div style="font-size:28px;font-weight:800;color:#fff;" id="dashProvsCount">0</div>
-            <div style="font-size:11px;color:rgba(255,255,255,0.8);" data-i18n="dash.providers">Prestataires</div>
-          </div>
-        </div>
-        <div id="dashTodayList" style="margin-bottom:12px;"></div>
-        <div id="dashWeekList"></div>
-      </div>
-    </div>
-  </div>
+  <!-- Dashboard content rendered by renderDashboardContent() -->
 
   <div id="dashTodayCleanings" style="margin-top:16px;"></div>
   <div id="dashPendingRequests" style="margin-top:16px;"></div>
@@ -1252,19 +1219,6 @@ async function loadPDF() {
   </div>
 
   <!-- SUB-TAB: Details (planning table) -->
-  <div id="prestSubDetails" class="prestSubContent" style="display:none;">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
-      <div style="font-size:16px;font-weight:700;color:var(--text);">📄 Planning detaille</div>
-      <button class="btn btnSmall" onclick="generatePlanning()" style="padding:8px 14px;font-size:12px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);">🔄 Rafraichir</button>
-    </div>
-    <div id="detailFilterBar" class="filterBar" style="padding:4px 0 8px;"></div>
-    <div id="detailResultDiv" class="resultScroll">
-      <div class="emptyState">Cliquez sur Rafraichir pour afficher le planning</div>
-    </div>
-    <div id="detailSummaryDiv" class="summaryBox hidden"></div>
-    <div id="detailSummaryActions"></div>
-  </div>
-
   <!-- SUB-TAB: Calendrier -->
   <div id="prestSubCalendar" class="prestSubContent" style="display:none;">
     <div id="tabCalContent"><div class="calView" id="calView"></div></div>
@@ -1287,7 +1241,7 @@ async function loadPDF() {
       <!-- Premium: WhatsApp, PDF, Partage -->
       <div class="lbl" style="margin-bottom:8px;">Premium &#11088;</div>
       <div id="commPremiumZone" style="position:relative;">
-        <div id="commPremLock" style="display:none;position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(15,15,26,0.7);display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:var(--radius-sm);z-index:2;cursor:pointer;" onclick="showPremiumModal('WhatsApp, PDF et Partage sont reserves aux utilisateurs Premium')"><span style="font-size:28px;">&#128274;</span><span style="color:#fff;font-size:12px;font-weight:600;margin-top:6px;">Debloquer</span></div>
+        <div id="commPremLock" style="display:none;position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(15,15,26,0.7);flex-direction:column;align-items:center;justify-content:center;border-radius:var(--radius-sm);z-index:2;cursor:pointer;" onclick="showPremiumModal('WhatsApp, PDF et Partage sont reserves aux utilisateurs Premium')"><span style="font-size:28px;">&#128274;</span><span style="color:#fff;font-size:12px;font-weight:600;margin-top:6px;">Debloquer</span></div>
         <div id="commPremContent" style="">
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
             <button class="btn btnPrimary" onclick="showSendModal()" style="padding:14px;font-size:14px;background:linear-gradient(135deg,#6c63ff,#5a52d5);">&#128228; <span data-i18n="send.btn">Envoyer</span></button>
@@ -1949,6 +1903,24 @@ function toggleTheme(){const t=document.documentElement.getAttribute('data-theme
 (function(){const t=localStorage.getItem('mm_theme');if(t==='light'){document.documentElement.setAttribute('data-theme','light');}})();
 
 const COLORS = ['#3fb950','#58a6ff','#d29922','#f85149','#bc8cff','#79c0ff','#f778ba'];
+
+// ── Centralized Status Config (single source of truth) ──
+const STATUS_CONFIG = {
+  pending:            { color: '#f59e0b', label: 'En attente' },
+  assigned:           { color: '#8b5cf6', label: 'En attente de reponse' },
+  accepted:           { color: '#34d399', label: 'Accepte' },
+  in_progress:        { color: '#3b82f6', label: 'En cours' },
+  arrived:            { color: '#6c63ff', label: 'Sur place' },
+  departed:           { color: '#34d399', label: 'Parti' },
+  done:               { color: '#34d399', label: 'Termine' },
+  pending_validation: { color: '#f59e0b', label: 'A valider' },
+  sent:               { color: '#888',    label: 'Envoye' },
+  seen:               { color: '#6c63ff', label: 'Lu' },
+  refused:            { color: '#ef4444', label: 'Refuse' },
+  cancelled:          { color: '#ef4444', label: 'Annulee' },
+};
+function getStatusColor(s) { return (STATUS_CONFIG[s] || {}).color || '#666'; }
+function getStatusLabel(s) { return (STATUS_CONFIG[s] || {}).label || s || ''; }
 
 // ── Splash Changelog (update this with each significant version) ──
 const SPLASH_CHANGELOG = [
@@ -2680,10 +2652,8 @@ async function switchProperty(propId) {
 }
 
 async function loadDashboard() {
-  const panel = document.getElementById('panelDashboard');
-  if (!panel) return;
-  // Dashboard panel hidden — KPIs in header already show the same info
-  panel.style.display = 'none'; return;
+  // Legacy - replaced by renderDashboardContent()
+  return;
   try {
     const dash = await API.loadDashboard();
     if (!dash || !dash.properties.length) { panel.style.display = 'none'; return; }
@@ -5171,7 +5141,8 @@ async function updateInvoiceStatus(id, status) {
 }
 
 async function deleteInvoice(id) {
-  if (!confirm('Supprimer cette facture ?')) return;
+  const ok = await customConfirm('Supprimer cette facture ?', 'Supprimer');
+  if (!ok) return;
   await sb.from('invoices').delete().eq('id', id);
   showToast('Facture supprimee');
   loadInvoices();
@@ -8814,14 +8785,7 @@ function buildMonthlyData() {
     const d = c.cleaningDate || c.date;
     if(d && d.length >= 7) allEntries.push({month: d.substring(0,7), provider: c.provider});
   });
-  // Deduplicate (same date+provider appears in both history and cleanings)
-  const seen = new Set();
-  const unique = [];
-  allEntries.forEach(e => {
-    const key = e.month + '|' + e.provider;
-    // Use full date for dedup if possible, but month granularity is fine for counting
-  });
-  // Actually dedup by full cleaningDate+provider
+  // Dedup by full cleaningDate+provider
   const seenFull = new Set();
   const allFull = [];
   cleaningHistory.forEach(h => {
@@ -9687,7 +9651,7 @@ async function toggleMarketplaceVisibility(visible) {
       visible: visible,
       display_name: user.user_metadata?.display_name || user.email.split('@')[0],
       email: user.email,
-      role: currentRole || 'admin',
+      role: API.getRole() || 'admin',
       updated_at: new Date().toISOString()
     };
     const { error } = await sb
@@ -9716,7 +9680,7 @@ async function saveMarketplaceProfile() {
       visible: document.getElementById('mkVisibleToggle')?.checked || false,
       display_name: user.user_metadata?.display_name || user.email.split('@')[0],
       email: user.email,
-      role: currentRole || 'admin',
+      role: API.getRole() || 'admin',
       description: description,
       services: services,
       experience_years: experienceYears,
