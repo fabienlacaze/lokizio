@@ -933,7 +933,7 @@ async function loadPDF() {
 <body>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;pointer-events:none;">v6.51</div>
+<div id="versionBadge" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;pointer-events:none;">v6.52</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -943,7 +943,7 @@ async function loadPDF() {
     <!-- Broom that sweeps -->
     <div id="splashBroom" style="position:absolute;top:50%;left:-60px;font-size:48px;transform:translateY(-50%) rotate(-30deg);opacity:0;transition:all 0.8s cubic-bezier(0.25,0.46,0.45,0.94);">✨</div>
   </div>
-  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v6.51</span></div>
+  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v6.52</span></div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie pour locations</div>
   <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou</div>
   <!-- Loading bar -->
@@ -3268,7 +3268,7 @@ async function showProviderMode() {
 
   // Today's prestations summary
   const _sc = { done:'#34d399', departed:'#34d399', in_progress:'#3b82f6', arrived:'#6c63ff', assigned:'#8b5cf6', accepted:'#34d399', pending:'#f59e0b', pending_validation:'#f59e0b', refused:'#ef4444', cancelled:'#ef4444' };
-  const _sl = { done:'Termine', departed:'Parti', in_progress:'En cours', arrived:'Sur place', assigned:'Assigne', accepted:'Accepte', pending:'Attente', pending_validation:'Validation', refused:'Refuse', cancelled:'Annulee' };
+  const _sl = { done:'Termine', departed:'Parti', in_progress:'En cours', arrived:'Sur place', assigned:'Propose', accepted:'Accepte', pending:'Attente', pending_validation:'Validation', refused:'Refuse', cancelled:'Annulee' };
   const todayItems = unified.filter(u => u.date === today && !['done','cancelled','departed'].includes(u.status));
   html += '<div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:12px;">';
   html += '<div style="font-weight:700;font-size:14px;margin-bottom:10px;">&#128197; Aujourd\'hui — ' + todayItems.length + ' prestation(s)</div>';
@@ -3382,7 +3382,7 @@ async function showProviderMode() {
         const status = u.status;
         const statusIcons = { done: '&#9989;', departed: '&#128682;', in_progress: '&#129529;', arrived: '&#127968;', assigned: '&#128228;', accepted: '&#9989;', seen: '&#128065;', sent: '&#9993;', refused: '&#10060;', pending: '&#9898;' };
         const statusIcon = statusIcons[status] || '&#9898;';
-        const statusLabels = { done: 'Termine', departed: 'Parti', in_progress: 'Menage en cours', arrived: 'Sur place', assigned: 'Assigne', accepted: 'Accepte &#10003;&#10003;', seen: 'Lu &#10003;', sent: 'Envoye', refused: 'Refuse', cancelled: 'Annulee', pending_validation: 'A valider', pending: 'A faire' };
+        const statusLabels = { done: 'Termine', departed: 'Parti', in_progress: 'Menage en cours', arrived: 'Sur place', assigned: 'Propose', accepted: 'Accepte &#10003;&#10003;', seen: 'Lu &#10003;', sent: 'Envoye', refused: 'Refuse', cancelled: 'Annulee', pending_validation: 'A valider', pending: 'A faire' };
         const statusLabel = statusLabels[status] || 'A faire';
         const statusColors = { done: '#34d399', departed: '#34d399', in_progress: '#f59e0b', arrived: '#6c63ff', assigned: '#8b5cf6', accepted: '#34d399', seen: '#6c63ff', sent: 'var(--text3)', refused: '#ef4444', cancelled: '#ef4444', pending_validation: '#f59e0b', pending: 'var(--text3)' };
         const statusColor = statusColors[status] || 'var(--text3)';
@@ -3476,7 +3476,7 @@ async function showProviderMode() {
         const r = u;
         const svcLabel = getServiceLabel(r.type);
         const statusColors = { pending: '#f59e0b', assigned: '#8b5cf6', accepted: '#6c63ff', in_progress: '#34d399', pending_validation: '#f59e0b', done: '#34d399', cancelled: '#ef4444' };
-        const statusLabels = { pending: 'En attente', assigned: 'Assigne', accepted: 'Accepte', in_progress: 'En cours', pending_validation: 'En validation', done: 'Termine', cancelled: 'Annulee' };
+        const statusLabels = { pending: 'En attente', assigned: 'Propose', accepted: 'Accepte', in_progress: 'En cours', pending_validation: 'En validation', done: 'Termine', cancelled: 'Annulee' };
         html += '<div class="prestCard" data-category="' + catKey + '" style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:8px;">';
         html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">';
         html += '<div style="font-weight:700;font-size:14px;color:var(--text);">' + svcLabel + '</div>';
@@ -4127,7 +4127,7 @@ async function showOwnerMode() {
       const v = validations[key];
       const status = v ? v.status : 'pending';
       const statusIcons = { done: '&#9989;', departed: '&#128682;', in_progress: '&#129529;', arrived: '&#127968;', assigned: '&#128228;', accepted: '&#10003;&#10003;', seen: '&#128065;', sent: '&#9993;', refused: '&#10060;', pending: '&#9203;' };
-      const statusLabels = { done: 'Termine', departed: 'Parti', in_progress: 'En cours', arrived: 'Sur place', assigned: 'Assigne', accepted: 'Accepte', seen: 'Lu', sent: 'Envoye', refused: 'Refuse', cancelled: 'Annulee', pending_validation: 'A valider', pending: 'En attente' };
+      const statusLabels = { done: 'Termine', departed: 'Parti', in_progress: 'En cours', arrived: 'Sur place', assigned: 'Propose', accepted: 'Accepte', seen: 'Lu', sent: 'Envoye', refused: 'Refuse', cancelled: 'Annulee', pending_validation: 'A valider', pending: 'En attente' };
       const statusColors = { done: '#34d399', departed: '#34d399', in_progress: '#f59e0b', arrived: '#6c63ff', assigned: '#8b5cf6', accepted: '#34d399', seen: '#6c63ff', sent: 'var(--text3)', refused: '#ef4444', cancelled: '#ef4444', pending_validation: '#f59e0b', pending: 'var(--text3)' };
       html += `<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px solid var(--border);font-size:13px;">
         <div style="flex:1;font-weight:600;">${esc(c.propertyName)}</div>
@@ -4150,7 +4150,7 @@ async function showOwnerMode() {
   }).slice(0, 8);
   if (ownerUpcoming.length > 0) {
     const _osc = { done:'#34d399', in_progress:'#3b82f6', assigned:'#8b5cf6', accepted:'#34d399', pending:'#f59e0b', pending_validation:'#f59e0b', refused:'#ef4444' };
-    const _osl = { done:'Termine', in_progress:'En cours', assigned:'Assigne', accepted:'Accepte', pending:'Attente', pending_validation:'Validation', refused:'Refuse' };
+    const _osl = { done:'Termine', in_progress:'En cours', assigned:'Propose', accepted:'Accepte', pending:'Attente', pending_validation:'Validation', refused:'Refuse' };
     html += '<div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:12px;">';
     html += '<div style="font-weight:700;font-size:14px;margin-bottom:10px;">&#128203; Prochaines prestations</div>';
     ownerUpcoming.forEach(u => {
@@ -4204,7 +4204,7 @@ async function showOwnerMode() {
     </div>`;
   } else {
     const _osc2 = { done:'#34d399', departed:'#34d399', in_progress:'#f59e0b', arrived:'#6c63ff', assigned:'#8b5cf6', accepted:'#34d399', seen:'#6c63ff', sent:'var(--text3)', refused:'#ef4444', cancelled:'#ef4444', pending_validation:'#f59e0b', pending:'var(--text3)' };
-    const _osl2 = { done:'Termine', departed:'Parti', in_progress:'En cours', arrived:'Sur place', assigned:'Assigne', accepted:'Accepte', refused:'Refuse', cancelled:'Annulee', pending_validation:'A valider', pending:'En attente' };
+    const _osl2 = { done:'Termine', departed:'Parti', in_progress:'En cours', arrived:'Sur place', assigned:'Propose', accepted:'Accepte', refused:'Refuse', cancelled:'Annulee', pending_validation:'A valider', pending:'En attente' };
     let lastOwnerDate = '';
     ownerUnified.forEach(u => {
       const dateStr = u.date || '';
@@ -8747,7 +8747,7 @@ function renderDashboardContent() {
   const div1 = document.getElementById('dashTodayCleanings');
   if (div1) {
     const statusColors = { done: '#34d399', in_progress: '#3b82f6', accepted: '#34d399', assigned: '#8b5cf6', pending: '#f59e0b', pending_validation: '#f59e0b', refused: '#ef4444' };
-    const statusLabels = { done: 'Termine', in_progress: 'En cours', accepted: 'Accepte', assigned: 'Assigne', pending: 'Attente', pending_validation: 'Validation', refused: 'Refuse' };
+    const statusLabels = { done: 'Termine', in_progress: 'En cours', accepted: 'Accepte', assigned: 'Propose', pending: 'Attente', pending_validation: 'Validation', refused: 'Refuse' };
     let html = '<div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:12px;">';
     html += '<div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:10px;">&#128197; Aujourd\'hui — ' + todayItems.length + ' prestation(s)</div>';
     if (todayItems.length === 0) {
@@ -8770,7 +8770,7 @@ function renderDashboardContent() {
   const div2 = document.getElementById('dashPendingRequests');
   if (div2 && upcomingItems.length > 0) {
     const statusColors = { done: '#34d399', in_progress: '#3b82f6', accepted: '#34d399', assigned: '#8b5cf6', pending: '#f59e0b', pending_validation: '#f59e0b' };
-    const statusLabels = { done: 'OK', in_progress: 'En cours', accepted: 'OK', assigned: 'Assigne', pending: 'Attente', pending_validation: 'Valid.' };
+    const statusLabels = { done: 'OK', in_progress: 'En cours', accepted: 'OK', assigned: 'Propose', pending: 'Attente', pending_validation: 'Valid.' };
     let html = '<div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;">';
     html += '<div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:10px;">&#128203; Prochaines prestations</div>';
     upcomingItems.forEach(u => {
@@ -9995,7 +9995,7 @@ async function loadServiceRequests() {
   let html = '';
   requests.forEach(r => {
     const statusColors = { pending: '#f59e0b', assigned: '#8b5cf6', accepted: '#6c63ff', in_progress: '#3b82f6', done: '#34d399', pending_validation: '#f59e0b', refused: '#e94560', cancelled: '#ef4444' };
-    const statusLabels = { pending: 'En attente', assigned: 'Assigne', accepted: 'Acceptee', in_progress: 'En cours', done: 'Terminee', pending_validation: 'A valider', refused: 'Refusee', cancelled: 'Annulee' };
+    const statusLabels = { pending: 'En attente', assigned: 'Propose', accepted: 'Acceptee', in_progress: 'En cours', done: 'Terminee', pending_validation: 'A valider', refused: 'Refusee', cancelled: 'Annulee' };
     const priorityIcons = { low: '🟢', normal: '🟡', high: '🔴' };
     const color = statusColors[r.status] || '#888';
     const label = statusLabels[r.status] || r.status;
@@ -10313,7 +10313,7 @@ async function loadAdminPrestations(forceReload) {
   if (filtersEl) {
     const statusDefs = [
       { id: 'pending', label: 'Attente', color: '#f59e0b' },
-      { id: 'assigned', label: 'Assigne', color: '#8b5cf6' },
+      { id: 'assigned', label: 'Propose', color: '#8b5cf6' },
       { id: 'accepted', label: 'Accepte', color: '#34d399' },
       { id: 'in_progress', label: 'En cours', color: '#3b82f6' },
       { id: 'done', label: 'Termine', color: '#059669' },
@@ -10357,7 +10357,7 @@ async function loadAdminPrestations(forceReload) {
 
   const providers = props.length ? (props[0].providers || []) : [];
   const statusColors = { pending: '#f59e0b', assigned: '#8b5cf6', accepted: '#6c63ff', in_progress: '#3b82f6', done: '#34d399', refused: '#e94560', sent: '#888', seen: '#6c63ff', arrived: '#6c63ff', departed: '#34d399' };
-  const statusLabels = { pending: 'En attente', assigned: 'Assigne', accepted: 'Accepte', in_progress: 'En cours', done: 'Termine', pending_validation: 'A valider', refused: 'Refuse', cancelled: 'Annulee', sent: 'Envoye', seen: 'Lu', arrived: 'Sur place', departed: 'Parti' };
+  const statusLabels = { pending: 'En attente', assigned: 'Propose', accepted: 'Accepte', in_progress: 'En cours', done: 'Termine', pending_validation: 'A valider', refused: 'Refuse', cancelled: 'Annulee', sent: 'Envoye', seen: 'Lu', arrived: 'Sur place', departed: 'Parti' };
 
   let html = '';
   const months = ['Jan','Fev','Mar','Avr','Mai','Jun','Jul','Aou','Sep','Oct','Nov','Dec'];
