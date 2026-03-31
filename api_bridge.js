@@ -43,7 +43,10 @@ const API = (function() {
           const { data: org } = await sb.from('organizations').select('*').eq('id', m.org_id).single();
           m.organizations = org;
         }
-        console.log('loadOrg: found', members.length, 'member(s), role:', members[0]?.role);
+        const _dbgUser = (await sb.auth.getUser()).data?.user;
+        console.log('loadOrg: found', members.length, 'member(s), role:', members[0]?.role, 'email:', _dbgUser?.email, 'uid:', userId);
+        // DEBUG: temporary alert to diagnose role issue
+        if (window._showDebugRole) window._showDebugRole(userId, _dbgUser?.email, members[0]?.role, members[0]?.invited_email);
       }
       if (error || !members || !members.length) {
         console.log('No org found, creating onboarding...', error);
