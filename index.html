@@ -961,7 +961,7 @@ async function loadPDF() {
 <body>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v6.92</div>
+<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v6.93</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -971,7 +971,7 @@ async function loadPDF() {
     <!-- Broom that sweeps -->
     <div id="splashBroom" style="position:absolute;top:50%;left:-60px;font-size:48px;transform:translateY(-50%) rotate(-30deg);opacity:0;transition:all 0.8s cubic-bezier(0.25,0.46,0.45,0.94);">✨</div>
   </div>
-  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v6.92</span></div>
+  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v6.93</span></div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie pour locations</div>
   <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou</div>
   <!-- Loading bar -->
@@ -3190,7 +3190,8 @@ async function publishToMarketplace() {
     // Check if already published
     const { data: existing } = await sb.from('marketplace_profiles').select('id').eq('user_id', user?.id).single();
     if (existing) {
-      showToast('Vous etes deja inscrit sur l\'annuaire !');
+      // Already published — show edit form instead
+      showEditMarketplaceProfile(user, name, email);
       return;
     }
     // Create marketplace profile
@@ -3229,6 +3230,28 @@ async function publishToMarketplace() {
     html += '</div>';
     showMsg(html, true);
   } catch(e) { console.error('publishToMarketplace error:', e); showToast('Erreur'); }
+}
+
+async function showEditMarketplaceProfile(user, name, email) {
+  const { data: profile } = await sb.from('marketplace_profiles').select('*').eq('user_id', user?.id).single();
+  const member = API.getMember();
+  const phone = profile?.phone || member?.phone || '';
+  const city = profile?.city || '';
+  const desc = profile?.description || '';
+  const inputStyle = 'width:100%;padding:10px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:13px;margin-bottom:8px;box-sizing:border-box;';
+  let html = '<div style="padding:10px;">';
+  html += '<div style="font-size:16px;font-weight:700;color:#6c63ff;margin-bottom:12px;text-align:center;">&#128221; Mon profil annuaire</div>';
+  html += '<label style="font-size:11px;color:var(--text3);display:block;margin-bottom:3px;">Telephone</label>';
+  html += '<input id="mkPhone" type="tel" value="' + esc(phone) + '" placeholder="06 12 34 56 78" style="' + inputStyle + '">';
+  html += '<label style="font-size:11px;color:var(--text3);display:block;margin-bottom:3px;">Ville</label>';
+  html += '<input id="mkCity" type="text" value="' + esc(city) + '" placeholder="Ex: Nice, Paris..." style="' + inputStyle + '">';
+  html += '<label style="font-size:11px;color:var(--text3);display:block;margin-bottom:3px;">Description</label>';
+  html += '<textarea id="mkDesc" placeholder="Presentez vos services..." rows="3" style="' + inputStyle + 'font-family:Inter,sans-serif;resize:vertical;">' + esc(desc) + '</textarea>';
+  html += '<div style="display:flex;gap:8px;margin-top:4px;">';
+  html += '<button class="btn btnOutline" style="flex:1;padding:12px;" onclick="closeMsg()">Fermer</button>';
+  html += '<button class="btn btnPrimary" style="flex:1;padding:12px;" onclick="saveMarketplaceProfile()">Enregistrer</button>';
+  html += '</div></div>';
+  showMsg(html, true);
 }
 
 async function saveMarketplaceProfile() {
@@ -3338,10 +3361,21 @@ async function showProviderMode() {
       </div>
       <div style="display:flex;flex-direction:column;align-items:center;gap:10px;margin-top:24px;width:100%;max-width:320px;margin-left:auto;margin-right:auto;">
         <button onclick="shareProviderProfile()" style="padding:16px 32px;background:linear-gradient(135deg,#6c63ff,#5a54e0);color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;width:100%;box-shadow:0 4px 16px rgba(108,99,255,0.4);">&#128228; Partager mon profil</button>
-        <button onclick="publishToMarketplace()" style="padding:14px 32px;background:linear-gradient(135deg,#34d399,#059669);color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;width:100%;box-shadow:0 4px 16px rgba(52,211,153,0.3);">&#127970; M'inscrire sur l'annuaire</button>
+        <button id="mkPublishBtn" onclick="publishToMarketplace()" style="padding:14px 32px;background:linear-gradient(135deg,#34d399,#059669);color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;width:100%;box-shadow:0 4px 16px rgba(52,211,153,0.3);">&#127970; M'inscrire sur l'annuaire</button>
       </div>
       <div style="font-size:11px;color:var(--text3);margin-top:8px;">Les conciergeries pourront vous trouver et vous inviter</div>
     </div>`;
+    // Check if already on marketplace and update button
+    try {
+      const { data: { user: _u } } = await sb.auth.getUser();
+      if (_u) {
+        const { data: _mk } = await sb.from('marketplace_profiles').select('id').eq('user_id', _u.id).single();
+        if (_mk) {
+          const btn = document.getElementById('mkPublishBtn');
+          if (btn) { btn.innerHTML = '&#128221; Modifier mon profil annuaire'; btn.style.background = 'linear-gradient(135deg,#6c63ff,#5a54e0)'; }
+        }
+      }
+    } catch(e) {}
     return;
   }
 
@@ -10957,38 +10991,7 @@ async function toggleMarketplaceVisibility(visible) {
   }
 }
 
-async function saveMarketplaceProfile() {
-  try {
-    const { data: { user } } = await sb.auth.getUser();
-    if (!user) return;
-    const description = document.getElementById('mkDescription')?.value?.trim() || '';
-    const experienceYears = parseInt(document.getElementById('mkExperienceYears')?.value) || 0;
-    const availability = document.getElementById('mkAvailability')?.value || 'available';
-    const services = [];
-    document.querySelectorAll('.mkServiceCb:checked').forEach(cb => services.push(cb.value));
-
-    const profileData = {
-      user_id: user.id,
-      visible: document.getElementById('mkVisibleToggle')?.checked || false,
-      display_name: user.user_metadata?.display_name || user.email.split('@')[0],
-      email: user.email,
-      role: API.getRole() || 'admin',
-      description: description,
-      services: services,
-      experience_years: experienceYears,
-      availability: availability,
-      updated_at: new Date().toISOString()
-    };
-    const { error } = await sb
-      .from('marketplace_profiles')
-      .upsert(profileData, { onConflict: 'user_id' });
-    if (error) throw error;
-    showToast('Profil annuaire sauvegarde !');
-  } catch (e) {
-    console.error('Save marketplace profile error:', e);
-    showToast('Erreur lors de la sauvegarde');
-  }
-}
+// Old saveMarketplaceProfile removed — now at line ~3235
 
 function renderMkServiceCheckboxes(checkedServices) {
   const container = document.getElementById('mkServicesCheckboxes');
