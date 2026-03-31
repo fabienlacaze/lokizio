@@ -933,7 +933,7 @@ async function loadPDF() {
 <body>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;pointer-events:none;">v6.41</div>
+<div id="versionBadge" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;pointer-events:none;">v6.42</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -943,7 +943,7 @@ async function loadPDF() {
     <!-- Broom that sweeps -->
     <div id="splashBroom" style="position:absolute;top:50%;left:-60px;font-size:48px;transform:translateY(-50%) rotate(-30deg);opacity:0;transition:all 0.8s cubic-bezier(0.25,0.46,0.45,0.94);">✨</div>
   </div>
-  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v6.41</span></div>
+  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v6.42</span></div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie pour locations</div>
   <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou</div>
   <!-- Loading bar -->
@@ -3272,8 +3272,8 @@ async function showProviderMode() {
     todayItems.forEach(u => {
       const svcLabel = getServiceLabel(u.type);
       const statusIcons = { done: '&#9989;', departed: '&#128682;', in_progress: '&#129529;', arrived: '&#127968;', assigned: '&#128228;', accepted: '&#9989;', seen: '&#128065;', sent: '&#9993;', refused: '&#10060;', pending: '&#9898;' };
-      const statusLabels = { done: 'Termine', departed: 'Parti', in_progress: 'En cours', arrived: 'Sur place', assigned: 'Assigne', accepted: 'Accepte', seen: 'Lu', sent: 'Envoye', refused: 'Refuse', cancelled: 'Annulee', pending: 'A faire' };
-      const statusColors = { done: '#34d399', departed: '#34d399', in_progress: '#f59e0b', arrived: '#6c63ff', assigned: '#8b5cf6', accepted: '#34d399', seen: '#6c63ff', sent: 'var(--text3)', refused: '#ef4444', cancelled: '#ef4444', pending: 'var(--text3)' };
+      const statusLabels = { done: 'Termine', departed: 'Parti', in_progress: 'En cours', arrived: 'Sur place', assigned: 'Assigne', accepted: 'Accepte', seen: 'Lu', sent: 'Envoye', refused: 'Refuse', cancelled: 'Annulee', pending_validation: 'A valider', pending: 'A faire' };
+      const statusColors = { done: '#34d399', departed: '#34d399', in_progress: '#f59e0b', arrived: '#6c63ff', assigned: '#8b5cf6', accepted: '#34d399', seen: '#6c63ff', sent: 'var(--text3)', refused: '#ef4444', cancelled: '#ef4444', pending_validation: '#f59e0b', pending: 'var(--text3)' };
       html += `<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px solid var(--border);font-size:13px;">
         <div style="flex:1;font-weight:600;">${svcLabel}</div>
         <div style="color:var(--text2);">${esc(u.propertyName || '')}</div>
@@ -3333,9 +3333,9 @@ async function showProviderMode() {
         const status = u.status;
         const statusIcons = { done: '&#9989;', departed: '&#128682;', in_progress: '&#129529;', arrived: '&#127968;', assigned: '&#128228;', accepted: '&#9989;', seen: '&#128065;', sent: '&#9993;', refused: '&#10060;', pending: '&#9898;' };
         const statusIcon = statusIcons[status] || '&#9898;';
-        const statusLabels = { done: 'Termine', departed: 'Parti', in_progress: 'Menage en cours', arrived: 'Sur place', assigned: 'Assigne', accepted: 'Accepte &#10003;&#10003;', seen: 'Lu &#10003;', sent: 'Envoye', refused: 'Refuse', cancelled: 'Annulee', pending: 'A faire' };
+        const statusLabels = { done: 'Termine', departed: 'Parti', in_progress: 'Menage en cours', arrived: 'Sur place', assigned: 'Assigne', accepted: 'Accepte &#10003;&#10003;', seen: 'Lu &#10003;', sent: 'Envoye', refused: 'Refuse', cancelled: 'Annulee', pending_validation: 'A valider', pending: 'A faire' };
         const statusLabel = statusLabels[status] || 'A faire';
-        const statusColors = { done: '#34d399', departed: '#34d399', in_progress: '#f59e0b', arrived: '#6c63ff', assigned: '#8b5cf6', accepted: '#34d399', seen: '#6c63ff', sent: 'var(--text3)', refused: '#ef4444', cancelled: '#ef4444', pending: 'var(--text3)' };
+        const statusColors = { done: '#34d399', departed: '#34d399', in_progress: '#f59e0b', arrived: '#6c63ff', assigned: '#8b5cf6', accepted: '#34d399', seen: '#6c63ff', sent: 'var(--text3)', refused: '#ef4444', cancelled: '#ef4444', pending_validation: '#f59e0b', pending: 'var(--text3)' };
         const statusColor = statusColors[status] || 'var(--text3)';
 
         html += `<div class="prestCard" data-category="${catKey}" style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:10px;${isToday ? 'border-left:3px solid #e94560;' : ''}">
@@ -3426,8 +3426,8 @@ async function showProviderMode() {
         // Service request card
         const r = u;
         const svcLabel = getServiceLabel(r.type);
-        const statusColors = { pending: '#f59e0b', assigned: '#8b5cf6', accepted: '#6c63ff', in_progress: '#34d399' };
-        const statusLabels = { pending: 'En attente', assigned: 'Assigne', accepted: 'Accepte', in_progress: 'En cours' };
+        const statusColors = { pending: '#f59e0b', assigned: '#8b5cf6', accepted: '#6c63ff', in_progress: '#34d399', pending_validation: '#f59e0b', done: '#34d399', cancelled: '#ef4444' };
+        const statusLabels = { pending: 'En attente', assigned: 'Assigne', accepted: 'Accepte', in_progress: 'En cours', pending_validation: 'En validation', done: 'Termine', cancelled: 'Annulee' };
         html += '<div class="prestCard" data-category="' + catKey + '" style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:8px;">';
         html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">';
         html += '<div style="font-weight:700;font-size:14px;color:var(--text);">' + svcLabel + '</div>';
@@ -3443,9 +3443,21 @@ async function showProviderMode() {
           html += '<button onclick="refuseServiceRequest(\'' + r._id + '\')" style="flex:1;padding:10px;background:#ef4444;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">&#10007; Refuser</button>';
           html += '</div>';
         } else if (r.status === 'accepted') {
-          html += '<div style="margin-top:10px;"><button onclick="startServiceRequest(\'' + r._id + '\')" style="width:100%;padding:10px;background:#f59e0b;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">&#128260; Commencer</button></div>';
+          html += '<div style="display:flex;gap:8px;margin-top:10px;">';
+          html += '<button onclick="startServiceRequest(\'' + r._id + '\')" style="flex:1;padding:10px;background:#f59e0b;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">&#128260; Commencer</button>';
+          html += '<button onclick="providerWithdraw(\'' + r._id + '\',\'' + (r.date || '') + '\')" style="padding:10px 14px;background:rgba(239,68,68,0.15);color:#ef4444;border:none;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;">Se desister</button>';
+          html += '</div>';
         } else if (r.status === 'in_progress') {
           html += '<div style="margin-top:10px;"><button onclick="completeServiceRequest(\'' + r._id + '\')" style="width:100%;padding:10px;background:#059669;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">&#9989; Termine</button></div>';
+        } else if (r.status === 'pending_validation') {
+          html += '<div style="margin-top:8px;font-size:12px;color:#f59e0b;padding:8px;background:rgba(245,158,11,0.1);border-radius:8px;text-align:center;">&#9203; En attente de validation par le gestionnaire</div>';
+        } else if (r.status === 'cancelled') {
+          html += '<div style="margin-top:8px;font-size:12px;color:#ef4444;padding:8px;background:rgba(239,68,68,0.1);border-radius:8px;">';
+          html += '&#10006; Prestation annulee';
+          if (r.cancel_penalty_amount > 0) html += ' — <b>Indemnite: ' + r.cancel_penalty_amount.toFixed(2) + '€</b>';
+          html += '</div>';
+        } else if (r.status === 'done') {
+          html += '<div style="margin-top:8px;font-size:12px;color:#34d399;text-align:center;">&#9989; Valide par le gestionnaire</div>';
         }
         html += '</div>';
       }
@@ -3823,23 +3835,62 @@ async function startServiceRequest(id) {
 async function completeServiceRequest(id) {
   try {
     const { data: req } = await sb.from('service_requests').select('*').eq('id', id).single();
-    await sb.from('service_requests').update({ status: 'done' }).eq('id', id);
-    showToast('Prestation terminee !');
+    await sb.from('service_requests').update({ status: 'pending_validation', updated_at: new Date().toISOString() }).eq('id', id);
+    showToast('En attente de validation du gestionnaire');
     if (req) {
       const org = API.getOrg();
       const member = API.getMember();
       const provName = member?.display_name || member?.invited_email || 'Prestataire';
       const svcLabel = getServiceLabel(req.service_type);
       const propName = req.property_name || '';
-      // Notify concierge
       await sendAutoMessage(org.id, provName, 'provider', 'gestionnaire',
-        '✅ ' + provName + ' a termine: ' + svcLabel);
-      // Notify owner
+        '&#9989; ' + provName + ' a termine ' + svcLabel + ' — En attente de votre validation');
       await sendAutoMessage(org.id, provName, 'provider', 'proprietaire',
-        '✅ ' + svcLabel + ' termine pour ' + propName);
+        '&#9989; ' + svcLabel + ' termine pour ' + propName + ' — Validation en cours');
     }
     showProviderMode();
   } catch(e) { console.error('completeServiceRequest error:', e); showToast('Erreur'); showProviderMode(); }
+}
+
+// Provider withdrawal (se désister)
+async function providerWithdraw(id, dateStr) {
+  const penalty = getCancelPenalty(dateStr);
+  let html = '<div style="padding:10px;text-align:center;">';
+  html += '<div style="font-size:20px;margin-bottom:8px;">&#9888;</div>';
+  html += '<div style="font-size:15px;font-weight:700;color:var(--accent);margin-bottom:10px;">Se desister de cette mission ?</div>';
+  if (penalty.percent > 0) {
+    html += '<div style="font-size:12px;color:var(--text2);margin-bottom:12px;background:rgba(239,68,68,0.1);padding:10px;border-radius:8px;">';
+    html += '&#9888; Desistement a moins de ' + (penalty.daysUntil + 1) + ' jours : <b>vous perdez ' + penalty.percent + '% de votre remuneration</b>';
+    html += '</div>';
+  } else {
+    html += '<div style="font-size:12px;color:var(--success);margin-bottom:12px;">Desistement gratuit (plus de 7 jours avant)</div>';
+  }
+  html += '<textarea id="withdrawReason" placeholder="Raison (optionnel)..." style="width:100%;padding:10px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:13px;font-family:Inter,sans-serif;resize:vertical;min-height:40px;box-sizing:border-box;margin-bottom:12px;"></textarea>';
+  html += '<div style="display:flex;gap:8px;">';
+  html += '<button class="btn btnOutline" style="flex:1;padding:12px;" onclick="closeMsg()">Retour</button>';
+  html += '<button class="btn" style="flex:1;padding:12px;background:#ef4444;color:#fff;border:none;font-weight:700;" onclick="confirmProviderWithdraw(\'' + id + '\',' + penalty.percent + ')">Confirmer</button>';
+  html += '</div></div>';
+  showMsg(html, true);
+}
+async function confirmProviderWithdraw(id, penaltyPercent) {
+  const reason = document.getElementById('withdrawReason')?.value?.trim() || '';
+  closeMsg();
+  try {
+    await sb.from('service_requests').update({
+      status: 'pending', assigned_provider: null, updated_at: new Date().toISOString()
+    }).eq('id', id);
+    const { data: req } = await sb.from('service_requests').select('*').eq('id', id).single();
+    if (req) {
+      const org = API.getOrg();
+      const member = API.getMember();
+      const provName = member?.display_name || 'Prestataire';
+      const svcLabel = getServiceLabel(req.service_type);
+      await sendAutoMessage(org.id, provName, 'provider', 'gestionnaire',
+        '&#9888; ' + provName + ' s\'est desiste de ' + svcLabel + (reason ? ' — ' + reason : '') + (penaltyPercent > 0 ? ' (penalite: ' + penaltyPercent + '%)' : ''));
+    }
+    showToast('Desistement confirme');
+    showProviderMode();
+  } catch(e) { console.error('Withdraw error:', e); showToast('Erreur'); }
 }
 
 /* ── Owner Mode ── */
@@ -4024,8 +4075,8 @@ async function showOwnerMode() {
       const v = validations[key];
       const status = v ? v.status : 'pending';
       const statusIcons = { done: '&#9989;', departed: '&#128682;', in_progress: '&#129529;', arrived: '&#127968;', assigned: '&#128228;', accepted: '&#10003;&#10003;', seen: '&#128065;', sent: '&#9993;', refused: '&#10060;', pending: '&#9203;' };
-      const statusLabels = { done: 'Termine', departed: 'Parti', in_progress: 'En cours', arrived: 'Sur place', assigned: 'Assigne', accepted: 'Accepte', seen: 'Lu', sent: 'Envoye', refused: 'Refuse', cancelled: 'Annulee', pending: 'En attente' };
-      const statusColors = { done: '#34d399', departed: '#34d399', in_progress: '#f59e0b', arrived: '#6c63ff', assigned: '#8b5cf6', accepted: '#34d399', seen: '#6c63ff', sent: 'var(--text3)', refused: '#ef4444', cancelled: '#ef4444', pending: 'var(--text3)' };
+      const statusLabels = { done: 'Termine', departed: 'Parti', in_progress: 'En cours', arrived: 'Sur place', assigned: 'Assigne', accepted: 'Accepte', seen: 'Lu', sent: 'Envoye', refused: 'Refuse', cancelled: 'Annulee', pending_validation: 'A valider', pending: 'En attente' };
+      const statusColors = { done: '#34d399', departed: '#34d399', in_progress: '#f59e0b', arrived: '#6c63ff', assigned: '#8b5cf6', accepted: '#34d399', seen: '#6c63ff', sent: 'var(--text3)', refused: '#ef4444', cancelled: '#ef4444', pending_validation: '#f59e0b', pending: 'var(--text3)' };
       html += `<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px solid var(--border);font-size:13px;">
         <div style="flex:1;font-weight:600;">${esc(c.propertyName)}</div>
         <div style="color:var(--text2);">${esc(c.provider || '?')}</div>
@@ -4090,8 +4141,8 @@ async function showOwnerMode() {
       const catKey = catObj ? catObj.cat : 'autre';
       const svcLabel = getServiceLabel(u.type);
       const statusIcons = { done: '&#9989;', departed: '&#128682;', in_progress: '&#129529;', arrived: '&#127968;', assigned: '&#128228;', accepted: '&#10003;&#10003;', seen: '&#128065;', sent: '&#9993;', refused: '&#10060;', cancelled: '&#10006;', pending: '&#9203;' };
-      const statusLabels = { done: 'Termine', departed: 'Parti', in_progress: 'En cours', arrived: 'Sur place', assigned: 'Assigne', accepted: 'Accepte', seen: 'Lu', sent: 'Envoye', refused: 'Refuse', cancelled: 'Annulee', pending: 'En attente' };
-      const statusColors = { done: '#34d399', departed: '#34d399', in_progress: '#f59e0b', arrived: '#6c63ff', assigned: '#8b5cf6', accepted: '#34d399', seen: '#6c63ff', sent: 'var(--text3)', refused: '#ef4444', cancelled: '#ef4444', pending: 'var(--text3)' };
+      const statusLabels = { done: 'Termine', departed: 'Parti', in_progress: 'En cours', arrived: 'Sur place', assigned: 'Assigne', accepted: 'Accepte', seen: 'Lu', sent: 'Envoye', refused: 'Refuse', cancelled: 'Annulee', pending_validation: 'A valider', pending: 'En attente' };
+      const statusColors = { done: '#34d399', departed: '#34d399', in_progress: '#f59e0b', arrived: '#6c63ff', assigned: '#8b5cf6', accepted: '#34d399', seen: '#6c63ff', sent: 'var(--text3)', refused: '#ef4444', cancelled: '#ef4444', pending_validation: '#f59e0b', pending: 'var(--text3)' };
       const ownerCanCancel = u._source === 'service_request' && !['done','departed','in_progress','cancelled'].includes(u.status);
 
       if (dateStr) {
@@ -4109,6 +4160,7 @@ async function showOwnerMode() {
             ${u.notes ? '<div style="font-size:11px;color:var(--text2);margin-top:2px;">' + esc(u.notes) + '</div>' : ''}
             ${ownerCanCancel ? '<a href="#" onclick="showCancelModal(\'' + u._id + '\',\'' + (u.date || '') + '\',\'' + esc(svcLabel).replace(/'/g,"\\\\'") + '\',0);return false;" style="font-size:11px;color:#ef4444;text-decoration:none;margin-top:4px;display:inline-block;">&#10006; Annuler</a>' : ''}
             ${u.status === 'cancelled' ? '<div style="font-size:11px;color:#ef4444;margin-top:4px;">&#10006; Annulee</div>' : ''}
+            ${(u.status === 'done' || u.status === 'pending_validation') && u._source === 'service_request' && u.provider ? '<a href="#" onclick="showRatingModal(\'' + u._id + '\',\'' + esc(u.provider).replace(/'/g,"\\\\'") + '\');return false;" style="font-size:11px;color:#f59e0b;text-decoration:none;margin-top:4px;display:inline-block;">&#11088; Noter</a>' : ''}
           </div>
           <span style="font-size:11px;color:${statusColors[u.status] || 'var(--text3)'};white-space:nowrap;">${statusIcons[u.status] || '&#9203;'} ${statusLabels[u.status] || ''}</span>
         </div>`;
@@ -9721,7 +9773,12 @@ async function submitServiceRequest() {
   if (role === 'owner') {
     // Owner created request -> notify concierge
     await sendAutoMessage(org.id, senderName, 'owner', 'gestionnaire',
-      '🔔 Nouvelle demande: ' + svcLabel + ' pour ' + propName + ' le ' + date);
+      '&#128276; Nouvelle demande: ' + svcLabel + ' pour ' + propName + ' le ' + date);
+    // If owner assigned a provider directly, also notify the provider
+    if (providerVal) {
+      await sendAutoMessage(org.id, senderName, 'owner', providerVal,
+        '&#128203; Mission assignee: ' + svcLabel + ' pour ' + propName + ' le ' + date);
+    }
   } else if (role === 'admin' || role === 'manager') {
     // Concierge created request with provider assigned -> notify provider
     if (providerVal) {
@@ -9764,8 +9821,8 @@ async function loadServiceRequests() {
   const providers = (API.getActiveProperty(fullConfig) || {}).providers || [];
   let html = '';
   requests.forEach(r => {
-    const statusColors = { pending: '#f59e0b', assigned: '#8b5cf6', accepted: '#6c63ff', in_progress: '#3b82f6', done: '#34d399', refused: '#e94560', cancelled: '#ef4444' };
-    const statusLabels = { pending: 'En attente', assigned: 'Assigne', accepted: 'Acceptee', in_progress: 'En cours', done: 'Terminee', refused: 'Refusee', cancelled: 'Annulee' };
+    const statusColors = { pending: '#f59e0b', assigned: '#8b5cf6', accepted: '#6c63ff', in_progress: '#3b82f6', done: '#34d399', pending_validation: '#f59e0b', refused: '#e94560', cancelled: '#ef4444' };
+    const statusLabels = { pending: 'En attente', assigned: 'Assigne', accepted: 'Acceptee', in_progress: 'En cours', done: 'Terminee', pending_validation: 'A valider', refused: 'Refusee', cancelled: 'Annulee' };
     const priorityIcons = { low: '🟢', normal: '🟡', high: '🔴' };
     const color = statusColors[r.status] || '#888';
     const label = statusLabels[r.status] || r.status;
@@ -10093,6 +10150,7 @@ async function loadAdminPrestations(forceReload) {
       { id: 'in_progress', label: 'En cours', color: '#3b82f6' },
       { id: 'done', label: 'Termine', color: '#059669' },
       { id: 'refused', label: 'Refuse', color: '#ef4444' },
+      { id: 'pending_validation', label: 'A valider', color: '#f59e0b' },
       { id: 'cancelled', label: 'Annulee', color: '#ef4444' },
     ];
     let fHtml = '<div style="display:flex;gap:6px;overflow-x:auto;padding-bottom:8px;margin-bottom:8px;-webkit-overflow-scrolling:touch;align-items:center;">';
@@ -10131,7 +10189,7 @@ async function loadAdminPrestations(forceReload) {
 
   const providers = props.length ? (props[0].providers || []) : [];
   const statusColors = { pending: '#f59e0b', assigned: '#8b5cf6', accepted: '#6c63ff', in_progress: '#3b82f6', done: '#34d399', refused: '#e94560', sent: '#888', seen: '#6c63ff', arrived: '#6c63ff', departed: '#34d399' };
-  const statusLabels = { pending: 'En attente', assigned: 'Assigne', accepted: 'Accepte', in_progress: 'En cours', done: 'Termine', refused: 'Refuse', cancelled: 'Annulee', sent: 'Envoye', seen: 'Lu', arrived: 'Sur place', departed: 'Parti' };
+  const statusLabels = { pending: 'En attente', assigned: 'Assigne', accepted: 'Accepte', in_progress: 'En cours', done: 'Termine', pending_validation: 'A valider', refused: 'Refuse', cancelled: 'Annulee', sent: 'Envoye', seen: 'Lu', arrived: 'Sur place', departed: 'Parti' };
 
   let html = '';
   const months = ['Jan','Fev','Mar','Avr','Mai','Jun','Jul','Aou','Sep','Oct','Nov','Dec'];
@@ -10210,8 +10268,14 @@ async function loadAdminPrestations(forceReload) {
       html += '<div onclick="updateServiceRequest(\'' + u._id + '\',\'refused\');setTimeout(()=>loadAdminPrestations(true),500)" style="padding:8px 14px;font-size:11px;color:#ef4444;cursor:pointer;border-bottom:1px solid var(--border);" onmouseover="this.style.background=\'rgba(255,255,255,0.05)\'" onmouseout="this.style.background=\'\'">&#10007; Refuser</div>';
       html += '<div onclick="showCancelModal(\'' + u._id + '\',\'' + (u.date || '') + '\',\'' + esc(svcName).replace(/'/g,"\\'") + '\',' + cancelPrice + ')" style="padding:8px 14px;font-size:11px;color:var(--text3);cursor:pointer;" onmouseover="this.style.background=\'rgba(255,255,255,0.05)\'" onmouseout="this.style.background=\'\'">&#128465; Annuler</div>';
       html += '</div></div>';
+    } else if (u.status === 'pending_validation' && u._source === 'service_request') {
+      // Concierge validates the completed prestation
+      html += '<button style="padding:4px 12px;font-size:10px;font-weight:700;border:none;border-radius:5px;cursor:pointer;background:rgba(52,211,153,0.2);color:#34d399;" onclick="validatePrestation(\'' + u._id + '\',\'' + esc(u.provider || '').replace(/'/g,"\\'") + '\')">&#10003; Valider</button>';
     } else {
       html += '<span class="card-status" style="background:' + color + '18;color:' + color + ';">' + label + '</span>';
+      if (u.status === 'done' && u._source === 'service_request' && u.provider) {
+        html += '<a href="#" onclick="showRatingModal(\'' + u._id + '\',\'' + esc(u.provider).replace(/'/g,"\\'") + '\');return false;" style="font-size:10px;color:#f59e0b;text-decoration:none;padding:2px;" title="Noter">&#11088;</a>';
+      }
       if (cancellable && u.status !== 'pending') {
         html += '<a href="#" onclick="showCancelModal(\'' + u._id + '\',\'' + (u.date || '') + '\',\'' + esc(svcName).replace(/'/g,"\\'") + '\',' + cancelPrice + ');return false;" style="font-size:10px;color:var(--text3);text-decoration:none;padding:2px;" title="Annuler">&#128465;</a>';
       }
@@ -10535,6 +10599,26 @@ async function updateUnreadBadge() {
 // Check unread after app loads
 setTimeout(updateUnreadBadge, 5000);
 setInterval(updateUnreadBadge, 30000);
+
+// ── Concierge Validation ──
+async function validatePrestation(id, providerName) {
+  try {
+    await sb.from('service_requests').update({ status: 'done', validated_at: new Date().toISOString(), updated_at: new Date().toISOString() }).eq('id', id);
+    const { data: req } = await sb.from('service_requests').select('*').eq('id', id).single();
+    if (req) {
+      const org = API.getOrg();
+      const svcLabel = getServiceLabel(req.service_type);
+      await sendAutoMessage(org.id, 'Gestionnaire', 'admin', providerName,
+        '&#10003; ' + svcLabel + ' valide ! Merci.');
+      await sendAutoMessage(org.id, 'Gestionnaire', 'admin', 'proprietaire',
+        '&#10003; ' + svcLabel + ' valide et termine.');
+    }
+    showToast('Prestation validee !');
+    // Show rating modal
+    if (providerName) setTimeout(() => showRatingModal(id, providerName), 500);
+    loadAdminPrestations(true);
+  } catch(e) { console.error('validatePrestation error:', e); showToast('Erreur'); }
+}
 
 // ── Rating System ──
 function showRatingModal(requestId, providerName) {
