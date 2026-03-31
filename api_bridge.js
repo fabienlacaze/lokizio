@@ -32,23 +32,18 @@ const API = (function() {
   async function loadOrg() {
     try {
       const userId = await getUserId();
+      // Always use separate queries to avoid RLS join issues
       let { data: members, error } = await sb
         .from('members')
-        .select('*, organizations(*)')
+        .select('*')
         .eq('user_id', userId);
-      // Fallback: if join fails, try without join then load org separately
-      if ((!members || !members.length) && !error) {
-        console.log('loadOrg: join query empty, trying without join...');
-        const { data: rawMembers } = await sb.from('members').select('*').eq('user_id', userId);
-        if (rawMembers && rawMembers.length) {
-          // Load org separately
-          for (const m of rawMembers) {
-            const { data: org } = await sb.from('organizations').select('*').eq('id', m.org_id).single();
-            m.organizations = org;
-          }
-          members = rawMembers;
-          console.log('loadOrg: fallback found', members.length, 'members, role:', members[0]?.role);
+      if (members && members.length) {
+        // Load organizations separately for each membership
+        for (const m of members) {
+          const { data: org } = await sb.from('organizations').select('*').eq('id', m.org_id).single();
+          m.organizations = org;
         }
+        console.log('loadOrg: found', members.length, 'member(s), role:', members[0]?.role);
       }
       if (error || !members || !members.length) {
         console.log('No org found, creating onboarding...', error);
