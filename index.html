@@ -933,7 +933,7 @@ async function loadPDF() {
 <body>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;pointer-events:none;">v6.43</div>
+<div id="versionBadge" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;pointer-events:none;">v6.44</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -943,7 +943,7 @@ async function loadPDF() {
     <!-- Broom that sweeps -->
     <div id="splashBroom" style="position:absolute;top:50%;left:-60px;font-size:48px;transform:translateY(-50%) rotate(-30deg);opacity:0;transition:all 0.8s cubic-bezier(0.25,0.46,0.45,0.94);">✨</div>
   </div>
-  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v6.43</span></div>
+  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v6.44</span></div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie pour locations</div>
   <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou</div>
   <!-- Loading bar -->
@@ -1224,7 +1224,6 @@ async function loadPDF() {
   <!-- Sub-tab navigation -->
   <div id="prestSubTabs" style="display:flex;gap:4px;margin-bottom:12px;overflow-x:auto;">
     <button class="prestSubTab active" onclick="switchPrestSubTab('list')">&#128203; Liste</button>
-    <button class="prestSubTab" onclick="switchPrestSubTab('details')">&#128196; Details</button>
     <button class="prestSubTab" onclick="switchPrestSubTab('calendar')">&#128197; Calendrier</button>
     <button class="prestSubTab" onclick="switchPrestSubTab('stats')">&#128200; Stats</button>
     <button class="prestSubTab" onclick="switchPrestSubTab('comm')">&#128228; Transmission</button>
@@ -8637,33 +8636,16 @@ window.addEventListener('popstate', function(e) {
 function switchPrestSubTab(tab) {
   document.querySelectorAll('.prestSubContent').forEach(el => el.style.display = 'none');
   document.querySelectorAll('.prestSubTab').forEach(btn => btn.classList.remove('active'));
-  const idMap = { list: 'prestSubList', details: 'prestSubDetails', calendar: 'prestSubCalendar', stats: 'prestSubStats', comm: 'prestSubComm', history: 'prestSubHistory' };
+  const idMap = { list: 'prestSubList', calendar: 'prestSubCalendar', stats: 'prestSubStats', comm: 'prestSubComm', history: 'prestSubHistory' };
   const content = document.getElementById(idMap[tab]);
   if (content) content.style.display = '';
-  // Activate clicked button
   const btns = document.querySelectorAll('.prestSubTab');
-  const tabIndex = { list: 0, details: 1, calendar: 2, stats: 3, comm: 4, history: 5 };
+  const tabIndex = { list: 0, calendar: 1, stats: 2, comm: 3, history: 4 };
   if (btns[tabIndex[tab]]) btns[tabIndex[tab]].classList.add('active');
-  // Refresh content on switch
   if (tab === 'calendar') renderCalendar();
   if (tab === 'stats') renderStats();
   if (tab === 'history') { renderHistory(); renderPressing(); }
   if (tab === 'list') loadAdminPrestations();
-  if (tab === 'details') {
-    // Copy planning content to detail tab
-    const src = document.getElementById('filterBar');
-    const dst = document.getElementById('detailFilterBar');
-    if (src && dst) dst.innerHTML = src.innerHTML;
-    const srcR = document.getElementById('resultDiv');
-    const dstR = document.getElementById('detailResultDiv');
-    if (srcR && dstR) dstR.innerHTML = srcR.innerHTML;
-    const srcS = document.getElementById('summaryDiv');
-    const dstS = document.getElementById('detailSummaryDiv');
-    if (srcS && dstS) { dstS.innerHTML = srcS.innerHTML; dstS.className = srcS.className; }
-    const srcA = document.getElementById('summaryActions');
-    const dstA = document.getElementById('detailSummaryActions');
-    if (srcA && dstA) dstA.innerHTML = srcA.innerHTML;
-  }
   window.scrollTo(0, 0);
 }
 
@@ -8946,16 +8928,19 @@ function renderCalendar() {
     let events='';
     const dayCleanings=cleanings.filter(c=>c.cleaningDate===dateStr);
     const dayReservs=reservations.filter(r=>dateStr>=r.start&&dateStr<r.end);
+    // Also show service requests on calendar
+    const daySvcReqs=(_adminPrestCache&&_adminPrestCache.svcRequests||[]).filter(r=>{const d=r.requested_date||r.preferred_date||'';return d===dateStr&&!['cancelled','refused'].includes(r.status);});
     dayCleanings.forEach(c=>{const color=getProvColor(c.provider);events+=`<div class="calEvent calCleaning" style="background:${color}">${esc(c.provider)}</div>`;});
+    daySvcReqs.forEach(r=>{const svc=getServiceIcon?getServiceIcon(r.service_type):'📋';events+=`<div class="calEvent" style="background:#6c63ff;color:#fff;padding:2px 5px;margin:1px 0;font-size:9px;border-radius:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${svc} ${esc(r.assigned_provider||'?')}</div>`;});
     dayReservs.forEach(r=>{events+=`<div class="calEvent calReserv">${esc(r.source)}</div>`;});
-    const hasEvents=dayCleanings.length||dayReservs.length;
+    const hasEvents=dayCleanings.length||dayReservs.length||daySvcReqs.length;
     const ttData=hasEvents?`onmouseenter="showCalTooltip(event,'${dateStr}')" onmouseleave="hideCalTooltip()"`:''
     html+=`<td${dateStr===todayStr?' class="calToday"':''} ${ttData} style="position:relative;cursor:${hasEvents?'pointer':'default'}"><div class="calDayNum">${day}</div>${events}</td>`;
     col++;if(col>=7&&day<daysInMonth){html+='</tr><tr>';col=0;}
   }
   while(col>0&&col<7){html+='<td class="calEmpty"></td>';col++;}
   html+='</tr></table>';
-  html+='<div style="margin-top:12px;font-size:11px;color:var(--text3);display:flex;gap:14px;align-items:center;flex-wrap:wrap;"><span class="calEvent calCleaning" style="display:inline-block;padding:3px 10px;">Menage</span><span class="calEvent calReserv" style="display:inline-block;padding:3px 10px;">Reservation</span><span style="color:var(--accent);font-weight:600;cursor:pointer;" onclick="calToday()">&#9658; Aujourd\'hui</span></div>';
+  html+='<div style="margin-top:12px;font-size:11px;color:var(--text3);display:flex;gap:14px;align-items:center;flex-wrap:wrap;"><span class="calEvent calCleaning" style="display:inline-block;padding:3px 10px;">Menage</span><span class="calEvent" style="display:inline-block;padding:3px 10px;background:#6c63ff;color:#fff;border-radius:4px;">Service</span><span class="calEvent calReserv" style="display:inline-block;padding:3px 10px;">Reservation</span><span style="color:var(--accent);font-weight:600;cursor:pointer;" onclick="calToday()">&#9658; Aujourd\'hui</span></div>';
   document.getElementById('calView').innerHTML=html;
 }
 function calPrev(){calMonth--;if(calMonth<0){calMonth=11;calYear--;}renderCalendar();}
@@ -8967,7 +8952,8 @@ function showCalTooltip(event, dateStr) {
   const td = event.currentTarget;
   const dayCleanings = cleanings.filter(c => c.cleaningDate === dateStr);
   const dayReservs = reservations.filter(r => dateStr >= r.start && dateStr < r.end);
-  if (!dayCleanings.length && !dayReservs.length) return;
+  const daySvcReqs = (_adminPrestCache&&_adminPrestCache.svcRequests||[]).filter(r=>{const d=r.requested_date||r.preferred_date||'';return d===dateStr&&!['cancelled','refused'].includes(r.status);});
+  if (!dayCleanings.length && !dayReservs.length && !daySvcReqs.length) return;
   const dateFR = fmtDate(dateStr);
   const DAYS = ['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'];
   const d = new Date(dateStr + 'T12:00:00');
@@ -8978,6 +8964,10 @@ function showCalTooltip(event, dateStr) {
     html += '<div class="tt-row"><span class="tt-dot" style="background:' + color + '"></span><span class="tt-label">Menage:</span><span class="tt-val">' + esc(c.provider) + '</span></div>';
     if (c.checkoutDateFR) html += '<div class="tt-row"><span class="tt-label" style="margin-left:14px;">Depart:</span><span class="tt-val">' + c.checkoutDateFR + '</span></div>';
     if (c.source) html += '<div class="tt-row"><span class="tt-label" style="margin-left:14px;">Source:</span><span class="tt-val">' + esc(c.source) + '</span></div>';
+  });
+  daySvcReqs.forEach(r => {
+    const svcLabel = getServiceLabel(r.service_type);
+    html += '<div class="tt-row"><span class="tt-dot" style="background:#6c63ff"></span><span class="tt-label">' + svcLabel + '</span><span class="tt-val">' + esc(r.assigned_provider || '?') + '</span></div>';
   });
   dayReservs.forEach(r => {
     html += '<div class="tt-row"><span class="tt-dot" style="background:#3b82f6"></span><span class="tt-label">Reservation:</span><span class="tt-val">' + esc(r.source) + '</span></div>';
