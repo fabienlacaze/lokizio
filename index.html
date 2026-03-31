@@ -961,7 +961,7 @@ async function loadPDF() {
 <body>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v6.79</div>
+<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v6.80</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -971,7 +971,7 @@ async function loadPDF() {
     <!-- Broom that sweeps -->
     <div id="splashBroom" style="position:absolute;top:50%;left:-60px;font-size:48px;transform:translateY(-50%) rotate(-30deg);opacity:0;transition:all 0.8s cubic-bezier(0.25,0.46,0.45,0.94);">✨</div>
   </div>
-  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v6.79</span></div>
+  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v6.80</span></div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie pour locations</div>
   <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou</div>
   <!-- Loading bar -->
@@ -1018,8 +1018,8 @@ async function loadPDF() {
 </script>
 
 <!-- Auth Screen -->
-<div id="authScreen" style="display:none;justify-content:center;align-items:center;min-height:100vh;padding:20px;">
-  <div style="background:var(--surface);padding:36px;border-radius:16px;width:380px;border:1px solid var(--border);box-shadow:0 8px 32px rgba(0,0,0,0.4);">
+<div id="authScreen" style="display:none;flex-direction:column;align-items:center;min-height:100vh;padding:40px 20px 20px;">
+  <div style="background:var(--surface);padding:36px;border-radius:16px;width:100%;max-width:500px;border:1px solid var(--border);box-shadow:0 8px 32px rgba(0,0,0,0.4);box-sizing:border-box;">
     <div style="text-align:center;margin-bottom:24px;">
       <div style="width:60px;height:60px;background:linear-gradient(135deg,#e94560,#6c63ff);border-radius:16px;display:inline-flex;align-items:center;justify-content:center;font-size:26px;font-weight:800;color:#fff;margin-bottom:12px;">L</div>
       <h1 style="color:#fff;font-size:22px;margin-bottom:4px;">Lokizio</h1>
@@ -1059,7 +1059,7 @@ async function loadPDF() {
     <div id="forgotPassLink" style="text-align:center;margin-top:10px;"><a href="#" onclick="forgotPassword();return false;" style="color:var(--accent2);font-size:12px;text-decoration:none;" data-i18n="auth.forgot">Mot de passe oublie ?</a></div>
   </div>
   <!-- Marketing section below auth -->
-  <div style="max-width:700px;margin:30px auto 0;padding:0 20px;">
+  <div style="max-width:500px;width:100%;margin:30px 0 0;padding:0;">
     <!-- Value proposition -->
     <div style="text-align:center;margin-bottom:30px;">
       <div style="font-size:18px;font-weight:800;color:var(--text);margin-bottom:8px;">La plateforme gratuite pour gerer vos locations</div>
