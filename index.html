@@ -933,7 +933,7 @@ async function loadPDF() {
 <body>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;pointer-events:none;">v6.47</div>
+<div id="versionBadge" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;pointer-events:none;">v6.48</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -943,7 +943,7 @@ async function loadPDF() {
     <!-- Broom that sweeps -->
     <div id="splashBroom" style="position:absolute;top:50%;left:-60px;font-size:48px;transform:translateY(-50%) rotate(-30deg);opacity:0;transition:all 0.8s cubic-bezier(0.25,0.46,0.45,0.94);">✨</div>
   </div>
-  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v6.47</span></div>
+  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v6.48</span></div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie pour locations</div>
   <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou</div>
   <!-- Loading bar -->
@@ -8689,23 +8689,69 @@ function switchPrestSubTab(tab) {
 function renderDashboardContent() {
   const today = new Date();
   const todayStr = today.toISOString().split('T')[0];
-  const todayCleanings = (cleanings || []).filter(c => (c.date || c.cleaningDate) === todayStr);
+
+  // Collect all upcoming prestations (cleanings + service requests)
+  const allUpcoming = [];
+  (cleanings || []).forEach(c => {
+    const d = c.cleaningDate || c.date || '';
+    if (d >= todayStr) allUpcoming.push({ date: d, type: 'cleaning_standard', label: getServiceLabel('cleaning_standard'), provider: c.provider || '?', source: c.source || '', status: c._status || 'pending', propertyName: '' });
+  });
+  const svcReqs = (_adminPrestCache && _adminPrestCache.svcRequests) || [];
+  svcReqs.forEach(r => {
+    const d = r.requested_date || r.preferred_date || '';
+    if (d >= todayStr && !['cancelled', 'refused'].includes(r.status)) {
+      allUpcoming.push({ date: d, type: r.service_type, label: getServiceLabel(r.service_type), provider: r.assigned_provider || '?', source: '', status: r.status, propertyName: r.property_name || '', priority: r.priority });
+    }
+  });
+  allUpcoming.sort((a, b) => a.date.localeCompare(b.date));
+
+  const todayItems = allUpcoming.filter(u => u.date === todayStr);
+  const upcomingItems = allUpcoming.filter(u => u.date > todayStr).slice(0, 8);
+
+  // Today section
   const div1 = document.getElementById('dashTodayCleanings');
   if (div1) {
-    let html = '<div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:8px;">&#128197; Aujourd\'hui</div>';
-    if (todayCleanings.length === 0) {
+    const statusColors = { done: '#34d399', in_progress: '#3b82f6', accepted: '#34d399', assigned: '#8b5cf6', pending: '#f59e0b', pending_validation: '#f59e0b', refused: '#ef4444' };
+    const statusLabels = { done: 'Termine', in_progress: 'En cours', accepted: 'Accepte', assigned: 'Assigne', pending: 'Attente', pending_validation: 'Validation', refused: 'Refuse' };
+    let html = '<div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:12px;">';
+    html += '<div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:10px;">&#128197; Aujourd\'hui — ' + todayItems.length + ' prestation(s)</div>';
+    if (todayItems.length === 0) {
       html += '<div style="color:var(--text3);font-size:13px;">Aucune prestation aujourd\'hui</div>';
     } else {
-      todayCleanings.forEach(c => {
-        const statusIcons = { done: '&#9989;', in_progress: '&#128260;', accepted: '&#10003;', pending: '&#9203;', refused: '&#10060;' };
-        html += '<div style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--surface2);border-radius:8px;margin-bottom:6px;">';
-        html += '<span>' + (statusIcons[c._status] || '&#128203;') + '</span>';
-        html += '<span style="font-weight:600;">' + esc(c.provider || 'Non assigne') + '</span>';
-        html += '<span style="color:var(--text3);font-size:12px;">' + esc(c.source || '') + '</span>';
+      todayItems.forEach(u => {
+        html += '<div onclick="switchMainTab(\'prestations\')" style="display:flex;align-items:center;gap:8px;padding:8px 0;border-top:1px solid var(--border);cursor:pointer;" onmouseover="this.style.background=\'rgba(255,255,255,0.03)\'" onmouseout="this.style.background=\'\'">';
+        html += '<div style="flex:1;font-size:13px;font-weight:600;">' + u.label + '</div>';
+        html += '<div style="font-size:11px;color:var(--text3);">' + esc(u.provider) + '</div>';
+        if (u.priority === 'high') html += '<span style="font-size:9px;padding:1px 5px;border-radius:3px;background:#ef444420;color:#ef4444;font-weight:700;animation:pulse 1.5s ease-in-out infinite;">URGENT</span>';
+        html += '<span style="font-size:10px;padding:2px 6px;border-radius:4px;background:' + (statusColors[u.status]||'#666') + '22;color:' + (statusColors[u.status]||'#666') + ';font-weight:600;">' + (statusLabels[u.status]||u.status) + '</span>';
         html += '</div>';
       });
     }
+    html += '</div>';
     div1.innerHTML = html;
+  }
+
+  // Upcoming section
+  const div2 = document.getElementById('dashPendingRequests');
+  if (div2 && upcomingItems.length > 0) {
+    const statusColors = { done: '#34d399', in_progress: '#3b82f6', accepted: '#34d399', assigned: '#8b5cf6', pending: '#f59e0b', pending_validation: '#f59e0b' };
+    const statusLabels = { done: 'OK', in_progress: 'En cours', accepted: 'OK', assigned: 'Assigne', pending: 'Attente', pending_validation: 'Valid.' };
+    let html = '<div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;">';
+    html += '<div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:10px;">&#128203; Prochaines prestations</div>';
+    upcomingItems.forEach(u => {
+      html += '<div onclick="switchMainTab(\'prestations\')" style="display:flex;align-items:center;gap:8px;padding:8px 0;border-top:1px solid var(--border);cursor:pointer;" onmouseover="this.style.background=\'rgba(255,255,255,0.03)\'" onmouseout="this.style.background=\'\'">';
+      html += '<div style="min-width:45px;font-size:11px;color:var(--text3);">' + fmtDate(u.date).substring(0, 5) + '</div>';
+      html += '<div style="flex:1;font-size:12px;font-weight:600;">' + u.label + '</div>';
+      html += '<div style="font-size:11px;color:var(--text3);">' + esc(u.provider) + '</div>';
+      if (u.priority === 'high') html += '<span style="font-size:9px;padding:1px 5px;border-radius:3px;background:#ef444420;color:#ef4444;font-weight:700;animation:pulse 1.5s ease-in-out infinite;">URGENT</span>';
+      html += '<span style="font-size:10px;padding:2px 6px;border-radius:4px;background:' + (statusColors[u.status]||'#666') + '22;color:' + (statusColors[u.status]||'#666') + ';font-weight:600;">' + (statusLabels[u.status]||'') + '</span>';
+      html += '</div>';
+    });
+    if (allUpcoming.filter(u => u.date > todayStr).length > 8) {
+      html += '<div onclick="switchMainTab(\'prestations\')" style="text-align:center;padding:8px;font-size:11px;color:var(--accent2);cursor:pointer;font-weight:600;">Voir tout &#8250;</div>';
+    }
+    html += '</div>';
+    div2.innerHTML = html;
   }
 }
 
