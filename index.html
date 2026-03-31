@@ -933,7 +933,7 @@ async function loadPDF() {
 <body>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;pointer-events:none;">v6.49</div>
+<div id="versionBadge" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;pointer-events:none;">v6.50</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -943,7 +943,7 @@ async function loadPDF() {
     <!-- Broom that sweeps -->
     <div id="splashBroom" style="position:absolute;top:50%;left:-60px;font-size:48px;transform:translateY(-50%) rotate(-30deg);opacity:0;transition:all 0.8s cubic-bezier(0.25,0.46,0.45,0.94);">✨</div>
   </div>
-  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v6.49</span></div>
+  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v6.50</span></div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie pour locations</div>
   <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou</div>
   <!-- Loading bar -->
@@ -3273,7 +3273,7 @@ async function showProviderMode() {
     html += '<div style="color:var(--text3);font-size:13px;">Aucune prestation aujourd\'hui</div>';
   } else {
     todayItems.forEach(u => {
-      html += '<div onclick="switchProviderNav(\'prestations\')" style="display:flex;align-items:center;gap:8px;padding:8px 0;border-top:1px solid var(--border);cursor:pointer;" onmouseover="this.style.background=\'rgba(255,255,255,0.03)\'" onmouseout="this.style.background=\'\'">';
+      html += '<div onclick="goToPrestation(\'' + (u.date||'') + '\',\'' + (u.type||'') + '\',\'\')" style="display:flex;align-items:center;gap:8px;padding:8px 0;border-top:1px solid var(--border);cursor:pointer;" onmouseover="this.style.background=\'rgba(255,255,255,0.03)\'" onmouseout="this.style.background=\'\'">';
       html += '<div style="flex:1;font-size:12px;font-weight:600;">' + getServiceLabel(u.type) + '</div>';
       if (u.propertyName) html += '<div style="font-size:11px;color:var(--text3);">' + esc(u.propertyName) + '</div>';
       if (u.priority === 'high') html += '<span style="font-size:9px;padding:1px 5px;border-radius:3px;background:#ef444420;color:#ef4444;font-weight:700;animation:pulse 1.5s ease-in-out infinite;">URGENT</span>';
@@ -3292,7 +3292,7 @@ async function showProviderMode() {
     html += '<div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:12px;">';
     html += '<div style="font-weight:700;font-size:14px;margin-bottom:10px;">&#128203; Prochaines prestations</div>';
     upcomingItems.forEach(u => {
-      html += '<div onclick="switchProviderNav(\'prestations\')" style="display:flex;align-items:center;gap:8px;padding:8px 0;border-top:1px solid var(--border);cursor:pointer;" onmouseover="this.style.background=\'rgba(255,255,255,0.03)\'" onmouseout="this.style.background=\'\'">';
+      html += '<div onclick="goToPrestation(\'' + (u.date||'') + '\',\'' + (u.type||'') + '\',\'\')" style="display:flex;align-items:center;gap:8px;padding:8px 0;border-top:1px solid var(--border);cursor:pointer;" onmouseover="this.style.background=\'rgba(255,255,255,0.03)\'" onmouseout="this.style.background=\'\'">';
       html += '<div style="min-width:40px;font-size:11px;color:var(--text3);">' + fmtDate(u.date).substring(0,5) + '</div>';
       html += '<div style="flex:1;font-size:12px;font-weight:600;">' + getServiceLabel(u.type) + '</div>';
       if (u.propertyName) html += '<div style="font-size:11px;color:var(--text3);">' + esc(u.propertyName) + '</div>';
@@ -3374,7 +3374,7 @@ async function showProviderMode() {
         const statusColors = { done: '#34d399', departed: '#34d399', in_progress: '#f59e0b', arrived: '#6c63ff', assigned: '#8b5cf6', accepted: '#34d399', seen: '#6c63ff', sent: 'var(--text3)', refused: '#ef4444', cancelled: '#ef4444', pending_validation: '#f59e0b', pending: 'var(--text3)' };
         const statusColor = statusColors[status] || 'var(--text3)';
 
-        html += `<div class="prestCard" data-category="${catKey}" style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:10px;${isToday ? 'border-left:3px solid #e94560;' : ''}">
+        html += `<div class="prestCard" data-category="${catKey}" data-date="${dateStr}" data-type="${u.type||''}" data-provider="${esc(u.provider||'')}" style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:10px;${isToday ? 'border-left:3px solid #e94560;' : ''}">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
             <div>
               <div style="font-size:11px;color:var(--accent2);font-weight:600;margin-bottom:2px;">${getServiceLabel('cleaning_standard')}</div>
@@ -4139,7 +4139,7 @@ async function showOwnerMode() {
     html += '<div style="font-weight:700;font-size:14px;margin-bottom:10px;">&#128203; Prochaines prestations</div>';
     ownerUpcoming.forEach(u => {
       const svcLabel = getServiceLabel(u.type);
-      html += '<div onclick="switchOwnerNav(\'prestations\')" style="display:flex;align-items:center;gap:8px;padding:8px 0;border-top:1px solid var(--border);cursor:pointer;" onmouseover="this.style.background=\'rgba(255,255,255,0.03)\'" onmouseout="this.style.background=\'\'">';
+      html += '<div onclick="goToPrestation(\'' + (u.date||'') + '\',\'' + (u.type||'') + '\',\'' + esc(u.provider||'').replace(/'/g,"\\\\'") + '\')" style="display:flex;align-items:center;gap:8px;padding:8px 0;border-top:1px solid var(--border);cursor:pointer;" onmouseover="this.style.background=\'rgba(255,255,255,0.03)\'" onmouseout="this.style.background=\'\'">';
       html += '<div style="min-width:40px;font-size:11px;color:var(--text3);">' + fmtDate(u.date).substring(0,5) + '</div>';
       html += '<div style="flex:1;font-size:12px;font-weight:600;">' + svcLabel + '</div>';
       if (u.propertyName) html += '<div style="font-size:11px;color:var(--text3);">' + esc(u.propertyName) + '</div>';
@@ -8745,7 +8745,7 @@ function renderDashboardContent() {
       html += '<div style="color:var(--text3);font-size:13px;">Aucune prestation aujourd\'hui</div>';
     } else {
       todayItems.forEach(u => {
-        html += '<div onclick="switchMainTab(\'prestations\')" style="display:flex;align-items:center;gap:8px;padding:8px 0;border-top:1px solid var(--border);cursor:pointer;" onmouseover="this.style.background=\'rgba(255,255,255,0.03)\'" onmouseout="this.style.background=\'\'">';
+        html += '<div onclick="goToPrestation(\'' + u.date + '\',\'' + (u.type||'') + '\',\'' + esc(u.provider||'').replace(/'/g,"\\'") + '\')" style="display:flex;align-items:center;gap:8px;padding:8px 0;border-top:1px solid var(--border);cursor:pointer;" onmouseover="this.style.background=\'rgba(255,255,255,0.03)\'" onmouseout="this.style.background=\'\'">';
         html += '<div style="flex:1;font-size:13px;font-weight:600;">' + u.label + '</div>';
         html += '<div style="font-size:11px;color:var(--text3);">' + esc(u.provider) + '</div>';
         if (u.priority === 'high') html += '<span style="font-size:9px;padding:1px 5px;border-radius:3px;background:#ef444420;color:#ef4444;font-weight:700;animation:pulse 1.5s ease-in-out infinite;">URGENT</span>';
@@ -8765,7 +8765,7 @@ function renderDashboardContent() {
     let html = '<div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;">';
     html += '<div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:10px;">&#128203; Prochaines prestations</div>';
     upcomingItems.forEach(u => {
-      html += '<div onclick="switchMainTab(\'prestations\')" style="display:flex;align-items:center;gap:8px;padding:8px 0;border-top:1px solid var(--border);cursor:pointer;" onmouseover="this.style.background=\'rgba(255,255,255,0.03)\'" onmouseout="this.style.background=\'\'">';
+      html += '<div onclick="goToPrestation(\'' + u.date + '\',\'' + (u.type||'') + '\',\'' + esc(u.provider||'').replace(/'/g,"\\'") + '\')" style="display:flex;align-items:center;gap:8px;padding:8px 0;border-top:1px solid var(--border);cursor:pointer;" onmouseover="this.style.background=\'rgba(255,255,255,0.03)\'" onmouseout="this.style.background=\'\'">';
       html += '<div style="min-width:45px;font-size:11px;color:var(--text3);">' + fmtDate(u.date).substring(0, 5) + '</div>';
       html += '<div style="flex:1;font-size:12px;font-weight:600;">' + u.label + '</div>';
       html += '<div style="font-size:11px;color:var(--text3);">' + esc(u.provider) + '</div>';
@@ -9082,6 +9082,40 @@ function goToListDate(dateStr) {
       }
     }
   }, 300);
+}
+function goToPrestation(dateStr, serviceType, provider) {
+  // Navigate to prestations tab, scroll to matching card, highlight it
+  const role = API.getRole();
+  if (role === 'provider') { switchProviderNav('prestations'); }
+  else if (role === 'owner') { switchOwnerNav('prestations'); }
+  else { switchMainTab('prestations'); switchPrestSubTab('list'); }
+  setTimeout(() => {
+    const cards = document.querySelectorAll('.adminPrestCard, .prestCard');
+    for (const card of cards) {
+      const match = (card.dataset.date === dateStr || !dateStr) &&
+        (card.dataset.type === serviceType || !serviceType) &&
+        (!provider || (card.dataset.provider || '').includes(provider));
+      if (match) {
+        card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        card.style.transition = 'box-shadow 0.3s, border-color 0.3s';
+        card.style.boxShadow = '0 0 0 2px #f59e0b, 0 0 20px rgba(245,158,11,0.3)';
+        card.style.borderColor = '#f59e0b';
+        setTimeout(() => {
+          card.style.boxShadow = '';
+          card.style.borderColor = '';
+        }, 1500);
+        return;
+      }
+    }
+    // Fallback: scroll to date separator
+    const allEls = document.getElementById('adminPrestList')?.children || [];
+    for (const el of allEls) {
+      if (el.dataset && el.dataset.date === dateStr) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        return;
+      }
+    }
+  }, 400);
 }
 function calPrev(){calMonth--;if(calMonth<0){calMonth=11;calYear--;}renderCalendar();}
 function calNext(){calMonth++;if(calMonth>11){calMonth=0;calYear++;}renderCalendar();}
@@ -10356,7 +10390,7 @@ async function loadAdminPrestations(forceReload) {
     const cancellable = u._source === 'service_request' && !['done', 'departed', 'in_progress', 'cancelled'].includes(u.status);
     const cancelPrice = u.propertyId ? (propMap[u.propertyId]?.owner_price || 0) : 0;
 
-    html += '<div class="adminPrestCard" data-category="' + cat + '" data-status="' + u.status + '"' + (isToday ? ' style="border-color:rgba(233,69,96,0.3);"' : '') + '>';
+    html += '<div class="adminPrestCard" data-category="' + cat + '" data-status="' + u.status + '" data-date="' + (u.date||'') + '" data-type="' + (u.type||'') + '" data-provider="' + esc(u.provider||'') + '"' + (isToday ? ' style="border-color:rgba(233,69,96,0.3);"' : '') + '>';
     html += '<div style="display:flex;align-items:center;gap:10px;padding:10px 14px;">';
     // Service icon
     html += '<div style="font-size:22px;flex-shrink:0;width:28px;text-align:center;">' + svcIcon + '</div>';
