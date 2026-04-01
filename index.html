@@ -967,7 +967,7 @@ async function loadPDF() {
 <body>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v7.19</div>
+<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v7.20</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -977,7 +977,7 @@ async function loadPDF() {
     <!-- Broom that sweeps -->
     <div id="splashBroom" style="position:absolute;top:50%;left:-60px;font-size:48px;transform:translateY(-50%) rotate(-30deg);opacity:0;transition:all 0.8s cubic-bezier(0.25,0.46,0.45,0.94);">✨</div>
   </div>
-  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v7.19</span></div>
+  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v7.20</span></div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie pour locations</div>
   <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou</div>
   <!-- Loading bar -->
@@ -1183,6 +1183,7 @@ async function loadPDF() {
 
   <div id="dashTodayCleanings" style="margin-top:16px;"></div>
   <div id="dashPendingRequests" style="margin-top:16px;"></div>
+  <div id="dashAnalytics" style="margin-top:0;"></div>
   <div id="dashRecentActivity" style="margin-top:16px;"></div>
 
   </div><!-- /tabDashboard -->
@@ -2098,6 +2099,7 @@ function getStatusLabel(s) { return (STATUS_CONFIG[s] || {}).label || s || ''; }
 // ── Splash Changelog (update this with each significant version) ──
 // Full versioned changelog — add new entries at TOP
 const VERSION_CHANGELOG = [
+  { v: '7.20', changes: ['Notifications email reelles (Edge Function Resend)', 'Notifications push (VAPID subscribe)', 'Dashboard analytics concierge (CA, tendance, litiges)', 'Historique depenses proprio (graphique mensuel)', 'Export PDF releve prestataire'] },
   { v: '7.19', changes: ['Popup envoi factures en debut de mois', 'Alerte factures en retard (>7 jours)', 'Proprio voit ses factures + bouton Payer (Stripe)', 'Envoi groupé des brouillons en 1 clic'] },
   { v: '7.18', changes: ['Facturation automatique a la validation', 'Facture brouillon creee/completee a chaque prestation done', '2 factures auto: proprio + prestataire'] },
   { v: '7.17', changes: ['Factures auto-remplies depuis le planning', 'Nom proprio pre-rempli', 'Fix PDF: gestion erreur + fallback nom', 'Fix "Marquer payee"'] },
@@ -3274,6 +3276,7 @@ async function init() {
   await loadActiveProperty();
   updateLangButton();
   if ('Notification' in window && Notification.permission === 'default') Notification.requestPermission();
+  subscribePushNotifications();
   checkRentalNotifications();
   checkReminders();
   loadDashboard();
@@ -4012,7 +4015,10 @@ async function showProviderMode() {
   html += '<div style="text-align:center;"><div style="font-size:11px;color:var(--text3);text-transform:uppercase;margin-bottom:4px;">Prestations terminees</div><div style="font-size:20px;font-weight:700;color:var(--text);">' + doneCount + '</div></div>';
   html += '</div></div>';
   // Detailed list of completed prestations
-  html += '<div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:8px;">Historique des prestations terminees</div>';
+  html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">';
+  html += '<div style="font-size:13px;font-weight:600;color:var(--text);">Historique des prestations terminees</div>';
+  html += '<button onclick="exportProviderPDF()" style="padding:6px 12px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:6px;font-size:11px;cursor:pointer;">&#128196; Export PDF</button>';
+  html += '</div>';
   const doneList = unified.filter(u => u.status === 'done' || u.status === 'departed');
   if (doneList.length === 0) {
     html += '<div style="text-align:center;padding:20px;color:var(--text3);font-size:13px;">Aucune prestation terminee</div>';
@@ -4356,7 +4362,55 @@ async function sendAutoMessage(orgId, senderName, senderRole, recipientName, bod
       body: body,
     });
     updateUnreadBadge();
+    // Also send email notification to recipient (async, non-blocking)
+    sendEmailNotification(orgId, recipientName, senderName, body).catch(() => {});
   } catch(e) { console.error('Auto-message error:', e); }
+}
+
+async function sendEmailNotification(orgId, recipientName, senderName, messageBody) {
+  try {
+    // Find recipient email from members
+    const { data: members } = await sb.from('members').select('display_name,invited_email,role').eq('org_id', orgId);
+    if (!members) return;
+    // Match by name or role
+    let recipientEmail = '';
+    if (recipientName === 'gestionnaire') {
+      const admin = members.find(m => m.role === 'admin' || m.role === 'manager');
+      if (admin) recipientEmail = admin.invited_email;
+    } else if (recipientName === 'proprietaire') {
+      const owner = members.find(m => m.role === 'owner');
+      if (owner) recipientEmail = owner.invited_email;
+    } else {
+      const match = members.find(m => m.display_name === recipientName);
+      if (match) recipientEmail = match.invited_email;
+    }
+    if (!recipientEmail) return;
+
+    // Clean HTML entities from body for email
+    const cleanBody = messageBody.replace(/&#\d+;/g, '').replace(/&[a-z]+;/g, ' ').trim();
+
+    const session = (await sb.auth.getSession()).data.session;
+    if (!session) return;
+    await fetch(SUPABASE_URL + '/functions/v1/send-email', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
+      body: JSON.stringify({
+        to: recipientEmail,
+        subject: 'Lokizio — ' + senderName,
+        type: 'notification',
+        html: '<div style="font-family:Arial,sans-serif;max-width:500px;margin:0 auto;padding:20px;">'
+          + '<div style="background:linear-gradient(135deg,#1a1a2e,#16213e);padding:16px 20px;border-radius:12px 12px 0 0;">'
+          + '<div style="color:#fff;font-size:18px;font-weight:700;">Lokizio</div></div>'
+          + '<div style="background:#f8f9fa;padding:20px;border:1px solid #e9ecef;border-radius:0 0 12px 12px;">'
+          + '<div style="font-size:14px;color:#333;margin-bottom:12px;"><b>' + senderName + '</b> :</div>'
+          + '<div style="font-size:14px;color:#555;line-height:1.6;padding:12px;background:#fff;border-radius:8px;border:1px solid #e9ecef;">' + cleanBody + '</div>'
+          + '<div style="margin-top:16px;text-align:center;">'
+          + '<a href="https://fabienlacaze.github.io/lokizio/" style="display:inline-block;padding:10px 24px;background:linear-gradient(135deg,#6c63ff,#5a54e0);color:#fff;text-decoration:none;border-radius:8px;font-weight:600;font-size:14px;">Ouvrir Lokizio</a></div>'
+          + '<div style="margin-top:12px;font-size:11px;color:#999;text-align:center;">Vous recevez cet email car vous etes membre d\'une equipe sur Lokizio.</div>'
+          + '</div></div>'
+      })
+    });
+  } catch(e) { /* non-blocking */ }
 }
 
 async function acceptServiceRequest(id) {
@@ -4788,6 +4842,38 @@ async function showOwnerMode() {
     if (ownerUnified.filter(u => (u.date||'') > today && !['done','cancelled','departed'].includes(u.status)).length > 8) {
       html += '<div onclick="switchOwnerNav(\'prestations\')" style="text-align:center;padding:8px;font-size:11px;color:var(--accent2);cursor:pointer;font-weight:600;">Voir tout &#8250;</div>';
     }
+    html += '</div>';
+  }
+
+  // Monthly cost history
+  const costByMonth = {};
+  allCleanings.forEach(c => {
+    const d = c.cleaningDate || c.date || '';
+    if (!d) return;
+    const month = d.substring(0, 7);
+    const price = getServicePriceForDate(c.propertyId || '', 'cleaning_standard', 'price_owner', d);
+    if (!costByMonth[month]) costByMonth[month] = { count: 0, total: 0 };
+    costByMonth[month].count++;
+    costByMonth[month].total += price;
+  });
+  const sortedMonths = Object.keys(costByMonth).sort().slice(-6);
+  if (sortedMonths.length > 1) {
+    html += '<div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:12px;">';
+    html += '<div style="font-weight:700;font-size:14px;margin-bottom:10px;">&#128200; Historique depenses</div>';
+    const maxCost = Math.max(...sortedMonths.map(m => costByMonth[m].total));
+    sortedMonths.forEach(m => {
+      const d = costByMonth[m];
+      const pct = maxCost > 0 ? Math.round(d.total / maxCost * 100) : 0;
+      const monthLabel = new Date(m + '-15').toLocaleDateString('fr-FR', { month: 'short', year: '2-digit' });
+      html += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">';
+      html += '<div style="width:50px;font-size:11px;color:var(--text3);text-align:right;">' + monthLabel + '</div>';
+      html += '<div style="flex:1;height:18px;background:var(--surface2);border-radius:4px;overflow:hidden;">';
+      html += '<div style="height:100%;width:' + pct + '%;background:linear-gradient(90deg,#6c63ff,#a78bfa);border-radius:4px;transition:width 0.3s;display:flex;align-items:center;justify-content:flex-end;padding-right:4px;">';
+      if (pct > 25) html += '<span style="font-size:9px;color:#fff;font-weight:700;">' + d.total + '&euro;</span>';
+      html += '</div></div>';
+      if (pct <= 25) html += '<span style="font-size:10px;color:var(--text3);">' + d.total + '&euro;</span>';
+      html += '</div>';
+    });
     html += '</div>';
   }
 
@@ -10391,6 +10477,103 @@ async function setReminder(idx) {
   // If reminder is already due, fire it now
   checkReminders();
 }
+/* ── Provider PDF Export ── */
+async function exportProviderPDF() {
+  try {
+    await loadPDF();
+    if (!window.jspdf) return showToast('Erreur chargement PDF');
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    const member = API.getMember();
+    const provName = member?.display_name || 'Prestataire';
+    const pageW = doc.internal.pageSize.getWidth();
+    let y = 20;
+
+    doc.setFontSize(18); doc.setFont(undefined, 'bold');
+    doc.text('Releve de prestations', 14, y); y += 8;
+    doc.setFontSize(12); doc.setFont(undefined, 'normal');
+    doc.text(provName, 14, y); y += 5;
+    doc.setFontSize(9); doc.text('Genere le ' + new Date().toLocaleDateString('fr-FR'), 14, y); y += 10;
+
+    // Table header
+    doc.setFillColor(108, 99, 255);
+    doc.rect(14, y - 4, pageW - 28, 8, 'F');
+    doc.setTextColor(255, 255, 255); doc.setFontSize(9); doc.setFont(undefined, 'bold');
+    doc.text('Date', 16, y); doc.text('Prestation', 50, y); doc.text('Propriete', 110, y); doc.text('Statut', pageW - 40, y); doc.text('Prix', pageW - 16, y, { align: 'right' });
+    doc.setTextColor(0, 0, 0); doc.setFont(undefined, 'normal'); y += 8;
+
+    // Get provider's prestations from cache or reload
+    const provCleanings = [];
+    if (_adminPrestCache) {
+      (_adminPrestCache.plannings || []).forEach(plan => {
+        const prop = _adminPrestCache.propMap[plan.property_id];
+        if (!plan.cleanings || !prop) return;
+        plan.cleanings.filter(c => c.provider === provName).forEach(c => {
+          const vKey = prop.id + '_' + (c.cleaningDate || c.date) + '_' + provName;
+          const v = (_adminPrestCache.validations || {})[vKey];
+          provCleanings.push({ date: c.cleaningDate || c.date, type: 'Menage standard', property: prop.name, status: v ? v.status : 'pending', price: getServicePrice(prop.id, 'cleaning_standard', 'cost_provider') });
+        });
+      });
+    }
+    provCleanings.sort((a, b) => a.date.localeCompare(b.date));
+    let total = 0;
+    provCleanings.forEach((c, i) => {
+      if (i % 2 === 0) { doc.setFillColor(248, 248, 252); doc.rect(14, y - 4, pageW - 28, 7, 'F'); }
+      doc.text(c.date || '', 16, y);
+      doc.text(c.type || '', 50, y);
+      doc.text(String(c.property || '').substring(0, 30), 110, y);
+      doc.text(c.status || '', pageW - 40, y);
+      doc.text((c.price || 0) + ' EUR', pageW - 16, y, { align: 'right' });
+      if (c.status === 'done' || c.status === 'departed') total += c.price || 0;
+      y += 7;
+      if (y > 270) { doc.addPage(); y = 20; }
+    });
+
+    y += 6;
+    doc.setFont(undefined, 'bold'); doc.setFontSize(11);
+    doc.text('Total: ' + total.toFixed(2) + ' EUR', pageW - 16, y, { align: 'right' });
+
+    doc.save('releve_' + provName.replace(/\s/g, '_') + '.pdf');
+    showToast('PDF telecharge !');
+  } catch(e) { console.error('exportProviderPDF:', e); showToast('Erreur: ' + e.message); }
+}
+
+/* ── Push Notifications Subscribe ── */
+const VAPID_PUBLIC_KEY = 'BMAMPjPS9Hb4yfjMpaku-69Cuwlot-lrBl53uF1JDF3OMzuEUckskFCS77Y534VT2PSf0S68ZSOJjfjXUqVU8-Q';
+
+async function subscribePushNotifications() {
+  try {
+    if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
+    const permission = await Notification.requestPermission();
+    if (permission !== 'granted') return;
+    const reg = await navigator.serviceWorker.ready;
+    let sub = await reg.pushManager.getSubscription();
+    if (!sub) {
+      sub = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
+      });
+    }
+    // Save subscription to DB
+    const { data: { user } } = await sb.auth.getUser();
+    if (user) {
+      await sb.from('push_subscriptions').upsert({
+        user_id: user.id,
+        endpoint: sub.endpoint,
+        keys: JSON.stringify(sub.toJSON().keys),
+        created_at: new Date().toISOString()
+      }, { onConflict: 'user_id' });
+    }
+  } catch(e) { console.error('Push subscribe error:', e); }
+}
+
+function urlBase64ToUint8Array(base64String) {
+  const padding = '='.repeat((4 - base64String.length % 4) % 4);
+  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+  const rawData = atob(base64);
+  return Uint8Array.from([...rawData].map(c => c.charCodeAt(0)));
+}
+
 /* ── Confetti Effect ── */
 /* ═══ KILLER FEATURES ═══ */
 
@@ -10769,6 +10952,58 @@ function renderDashboardContent() {
     }
     html += '</div>';
     div2.innerHTML = html;
+  }
+
+  // Analytics section
+  const div3 = document.getElementById('dashAnalytics');
+  if (div3 && _adminPrestCache) {
+    const cache = _adminPrestCache;
+    const thisMonth = todayStr.substring(0, 7);
+    const lastMonth = new Date(today.getFullYear(), today.getMonth() - 1, 15).toISOString().substring(0, 7);
+    let thisMonthCount = 0, lastMonthCount = 0, thisMonthRevenue = 0, disputed = 0, pending = 0;
+
+    // Count from service requests
+    (cache.svcRequests || []).forEach(r => {
+      const d = r.requested_date || '';
+      const month = d.substring(0, 7);
+      if (r.status === 'done') {
+        if (month === thisMonth) { thisMonthCount++; thisMonthRevenue += getServicePrice(r.property_id || '', r.service_type, 'price_owner'); }
+        if (month === lastMonth) lastMonthCount++;
+      }
+      if (r.status === 'disputed') disputed++;
+      if (r.status === 'pending' || r.status === 'assigned') pending++;
+    });
+
+    // Count from cleanings
+    (cache.plannings || []).forEach(plan => {
+      if (!plan.cleanings) return;
+      plan.cleanings.forEach(c => {
+        const d = c.cleaningDate || c.date || '';
+        const month = d.substring(0, 7);
+        const vKey = plan.property_id + '_' + d + '_' + (c.provider || '');
+        const v = (cache.validations || {})[vKey];
+        if (v && v.status === 'done') {
+          if (month === thisMonth) { thisMonthCount++; thisMonthRevenue += getServicePrice(plan.property_id, 'cleaning_standard', 'price_owner'); }
+          if (month === lastMonth) lastMonthCount++;
+        }
+      });
+    });
+
+    const trend = lastMonthCount > 0 ? Math.round(((thisMonthCount - lastMonthCount) / lastMonthCount) * 100) : 0;
+    const trendColor = trend >= 0 ? '#34d399' : '#ef4444';
+    const trendIcon = trend >= 0 ? '&#9650;' : '&#9660;';
+
+    let html = '<div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-top:12px;">';
+    html += '<div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:12px;">&#128202; Analytique du mois</div>';
+    html += '<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;">';
+    html += '<div style="background:var(--surface2);border-radius:10px;padding:12px;text-align:center;"><div style="font-size:22px;font-weight:800;color:var(--text);">' + thisMonthCount + '</div><div style="font-size:10px;color:var(--text3);">Prestations terminees</div>';
+    if (trend !== 0) html += '<div style="font-size:10px;color:' + trendColor + ';margin-top:4px;">' + trendIcon + ' ' + Math.abs(trend) + '% vs mois dernier</div>';
+    html += '</div>';
+    html += '<div style="background:var(--surface2);border-radius:10px;padding:12px;text-align:center;"><div style="font-size:22px;font-weight:800;color:#f59e0b;">' + thisMonthRevenue + '&euro;</div><div style="font-size:10px;color:var(--text3);">CA du mois</div></div>';
+    html += '<div style="background:var(--surface2);border-radius:10px;padding:12px;text-align:center;"><div style="font-size:22px;font-weight:800;color:#f59e0b;">' + pending + '</div><div style="font-size:10px;color:var(--text3);">En attente</div></div>';
+    html += '<div style="background:var(--surface2);border-radius:10px;padding:12px;text-align:center;"><div style="font-size:22px;font-weight:800;color:' + (disputed > 0 ? '#ef4444' : 'var(--text)') + ';">' + disputed + '</div><div style="font-size:10px;color:var(--text3);">Litiges</div></div>';
+    html += '</div></div>';
+    div3.innerHTML = html;
   }
 }
 
