@@ -192,11 +192,17 @@ async function loadPDF() {
   .adminPrestCard .card-date .month { font-size:10px; color:var(--text3); text-transform:uppercase; font-weight:600; letter-spacing:0.5px; }
   .adminPrestCard .card-date .dow { font-size:9px; color:var(--text3); margin-top:2px; }
   .adminPrestCard .card-body { flex:1; padding:10px 12px; min-width:0; }
+  .adminPrestCard { background:var(--surface); border:1px solid var(--border); border-radius:12px; margin-bottom:8px; overflow:hidden; transition:transform 0.15s,box-shadow 0.15s; }
+  .adminPrestCard:hover { transform:translateY(-1px); box-shadow:0 4px 16px rgba(0,0,0,0.2); }
   .adminPrestCard .card-title { font-size:13px; font-weight:700; color:var(--text); display:flex; align-items:center; gap:6px; }
   .adminPrestCard .card-meta { display:flex; gap:10px; font-size:11px; color:var(--text3); margin-top:4px; flex-wrap:wrap; }
   .adminPrestCard .card-meta span { display:flex; align-items:center; gap:3px; }
-  .adminPrestCard .card-status { padding:3px 8px; border-radius:4px; font-size:10px; font-weight:700; white-space:nowrap; }
+  .adminPrestCard .card-status { padding:3px 10px; border-radius:6px; font-size:10px; font-weight:700; white-space:nowrap; letter-spacing:0.3px; }
   .adminPrestCard .card-actions { padding:8px 12px; border-top:1px solid var(--border); display:flex; gap:6px; align-items:center; flex-wrap:wrap; }
+  .adminPrestCard .card-date-block { width:48px; text-align:center; flex-shrink:0; padding:8px 0; border-right:1px solid var(--border); margin-right:4px; }
+  .adminPrestCard .card-date-block .card-day { font-size:18px; font-weight:800; color:var(--text); line-height:1; }
+  .adminPrestCard .card-date-block .card-month { font-size:9px; color:var(--text3); text-transform:uppercase; letter-spacing:0.5px; }
+  .adminPrestCard .card-date-block .card-dow { font-size:9px; color:var(--text3); }
   .tab-content { display: none; }
   .tab-content.active { display: block; }
   .header-left { display: flex; align-items: center; gap: 12px; }
@@ -961,7 +967,7 @@ async function loadPDF() {
 <body>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v7.09</div>
+<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v7.10</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -971,7 +977,7 @@ async function loadPDF() {
     <!-- Broom that sweeps -->
     <div id="splashBroom" style="position:absolute;top:50%;left:-60px;font-size:48px;transform:translateY(-50%) rotate(-30deg);opacity:0;transition:all 0.8s cubic-bezier(0.25,0.46,0.45,0.94);">✨</div>
   </div>
-  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v7.09</span></div>
+  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v7.10</span></div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie pour locations</div>
   <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou</div>
   <!-- Loading bar -->
@@ -2092,6 +2098,7 @@ function getStatusLabel(s) { return (STATUS_CONFIG[s] || {}).label || s || ''; }
 // ── Splash Changelog (update this with each significant version) ──
 // Full versioned changelog — add new entries at TOP
 const VERSION_CHANGELOG = [
+  { v: '7.10', changes: ['Nouveau design des cartes prestations', 'Mini-calendrier avec jour/mois sur chaque carte', 'Bordure coloree par statut', 'Icones plus grandes, meilleure lisibilite'] },
   { v: '7.08', changes: ['Securite: verification identite prestataire', 'Facturation: exclut prestations non validees', 'Facturation: inclut prestations a la demande', 'Photos: chemins aleatoires anti-enumeration'] },
   { v: '7.07', changes: ['Photos via Supabase Storage (compression client)', 'Fin du stockage base64 en DB', 'Upload max 10MB avec compression auto'] },
   { v: '7.06', changes: ['Barre de completude sur chaque bien (8 criteres)'] },
@@ -12578,22 +12585,30 @@ async function loadAdminPrestations(forceReload) {
     const cancellable = u._source === 'service_request' && !['done', 'departed', 'in_progress', 'cancelled'].includes(u.status);
     const cancelPrice = getServicePriceForDate(u.propertyId || '', u.type || 'cleaning_standard', 'price_owner', u.date || '');
 
-    html += '<div class="adminPrestCard" data-category="' + cat + '" data-status="' + u.status + '" data-date="' + (u.date||'') + '" data-type="' + (u.type||'') + '" data-provider="' + esc(u.provider||'') + '"' + (isToday ? ' style="border-color:rgba(233,69,96,0.3);"' : '') + '>';
-    html += '<div style="display:flex;align-items:center;gap:10px;padding:10px 14px;">';
+    html += '<div class="adminPrestCard" data-category="' + cat + '" data-status="' + u.status + '" data-date="' + (u.date||'') + '" data-type="' + (u.type||'') + '" data-provider="' + esc(u.provider||'') + '" style="border-left:4px solid ' + color + ';' + (isToday ? 'box-shadow:0 0 0 1px rgba(233,69,96,0.3);' : '') + '">';
+    html += '<div style="display:flex;align-items:stretch;gap:0;padding:0;">';
+    // Date block
+    if (dayNum) {
+      html += '<div class="card-date-block">';
+      html += '<div class="card-dow">' + dowStr + '</div>';
+      html += '<div class="card-day">' + dayNum + '</div>';
+      html += '<div class="card-month">' + monthStr + '</div>';
+      html += '</div>';
+    }
     // Service icon
-    html += '<div style="font-size:22px;flex-shrink:0;width:28px;text-align:center;">' + svcIcon + '</div>';
+    html += '<div style="display:flex;align-items:center;padding:0 8px;font-size:26px;flex-shrink:0;">' + svcIcon + '</div>';
     // Info
-    html += '<div style="flex:1;min-width:0;">';
+    html += '<div style="flex:1;min-width:0;padding:10px 8px 10px 0;">';
     html += '<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">';
-    html += '<span style="font-size:13px;font-weight:700;color:var(--text);">' + esc(svcName) + '</span>';
+    html += '<span style="font-size:14px;font-weight:700;color:var(--text);">' + esc(svcName) + '</span>';
     if (u.source) html += '<span style="font-size:9px;padding:1px 5px;border-radius:3px;background:' + (u.source.toLowerCase().includes('airbnb') ? '#e9456030' : '#2563eb30') + ';color:' + (u.source.toLowerCase().includes('airbnb') ? '#e94560' : '#2563eb') + ';font-weight:700;">' + esc(u.source).toUpperCase() + '</span>';
     if (u.priority === 'high') html += '<span style="font-size:9px;padding:1px 5px;border-radius:3px;background:#ef444420;color:#ef4444;font-weight:700;animation:pulse 1.5s ease-in-out infinite;">URGENT</span>';
     html += '</div>';
-    html += '<div style="font-size:11px;color:var(--text3);margin-top:2px;">';
+    html += '<div style="font-size:11px;color:var(--text3);margin-top:3px;">';
     const metaParts = [];
-    if (u.propertyName) metaParts.push('🏠 ' + esc(u.propertyName));
-    if (u.provider) metaParts.push('👤 ' + esc(u.provider));
-    html += metaParts.join(' · ');
+    if (u.propertyName) metaParts.push('&#127968; ' + esc(u.propertyName));
+    if (u.provider) metaParts.push('&#128100; ' + esc(u.provider));
+    html += metaParts.join(' &middot; ');
     html += '</div>';
     if (u.description) html += '<div style="font-size:10px;color:var(--text3);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + esc(u.description) + '</div>';
     html += '</div>';
