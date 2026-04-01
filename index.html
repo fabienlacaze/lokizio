@@ -961,7 +961,7 @@ async function loadPDF() {
 <body>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v7.03</div>
+<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v7.04</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -971,7 +971,7 @@ async function loadPDF() {
     <!-- Broom that sweeps -->
     <div id="splashBroom" style="position:absolute;top:50%;left:-60px;font-size:48px;transform:translateY(-50%) rotate(-30deg);opacity:0;transition:all 0.8s cubic-bezier(0.25,0.46,0.45,0.94);">✨</div>
   </div>
-  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v7.03</span></div>
+  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v7.04</span></div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie pour locations</div>
   <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou</div>
   <!-- Loading bar -->
@@ -1661,6 +1661,18 @@ async function loadPDF() {
         </label>
       </div>
       <div id="mkProfileFields" style="display:none;flex-direction:column;gap:10px;border-top:1px solid var(--border2);padding-top:12px;">
+        <label style="font-size:11px;color:var(--text3);text-transform:uppercase;">Nom affiche</label>
+        <input type="text" id="mkName" placeholder="Votre nom ou nom d'entreprise" onchange="autoSaveMarketplaceField()" style="width:100%;padding:8px 12px;background:#1a1a2e;color:#f0f0f5;border:1px solid var(--border2);border-radius:8px;font-size:13px;box-sizing:border-box;">
+        <div style="display:flex;gap:10px;">
+          <div style="flex:1;">
+            <label style="font-size:11px;color:var(--text3);text-transform:uppercase;display:block;margin-bottom:4px;">Ville</label>
+            <input type="text" id="mkCity" placeholder="Votre ville" onchange="autoSaveMarketplaceField()" style="width:100%;padding:8px 12px;background:#1a1a2e;color:#f0f0f5;border:1px solid var(--border2);border-radius:8px;font-size:13px;box-sizing:border-box;">
+          </div>
+          <div style="flex:1;">
+            <label style="font-size:11px;color:var(--text3);text-transform:uppercase;display:block;margin-bottom:4px;">Telephone</label>
+            <input type="tel" id="mkPhone" placeholder="06 12 34 56 78" onchange="autoSaveMarketplaceField()" style="width:100%;padding:8px 12px;background:#1a1a2e;color:#f0f0f5;border:1px solid var(--border2);border-radius:8px;font-size:13px;box-sizing:border-box;">
+          </div>
+        </div>
         <label style="font-size:11px;color:var(--text3);text-transform:uppercase;">Description</label>
         <textarea id="mkDescription" placeholder="Decrivez votre activite, vos specialites..." rows="3" onchange="autoSaveMarketplaceField()" style="width:100%;padding:10px;background:#1a1a2e;color:#f0f0f5;border:1px solid var(--border2);border-radius:8px;font-size:13px;font-family:'Inter',sans-serif;resize:vertical;box-sizing:border-box;"></textarea>
         <label style="font-size:11px;color:var(--text3);text-transform:uppercase;">Services proposes</label>
@@ -2550,7 +2562,7 @@ let inlinePropCheckItems = [];
 function renderInlineChecklist() {
   const prop = API.getActiveProperty(fullConfig);
   if (!prop) return;
-  if (!inlinePropCheckItems.length || inlinePropCheckItems._propId !== prop.id) {
+  if (inlinePropCheckItems._propId !== prop.id) {
     inlinePropCheckItems = (prop.checklist || []).slice();
     inlinePropCheckItems._propId = prop.id;
   }
@@ -2592,6 +2604,8 @@ function handleInlinePropPhoto(input) {
     img.src = e.target.result;
     img.style.display = 'block';
     document.getElementById('inlinePropPhotoPlaceholder').style.display = 'none';
+    // Auto-save photo
+    saveInlinePropDetail();
   };
   reader.readAsDataURL(file);
 }
@@ -2661,6 +2675,8 @@ function recalcEstimate() {
       if (svcPrices[svcId] !== undefined) { input.value = svcPrices[svcId]; input.dataset.auto = '1'; }
     }
   });
+  // Auto-save after recalculation
+  saveInlinePropDetail();
 }
 
 function saveInlinePropDetail() {
@@ -11501,12 +11517,16 @@ async function autoSaveMarketplaceField() {
   try {
     const { data: { user } } = await sb.auth.getUser();
     if (!user) return;
+    const mkName = document.getElementById('mkName')?.value?.trim() || '';
+    const mkCity = document.getElementById('mkCity')?.value?.trim() || '';
+    const mkPhone = document.getElementById('mkPhone')?.value?.trim() || '';
     const description = document.getElementById('mkDescription')?.value?.trim() || '';
     const experienceYears = parseInt(document.getElementById('mkExperienceYears')?.value) || 0;
     const availability = document.getElementById('mkAvailability')?.value || 'available';
     const services = [];
     document.querySelectorAll('.mkServiceCb:checked').forEach(cb => services.push(cb.value));
     const profileData = {
+      display_name: mkName, city: mkCity, phone: mkPhone,
       description, services, experience_years: experienceYears, availability,
       visible: document.getElementById('mkVisibleToggle')?.checked || false,
       updated_at: new Date().toISOString()
@@ -11517,7 +11537,7 @@ async function autoSaveMarketplaceField() {
       ({ error } = await sb.from('marketplace_profiles').update(profileData).eq('user_id', user.id));
     } else {
       profileData.user_id = user.id;
-      profileData.display_name = user.user_metadata?.display_name || user.email?.split('@')[0] || '';
+      if (!profileData.display_name) profileData.display_name = user.user_metadata?.display_name || user.email?.split('@')[0] || '';
       profileData.email = user.email;
       const _r = API.getRole();
       profileData.role = (_r === 'admin' || _r === 'manager') ? 'concierge' : _r || 'provider';
@@ -11568,6 +11588,12 @@ async function loadMarketplaceProfile() {
     renderMkServiceCheckboxes(services);
     // Populate extended fields if data exists
     if (data) {
+      const nameEl = document.getElementById('mkName');
+      if (nameEl) nameEl.value = data.display_name || '';
+      const cityEl = document.getElementById('mkCity');
+      if (cityEl) cityEl.value = data.city || '';
+      const phoneEl = document.getElementById('mkPhone');
+      if (phoneEl) phoneEl.value = data.phone || '';
       const descEl = document.getElementById('mkDescription');
       if (descEl) descEl.value = data.description || '';
       const expEl = document.getElementById('mkExperienceYears');
