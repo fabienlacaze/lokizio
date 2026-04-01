@@ -961,7 +961,7 @@ async function loadPDF() {
 <body>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v7.02</div>
+<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v7.03</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -971,7 +971,7 @@ async function loadPDF() {
     <!-- Broom that sweeps -->
     <div id="splashBroom" style="position:absolute;top:50%;left:-60px;font-size:48px;transform:translateY(-50%) rotate(-30deg);opacity:0;transition:all 0.8s cubic-bezier(0.25,0.46,0.45,0.94);">✨</div>
   </div>
-  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v7.02</span></div>
+  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v7.03</span></div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie pour locations</div>
   <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou</div>
   <!-- Loading bar -->
@@ -1254,6 +1254,37 @@ async function loadPDF() {
   </div>
 
   </div><!-- /tabTeam -->
+
+  <!-- ═══ TAB: ANNUAIRE ═══ -->
+  <div class="tab-content" id="tabAnnuaire">
+    <!-- Connection requests -->
+    <div id="annuaireRequests"></div>
+    <!-- My profile completeness -->
+    <div id="annuaireMyProfile"></div>
+    <!-- Filters -->
+    <div id="annuaireFilters" style="margin-bottom:12px;">
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;">
+        <select id="annRoleFilter" onchange="filterAnnuaire()" style="padding:8px 12px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:13px;">
+          <option value="">Tous les profils</option>
+          <option value="provider">Prestataires</option>
+          <option value="owner">Proprietaires</option>
+          <option value="concierge">Conciergeries</option>
+        </select>
+        <input type="text" id="annCityFilter" placeholder="Ville ou code postal..." oninput="filterAnnuaire()" style="flex:1;min-width:120px;padding:8px 12px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:13px;">
+        <select id="annSortFilter" onchange="filterAnnuaire()" style="padding:8px 12px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:13px;">
+          <option value="recent">Plus recents</option>
+          <option value="rating">Meilleure note</option>
+          <option value="cleanings">Plus d'experience</option>
+        </select>
+      </div>
+      <!-- Service filter chips -->
+      <div id="annServiceFilters" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;"></div>
+    </div>
+    <!-- My team -->
+    <div id="annuaireTeam"></div>
+    <!-- Marketplace results -->
+    <div id="annuaireResults" style="min-height:200px;"></div>
+  </div><!-- /tabAnnuaire -->
 
   <!-- ═══ TAB: PRESTATIONS ═══ -->
   <div class="tab-content" id="tabPrestations">
@@ -3844,7 +3875,7 @@ async function showProviderMode() {
   html += '</div>';
 
   // Team page (hidden, shown by nav Equipe tab)
-  html += '<div id="provContentTeam" style="display:none;"><div id="provTeamTabContent"></div></div>';
+  html += '<div id="provContentAnnuaire" style="display:none;"><div id="provAnnuaireContent"></div></div>';
 
   // Chat page (hidden, shown by nav Messages tab)
   html += '<div id="provContentChat" style="display:none;">';
@@ -3876,21 +3907,21 @@ function setupBottomNav(role) {
     admin: [
       { id: 'dashboard', icon: '📊', label: 'Dashboard' },
       { id: 'properties', icon: '🏠', label: 'Biens' },
-      { id: 'team', icon: '👥', label: 'Equipe' },
+      { id: 'annuaire', icon: '🌐', label: 'Annuaire' },
       { id: 'prestations', icon: '📋', label: 'Prestations' },
       { id: 'billing', icon: '💰', label: 'Finances' },
       { id: 'messages', icon: '💬', label: 'Messages' },
     ],
     provider: [
       { id: 'overview', icon: '📊', label: 'Apercu' },
-      { id: 'team', icon: '👥', label: 'Equipe' },
+      { id: 'annuaire', icon: '🌐', label: 'Annuaire' },
       { id: 'prestations', icon: '📋', label: 'Prestations' },
       { id: 'billing', icon: '💰', label: 'Finances' },
       { id: 'chat', icon: '💬', label: 'Messages' },
     ],
     owner: [
       { id: 'overview', icon: '📊', label: 'Apercu' },
-      { id: 'team', icon: '👥', label: 'Equipe' },
+      { id: 'annuaire', icon: '🌐', label: 'Annuaire' },
       { id: 'properties', icon: '🏠', label: 'Biens' },
       { id: 'prestations', icon: '📋', label: 'Prestations' },
       { id: 'billing', icon: '💰', label: 'Finances' },
@@ -3926,14 +3957,14 @@ function switchProviderNav(tab) {
   const prestations = document.getElementById('provContentPrestations');
   const billing = document.getElementById('provContentBilling');
   const chatPage = document.getElementById('provContentChat');
-  const teamPage = document.getElementById('provContentTeam');
+  const annuairePage = document.getElementById('provContentAnnuaire');
   if (overview) overview.style.display = tab === 'overview' ? '' : 'none';
   if (billing) billing.style.display = tab === 'billing' ? '' : 'none';
   if (prestations) prestations.style.display = tab === 'prestations' ? '' : 'none';
   if (chatPage) chatPage.style.display = tab === 'chat' ? '' : 'none';
-  if (teamPage) teamPage.style.display = tab === 'team' ? '' : 'none';
+  if (annuairePage) annuairePage.style.display = tab === 'annuaire' ? '' : 'none';
   if (tab === 'chat') initProviderFullChat();
-  if (tab === 'team') renderTeamTab();
+  if (tab === 'annuaire') renderAnnuaireTab();
   document.querySelectorAll('#bottomNav .bottomNav-item').forEach(n => n.classList.remove('active'));
   const navEl = document.getElementById('nav_' + tab);
   if (navEl) navEl.classList.add('active');
@@ -4126,15 +4157,15 @@ function switchOwnerNav(tab) {
   const prestations = document.getElementById('ownerContentPrestations');
   const billing = document.getElementById('ownerContentBilling');
   const chatPage = document.getElementById('ownerContentChat');
-  const teamPage = document.getElementById('ownerContentTeam');
+  const annuairePage = document.getElementById('ownerContentAnnuaire');
   if (overview) overview.style.display = tab === 'overview' ? '' : 'none';
   if (properties) { properties.style.display = tab === 'properties' ? '' : 'none'; if (tab === 'properties') renderOwnerPropertyDetails(); }
   if (prestations) prestations.style.display = tab === 'prestations' ? '' : 'none';
   if (billing) billing.style.display = tab === 'billing' ? '' : 'none';
   if (chatPage) chatPage.style.display = tab === 'chat' ? '' : 'none';
-  if (teamPage) teamPage.style.display = tab === 'team' ? '' : 'none';
+  if (annuairePage) annuairePage.style.display = tab === 'annuaire' ? '' : 'none';
   if (tab === 'chat') initOwnerFullChat();
-  if (tab === 'team') renderTeamTab();
+  if (tab === 'annuaire') renderAnnuaireTab();
   document.querySelectorAll('#bottomNav .bottomNav-item').forEach(n => n.classList.remove('active'));
   const navEl = document.getElementById('nav_' + tab);
   if (navEl) navEl.classList.add('active');
@@ -4611,7 +4642,7 @@ async function showOwnerMode() {
   html += '</div>'; // close ownerContentProperties
 
   // ═══ TAB: Equipe ═══
-  html += '<div id="ownerContentTeam" style="display:none;"><div id="ownerTeamTabContent"></div></div>';
+  html += '<div id="ownerContentAnnuaire" style="display:none;"><div id="ownerAnnuaireContent"></div></div>';
 
   // ═══ TAB 3: Prestations (unified) ═══
   html += '<div id="ownerContentPrestations" style="display:none;">';
@@ -9981,6 +10012,7 @@ function switchMainTab(tabId, fromPopState) {
   if (tabId === 'dashboard') renderDashboardContent();
   if (tabId === 'prestations') { renderTabPropertySelector('prestPropertySelector'); loadAdminPrestations(); }
   if (tabId === 'team') renderTabPropertySelector('teamPropertySelector');
+  if (tabId === 'annuaire') renderAnnuaireTab();
   if (tabId === 'properties') { renderBiensPropertySelector(); inlinePropCheckItems = []; renderPropertyDetailsInline(); }
   if (tabId === 'messages') initFullChat();
 }
@@ -10810,7 +10842,6 @@ let _mkAllProfiles = [];
 
 let _mkRefreshInterval = null;
 async function showMarketplace(prefillAddress) {
-  if (!API.isPremium()) { showPremiumModal('L\'annuaire est reserve aux membres Premium.'); return; }
   document.getElementById('overlay').style.display = 'block';
   document.getElementById('marketplaceModal').style.display = 'block';
   // Auto-refresh every 15s while marketplace is open
@@ -10969,56 +11000,294 @@ async function showConnectionRequests() {
   showMsg(html, true);
 }
 
-async function renderTeamTab() {
-  const container = document.getElementById('provTeamTabContent') || document.getElementById('ownerTeamTabContent');
+let _annuaireProfiles = [];
+async function renderAnnuaireTab() {
+  // Determine which container to use (admin tab, provider or owner inline)
+  const container = document.getElementById('annuaireResults') || document.getElementById('provAnnuaireContent') || document.getElementById('ownerAnnuaireContent');
   if (!container) return;
+
   const roleColors = { admin: '#e94560', manager: '#6c63ff', owner: '#f59e0b', provider: '#34d399', concierge: '#6c63ff' };
   const roleLabels = { admin: 'Admin', manager: 'Conciergerie', owner: 'Proprietaire', provider: 'Prestataire', concierge: 'Conciergerie' };
-  let html = '';
+  const isPrem = API.isPremium();
 
-  // Pending connection requests
-  const requests = await loadConnectionRequests();
-  if (requests.length) {
-    html += '<div class="panel" style="margin-bottom:16px;">';
-    html += '<div style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:12px;">&#128276; Demandes de connexion en attente</div>';
-    requests.forEach(r => {
-      html += '<div style="padding:12px;background:var(--surface2);border-radius:10px;margin-bottom:8px;border-left:3px solid ' + (roleColors[r.sender_role] || '#6c63ff') + ';">';
-      html += '<div style="font-weight:700;font-size:14px;color:var(--text);">' + esc(r.sender_name) + '</div>';
-      html += '<div style="font-size:11px;color:' + (roleColors[r.sender_role] || '#6c63ff') + ';margin-bottom:8px;">' + (roleLabels[r.sender_role] || r.sender_role) + '</div>';
-      if (r.message) html += '<div style="font-size:12px;color:var(--text3);margin-bottom:8px;">' + esc(r.message) + '</div>';
-      html += '<div style="display:flex;gap:8px;">';
-      html += '<button class="btn btnSuccess" style="flex:1;padding:8px;font-size:12px;" onclick="respondConnectionRequest(\'' + r.id + '\',true).then(()=>renderTeamTab())">&#10003; Accepter</button>';
-      html += '<button class="btn btnDanger" style="flex:1;padding:8px;font-size:12px;" onclick="respondConnectionRequest(\'' + r.id + '\',false).then(()=>renderTeamTab())">&#10007; Refuser</button>';
-      html += '</div></div>';
-    });
-    html += '</div>';
+  // For provider/owner: build complete HTML including filters
+  const isInline = container.id === 'provAnnuaireContent' || container.id === 'ownerAnnuaireContent';
+  if (isInline) {
+    let fullHtml = '';
+    // Requests section
+    fullHtml += '<div id="annuaireRequests"></div>';
+    // My profile section
+    fullHtml += '<div id="annuaireMyProfile"></div>';
+    // Filters
+    fullHtml += '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;">';
+    fullHtml += '<select id="annRoleFilter" onchange="filterAnnuaire()" style="padding:8px 12px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:13px;">';
+    fullHtml += '<option value="">Tous les profils</option><option value="provider">Prestataires</option><option value="owner">Proprietaires</option><option value="concierge">Conciergeries</option></select>';
+    fullHtml += '<input type="text" id="annCityFilter" placeholder="Ville ou code postal..." oninput="filterAnnuaire()" style="flex:1;min-width:120px;padding:8px 12px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:13px;">';
+    fullHtml += '<select id="annSortFilter" onchange="filterAnnuaire()" style="padding:8px 12px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:13px;">';
+    fullHtml += '<option value="recent">Plus recents</option><option value="rating">Meilleure note</option><option value="cleanings">Plus d\'experience</option></select>';
+    fullHtml += '</div>';
+    // Service chips
+    fullHtml += '<div id="annServiceFilters" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;"></div>';
+    // Team
+    fullHtml += '<div id="annuaireTeam"></div>';
+    // Results
+    fullHtml += '<div id="annuaireResults" style="min-height:200px;"></div>';
+    container.innerHTML = fullHtml;
   }
 
-  // My team members
-  const org = API.getOrg();
-  if (org) {
-    const { data: members } = await sb.from('members').select('*').eq('org_id', org.id);
-    if (members && members.length) {
-      html += '<div class="panel" style="margin-bottom:16px;">';
-      html += '<div style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:12px;">&#128101; Mon equipe</div>';
-      members.forEach(m => {
-        const mColor = roleColors[m.role] || '#6c63ff';
-        const mLabel = roleLabels[m.role] || m.role;
-        html += '<div style="display:flex;align-items:center;gap:12px;padding:10px;background:var(--surface2);border-radius:10px;margin-bottom:6px;">';
-        html += '<div style="width:36px;height:36px;border-radius:50%;background:' + mColor + ';display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#fff;">' + esc((m.display_name || '?').charAt(0).toUpperCase()) + '</div>';
-        html += '<div style="flex:1;min-width:0;">';
-        html += '<div style="font-weight:600;font-size:13px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + esc(m.display_name || 'Sans nom') + '</div>';
-        html += '<div style="font-size:11px;color:' + mColor + ';">' + mLabel + '</div>';
-        html += '</div></div>';
+  // ── 1. Connection requests ──
+  const reqContainer = document.getElementById('annuaireRequests');
+  if (reqContainer) {
+    const requests = await loadConnectionRequests();
+    let rHtml = '';
+    if (requests.length) {
+      rHtml += '<div class="panel" style="margin-bottom:12px;padding:12px;border-left:3px solid #e94560;">';
+      rHtml += '<div style="font-size:15px;font-weight:700;color:var(--text);margin-bottom:10px;">&#128276; ' + requests.length + ' demande' + (requests.length > 1 ? 's' : '') + ' en attente</div>';
+      requests.forEach(r => {
+        rHtml += '<div style="display:flex;align-items:center;gap:10px;padding:10px;background:var(--surface2);border-radius:10px;margin-bottom:6px;">';
+        rHtml += '<div style="width:36px;height:36px;border-radius:50%;background:' + (roleColors[r.sender_role] || '#6c63ff') + ';display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#fff;">' + esc((r.sender_name || '?').charAt(0).toUpperCase()) + '</div>';
+        rHtml += '<div style="flex:1;min-width:0;">';
+        rHtml += '<div style="font-weight:600;font-size:13px;color:var(--text);">' + esc(r.sender_name) + '</div>';
+        rHtml += '<div style="font-size:11px;color:' + (roleColors[r.sender_role] || '#6c63ff') + ';">' + (roleLabels[r.sender_role] || r.sender_role) + '</div>';
+        rHtml += '</div>';
+        rHtml += '<button class="btn btnSuccess" style="padding:6px 12px;font-size:11px;" onclick="respondConnectionRequest(\'' + r.id + '\',true).then(()=>renderAnnuaireTab())">&#10003;</button>';
+        rHtml += '<button class="btn btnDanger" style="padding:6px 12px;font-size:11px;" onclick="respondConnectionRequest(\'' + r.id + '\',false).then(()=>renderAnnuaireTab())">&#10007;</button>';
+        rHtml += '</div>';
       });
-      html += '</div>';
+      rHtml += '</div>';
+    }
+    reqContainer.innerHTML = rHtml;
+  }
+
+  // ── 2. My profile completeness ──
+  const profContainer = document.getElementById('annuaireMyProfile');
+  if (profContainer) {
+    await _ensureMkUserId();
+    const { data: myProf } = await sb.from('marketplace_profiles').select('*').eq('user_id', _mkMyUserId).maybeSingle();
+    let pHtml = '';
+    if (!myProf || !myProf.visible) {
+      pHtml += '<div class="panel" style="margin-bottom:12px;padding:14px;background:linear-gradient(135deg,rgba(108,99,255,0.1),rgba(233,69,96,0.1));border:1px dashed var(--accent);border-radius:12px;text-align:center;">';
+      pHtml += '<div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:6px;">&#127758; Rendez-vous visible !</div>';
+      pHtml += '<div style="font-size:12px;color:var(--text3);margin-bottom:10px;line-height:1.5;">Creez votre profil pour que les autres utilisateurs puissent vous trouver et se connecter avec vous.</div>';
+      pHtml += '<button onclick="showAccountModal()" style="padding:10px 20px;background:linear-gradient(135deg,#6c63ff,#5a54e0);color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;">Creer mon profil</button>';
+      pHtml += '</div>';
+    } else {
+      // Profile completeness bar
+      let score = 0; let total = 6;
+      if (myProf.display_name) score++;
+      if (myProf.city) score++;
+      if (myProf.description) score++;
+      if (myProf.phone) score++;
+      if (myProf.services && myProf.services.length > 0) score++;
+      if (myProf.experience_years) score++;
+      const pct = Math.round((score / total) * 100);
+      if (pct < 100) {
+        pHtml += '<div class="panel" style="margin-bottom:12px;padding:12px;">';
+        pHtml += '<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">';
+        pHtml += '<div style="flex:1;font-size:13px;font-weight:600;color:var(--text);">Mon profil annuaire</div>';
+        pHtml += '<span style="font-size:12px;font-weight:700;color:' + (pct >= 80 ? '#34d399' : pct >= 50 ? '#f59e0b' : '#e94560') + ';">' + pct + '%</span>';
+        pHtml += '</div>';
+        pHtml += '<div style="height:6px;background:var(--surface2);border-radius:3px;overflow:hidden;margin-bottom:8px;">';
+        pHtml += '<div style="height:100%;width:' + pct + '%;background:linear-gradient(90deg,#6c63ff,#34d399);border-radius:3px;transition:width 0.3s;"></div>';
+        pHtml += '</div>';
+        let missing = [];
+        if (!myProf.city) missing.push('ville');
+        if (!myProf.description) missing.push('description');
+        if (!myProf.phone) missing.push('telephone');
+        if (!myProf.services || !myProf.services.length) missing.push('services');
+        if (!myProf.experience_years) missing.push('experience');
+        pHtml += '<div style="font-size:11px;color:var(--text3);">Completez : ' + missing.join(', ') + ' <a href="#" onclick="event.preventDefault();showAccountModal()" style="color:var(--accent);text-decoration:underline;">Modifier</a></div>';
+        pHtml += '</div>';
+      }
+    }
+    profContainer.innerHTML = pHtml;
+  }
+
+  // ── 3. Service filter chips ──
+  const chipContainer = document.getElementById('annServiceFilters');
+  if (chipContainer) {
+    let cHtml = '';
+    const popularServices = ['cleaning_standard', 'cleaning_deep', 'checkin', 'checkout', 'laundry', 'gardening', 'pool', 'handyman'];
+    popularServices.forEach(sId => {
+      const label = getServiceLabel(sId);
+      cHtml += '<button class="annServiceChip" data-service="' + sId + '" onclick="toggleAnnServiceFilter(this)" style="padding:4px 10px;border-radius:16px;border:1px solid var(--border2);background:var(--surface2);color:var(--text3);font-size:11px;cursor:pointer;transition:all 0.2s;">' + label + '</button>';
+    });
+    chipContainer.innerHTML = cHtml;
+  }
+
+  // ── 4. My team ──
+  const teamContainer = document.getElementById('annuaireTeam');
+  if (teamContainer) {
+    const org = API.getOrg();
+    let tHtml = '';
+    if (org) {
+      const { data: members } = await sb.from('members').select('*').eq('org_id', org.id);
+      if (members && members.length > 1) {
+        tHtml += '<div style="margin-bottom:12px;">';
+        tHtml += '<div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:8px;">&#128101; Mon equipe (' + members.length + ')</div>';
+        tHtml += '<div style="display:flex;gap:8px;overflow-x:auto;padding-bottom:6px;">';
+        members.forEach(m => {
+          const mColor = roleColors[m.role] || '#6c63ff';
+          tHtml += '<div style="flex-shrink:0;text-align:center;width:60px;">';
+          tHtml += '<div style="width:40px;height:40px;border-radius:50%;background:' + mColor + ';display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;color:#fff;margin:0 auto 4px;">' + esc((m.display_name || '?').charAt(0).toUpperCase()) + '</div>';
+          tHtml += '<div style="font-size:10px;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + esc(m.display_name || 'Sans nom') + '</div>';
+          tHtml += '</div>';
+        });
+        tHtml += '</div></div>';
+      }
+    }
+    teamContainer.innerHTML = tHtml;
+  }
+
+  // ── 5. Load marketplace profiles ──
+  try {
+    const { data: mkData } = await sb.from('marketplace_profiles').select('*').eq('visible', true);
+    _annuaireProfiles = mkData || [];
+    // Also add org members not on marketplace
+    const org = API.getOrg();
+    if (org) {
+      const { data: allMembers } = await sb.from('members').select('*').eq('org_id', org.id);
+      if (allMembers) {
+        const mkUserIds = _annuaireProfiles.map(p => p.user_id);
+        allMembers.forEach(m => {
+          if (!mkUserIds.includes(m.user_id) && m.role !== 'admin') {
+            _annuaireProfiles.push({ user_id: m.user_id, display_name: m.display_name || '', email: m.invited_email || '', role: m.role, org_id: m.org_id, visible: true, _fromMembers: true });
+          }
+        });
+      }
+    }
+    filterAnnuaire();
+  } catch(e) {
+    console.error('loadAnnuaire error:', e);
+    const res = document.getElementById('annuaireResults');
+    if (res) res.innerHTML = '<div style="text-align:center;padding:30px;color:var(--text3);">Erreur de chargement</div>';
+  }
+}
+
+let _annActiveServices = [];
+function toggleAnnServiceFilter(btn) {
+  const sId = btn.dataset.service;
+  const idx = _annActiveServices.indexOf(sId);
+  if (idx >= 0) {
+    _annActiveServices.splice(idx, 1);
+    btn.style.background = 'var(--surface2)';
+    btn.style.color = 'var(--text3)';
+    btn.style.borderColor = 'var(--border2)';
+  } else {
+    _annActiveServices.push(sId);
+    btn.style.background = 'rgba(108,99,255,0.2)';
+    btn.style.color = '#a78bfa';
+    btn.style.borderColor = '#6c63ff';
+  }
+  filterAnnuaire();
+}
+
+function filterAnnuaire() {
+  const roleEl = document.getElementById('annRoleFilter');
+  const cityEl = document.getElementById('annCityFilter');
+  const sortEl = document.getElementById('annSortFilter');
+  const role = roleEl ? roleEl.value : '';
+  const city = cityEl ? cityEl.value.trim().toLowerCase() : '';
+  const sort = sortEl ? sortEl.value : 'recent';
+
+  let filtered = _annuaireProfiles;
+
+  // Role filter (concierge matches admin and manager)
+  if (role) {
+    if (role === 'concierge') {
+      filtered = filtered.filter(p => p.role === 'admin' || p.role === 'manager' || p.role === 'concierge');
+    } else {
+      filtered = filtered.filter(p => p.role === role);
     }
   }
 
-  // Link to marketplace
-  html += '<div style="text-align:center;padding:12px;">';
-  html += '<button onclick="showMarketplace()" style="padding:12px 24px;background:linear-gradient(135deg,#6c63ff,#5a54e0);color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:600;cursor:pointer;">&#127758; Rechercher sur l\'annuaire</button>';
-  html += '</div>';
+  // City filter
+  if (city) {
+    filtered = filtered.filter(p => (p.city || '').toLowerCase().includes(city) || (p.postal_code || '').includes(city) || (p.display_name || '').toLowerCase().includes(city));
+  }
+
+  // Service filter
+  if (_annActiveServices.length > 0) {
+    filtered = filtered.filter(p => {
+      if (!p.services || !p.services.length) return false;
+      return _annActiveServices.some(s => p.services.includes(s));
+    });
+  }
+
+  // Sort
+  filtered = [...filtered];
+  if (sort === 'rating') filtered.sort((a, b) => (b.rating || 0) - (a.rating || 0));
+  else if (sort === 'cleanings') filtered.sort((a, b) => (b.cleanings_done || 0) - (a.cleanings_done || 0));
+  else filtered.sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
+
+  renderAnnuaireResults(filtered);
+}
+
+async function renderAnnuaireResults(profiles) {
+  await _ensureMkUserId();
+  const container = document.getElementById('annuaireResults');
+  if (!container) return;
+  const isPrem = API.isPremium();
+  const roleColors = { provider: '#34d399', owner: '#f59e0b', admin: '#e94560', manager: '#6c63ff', concierge: '#6c63ff' };
+  const roleLabels = { provider: 'Prestataire', owner: 'Proprietaire', admin: 'Conciergerie', manager: 'Conciergerie', concierge: 'Conciergerie' };
+  const availLabels = { available: '&#128994; Disponible', full: '&#128308; Complet', vacation: '&#127796; En vacances' };
+
+  if (!profiles.length) {
+    container.innerHTML = '<div style="text-align:center;padding:40px 20px;"><div style="font-size:48px;margin-bottom:12px;opacity:0.4;">&#128269;</div><div style="font-size:15px;font-weight:600;color:var(--text);margin-bottom:6px;">Aucun profil trouve</div><div style="font-size:12px;color:var(--text3);line-height:1.6;">Essayez d\'elargir votre recherche ou de supprimer les filtres.</div></div>';
+    return;
+  }
+
+  let html = '<div style="font-size:12px;color:var(--text3);margin-bottom:8px;">' + profiles.length + ' profil' + (profiles.length > 1 ? 's' : '') + ' trouve' + (profiles.length > 1 ? 's' : '') + '</div>';
+
+  profiles.forEach(p => {
+    const color = roleColors[p.role] || '#6c63ff';
+    const label = roleLabels[p.role] || p.role;
+    const name = p.display_name || 'Sans nom';
+    const initial = (name.charAt(0) || '?').toUpperCase();
+    const isNew = p.created_at && (Date.now() - new Date(p.created_at).getTime()) < 7 * 86400000;
+    const services = p.services || [];
+    const availHtml = availLabels[p.availability] || '';
+
+    html += '<div style="padding:14px;margin-bottom:8px;background:var(--surface2);border-radius:12px;border-left:4px solid ' + color + ';transition:transform 0.15s;" onmouseenter="this.style.transform=\'translateY(-1px)\'" onmouseleave="this.style.transform=\'\'">';
+    html += '<div style="display:flex;gap:12px;align-items:flex-start;">';
+    html += '<div style="width:42px;height:42px;border-radius:50%;background:' + color + ';display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:700;color:#fff;flex-shrink:0;">' + _escHtml(initial) + '</div>';
+    html += '<div style="flex:1;min-width:0;">';
+    // Name + badges
+    html += '<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:3px;">';
+    html += '<span style="font-weight:700;font-size:14px;color:var(--text);">' + _escHtml(name) + '</span>';
+    if (p.verified) html += '<span title="Verifie" style="color:#34d399;font-size:13px;font-weight:700;">&#10003;</span>';
+    html += '<span style="font-size:10px;padding:2px 7px;border-radius:10px;background:' + color + ';color:#fff;font-weight:600;">' + label + '</span>';
+    if (isNew) html += '<span style="font-size:10px;padding:2px 7px;border-radius:10px;background:linear-gradient(135deg,#6c63ff,#a855f7);color:#fff;font-weight:600;">Nouveau</span>';
+    html += '</div>';
+    // Info line
+    html += '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:4px;">';
+    if (p.cleanings_done) html += '<span style="font-size:11px;color:var(--text2);">&#128700; ' + p.cleanings_done + ' menages</span>';
+    if (p.experience_years) html += '<span style="font-size:11px;color:var(--text2);">&#128188; ' + p.experience_years + ' ans</span>';
+    if (p.tarif) html += '<span style="font-size:11px;color:var(--text2);">&#128176; ' + _escHtml(p.tarif) + '</span>';
+    if (availHtml) html += '<span style="font-size:11px;">' + availHtml + '</span>';
+    html += '</div>';
+    if (p.city) html += '<div style="font-size:11px;color:var(--text3);margin-bottom:4px;">&#128205; ' + _escHtml(p.city) + (p.postal_code ? ' (' + _escHtml(p.postal_code) + ')' : '') + '</div>';
+    if (p.description) html += '<div style="font-size:12px;color:var(--text3);margin-bottom:6px;line-height:1.4;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;">' + _escHtml(p.description) + '</div>';
+    if (services.length) {
+      html += '<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:6px;">';
+      services.slice(0, 5).forEach(s => { html += '<span style="font-size:10px;padding:2px 6px;border-radius:10px;background:rgba(108,99,255,0.12);color:#a78bfa;">' + getServiceLabel(s) + '</span>'; });
+      if (services.length > 5) html += '<span style="font-size:10px;color:var(--text3);">+' + (services.length - 5) + '</span>';
+      html += '</div>';
+    }
+    // Actions
+    html += '<div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">';
+    if (p.phone) html += '<a href="tel:' + _escHtml(p.phone) + '" style="display:inline-flex;align-items:center;gap:3px;font-size:11px;color:#34d399;text-decoration:none;padding:4px 8px;background:rgba(52,211,153,0.1);border-radius:6px;">&#128222; Appeler</a>';
+    if (p.email) html += '<a href="mailto:' + _escHtml(p.email) + '" style="display:inline-flex;align-items:center;gap:3px;font-size:11px;color:var(--accent);text-decoration:none;padding:4px 8px;background:rgba(108,99,255,0.1);border-radius:6px;">&#9993; Email</a>';
+    if (p.user_id !== _mkMyUserId) {
+      if (isPrem) {
+        html += '<button onclick="sendConnectionRequest(\'' + _escHtml(p.user_id) + '\',\'' + _escHtml(p.display_name || '') + '\',\'' + _escHtml(p.role) + '\')" style="margin-left:auto;padding:6px 14px;background:linear-gradient(135deg,#6c63ff,#5a54e0);color:#fff;border:none;border-radius:8px;font-size:11px;font-weight:600;cursor:pointer;">&#128279; Se connecter</button>';
+      } else {
+        html += '<button onclick="showPremiumModal(\'Passez Premium pour vous connecter avec d\\\'autres professionnels.\')" style="margin-left:auto;padding:6px 14px;background:var(--surface);color:var(--text3);border:1px solid var(--border2);border-radius:8px;font-size:11px;cursor:pointer;">&#128274; Premium</button>';
+      }
+    }
+    html += '</div>';
+    html += '</div></div></div>';
+  });
 
   container.innerHTML = html;
 }
@@ -11177,7 +11446,7 @@ async function renderMarketplaceResults(profiles) {
           <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
             ${p.phone ? `<a href="tel:${_escHtml(p.phone)}" style="display:inline-flex;align-items:center;gap:4px;font-size:12px;color:#34d399;text-decoration:none;padding:5px 10px;background:rgba(52,211,153,0.1);border-radius:8px;border:1px solid rgba(52,211,153,0.2);transition:background 0.2s;" onmouseenter="this.style.background='rgba(52,211,153,0.2)'" onmouseleave="this.style.background='rgba(52,211,153,0.1)'">&#128222; Appeler</a>` : ''}
             ${p.email ? `<a href="mailto:${_escHtml(p.email)}" style="display:inline-flex;align-items:center;gap:4px;font-size:12px;color:var(--accent);text-decoration:none;padding:5px 10px;background:rgba(108,99,255,0.1);border-radius:8px;border:1px solid rgba(108,99,255,0.2);transition:background 0.2s;" onmouseenter="this.style.background='rgba(108,99,255,0.2)'" onmouseleave="this.style.background='rgba(108,99,255,0.1)'">&#9993; Email</a>` : ''}
-            ${p.user_id !== _mkMyUserId ? `<button onclick="sendConnectionRequest('${_escHtml(p.user_id)}','${_escHtml(p.display_name)}','${_escHtml(p.role)}')" style="margin-left:auto;padding:7px 16px;background:linear-gradient(135deg,#6c63ff,#5a54e0);color:#fff;border:none;border-radius:8px;font-size:11px;font-weight:600;cursor:pointer;transition:opacity 0.2s;" onmouseenter="this.style.opacity='0.85'" onmouseleave="this.style.opacity='1'">&#128279; Se connecter</button>` : ''}
+            ${p.user_id !== _mkMyUserId ? (API.isPremium() ? `<button onclick="sendConnectionRequest('${_escHtml(p.user_id)}','${_escHtml(p.display_name)}','${_escHtml(p.role)}')" style="margin-left:auto;padding:7px 16px;background:linear-gradient(135deg,#6c63ff,#5a54e0);color:#fff;border:none;border-radius:8px;font-size:11px;font-weight:600;cursor:pointer;">&#128279; Se connecter</button>` : `<button onclick="showPremiumModal('Passez Premium pour vous connecter.')" style="margin-left:auto;padding:7px 16px;background:var(--surface);color:var(--text3);border:1px solid var(--border2);border-radius:8px;font-size:11px;cursor:pointer;">&#128274; Premium</button>`) : ''}
           </div>
         </div>
       </div>
