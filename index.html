@@ -135,6 +135,73 @@ async function loadPDF() {
   [data-theme="light"] .header { background: linear-gradient(135deg, #1a1a2e, #16213e); }
   [data-theme="light"] .header h1, [data-theme="light"] .header .subtitle { color: #fff; }
   [data-theme="light"] .btnHelp { color: rgba(255,255,255,0.7); border-color: rgba(255,255,255,0.15); }
+  /* ── Animations ── */
+  @keyframes fadeInUp { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:translateY(0); } }
+  @keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
+  @keyframes slideInRight { from { opacity:0; transform:translateX(20px); } to { opacity:1; transform:translateX(0); } }
+  @keyframes scaleIn { from { opacity:0; transform:scale(0.92); } to { opacity:1; transform:scale(1); } }
+  @keyframes shimmer { 0% { background-position:-200% 0; } 100% { background-position:200% 0; } }
+  @keyframes glow { 0%,100% { box-shadow:0 0 8px rgba(108,99,255,0.2); } 50% { box-shadow:0 0 20px rgba(108,99,255,0.4); } }
+  @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.6; } }
+  @keyframes bounceIn { 0% { transform:scale(0.3); opacity:0; } 50% { transform:scale(1.05); } 70% { transform:scale(0.95); } 100% { transform:scale(1); opacity:1; } }
+  @keyframes slideDown { from { opacity:0; transform:translateY(-10px); } to { opacity:1; transform:translateY(0); } }
+  @keyframes ripple { to { transform:scale(4); opacity:0; } }
+
+  .anim-fade-up { animation: fadeInUp 0.4s ease both; }
+  .anim-fade { animation: fadeIn 0.3s ease both; }
+  .anim-slide-right { animation: slideInRight 0.35s ease both; }
+  .anim-scale { animation: scaleIn 0.3s var(--bounce) both; }
+  .anim-bounce { animation: bounceIn 0.5s var(--bounce) both; }
+  .anim-stagger > * { animation: fadeInUp 0.4s ease both; }
+  .anim-stagger > *:nth-child(1) { animation-delay:0.05s; }
+  .anim-stagger > *:nth-child(2) { animation-delay:0.1s; }
+  .anim-stagger > *:nth-child(3) { animation-delay:0.15s; }
+  .anim-stagger > *:nth-child(4) { animation-delay:0.2s; }
+  .anim-stagger > *:nth-child(5) { animation-delay:0.25s; }
+  .anim-stagger > *:nth-child(6) { animation-delay:0.3s; }
+  .anim-stagger > *:nth-child(7) { animation-delay:0.35s; }
+  .anim-stagger > *:nth-child(8) { animation-delay:0.4s; }
+
+  /* Buttons */
+  .btn, button { transition: all 0.2s var(--bounce); }
+  .btn:active, button:active { transform: scale(0.96); }
+  .btnPrimary:hover { box-shadow: 0 4px 20px rgba(233,69,96,0.4); transform:translateY(-1px); }
+  .btnSuccess:hover { box-shadow: 0 4px 20px rgba(52,211,153,0.3); }
+
+  /* Cards */
+  .panel { animation: fadeInUp 0.4s ease both; transition: transform 0.2s, box-shadow 0.2s; }
+  .panel:hover { transform: translateY(-2px); box-shadow: var(--shadow-lg); }
+
+  /* Modal */
+  #msgModal, .modal { animation: scaleIn 0.25s var(--bounce) both; }
+  #overlay { animation: fadeIn 0.2s ease both; }
+
+  /* Tab content */
+  .tab-content.active { animation: fadeIn 0.25s ease both; }
+
+  /* Toast */
+  #toastBar { animation: slideDown 0.3s var(--bounce) both; }
+
+  /* Bottom nav item tap */
+  .bottomNav-item:active { transform: scale(0.9); }
+  .bottomNav-item.active .nav-icon { animation: bounceIn 0.4s var(--bounce); }
+
+  /* Shimmer loading effect */
+  .shimmer { background: linear-gradient(90deg, var(--surface2) 25%, var(--surface) 50%, var(--surface2) 75%); background-size: 200% 100%; animation: shimmer 1.5s ease-in-out infinite; }
+
+  /* Floating particles background */
+  .bg-particles { position:fixed; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:-1; overflow:hidden; }
+  .bg-particle { position:absolute; border-radius:50%; opacity:0.04; animation: floatParticle 20s ease-in-out infinite; }
+  @keyframes floatParticle { 0%,100% { transform:translateY(0) rotate(0deg); } 33% { transform:translateY(-30px) rotate(120deg); } 66% { transform:translateY(15px) rotate(240deg); } }
+
+  /* Ripple effect for buttons */
+  .ripple { position:relative; overflow:hidden; }
+  .ripple::after { content:''; position:absolute; width:10px; height:10px; background:rgba(255,255,255,0.3); border-radius:50%; transform:scale(0); opacity:1; pointer-events:none; }
+  .ripple:active::after { animation: ripple 0.6s ease-out; }
+
+  /* Progress bars animate on load */
+  [style*="width:"][style*="background:linear-gradient"] { transition: width 0.8s ease; }
+
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html { overflow-x: hidden; width: 100%; scroll-behavior: smooth; }
   body {
@@ -966,8 +1033,25 @@ async function loadPDF() {
 </head>
 <body>
 
+<!-- Floating background particles -->
+<div class="bg-particles" id="bgParticles"></div>
+<script>
+(function(){
+  const c = document.getElementById('bgParticles');
+  if (!c) return;
+  const colors = ['#e94560','#6c63ff','#34d399','#f59e0b'];
+  for (let i = 0; i < 6; i++) {
+    const p = document.createElement('div');
+    p.className = 'bg-particle';
+    const size = 100 + Math.random() * 200;
+    p.style.cssText = 'width:' + size + 'px;height:' + size + 'px;left:' + (Math.random()*100) + '%;top:' + (Math.random()*100) + '%;background:' + colors[i%4] + ';animation-delay:' + (i*3) + 's;animation-duration:' + (15+Math.random()*15) + 's;';
+    c.appendChild(p);
+  }
+})();
+</script>
+
 <!-- Version badge (always visible) -->
-<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v7.22</div>
+<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v7.23</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -977,7 +1061,7 @@ async function loadPDF() {
     <!-- Broom that sweeps -->
     <div id="splashBroom" style="position:absolute;top:50%;left:-60px;font-size:48px;transform:translateY(-50%) rotate(-30deg);opacity:0;transition:all 0.8s cubic-bezier(0.25,0.46,0.45,0.94);">✨</div>
   </div>
-  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v7.22</span></div>
+  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v7.23</span></div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie pour locations</div>
   <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou</div>
   <!-- Loading bar -->
@@ -1255,7 +1339,7 @@ async function loadPDF() {
   <div class="tab-content active" id="tabDashboard">
 
   <!-- KPI Cards (all modes) -->
-  <div id="kpiCards" style="display:none;"></div>
+  <div id="kpiCards" class="anim-stagger" style="display:none;"></div>
 
   <!-- Quick actions -->
   <div id="quickActions" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;">
@@ -2187,6 +2271,7 @@ function getStatusLabel(s) { return (STATUS_CONFIG[s] || {}).label || s || ''; }
 // ── Splash Changelog (update this with each significant version) ──
 // Full versioned changelog — add new entries at TOP
 const VERSION_CHANGELOG = [
+  { v: '7.23', changes: ['Animations CSS globales (fade, slide, bounce, scale)', 'Particules flottantes en arriere-plan', 'KPI cards en cascade animee', 'Boutons avec effet rebond', 'SQL RLS complet pour toutes les tables'] },
   { v: '7.22', changes: ['Fix cache busters synchro scripts', 'Proprio ne voit que SES factures', 'Alerte prix 0 dans auto-facturation'] },
   { v: '7.21', changes: ['Landing page complete (hero, temoignages, FAQ, 3 etapes)', 'Onboarding: barre de progression 3 etapes', 'Onboarding: etapes visuelles avec icones par role', 'CTA "Commencer gratuitement" en bas de page'] },
   { v: '7.20', changes: ['Notifications email reelles (Edge Function Resend)', 'Notifications push (VAPID subscribe)', 'Dashboard analytics concierge (CA, tendance, litiges)', 'Historique depenses proprio (graphique mensuel)', 'Export PDF releve prestataire'] },
