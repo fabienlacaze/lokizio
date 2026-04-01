@@ -961,7 +961,7 @@ async function loadPDF() {
 <body>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v7.04</div>
+<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v7.05</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -971,7 +971,7 @@ async function loadPDF() {
     <!-- Broom that sweeps -->
     <div id="splashBroom" style="position:absolute;top:50%;left:-60px;font-size:48px;transform:translateY(-50%) rotate(-30deg);opacity:0;transition:all 0.8s cubic-bezier(0.25,0.46,0.45,0.94);">✨</div>
   </div>
-  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v7.04</span></div>
+  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v7.05</span></div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie pour locations</div>
   <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou</div>
   <!-- Loading bar -->
@@ -2083,6 +2083,7 @@ const STATUS_CONFIG = {
   seen:               { color: '#6c63ff', label: 'Lu', hint: 'Le prestataire a vu le planning' },
   refused:            { color: '#ef4444', label: 'Refuse', hint: 'Le prestataire a refuse cette mission' },
   cancelled:          { color: '#ef4444', label: 'Annulee', hint: 'Cette prestation a ete annulee' },
+  disputed:           { color: '#dc2626', label: 'Contestee', hint: 'Le proprietaire a conteste cette prestation' },
 };
 function getStatusHint(s) { return (STATUS_CONFIG[s] || {}).hint || ''; }
 function getStatusColor(s) { return (STATUS_CONFIG[s] || {}).color || '#666'; }
@@ -4002,9 +4003,8 @@ async function renderOwnerPropertyDetails() {
   if (!org) return;
   const member = API.getMember();
   const { data: allProps } = await sb.from('properties').select('*').eq('org_id', org.id);
-  let properties = (allProps || []).filter(p => p.owner_member_id === member.id || !p.owner_member_id);
-  // If no properties assigned, show all org properties (owner can see everything in their org)
-  if (!properties.length && allProps && allProps.length) properties = allProps;
+  const { data: { user: _ownerUser } } = await sb.auth.getUser();
+  let properties = (allProps || []).filter(p => p.owner_member_id === member.id || p.owner_email === (_ownerUser?.email || ''));
 
   // Render selector
   const selContainer = document.getElementById('ownerBiensSelector');
@@ -4446,8 +4446,8 @@ async function showOwnerMode() {
 
   // Load properties
   const { data: allProperties } = await sb.from('properties').select('*').eq('org_id', org.id);
-  // Filter: owner sees properties where owner_member_id matches, or all if no filter
-  let properties = (allProperties || []).filter(p => p.owner_member_id === member.id || !p.owner_member_id);
+  // Filter: owner sees only properties assigned to them (or where owner_email matches)
+  let properties = (allProperties || []).filter(p => p.owner_member_id === member.id || p.owner_email === user.email);
   // Free plan: limit to 1 property
   const ownerPlanCheck = API.getPlan();
   const isOwnerProCheck = ownerPlanCheck === 'pro' || ownerPlanCheck === 'premium' || ownerPlanCheck === 'business';
@@ -4498,7 +4498,7 @@ async function showOwnerMode() {
   }
 
   // Load service requests for owner's properties
-  const { data: ownerSvcRequests } = await sb.from('service_requests').select('*').eq('org_id', org.id).in('status', ['pending','assigned','accepted','in_progress','done']);
+  const { data: ownerSvcRequests } = await sb.from('service_requests').select('*').eq('org_id', org.id).in('status', ['pending','assigned','accepted','in_progress','done','pending_validation','disputed']);
   const ownerPropertyIds = properties.map(p => p.id);
   const ownerServiceRequests = (ownerSvcRequests || []).filter(r => ownerPropertyIds.includes(r.property_id));
 
@@ -4725,6 +4725,10 @@ async function showOwnerMode() {
       html += '<div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">';
       html += '<span class="card-status" title="' + (getStatusHint(u.status)||'') + '" style="background:' + color + '18;color:' + color + ';cursor:help;">' + label + '</span>';
       if (ownerCanCancel) { const _cp = getServicePriceForDate(u.propertyId || '', u.type || 'cleaning_standard', 'price_owner', dateStr); html += '<a href="#" onclick="showCancelModal(\'' + u._id + '\',\'' + dateStr + '\',\'' + esc(svcName).replace(/'/g,"\\\\'") + '\',' + _cp + ');return false;" style="font-size:10px;color:var(--text3);text-decoration:none;" title="Annuler">&#128465;</a>'; }
+      if (u.status === 'pending_validation' && u._source === 'service_request') {
+        html += '<button onclick="ownerValidateService(\'' + u._id + '\',true)" style="padding:4px 8px;font-size:10px;background:#34d399;color:#fff;border:none;border-radius:6px;cursor:pointer;margin-left:4px;" title="Valider">&#10003;</button>';
+        html += '<button onclick="ownerDisputeService(\'' + u._id + '\',\'' + esc(u.provider || '').replace(/'/g,"\\\\'") + '\',\'' + esc(svcName).replace(/'/g,"\\\\'") + '\')" style="padding:4px 8px;font-size:10px;background:#e94560;color:#fff;border:none;border-radius:6px;cursor:pointer;margin-left:2px;" title="Contester">&#10007;</button>';
+      }
       if ((u.status === 'done' || u.status === 'pending_validation') && u._source === 'service_request' && u.provider) html += '<a href="#" onclick="showRatingModal(\'' + u._id + '\',\'' + esc(u.provider).replace(/'/g,"\\\\'") + '\');return false;" style="font-size:10px;color:#f59e0b;text-decoration:none;" title="Noter">&#11088;</a>';
       html += '</div>';
       html += '</div>';
@@ -5481,11 +5485,14 @@ function autoFillInvoiceItems(type) {
   const end = document.getElementById('invPeriodEnd').value;
   if (!start || !end) return showToast('Definissez la periode');
   const prop = API.getActiveProperty(fullConfig);
+  const excludedStatuses = ['disputed', 'refused', 'cancelled', 'pending', 'assigned'];
   const filtered = (cleanings || []).filter(c => {
     const d = c.date || c.cleaningDate;
-    return d >= start && d <= end;
+    if (d < start || d > end) return false;
+    if (c._status && excludedStatuses.includes(c._status)) return false;
+    return true;
   });
-  if (!filtered.length) return showToast('Aucun menage sur cette periode');
+  if (!filtered.length) return showToast('Aucun menage facturable sur cette periode');
 
   if (type === 'concierge_to_owner') {
     const price = getServicePrice(prop?.id || '', 'cleaning_standard', 'price_owner');
@@ -5710,6 +5717,117 @@ async function adminValidateService(requestId, newStatus) {
     }
     loadAdminPrestations(true);
   } catch(e) { console.error('adminValidateService error:', e); showToast('Erreur'); }
+}
+
+// ── Owner Validation & Dispute ──
+async function ownerValidateService(requestId, accept) {
+  try {
+    const org = API.getOrg();
+    const member = API.getMember();
+    const ownerName = member?.display_name || 'Proprietaire';
+    const { data: req } = await sb.from('service_requests').select('*').eq('id', requestId).single();
+    if (!req) return;
+    const svcLabel = getServiceLabel(req.service_type);
+    // Owner validates → mark as owner_validated, notify concierge to finalize
+    await sb.from('service_requests').update({
+      owner_validated: true,
+      owner_validated_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    }).eq('id', requestId);
+    showToast('Prestation validee !');
+    await sendAutoMessage(org.id, ownerName, 'owner', 'gestionnaire',
+      '&#9989; ' + ownerName + ' a valide ' + svcLabel + '. Vous pouvez finaliser.');
+    await sendAutoMessage(org.id, ownerName, 'owner', req.assigned_provider || 'prestataire',
+      '&#9989; Le proprietaire a valide votre travail sur ' + svcLabel + '. Merci !');
+    // Propose rating
+    if (req.assigned_provider) setTimeout(() => showRatingModal(requestId, req.assigned_provider), 500);
+    // Refresh owner mode
+    showOwnerMode();
+  } catch(e) { console.error('ownerValidateService error:', e); showToast('Erreur'); }
+}
+
+async function ownerDisputeService(requestId, providerName, serviceName) {
+  let html = '<div style="padding:12px;">';
+  html += '<div style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:12px;text-align:center;">&#9888; Contester la prestation</div>';
+  html += '<div style="font-size:13px;color:var(--text2);margin-bottom:12px;line-height:1.5;">';
+  html += '<b>' + esc(serviceName) + '</b> par <b>' + esc(providerName) + '</b>';
+  html += '</div>';
+  html += '<div style="margin-bottom:12px;">';
+  html += '<label style="font-size:11px;color:var(--text3);text-transform:uppercase;display:block;margin-bottom:4px;">Motif de contestation</label>';
+  html += '<select id="disputeReason" style="width:100%;padding:10px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:13px;margin-bottom:8px;">';
+  html += '<option value="quality">Qualite insuffisante</option>';
+  html += '<option value="incomplete">Travail incomplet</option>';
+  html += '<option value="damage">Dommage constate</option>';
+  html += '<option value="no_show">Prestataire absent</option>';
+  html += '<option value="late">Retard important</option>';
+  html += '<option value="other">Autre</option>';
+  html += '</select>';
+  html += '</div>';
+  html += '<div style="margin-bottom:12px;">';
+  html += '<label style="font-size:11px;color:var(--text3);text-transform:uppercase;display:block;margin-bottom:4px;">Details (obligatoire)</label>';
+  html += '<textarea id="disputeDetails" rows="3" placeholder="Decrivez le probleme..." style="width:100%;padding:10px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:13px;font-family:Inter,sans-serif;resize:vertical;box-sizing:border-box;"></textarea>';
+  html += '</div>';
+  html += '<div style="margin-bottom:12px;">';
+  html += '<label style="font-size:11px;color:var(--text3);text-transform:uppercase;display:block;margin-bottom:4px;">Photos (optionnel)</label>';
+  html += '<input type="file" id="disputePhotos" accept="image/*" multiple style="font-size:12px;color:var(--text3);">';
+  html += '</div>';
+  html += '<div style="display:flex;gap:8px;">';
+  html += '<button class="btn btnDanger" style="flex:1;padding:10px;font-size:13px;" onclick="submitDispute(\'' + requestId + '\',\'' + esc(providerName).replace(/'/g,"\\\\'") + '\')">Envoyer la contestation</button>';
+  html += '<button class="btn btnOutline" style="flex:1;padding:10px;font-size:13px;" onclick="closeMsg()">Annuler</button>';
+  html += '</div>';
+  html += '</div>';
+  showMsg(html, true);
+}
+
+async function submitDispute(requestId, providerName) {
+  const reason = document.getElementById('disputeReason')?.value || 'other';
+  const details = document.getElementById('disputeDetails')?.value?.trim();
+  if (!details) { showToast('Veuillez decrire le probleme'); return; }
+
+  // Convert photos to base64
+  const photoFiles = document.getElementById('disputePhotos')?.files || [];
+  const photos = [];
+  for (const f of photoFiles) {
+    if (f.size > 500000) continue; // Skip if too large
+    const b64 = await new Promise(r => { const rd = new FileReader(); rd.onload = e => r(e.target.result); rd.readAsDataURL(f); });
+    photos.push(b64);
+  }
+
+  try {
+    const org = API.getOrg();
+    const member = API.getMember();
+    const ownerName = member?.display_name || 'Proprietaire';
+    const { data: req } = await sb.from('service_requests').select('*').eq('id', requestId).single();
+    const svcLabel = req ? getServiceLabel(req.service_type) : 'Prestation';
+
+    const reasonLabels = { quality: 'Qualite insuffisante', incomplete: 'Travail incomplet', damage: 'Dommage constate', no_show: 'Prestataire absent', late: 'Retard important', other: 'Autre' };
+
+    // Update service request with dispute info
+    await sb.from('service_requests').update({
+      status: 'disputed',
+      dispute_reason: reason,
+      dispute_details: details,
+      dispute_photos: photos.length ? photos : null,
+      dispute_by: member?.id,
+      dispute_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    }).eq('id', requestId);
+
+    closeMsg();
+    showToast('Contestation envoyee');
+
+    // Notify concierge
+    await sendAutoMessage(org.id, ownerName, 'owner', 'gestionnaire',
+      '&#9888; CONTESTATION : ' + ownerName + ' conteste ' + svcLabel +
+      ' — Motif : ' + (reasonLabels[reason] || reason) + ' — ' + details.substring(0, 100));
+
+    // Notify provider
+    await sendAutoMessage(org.id, ownerName, 'owner', providerName,
+      '&#9888; Le proprietaire a conteste ' + svcLabel +
+      ' — Motif : ' + (reasonLabels[reason] || reason));
+
+    showOwnerMode();
+  } catch(e) { console.error('submitDispute error:', e); showToast('Erreur'); }
 }
 
 // ── QC Checklist (Photo Quality Control) ──
@@ -11881,6 +11999,23 @@ async function loadServiceRequests() {
         html += `</div></div>`;
       } else if (r.status === 'done') {
         html += `<div style="font-size:11px;color:#34d399;font-style:italic;">✅ Prestation terminee</div>`;
+        if (r.owner_validated) html += `<div style="font-size:10px;color:#34d399;">✅ Validee par le proprietaire</div>`;
+      } else if (r.status === 'disputed') {
+        const reasonLabels = { quality: 'Qualite insuffisante', incomplete: 'Travail incomplet', damage: 'Dommage constate', no_show: 'Prestataire absent', late: 'Retard important', other: 'Autre' };
+        html += `<div style="padding:8px;background:rgba(220,38,38,0.1);border:1px solid rgba(220,38,38,0.3);border-radius:8px;margin-top:4px;">`;
+        html += `<div style="font-size:12px;font-weight:700;color:#dc2626;margin-bottom:4px;">⚠️ CONTESTATION</div>`;
+        html += `<div style="font-size:11px;color:var(--text2);margin-bottom:4px;">Motif : ${reasonLabels[r.dispute_reason] || r.dispute_reason || 'Non specifie'}</div>`;
+        if (r.dispute_details) html += `<div style="font-size:11px;color:var(--text3);margin-bottom:6px;line-height:1.4;">${esc(r.dispute_details)}</div>`;
+        if (r.dispute_photos && r.dispute_photos.length) {
+          html += `<div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:6px;">`;
+          r.dispute_photos.forEach(p => { html += `<img src="${p}" onclick="window.open(this.src)" style="width:48px;height:48px;object-fit:cover;border-radius:6px;cursor:pointer;border:1px solid var(--border2);">`; });
+          html += `</div>`;
+        }
+        html += `<div style="display:flex;gap:6px;">`;
+        html += `<button class="btn btnSmall" style="flex:1;padding:6px;font-size:11px;background:#6c63ff;color:#fff;" onclick="adminValidateService('${r.id}','in_progress')">🔄 Renvoyer au prestataire</button>`;
+        html += `<button class="btn btnSmall btnDanger" style="flex:1;padding:6px;font-size:11px;" onclick="adminValidateService('${r.id}','cancelled')">🚫 Annuler</button>`;
+        html += `<button class="btn btnSmall btnSuccess" style="flex:1;padding:6px;font-size:11px;" onclick="adminValidateService('${r.id}','done')">✅ Forcer validation</button>`;
+        html += `</div></div>`;
       } else if (r.status === 'refused') {
         html += `<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px;">`;
         html += `<select id="svcReassign2_${r.id}" style="padding:6px;background:var(--surface);color:var(--text);border:1px solid var(--border2);border-radius:6px;font-size:11px;"><option value="">Reassigner...</option>`;
@@ -12302,8 +12437,11 @@ async function loadAdminPrestations(forceReload) {
       html += '<div onclick="showCancelModal(\'' + u._id + '\',\'' + (u.date || '') + '\',\'' + esc(svcName).replace(/'/g,"\\'") + '\',' + cancelPrice + ')" style="padding:8px 14px;font-size:11px;color:var(--text3);cursor:pointer;" onmouseover="this.style.background=\'rgba(255,255,255,0.05)\'" onmouseout="this.style.background=\'\'">&#128465; Annuler</div>';
       html += '</div></div>';
     } else if (u.status === 'pending_validation' && u._source === 'service_request') {
-      // Concierge validates the completed prestation
       html += '<button style="padding:4px 12px;font-size:10px;font-weight:700;border:none;border-radius:5px;cursor:pointer;background:rgba(52,211,153,0.2);color:#34d399;" onclick="adminValidateService(\'' + u._id + '\',\'done\')">&#10003; Valider</button>';
+    } else if (u.status === 'disputed' && u._source === 'service_request') {
+      html += '<span class="card-status" style="background:#dc262618;color:#dc2626;cursor:help;" title="Conteste par le proprietaire">&#9888; Contestee</span>';
+      html += '<button style="padding:4px 8px;font-size:10px;border:none;border-radius:5px;cursor:pointer;background:rgba(108,99,255,0.2);color:#6c63ff;" onclick="adminValidateService(\'' + u._id + '\',\'in_progress\')">&#128260; Reprendre</button>';
+      html += '<button style="padding:4px 8px;font-size:10px;border:none;border-radius:5px;cursor:pointer;background:rgba(220,38,38,0.2);color:#dc2626;" onclick="adminValidateService(\'' + u._id + '\',\'cancelled\')">&#128683; Annuler</button>';
     } else {
       html += '<span class="card-status" title="' + (getStatusHint(u.status)||'') + '" style="background:' + color + '18;color:' + color + ';cursor:help;">' + label + '</span>';
       if (u.status === 'done' && u._source === 'service_request' && u.provider) {
