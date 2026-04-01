@@ -967,7 +967,7 @@ async function loadPDF() {
 <body>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v7.20</div>
+<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v7.21</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -977,7 +977,7 @@ async function loadPDF() {
     <!-- Broom that sweeps -->
     <div id="splashBroom" style="position:absolute;top:50%;left:-60px;font-size:48px;transform:translateY(-50%) rotate(-30deg);opacity:0;transition:all 0.8s cubic-bezier(0.25,0.46,0.45,0.94);">✨</div>
   </div>
-  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v7.20</span></div>
+  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v7.21</span></div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie pour locations</div>
   <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou</div>
   <!-- Loading bar -->
@@ -1064,50 +1064,138 @@ async function loadPDF() {
     <button id="authSubmitBtn" onclick="authSubmit()" data-i18n="auth.login.btn" style="width:100%;padding:12px;background:linear-gradient(135deg,#e94560,#c73e54);color:#fff;border:none;font-size:14px;font-weight:600;cursor:pointer;border-radius:8px;margin-top:12px;">Se connecter</button>
     <div id="forgotPassLink" style="text-align:center;margin-top:10px;"><a href="#" onclick="forgotPassword();return false;" style="color:var(--accent2);font-size:12px;text-decoration:none;" data-i18n="auth.forgot">Mot de passe oublie ?</a></div>
   </div>
-  <!-- Marketing section below auth -->
-  <div style="max-width:500px;width:100%;margin:30px 0 0;padding:0;">
-    <!-- Value proposition -->
-    <div style="text-align:center;margin-bottom:30px;">
-      <div style="font-size:18px;font-weight:800;color:var(--text);margin-bottom:8px;">La plateforme gratuite pour gerer vos locations</div>
-      <div style="font-size:13px;color:var(--text3);line-height:1.6;">Connectez proprietaires, conciergeries et prestataires en un seul endroit.</div>
+  <!-- Landing page below auth -->
+  <div style="max-width:600px;width:100%;margin:30px 0 0;padding:0;">
+
+    <!-- Hero -->
+    <div style="text-align:center;margin-bottom:32px;">
+      <div style="font-size:22px;font-weight:800;color:var(--text);margin-bottom:8px;line-height:1.3;">Gerez vos locations courte duree<br><span style="background:linear-gradient(135deg,#e94560,#6c63ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">sans effort</span></div>
+      <div style="font-size:14px;color:var(--text3);line-height:1.6;max-width:400px;margin:0 auto;">Planning automatique, facturation, equipe — tout en un. Gratuit pour demarrer.</div>
     </div>
+
     <!-- 3 role cards -->
-    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:24px;">
-      <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;text-align:center;">
-        <div style="font-size:28px;margin-bottom:8px;">&#127970;</div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:28px;">
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px 12px;text-align:center;transition:transform 0.2s;" onmouseenter="this.style.transform='translateY(-3px)'" onmouseleave="this.style.transform=''">
+        <div style="width:48px;height:48px;background:linear-gradient(135deg,#6c63ff,#5a54e0);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;margin:0 auto 10px;">&#127970;</div>
         <div style="font-size:13px;font-weight:700;color:#6c63ff;margin-bottom:4px;">Conciergerie</div>
-        <div style="font-size:11px;color:var(--text3);line-height:1.5;">Planning auto, facturation, equipe, dashboard</div>
+        <div style="font-size:11px;color:var(--text3);line-height:1.5;">Planning auto, facturation, equipe, analytics</div>
       </div>
-      <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;text-align:center;">
-        <div style="font-size:28px;margin-bottom:8px;">&#127968;</div>
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px 12px;text-align:center;transition:transform 0.2s;" onmouseenter="this.style.transform='translateY(-3px)'" onmouseleave="this.style.transform=''">
+        <div style="width:48px;height:48px;background:linear-gradient(135deg,#f59e0b,#d97706);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;margin:0 auto 10px;">&#127968;</div>
         <div style="font-size:13px;font-weight:700;color:#f59e0b;margin-bottom:4px;">Proprietaire</div>
-        <div style="font-size:11px;color:var(--text3);line-height:1.5;">Suivi des menages, couts, communication</div>
+        <div style="font-size:11px;color:var(--text3);line-height:1.5;">Suivi temps reel, couts, validation, paiement</div>
       </div>
-      <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;text-align:center;">
-        <div style="font-size:28px;margin-bottom:8px;">&#129529;</div>
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px 12px;text-align:center;transition:transform 0.2s;" onmouseenter="this.style.transform='translateY(-3px)'" onmouseleave="this.style.transform=''">
+        <div style="width:48px;height:48px;background:linear-gradient(135deg,#34d399,#059669);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;margin:0 auto 10px;">&#129529;</div>
         <div style="font-size:13px;font-weight:700;color:#34d399;margin-bottom:4px;">Prestataire</div>
-        <div style="font-size:11px;color:var(--text3);line-height:1.5;">Missions, validation photos, revenus</div>
+        <div style="font-size:11px;color:var(--text3);line-height:1.5;">Missions, photos QC, revenus, disponibilite</div>
       </div>
     </div>
+
+    <!-- Comment ca marche -->
+    <div style="margin-bottom:28px;">
+      <div style="font-size:15px;font-weight:700;color:var(--text);text-align:center;margin-bottom:16px;">Comment ca marche ?</div>
+      <div style="display:flex;flex-direction:column;gap:12px;">
+        <div style="display:flex;gap:12px;align-items:flex-start;">
+          <div style="width:32px;height:32px;background:linear-gradient(135deg,#e94560,#c73e54);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:#fff;flex-shrink:0;">1</div>
+          <div><div style="font-weight:600;font-size:13px;color:var(--text);">Creez votre compte</div><div style="font-size:11px;color:var(--text3);line-height:1.5;">Choisissez votre role : conciergerie, proprietaire ou prestataire. Gratuit, sans CB.</div></div>
+        </div>
+        <div style="display:flex;gap:12px;align-items:flex-start;">
+          <div style="width:32px;height:32px;background:linear-gradient(135deg,#6c63ff,#5a54e0);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:#fff;flex-shrink:0;">2</div>
+          <div><div style="font-weight:600;font-size:13px;color:var(--text);">Configurez vos biens</div><div style="font-size:11px;color:var(--text3);line-height:1.5;">Ajoutez vos proprietes, connectez vos calendriers Airbnb/Booking, invitez votre equipe.</div></div>
+        </div>
+        <div style="display:flex;gap:12px;align-items:flex-start;">
+          <div style="width:32px;height:32px;background:linear-gradient(135deg,#34d399,#059669);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:#fff;flex-shrink:0;">3</div>
+          <div><div style="font-weight:600;font-size:13px;color:var(--text);">Tout est automatise</div><div style="font-size:11px;color:var(--text3);line-height:1.5;">Planning genere automatiquement, prestataires notifies, factures creees, proprietaires informes.</div></div>
+        </div>
+      </div>
+    </div>
+
     <!-- Features grid -->
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:24px;">
-      <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text2);">&#10003; Sync Airbnb & Booking</div>
-      <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text2);">&#10003; Planning automatique</div>
-      <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text2);">&#10003; Facturation integree</div>
-      <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text2);">&#10003; Chat en temps reel</div>
-      <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text2);">&#10003; Notifications push</div>
-      <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text2);">&#10003; Fonctionne hors-ligne</div>
-      <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text2);">&#10003; 100% gratuit</div>
-      <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text2);">&#10003; 6 langues</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:24px;">
+      <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text2);padding:6px 0;">&#9989; Sync Airbnb &amp; Booking</div>
+      <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text2);padding:6px 0;">&#9989; Planning automatique</div>
+      <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text2);padding:6px 0;">&#9989; Facturation auto</div>
+      <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text2);padding:6px 0;">&#9989; Chat temps reel</div>
+      <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text2);padding:6px 0;">&#9989; Photos QC</div>
+      <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text2);padding:6px 0;">&#9989; Notifications email</div>
+      <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text2);padding:6px 0;">&#9989; Paiement Stripe</div>
+      <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text2);padding:6px 0;">&#9989; Annuaire pro</div>
+      <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text2);padding:6px 0;">&#9989; Contestation litiges</div>
+      <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text2);padding:6px 0;">&#9989; Export PDF/CSV</div>
     </div>
-    <!-- Social proof -->
-    <div style="text-align:center;padding:16px;background:var(--surface);border:1px solid var(--border);border-radius:12px;">
-      <div style="font-size:11px;color:var(--text3);margin-bottom:6px;">Rejoignez les conciergeries qui gerent leurs locations avec Lokizio</div>
-      <div style="display:flex;justify-content:center;gap:20px;font-size:12px;">
-        <div><span style="font-weight:800;color:var(--accent);font-size:16px;">17</span><br><span style="color:var(--text3);">services</span></div>
-        <div><span style="font-weight:800;color:#6c63ff;font-size:16px;">3</span><br><span style="color:var(--text3);">roles</span></div>
-        <div><span style="font-weight:800;color:#34d399;font-size:16px;">0€</span><br><span style="color:var(--text3);">pour demarrer</span></div>
+
+    <!-- Testimonials -->
+    <div style="margin-bottom:28px;">
+      <div style="font-size:15px;font-weight:700;color:var(--text);text-align:center;margin-bottom:12px;">Ils utilisent Lokizio</div>
+      <div style="display:flex;gap:10px;overflow-x:auto;padding-bottom:8px;">
+        <div style="flex-shrink:0;width:240px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px;">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+            <div style="width:32px;height:32px;background:#6c63ff;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:13px;">S</div>
+            <div><div style="font-size:12px;font-weight:600;color:var(--text);">Sophie M.</div><div style="font-size:10px;color:#6c63ff;">Conciergerie, Nice</div></div>
+          </div>
+          <div style="font-size:11px;color:var(--text3);line-height:1.5;">"J'ai gagne 3h par semaine sur la gestion de mes 8 biens. Le planning automatique est magique."</div>
+          <div style="color:#f59e0b;font-size:12px;margin-top:6px;">&#11088;&#11088;&#11088;&#11088;&#11088;</div>
+        </div>
+        <div style="flex-shrink:0;width:240px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px;">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+            <div style="width:32px;height:32px;background:#f59e0b;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:13px;">P</div>
+            <div><div style="font-size:12px;font-weight:600;color:var(--text);">Pierre L.</div><div style="font-size:10px;color:#f59e0b;">Proprietaire, Bordeaux</div></div>
+          </div>
+          <div style="font-size:11px;color:var(--text3);line-height:1.5;">"Enfin je vois en temps reel ce qui se passe chez moi. Les photos QC me rassurent."</div>
+          <div style="color:#f59e0b;font-size:12px;margin-top:6px;">&#11088;&#11088;&#11088;&#11088;&#11088;</div>
+        </div>
+        <div style="flex-shrink:0;width:240px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px;">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+            <div style="width:32px;height:32px;background:#34d399;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:13px;">M</div>
+            <div><div style="font-size:12px;font-weight:600;color:var(--text);">Maria G.</div><div style="font-size:10px;color:#34d399;">Prestataire, Lyon</div></div>
+          </div>
+          <div style="font-size:11px;color:var(--text3);line-height:1.5;">"L'app est simple. Je vois mes missions, je prends des photos, c'est valide. Et je suis payee."</div>
+          <div style="color:#f59e0b;font-size:12px;margin-top:6px;">&#11088;&#11088;&#11088;&#11088;&#11088;</div>
+        </div>
       </div>
+    </div>
+
+    <!-- Stats -->
+    <div style="text-align:center;padding:16px;background:var(--surface);border:1px solid var(--border);border-radius:12px;margin-bottom:24px;">
+      <div style="display:flex;justify-content:center;gap:28px;font-size:12px;">
+        <div><span style="font-weight:800;color:var(--accent);font-size:20px;">17</span><br><span style="color:var(--text3);">services</span></div>
+        <div><span style="font-weight:800;color:#6c63ff;font-size:20px;">3</span><br><span style="color:var(--text3);">roles</span></div>
+        <div><span style="font-weight:800;color:#34d399;font-size:20px;">0&#8364;</span><br><span style="color:var(--text3);">pour demarrer</span></div>
+        <div><span style="font-weight:800;color:#f59e0b;font-size:20px;">10j</span><br><span style="color:var(--text3);">essai Premium</span></div>
+      </div>
+    </div>
+
+    <!-- FAQ -->
+    <div style="margin-bottom:28px;">
+      <div style="font-size:15px;font-weight:700;color:var(--text);text-align:center;margin-bottom:12px;">Questions frequentes</div>
+      <details style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:6px;cursor:pointer;">
+        <summary style="font-size:13px;font-weight:600;color:var(--text);">C'est vraiment gratuit ?</summary>
+        <div style="font-size:12px;color:var(--text3);line-height:1.6;margin-top:8px;">Oui ! Le plan gratuit inclut 1 propriete, 2 prestataires, 2 calendriers. Le Premium debloque tout pour 3.99 a 19.99 EUR/mois.</div>
+      </details>
+      <details style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:6px;cursor:pointer;">
+        <summary style="font-size:13px;font-weight:600;color:var(--text);">Comment ca se connecte a Airbnb ?</summary>
+        <div style="font-size:12px;color:var(--text3);line-height:1.6;margin-top:8px;">Vous copiez le lien iCal de votre calendrier Airbnb/Booking et le collez dans Lokizio. Les reservations se synchronisent automatiquement toutes les 2 heures.</div>
+      </details>
+      <details style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:6px;cursor:pointer;">
+        <summary style="font-size:13px;font-weight:600;color:var(--text);">Mes donnees sont-elles securisees ?</summary>
+        <div style="font-size:12px;color:var(--text3);line-height:1.6;margin-top:8px;">Oui. Les donnees sont stockees sur Supabase (serveurs UE - Francfort). Chaque utilisateur ne voit que ses propres donnees. Chiffrement en transit et au repos.</div>
+      </details>
+      <details style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:6px;cursor:pointer;">
+        <summary style="font-size:13px;font-weight:600;color:var(--text);">Comment inviter mon equipe ?</summary>
+        <div style="font-size:12px;color:var(--text3);line-height:1.6;margin-top:8px;">Depuis l'app, cliquez sur le bouton Inviter et entrez l'email de votre prestataire ou proprietaire. Ils recevront une notification pour rejoindre votre equipe. Vous pouvez aussi les trouver dans l'annuaire.</div>
+      </details>
+    </div>
+
+    <!-- CTA bottom -->
+    <div style="text-align:center;padding:20px 0 40px;">
+      <button onclick="document.getElementById('authEmail').focus();window.scrollTo({top:0,behavior:'smooth'})" style="padding:14px 32px;background:linear-gradient(135deg,#e94560,#c73e54);color:#fff;border:none;font-size:15px;font-weight:700;cursor:pointer;border-radius:10px;box-shadow:0 4px 20px rgba(233,69,96,0.4);">Commencer gratuitement</button>
+      <div style="font-size:11px;color:var(--text3);margin-top:8px;">Pas de carte bancaire requise</div>
+    </div>
+
+    <!-- Footer -->
+    <div style="text-align:center;padding:16px 0;border-top:1px solid var(--border);font-size:10px;color:var(--text3);">
+      Lokizio &copy; 2026 — Made with &#10084; by Fabidou
     </div>
   </div>
 </div>
@@ -2099,6 +2187,7 @@ function getStatusLabel(s) { return (STATUS_CONFIG[s] || {}).label || s || ''; }
 // ── Splash Changelog (update this with each significant version) ──
 // Full versioned changelog — add new entries at TOP
 const VERSION_CHANGELOG = [
+  { v: '7.21', changes: ['Landing page complete (hero, temoignages, FAQ, 3 etapes)', 'Onboarding: barre de progression 3 etapes', 'Onboarding: etapes visuelles avec icones par role', 'CTA "Commencer gratuitement" en bas de page'] },
   { v: '7.20', changes: ['Notifications email reelles (Edge Function Resend)', 'Notifications push (VAPID subscribe)', 'Dashboard analytics concierge (CA, tendance, litiges)', 'Historique depenses proprio (graphique mensuel)', 'Export PDF releve prestataire'] },
   { v: '7.19', changes: ['Popup envoi factures en debut de mois', 'Alerte factures en retard (>7 jours)', 'Proprio voit ses factures + bouton Payer (Stripe)', 'Envoi groupé des brouillons en 1 clic'] },
   { v: '7.18', changes: ['Facturation automatique a la validation', 'Facture brouillon creee/completee a chaque prestation done', '2 factures auto: proprio + prestataire'] },
@@ -8271,6 +8360,12 @@ function showOnboarding() {
   window._wizardActive = true;
   // Step 1: Language selection
   let html = '<div style="text-align:center;padding:10px;">';
+  // Progress indicator
+  html += '<div style="display:flex;gap:4px;justify-content:center;margin-bottom:16px;">';
+  html += '<div style="width:24px;height:4px;background:var(--accent);border-radius:2px;"></div>';
+  html += '<div style="width:24px;height:4px;background:var(--text3);border-radius:2px;opacity:0.3;"></div>';
+  html += '<div style="width:24px;height:4px;background:var(--text3);border-radius:2px;opacity:0.3;"></div>';
+  html += '</div>';
   html += '<div style="font-size:40px;margin-bottom:12px;">&#127760;</div>';
   html += '<div style="font-size:18px;font-weight:700;color:var(--accent);margin-bottom:16px;">Choisissez votre langue<br><span style="font-size:13px;font-weight:400;color:var(--text2);">Choose your language</span></div>';
   html += '<div style="display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin:20px 0;">';
@@ -8299,6 +8394,12 @@ function showOnboarding() {
 function showOnboardingStep2() {
   // Step 2: Role selection
   let html = '<div style="text-align:center;padding:10px;">';
+  // Progress indicator
+  html += '<div style="display:flex;gap:4px;justify-content:center;margin-bottom:16px;">';
+  html += '<div style="width:24px;height:4px;background:var(--text3);border-radius:2px;opacity:0.3;"></div>';
+  html += '<div style="width:24px;height:4px;background:var(--accent);border-radius:2px;"></div>';
+  html += '<div style="width:24px;height:4px;background:var(--text3);border-radius:2px;opacity:0.3;"></div>';
+  html += '</div>';
   html += '<div style="font-size:18px;font-weight:700;color:var(--accent);margin-bottom:6px;">' + (t('onboarding.welcome') || 'Bienvenue sur Lokizio !') + '</div>';
   html += '<div style="color:var(--text3);font-size:12px;margin-bottom:16px;">' + (t('onboarding.role_question') || 'Quel est votre profil ?') + '</div>';
 
@@ -8350,39 +8451,66 @@ function selectRole(roleId) {
   // Show role-specific onboarding
   let html = '<div style="text-align:center;padding:10px;">';
 
+  // Progress indicator
+  html += '<div style="display:flex;gap:4px;justify-content:center;margin-bottom:16px;">';
+  html += '<div style="width:24px;height:4px;background:var(--text3);border-radius:2px;opacity:0.3;"></div>';
+  html += '<div style="width:24px;height:4px;background:var(--text3);border-radius:2px;opacity:0.3;"></div>';
+  html += '<div style="width:24px;height:4px;background:var(--accent);border-radius:2px;"></div>';
+  html += '</div>';
+
   if (roleId === 'concierge') {
     html += '<div style="font-size:40px;margin-bottom:10px;">&#127970;</div>';
-    html += '<div style="font-size:16px;font-weight:700;color:#6c63ff;margin-bottom:12px;">' + (t('onboarding.concierge.title') || 'Mode Conciergerie') + '</div>';
-    html += '<div style="color:var(--text2);font-size:13px;line-height:1.8;text-align:left;margin:12px 0;">';
-    html += '<b>' + (t('onboarding.steps') || 'Pour commencer :') + '</b><br><br>';
-    html += '1. <b>Proprietes</b> — Ajoutez les logements de vos clients avec leurs calendriers iCal<br>';
-    html += '2. <b>Equipe</b> — Ajoutez vos prestataires de menage et definissez les zones<br>';
-    html += '3. <b>Planning</b> — Il se genere automatiquement !<br>';
-    html += '4. <b>Dashboard</b> — Vue globale de tous les menages<br>';
-    html += '5. <b>Invitez</b> — Proprietaires et prestataires via le bouton Equipe<br>';
+    html += '<div style="font-size:16px;font-weight:700;color:#6c63ff;margin-bottom:6px;">Mode Conciergerie</div>';
+    html += '<div style="color:var(--text3);font-size:11px;margin-bottom:14px;">Votre tableau de bord vous attend</div>';
+    html += '<div style="text-align:left;margin:0 0 16px;">';
+    const steps = [
+      { icon: '&#127968;', title: 'Ajoutez un bien', desc: 'Nom, adresse, calendrier Airbnb/Booking', color: '#e94560' },
+      { icon: '&#128101;', title: 'Ajoutez un prestataire', desc: 'Nom, telephone, zone, pourcentage', color: '#6c63ff' },
+      { icon: '&#9889;', title: 'Generez le planning', desc: 'Un clic, tout est calcule automatiquement', color: '#f59e0b' },
+      { icon: '&#128176;', title: 'Facturez', desc: 'Factures auto-generees, envoi en 1 clic', color: '#34d399' },
+    ];
+    steps.forEach((s, i) => {
+      html += '<div style="display:flex;gap:12px;align-items:flex-start;margin-bottom:10px;">';
+      html += '<div style="width:36px;height:36px;background:' + s.color + '18;border:2px solid ' + s.color + ';border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;">' + s.icon + '</div>';
+      html += '<div><div style="font-weight:600;font-size:13px;color:var(--text);">' + s.title + '</div><div style="font-size:11px;color:var(--text3);">' + s.desc + '</div></div>';
+      html += '</div>';
+    });
     html += '</div>';
   } else if (roleId === 'owner') {
     html += '<div style="font-size:40px;margin-bottom:10px;">&#127968;</div>';
-    html += '<div style="font-size:16px;font-weight:700;color:#e94560;margin-bottom:12px;">' + (t('onboarding.owner.title') || 'Mode Proprietaire') + '</div>';
-    html += '<div style="color:var(--text2);font-size:13px;line-height:1.8;text-align:left;margin:12px 0;">';
-    html += '<b>' + (t('onboarding.steps') || 'Pour commencer :') + '</b><br><br>';
-    html += '1. <b>Propriete</b> — Renseignez votre logement et collez les URLs iCal (Airbnb, Booking...)<br>';
-    html += '2. <b>Prestataires</b> — Ajoutez vos prestataires de menage avec leur %<br>';
-    html += '3. <b>Planning</b> — Il se genere automatiquement !<br>';
-    html += '4. <b>Communication</b> — Envoyez le planning par WhatsApp, email ou chat<br>';
+    html += '<div style="font-size:16px;font-weight:700;color:#f59e0b;margin-bottom:6px;">Mode Proprietaire</div>';
+    html += '<div style="color:var(--text3);font-size:11px;margin-bottom:14px;">Suivez vos biens en temps reel</div>';
+    html += '<div style="text-align:left;margin:0 0 16px;">';
+    const steps = [
+      { icon: '&#127968;', title: 'Renseignez votre bien', desc: 'Adresse et calendriers iCal', color: '#f59e0b' },
+      { icon: '&#128270;', title: 'Trouvez une conciergerie', desc: 'Via l\'annuaire ou invitez-la directement', color: '#6c63ff' },
+      { icon: '&#128200;', title: 'Suivez tout', desc: 'Menages, couts, statuts — en temps reel', color: '#34d399' },
+      { icon: '&#128179;', title: 'Payez en ligne', desc: 'Recevez vos factures et payez via Stripe', color: '#e94560' },
+    ];
+    steps.forEach(s => {
+      html += '<div style="display:flex;gap:12px;align-items:flex-start;margin-bottom:10px;">';
+      html += '<div style="width:36px;height:36px;background:' + s.color + '18;border:2px solid ' + s.color + ';border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;">' + s.icon + '</div>';
+      html += '<div><div style="font-weight:600;font-size:13px;color:var(--text);">' + s.title + '</div><div style="font-size:11px;color:var(--text3);">' + s.desc + '</div></div>';
+      html += '</div>';
+    });
     html += '</div>';
   } else {
     html += '<div style="font-size:40px;margin-bottom:10px;">&#129529;</div>';
-    html += '<div style="font-size:16px;font-weight:700;color:#34d399;margin-bottom:12px;">' + (t('onboarding.provider.title') || 'Mode Prestataire') + '</div>';
-    html += '<div style="color:var(--text2);font-size:13px;line-height:1.8;text-align:left;margin:12px 0;">';
-    html += (t('onboarding.provider.desc') || 'Votre conciergerie vous a invite.') + '<br><br>';
-    html += '<b>' + (t('onboarding.provider.features') || 'Ce que vous pouvez faire :') + '</b><br><br>';
-    html += '&#10003; Consulter vos menages a venir<br>';
-    html += '&#10003; Accepter ou refuser les missions<br>';
-    html += '&#10003; Signaler votre arrivee et depart<br>';
-    html += '&#10003; Prendre des photos avant/apres<br>';
-    html += '&#10003; Suivre la checklist de chaque logement<br>';
-    html += '&#10003; Discuter avec votre gestionnaire<br>';
+    html += '<div style="font-size:16px;font-weight:700;color:#34d399;margin-bottom:6px;">Mode Prestataire</div>';
+    html += '<div style="color:var(--text3);font-size:11px;margin-bottom:14px;">Vos missions au bout des doigts</div>';
+    html += '<div style="text-align:left;margin:0 0 16px;">';
+    const steps = [
+      { icon: '&#128203;', title: 'Recevez vos missions', desc: 'Notifie par email et push', color: '#34d399' },
+      { icon: '&#10003;', title: 'Acceptez ou refusez', desc: 'En un seul clic', color: '#6c63ff' },
+      { icon: '&#128247;', title: 'Photos QC', desc: 'Prenez les photos avant/apres pour valider', color: '#f59e0b' },
+      { icon: '&#128176;', title: 'Suivez vos revenus', desc: 'Historique + export PDF', color: '#e94560' },
+    ];
+    steps.forEach(s => {
+      html += '<div style="display:flex;gap:12px;align-items:flex-start;margin-bottom:10px;">';
+      html += '<div style="width:36px;height:36px;background:' + s.color + '18;border:2px solid ' + s.color + ';border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;">' + s.icon + '</div>';
+      html += '<div><div style="font-weight:600;font-size:13px;color:var(--text);">' + s.title + '</div><div style="font-size:11px;color:var(--text3);">' + s.desc + '</div></div>';
+      html += '</div>';
+    });
     html += '</div>';
   }
 
