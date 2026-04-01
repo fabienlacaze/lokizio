@@ -967,7 +967,7 @@ async function loadPDF() {
 <body>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v7.17</div>
+<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v7.18</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -977,7 +977,7 @@ async function loadPDF() {
     <!-- Broom that sweeps -->
     <div id="splashBroom" style="position:absolute;top:50%;left:-60px;font-size:48px;transform:translateY(-50%) rotate(-30deg);opacity:0;transition:all 0.8s cubic-bezier(0.25,0.46,0.45,0.94);">✨</div>
   </div>
-  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v7.17</span></div>
+  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v7.18</span></div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie pour locations</div>
   <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou</div>
   <!-- Loading bar -->
@@ -2098,6 +2098,7 @@ function getStatusLabel(s) { return (STATUS_CONFIG[s] || {}).label || s || ''; }
 // ── Splash Changelog (update this with each significant version) ──
 // Full versioned changelog — add new entries at TOP
 const VERSION_CHANGELOG = [
+  { v: '7.18', changes: ['Facturation automatique a la validation', 'Facture brouillon creee/completee a chaque prestation done', '2 factures auto: proprio + prestataire'] },
   { v: '7.17', changes: ['Factures auto-remplies depuis le planning', 'Nom proprio pre-rempli', 'Fix PDF: gestion erreur + fallback nom', 'Fix "Marquer payee"'] },
   { v: '7.16', changes: ['Fix "Marquer payee" avec gestion erreur', 'Fix nom facture "undefined"'] },
   { v: '7.15', changes: ['Onglets Finances reordonnes : Revenus > Factures > Tarifs', 'Revenus affiche par defaut'] },
@@ -5009,6 +5010,18 @@ async function providerValidate(propId, date, provName, status, btn) {
       }
     }
 
+    // Auto-invoice when cleaning is done
+    if (status === 'done') {
+      await autoInvoiceOnDone({
+        service_type: 'cleaning_standard',
+        property_id: propId,
+        property_name: '',
+        requested_date: date,
+        assigned_provider: provName,
+        id: propId + '_' + date
+      });
+    }
+
     const toastMsgs = {
       arrived: 'Arrive sur place !',
       in_progress: 'Menage commence !',
@@ -5892,6 +5905,8 @@ async function adminValidateService(requestId, newStatus) {
           '&#9989; ' + svcLabel + ' validee ! Merci pour votre travail.');
         await sendAutoMessage(org.id, 'Gestionnaire', 'admin', 'proprietaire',
           '&#9989; ' + svcLabel + ' validee et terminee' + (propName ? ' pour ' + propName : '') + '.');
+        // Auto-generate invoice line
+        await autoInvoiceOnDone(req);
         // Propose rating
         if (req.assigned_provider) setTimeout(() => showRatingModal(requestId, req.assigned_provider), 500);
       } else {
@@ -5902,6 +5917,121 @@ async function adminValidateService(requestId, newStatus) {
     }
     loadAdminPrestations(true);
   } catch(e) { console.error('adminValidateService error:', e); showToast('Erreur'); }
+}
+
+// Auto-invoice: add completed prestation to monthly draft invoice
+async function autoInvoiceOnDone(req) {
+  try {
+    const org = API.getOrg();
+    const member = API.getMember();
+    if (!org || !req) return;
+
+    const svcLabel = getServiceLabel(req.service_type);
+    const dateStr = req.requested_date || new Date().toISOString().split('T')[0];
+    const propId = req.property_id || '';
+
+    // Get property for pricing + owner name
+    let propName = req.property_name || '';
+    let ownerName = '';
+    let ownerPrice = 0;
+    let providerCost = 0;
+    if (propId) {
+      const { data: prop } = await sb.from('properties').select('*').eq('id', propId).single();
+      if (prop) {
+        propName = prop.name || propName;
+        ownerName = prop.owner_name || prop.owner_email || '';
+        ownerPrice = getServicePrice(propId, req.service_type, 'price_owner');
+        providerCost = getServicePrice(propId, req.service_type, 'cost_provider');
+      }
+    }
+
+    const now = new Date();
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
+    const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0];
+    const newItem = {
+      description: svcLabel + ' — ' + propName + ' (' + dateStr + ')',
+      quantity: 1,
+      unit_price: ownerPrice,
+      amount: ownerPrice,
+      service_request_id: req.id,
+      provider: req.assigned_provider || '',
+      provider_cost: providerCost
+    };
+
+    // 1. Invoice proprio (concierge_to_owner) — find or create draft
+    if (ownerPrice > 0) {
+      const { data: existingOwner } = await sb.from('invoices').select('*')
+        .eq('org_id', org.id).eq('type', 'concierge_to_owner').eq('status', 'draft')
+        .gte('created_at', monthStart + 'T00:00:00').lte('created_at', monthEnd + 'T23:59:59')
+        .order('created_at', { ascending: false }).limit(1).maybeSingle();
+
+      if (existingOwner) {
+        // Append item to existing draft
+        const items = existingOwner.items || [];
+        items.push(newItem);
+        const subtotal = items.reduce((s, i) => s + (i.quantity || 1) * (i.unit_price || 0), 0);
+        await sb.from('invoices').update({ items, subtotal_ht: subtotal, total_ttc: subtotal }).eq('id', existingOwner.id);
+      } else {
+        // Create new draft
+        const { count } = await sb.from('invoices').select('*', { count: 'exact', head: true }).eq('org_id', org.id);
+        const num = String((count || 0) + 1).padStart(4, '0');
+        await sb.from('invoices').insert({
+          org_id: org.id,
+          invoice_number: 'FAC-' + now.getFullYear() + '-' + num,
+          type: 'concierge_to_owner',
+          status: 'draft',
+          client_name: ownerName,
+          issuer_name: member?.company_name || member?.display_name || org.name,
+          issuer_address: member?.billing_address || '',
+          issuer_siret: member?.siret || '',
+          issuer_email: member?.invited_email || '',
+          property_name: propName,
+          items: [newItem],
+          subtotal_ht: ownerPrice,
+          total_ttc: ownerPrice,
+          period_start: monthStart,
+          period_end: monthEnd,
+          payment_terms: 'A reception',
+          created_at: new Date().toISOString()
+        });
+      }
+    }
+
+    // 2. Invoice prestataire (provider_to_concierge) — same logic
+    if (providerCost > 0 && req.assigned_provider) {
+      const provItem = { ...newItem, unit_price: providerCost, amount: providerCost };
+      const { data: existingProv } = await sb.from('invoices').select('*')
+        .eq('org_id', org.id).eq('type', 'provider_to_concierge').eq('status', 'draft')
+        .gte('created_at', monthStart + 'T00:00:00').lte('created_at', monthEnd + 'T23:59:59')
+        .order('created_at', { ascending: false }).limit(1).maybeSingle();
+
+      if (existingProv) {
+        const items = existingProv.items || [];
+        items.push(provItem);
+        const subtotal = items.reduce((s, i) => s + (i.quantity || 1) * (i.unit_price || 0), 0);
+        await sb.from('invoices').update({ items, subtotal_ht: subtotal, total_ttc: subtotal }).eq('id', existingProv.id);
+      } else {
+        const { count } = await sb.from('invoices').select('*', { count: 'exact', head: true }).eq('org_id', org.id);
+        const num = String((count || 0) + 1).padStart(4, '0');
+        await sb.from('invoices').insert({
+          org_id: org.id,
+          invoice_number: 'FAC-' + now.getFullYear() + '-' + num,
+          type: 'provider_to_concierge',
+          status: 'draft',
+          client_name: member?.company_name || member?.display_name || org.name,
+          issuer_name: req.assigned_provider,
+          property_name: propName,
+          items: [provItem],
+          subtotal_ht: providerCost,
+          total_ttc: providerCost,
+          period_start: monthStart,
+          period_end: monthEnd,
+          payment_terms: 'A reception',
+          created_at: new Date().toISOString()
+        });
+      }
+    }
+  } catch(e) { console.error('autoInvoiceOnDone error:', e); }
 }
 
 // ── Owner Validation & Dispute ──
