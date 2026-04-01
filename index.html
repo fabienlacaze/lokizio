@@ -961,7 +961,7 @@ async function loadPDF() {
 <body>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v7.06</div>
+<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v7.07</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -971,7 +971,7 @@ async function loadPDF() {
     <!-- Broom that sweeps -->
     <div id="splashBroom" style="position:absolute;top:50%;left:-60px;font-size:48px;transform:translateY(-50%) rotate(-30deg);opacity:0;transition:all 0.8s cubic-bezier(0.25,0.46,0.45,0.94);">✨</div>
   </div>
-  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v7.06</span></div>
+  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v7.07</span></div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie pour locations</div>
   <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou</div>
   <!-- Loading bar -->
@@ -2193,6 +2193,69 @@ window.addEventListener('unhandledrejection', event => {
   console.error('Unhandled promise rejection:', event.reason);
 });
 
+// ── Image compression & Supabase Storage upload ──
+function compressImage(file, maxWidth, maxKB) {
+  maxWidth = maxWidth || 1200;
+  maxKB = maxKB || 100;
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = reject;
+    reader.onload = function(e) {
+      const img = new Image();
+      img.onerror = reject;
+      img.onload = function() {
+        const canvas = document.createElement('canvas');
+        let w = img.width, h = img.height;
+        if (w > maxWidth) { h = Math.round(h * maxWidth / w); w = maxWidth; }
+        canvas.width = w; canvas.height = h;
+        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+        // Try quality levels until under maxKB
+        let quality = 0.8;
+        let result = canvas.toDataURL('image/jpeg', quality);
+        while (result.length > maxKB * 1370 && quality > 0.2) {
+          quality -= 0.1;
+          result = canvas.toDataURL('image/jpeg', quality);
+        }
+        // Convert dataURL to Blob
+        const arr = atob(result.split(',')[1]);
+        const mime = 'image/jpeg';
+        const buf = new Uint8Array(arr.length);
+        for (let i = 0; i < arr.length; i++) buf[i] = arr.charCodeAt(i);
+        const blob = new Blob([buf], { type: mime });
+        resolve({ blob, dataUrl: result, width: w, height: h });
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+async function uploadToStorage(bucket, filePath, blob) {
+  try {
+    const { data, error } = await sb.storage.from(bucket).upload(filePath, blob, {
+      cacheControl: '31536000',
+      upsert: true,
+      contentType: blob.type || 'image/jpeg'
+    });
+    if (error) throw error;
+    // Get public URL
+    const { data: urlData } = sb.storage.from(bucket).getPublicUrl(filePath);
+    return urlData.publicUrl;
+  } catch(e) {
+    console.error('uploadToStorage error:', e);
+    return null;
+  }
+}
+
+async function uploadPhoto(file, folder, filename) {
+  const maxKB = folder === 'properties' ? 150 : 100;
+  const maxWidth = folder === 'properties' ? 1400 : 1000;
+  const { blob } = await compressImage(file, maxWidth, maxKB);
+  const path = folder + '/' + filename + '_' + Date.now() + '.jpg';
+  const url = await uploadToStorage('lokizio-photos', path, blob);
+  return url;
+}
+
 let fullConfig = { properties: [], activeProperty: null };
 let config = { airbnbIcalUrl:'',bookingIcalUrl:'',providers:[],property:'Mon logement' }; // active property shortcut
 let transmittedDates = [];
@@ -2627,20 +2690,31 @@ function removeInlineCheckItem(idx) {
   renderInlineChecklist();
 }
 
-function handleInlinePropPhoto(input) {
+async function handleInlinePropPhoto(input) {
   const file = input.files[0];
   if (!file) return;
-  if (file.size > 500000) { showToast(t('property.image.toolarge') || 'Image trop lourde (max 500KB)'); return; }
-  const reader = new FileReader();
-  reader.onload = function(e) {
-    const img = document.getElementById('inlinePropPhotoImg');
-    img.src = e.target.result;
-    img.style.display = 'block';
-    document.getElementById('inlinePropPhotoPlaceholder').style.display = 'none';
-    // Auto-save photo
+  if (file.size > 10000000) { showToast('Image trop lourde (max 10MB)'); return; }
+  const prop = API.getActiveProperty(fullConfig);
+  if (!prop) return;
+  const img = document.getElementById('inlinePropPhotoImg');
+  const placeholder = document.getElementById('inlinePropPhotoPlaceholder');
+  // Show preview immediately with compressed version
+  const { dataUrl } = await compressImage(file, 1400, 150);
+  img.src = dataUrl;
+  img.style.display = 'block';
+  if (placeholder) placeholder.style.display = 'none';
+  // Upload to Supabase Storage
+  const url = await uploadPhoto(file, 'properties', prop.id);
+  if (url) {
+    img.src = url;
+    prop.photo = url;
     saveInlinePropDetail();
-  };
-  reader.readAsDataURL(file);
+    showToast('Photo enregistree');
+  } else {
+    // Fallback: save compressed base64 if storage fails
+    prop.photo = dataUrl;
+    saveInlinePropDetail();
+  }
 }
 
 function updateInlineIcalUrl(idx, url) {
@@ -4187,16 +4261,18 @@ async function saveOwnerPropDetail() {
 async function handleOwnerPropPhoto(input) {
   if (!input.files || !input.files[0]) return;
   const file = input.files[0];
-  if (file.size > 500000) return showToast('Photo trop grande (max 500KB)');
-  const reader = new FileReader();
-  reader.onload = async (e) => {
-    const propId = window._ownerActivePropId;
-    if (!propId) return;
-    await sb.from('properties').update({ photo: e.target.result }).eq('id', propId);
-    showToast('Photo mise a jour !');
-    renderOwnerPropertyDetails();
-  };
-  reader.readAsDataURL(file);
+  if (file.size > 10000000) return showToast('Photo trop grande (max 10MB)');
+  const propId = window._ownerActivePropId;
+  if (!propId) return;
+  const url = await uploadPhoto(file, 'properties', propId);
+  if (url) {
+    await sb.from('properties').update({ photo: url }).eq('id', propId);
+  } else {
+    const { dataUrl } = await compressImage(file, 1400, 150);
+    await sb.from('properties').update({ photo: dataUrl }).eq('id', propId);
+  }
+  showToast('Photo mise a jour !');
+  renderOwnerPropertyDetails();
 }
 
 function switchOwnerNav(tab) {
@@ -4353,27 +4429,22 @@ function showQcPhotoModal(requestId, req, checklist) {
   showMsg(html, true);
 }
 
-function handleQcPhoto(input, idx) {
+async function handleQcPhoto(input, idx) {
   const file = input.files[0];
   if (!file) return;
-  const reader = new FileReader();
-  reader.onload = (e) => {
-    window._qcPhotos[idx] = e.target.result;
-    const preview = document.getElementById('qcPreview_' + idx);
-    if (preview) {
-      preview.style.display = 'block';
-      preview.querySelector('img').src = e.target.result;
-    }
-    // Change label to green check
-    input.parentElement.innerHTML = '&#9989; Photo ajoutee <input type="file" accept="image/*" capture="environment" data-qc-idx="' + idx + '" onchange="handleQcPhoto(this,' + idx + ')" style="display:none;">';
-    input.parentElement.style.borderColor = '#34d399';
-    input.parentElement.style.color = '#34d399';
-  };
-  reader.readAsDataURL(file);
+  const { dataUrl } = await compressImage(file, 1000, 100);
+  window._qcPhotos[idx] = { file, dataUrl };
+  const preview = document.getElementById('qcPreview_' + idx);
+  if (preview) {
+    preview.style.display = 'block';
+    preview.querySelector('img').src = dataUrl;
+  }
+  input.parentElement.innerHTML = '&#9989; Photo ajoutee <input type="file" accept="image/*" capture="environment" data-qc-idx="' + idx + '" onchange="handleQcPhoto(this,' + idx + ')" style="display:none;">';
+  input.parentElement.style.borderColor = '#34d399';
+  input.parentElement.style.color = '#34d399';
 }
 
 async function submitQcPhotos(requestId, total) {
-  // Validate required photos
   const { data: req } = await sb.from('service_requests').select('*').eq('id', requestId).single();
   const { data: prop } = await sb.from('properties').select('qc_checklist').eq('id', req.property_id).single();
   const checklist = (prop && prop.qc_checklist) || [];
@@ -4385,14 +4456,19 @@ async function submitQcPhotos(requestId, total) {
     showToast('Photos manquantes: ' + missing.join(', '));
     return;
   }
-  // Save photos as JSON array in service_request
-  const photos = checklist.map((item, i) => ({
-    room: item.label,
-    icon: item.icon,
-    photo: window._qcPhotos[i] || null,
-    timestamp: new Date().toISOString()
-  })).filter(p => p.photo);
-
+  showToast('Upload des photos...');
+  // Upload photos to Storage and build array
+  const photos = [];
+  for (let i = 0; i < checklist.length; i++) {
+    const qcData = window._qcPhotos[i];
+    if (!qcData) continue;
+    let photoUrl = qcData.dataUrl; // fallback
+    if (qcData.file) {
+      const url = await uploadPhoto(qcData.file, 'qc', requestId + '_' + i);
+      if (url) photoUrl = url;
+    }
+    photos.push({ room: checklist[i].label, icon: checklist[i].icon, photo: photoUrl, timestamp: new Date().toISOString() });
+  }
   await sb.from('service_requests').update({ qc_photos: photos }).eq('id', requestId);
   closeMsg();
   await finalizeServiceCompletion(requestId, req);
@@ -4913,11 +4989,15 @@ async function providerValidate(propId, date, provName, status, btn) {
 async function providerUploadPhotos(input, propId, date, provName) {
   const files = input.files;
   if (!files.length) return;
+  showToast('Upload des photos...');
   const photos = [];
-  for (const file of files) {
-    const reader = new FileReader();
-    const b64 = await new Promise(resolve => { reader.onload = e => resolve(e.target.result); reader.readAsDataURL(file); });
-    photos.push(b64);
+  for (let i = 0; i < files.length; i++) {
+    const url = await uploadPhoto(files[i], 'cleaning', propId + '_' + date + '_' + i);
+    if (url) photos.push(url);
+    else {
+      const { dataUrl } = await compressImage(files[i], 1000, 100);
+      photos.push(dataUrl);
+    }
   }
   // Get existing validation
   const { data: existing } = await sb.from('cleaning_validations')
@@ -5816,13 +5896,19 @@ async function submitDispute(requestId, providerName) {
   const details = document.getElementById('disputeDetails')?.value?.trim();
   if (!details) { showToast('Veuillez decrire le probleme'); return; }
 
-  // Convert photos to base64
+  // Upload dispute photos to Storage
   const photoFiles = document.getElementById('disputePhotos')?.files || [];
   const photos = [];
-  for (const f of photoFiles) {
-    if (f.size > 500000) continue; // Skip if too large
-    const b64 = await new Promise(r => { const rd = new FileReader(); rd.onload = e => r(e.target.result); rd.readAsDataURL(f); });
-    photos.push(b64);
+  for (let i = 0; i < photoFiles.length; i++) {
+    const f = photoFiles[i];
+    if (f.size > 10000000) continue;
+    const url = await uploadPhoto(f, 'disputes', requestId + '_' + i);
+    if (url) photos.push(url);
+    else {
+      // Fallback to compressed base64
+      const { dataUrl } = await compressImage(f, 1000, 100);
+      photos.push(dataUrl);
+    }
   }
 
   try {
@@ -8697,18 +8783,21 @@ function removeCheckItem(idx) {
   renderChecklist();
 }
 
-function handlePropPhoto(input) {
+async function handlePropPhoto(input) {
   const file = input.files[0];
   if (!file) return;
-  if (file.size > 500000) { showToast(t('property.image.toolarge')); return; }
-  const reader = new FileReader();
-  reader.onload = function(e) {
-    const img = document.getElementById('propPhotoImg');
-    img.src = e.target.result;
-    img.style.display = 'block';
-    document.getElementById('propPhotoPlaceholder').style.display = 'none';
-  };
-  reader.readAsDataURL(file);
+  if (file.size > 10000000) { showToast('Image trop lourde (max 10MB)'); return; }
+  const prop = API.getActiveProperty(fullConfig);
+  const { dataUrl } = await compressImage(file, 1400, 150);
+  const img = document.getElementById('propPhotoImg');
+  img.src = dataUrl;
+  img.style.display = 'block';
+  document.getElementById('propPhotoPlaceholder').style.display = 'none';
+  if (prop) {
+    const url = await uploadPhoto(file, 'properties', prop.id);
+    if (url) { img.src = url; prop.photo = url; }
+    else prop.photo = dataUrl;
+  }
 }
 
 function savePropDetail() {
