@@ -967,7 +967,7 @@ async function loadPDF() {
 <body>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v7.18</div>
+<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v7.19</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -977,7 +977,7 @@ async function loadPDF() {
     <!-- Broom that sweeps -->
     <div id="splashBroom" style="position:absolute;top:50%;left:-60px;font-size:48px;transform:translateY(-50%) rotate(-30deg);opacity:0;transition:all 0.8s cubic-bezier(0.25,0.46,0.45,0.94);">✨</div>
   </div>
-  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v7.18</span></div>
+  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v7.19</span></div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie pour locations</div>
   <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou</div>
   <!-- Loading bar -->
@@ -2098,6 +2098,7 @@ function getStatusLabel(s) { return (STATUS_CONFIG[s] || {}).label || s || ''; }
 // ── Splash Changelog (update this with each significant version) ──
 // Full versioned changelog — add new entries at TOP
 const VERSION_CHANGELOG = [
+  { v: '7.19', changes: ['Popup envoi factures en debut de mois', 'Alerte factures en retard (>7 jours)', 'Proprio voit ses factures + bouton Payer (Stripe)', 'Envoi groupé des brouillons en 1 clic'] },
   { v: '7.18', changes: ['Facturation automatique a la validation', 'Facture brouillon creee/completee a chaque prestation done', '2 factures auto: proprio + prestataire'] },
   { v: '7.17', changes: ['Factures auto-remplies depuis le planning', 'Nom proprio pre-rempli', 'Fix PDF: gestion erreur + fallback nom', 'Fix "Marquer payee"'] },
   { v: '7.16', changes: ['Fix "Marquer payee" avec gestion erreur', 'Fix nom facture "undefined"'] },
@@ -3288,6 +3289,9 @@ async function init() {
 
   // Auto-refresh iCal planning if last refresh > 2 hours ago
   autoRefreshPlanning();
+
+  // Check for pending invoices (monthly auto-send + overdue reminders)
+  checkPendingInvoices();
 
   // Sequential panel reveal animation on first load
   if (!localStorage.getItem('mm_panels_revealed')) {
@@ -4932,6 +4936,9 @@ async function showOwnerMode() {
       html += '</div>';
     });
   }
+  // Invoices received by owner
+  html += '<div style="font-size:13px;font-weight:600;color:var(--text);margin:16px 0 8px;">Factures recues</div>';
+  html += '<div id="ownerInvoicesList"></div>';
   html += '</div>';
 
   html += '<div id="ownerContentChat" style="display:none;">';
@@ -4951,7 +4958,74 @@ async function showOwnerMode() {
   // Append activity to overview tab after render
   const overviewTab = document.getElementById('ownerContentOverview');
   if (overviewTab && activityHtml) overviewTab.insertAdjacentHTML('beforeend', activityHtml);
+  // Load owner invoices
+  loadOwnerInvoices();
   } catch(err) { console.error('showOwnerMode error:', err); showToast('Erreur chargement mode proprietaire: ' + (err.message || 'Probleme de connexion')); }
+}
+
+async function loadOwnerInvoices() {
+  const container = document.getElementById('ownerInvoicesList');
+  if (!container) return;
+  try {
+    const org = API.getOrg();
+    if (!org) return;
+    const { data: invoices } = await sb.from('invoices').select('*')
+      .eq('org_id', org.id).eq('type', 'concierge_to_owner')
+      .in('status', ['sent', 'paid'])
+      .order('created_at', { ascending: false }).limit(20);
+    if (!invoices || !invoices.length) {
+      container.innerHTML = '<div style="text-align:center;padding:16px;color:var(--text3);font-size:12px;">Aucune facture recue</div>';
+      return;
+    }
+    let html = '';
+    invoices.forEach(inv => {
+      const isPaid = inv.status === 'paid';
+      const color = isPaid ? '#34d399' : '#f59e0b';
+      const label = isPaid ? 'Payee' : 'A payer';
+      const dateStr = new Date(inv.created_at).toLocaleDateString('fr-FR');
+      html += '<div style="display:flex;justify-content:space-between;align-items:center;padding:12px;background:var(--surface);border:1px solid var(--border);border-left:3px solid ' + color + ';border-radius:8px;margin-bottom:6px;">';
+      html += '<div>';
+      html += '<div style="font-weight:600;font-size:13px;color:var(--text);">' + (inv.invoice_number || 'Facture') + '</div>';
+      html += '<div style="font-size:11px;color:var(--text3);">' + dateStr + ' — ' + (inv.property_name || '') + '</div>';
+      html += '</div>';
+      html += '<div style="display:flex;align-items:center;gap:8px;">';
+      html += '<span style="font-weight:700;font-size:14px;color:' + color + ';">' + (inv.total_ttc || 0).toFixed(2) + ' &euro;</span>';
+      html += '<span style="font-size:10px;padding:2px 8px;background:' + color + '20;color:' + color + ';border-radius:4px;font-weight:600;">' + label + '</span>';
+      if (!isPaid) {
+        html += '<button onclick="ownerPayInvoice(\'' + inv.id + '\',' + (inv.total_ttc || 0) + ')" style="padding:6px 12px;background:linear-gradient(135deg,#6c63ff,#5a54e0);color:#fff;border:none;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;">&#128179; Payer</button>';
+      }
+      html += '</div></div>';
+    });
+    container.innerHTML = html;
+  } catch(e) { console.error('loadOwnerInvoices error:', e); }
+}
+
+async function ownerPayInvoice(invoiceId, amount) {
+  // Create Stripe checkout for invoice payment
+  try {
+    const { data: { user } } = await sb.auth.getUser();
+    if (!user) return;
+    showToast('Redirection vers le paiement...');
+    const resp = await fetch(SUPABASE_URL + '/functions/v1/create-checkout', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + (await sb.auth.getSession()).data.session.access_token },
+      body: JSON.stringify({
+        user_id: user.id,
+        email: user.email,
+        mode: 'payment',
+        amount: Math.round(amount * 100),
+        invoice_id: invoiceId,
+        success_url: window.location.href,
+        cancel_url: window.location.href,
+      })
+    });
+    const data = await resp.json();
+    if (data.url) window.location.href = data.url;
+    else showToast('Erreur: impossible de creer le paiement');
+  } catch(e) {
+    console.error('ownerPayInvoice error:', e);
+    showToast('Erreur paiement. Contactez votre conciergerie.');
+  }
 }
 
 async function openOwnerChat() {
@@ -6032,6 +6106,109 @@ async function autoInvoiceOnDone(req) {
       }
     }
   } catch(e) { console.error('autoInvoiceOnDone error:', e); }
+}
+
+// ── Monthly invoice check + overdue reminders (runs on app open) ──
+async function checkPendingInvoices() {
+  try {
+    const org = API.getOrg();
+    if (!org) return;
+    const role = API.getRole();
+    if (role !== 'admin' && role !== 'manager') return;
+
+    // Only check once per day
+    const lastCheck = localStorage.getItem('lokizio_invoice_check');
+    const today = new Date().toISOString().split('T')[0];
+    if (lastCheck === today) return;
+    localStorage.setItem('lokizio_invoice_check', today);
+
+    const now = new Date();
+    const todayDay = now.getDate();
+
+    // 1. Auto-finalize previous month's drafts on 1st-3rd of month
+    if (todayDay <= 3) {
+      const prevMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0);
+      const prevMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+      const { data: drafts } = await sb.from('invoices').select('*')
+        .eq('org_id', org.id).eq('status', 'draft')
+        .gte('created_at', prevMonthStart.toISOString())
+        .lte('created_at', prevMonthEnd.toISOString() + 'T23:59:59');
+
+      if (drafts && drafts.length > 0) {
+        const totalAmount = drafts.reduce((s, d) => s + (d.total_ttc || 0), 0);
+        let html = '<div style="padding:14px;">';
+        html += '<div style="font-size:16px;font-weight:700;color:#f59e0b;margin-bottom:10px;text-align:center;">&#128176; Factures du mois dernier</div>';
+        html += '<div style="font-size:13px;color:var(--text2);margin-bottom:12px;text-align:center;line-height:1.5;">';
+        html += drafts.length + ' facture' + (drafts.length > 1 ? 's' : '') + ' en brouillon pour un total de <b>' + totalAmount.toFixed(2) + ' &euro;</b>';
+        html += '</div>';
+        drafts.forEach(d => {
+          html += '<div style="padding:8px;background:var(--surface2);border-radius:8px;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center;">';
+          html += '<div><div style="font-weight:600;font-size:12px;color:var(--text);">' + (d.invoice_number || 'Facture') + '</div>';
+          html += '<div style="font-size:11px;color:var(--text3);">' + (d.client_name || '') + '</div></div>';
+          html += '<div style="font-weight:700;font-size:13px;color:#f59e0b;">' + (d.total_ttc || 0).toFixed(2) + ' &euro;</div>';
+          html += '</div>';
+        });
+        html += '<div style="display:flex;gap:8px;margin-top:12px;">';
+        html += '<button class="btn btnOutline" style="flex:1;padding:10px;" onclick="closeMsg()">Plus tard</button>';
+        html += '<button class="btn btnPrimary" style="flex:1;padding:10px;" onclick="closeMsg();sendAllDraftInvoices()">&#9889; Envoyer tout</button>';
+        html += '</div></div>';
+        showMsg(html, true);
+      }
+    }
+
+    // 2. Check overdue invoices (sent > 7 days ago, not paid)
+    const sevenDaysAgo = new Date(now.getTime() - 7 * 86400000).toISOString();
+    const { data: overdue } = await sb.from('invoices').select('id,invoice_number,client_name,total_ttc,created_at')
+      .eq('org_id', org.id).eq('status', 'sent')
+      .lt('created_at', sevenDaysAgo);
+
+    if (overdue && overdue.length > 0 && todayDay > 3) {
+      const totalOverdue = overdue.reduce((s, d) => s + (d.total_ttc || 0), 0);
+      let html = '<div style="padding:14px;">';
+      html += '<div style="font-size:16px;font-weight:700;color:#e94560;margin-bottom:10px;text-align:center;">&#9888; Factures en retard</div>';
+      html += '<div style="font-size:13px;color:var(--text2);margin-bottom:12px;text-align:center;">';
+      html += overdue.length + ' facture' + (overdue.length > 1 ? 's' : '') + ' non payee' + (overdue.length > 1 ? 's' : '') + ' (' + totalOverdue.toFixed(2) + ' &euro;)';
+      html += '</div>';
+      overdue.forEach(d => {
+        const daysAgo = Math.floor((now.getTime() - new Date(d.created_at).getTime()) / 86400000);
+        html += '<div style="padding:8px;background:var(--surface2);border-radius:8px;margin-bottom:6px;border-left:3px solid #e94560;display:flex;justify-content:space-between;align-items:center;">';
+        html += '<div><div style="font-weight:600;font-size:12px;color:var(--text);">' + (d.invoice_number || 'Facture') + '</div>';
+        html += '<div style="font-size:11px;color:var(--text3);">' + (d.client_name || '') + ' &mdash; ' + daysAgo + ' jours</div></div>';
+        html += '<div style="font-weight:700;font-size:13px;color:#e94560;">' + (d.total_ttc || 0).toFixed(2) + ' &euro;</div>';
+        html += '</div>';
+      });
+      html += '<div style="display:flex;gap:8px;margin-top:12px;">';
+      html += '<button class="btn btnOutline" style="flex:1;padding:10px;" onclick="closeMsg()">OK</button>';
+      html += '<button class="btn btnDanger" style="flex:1;padding:10px;" onclick="closeMsg();switchMainTab(\'billing\');setTimeout(()=>switchFinanceTab(\'factures\'),300)">Voir les factures</button>';
+      html += '</div></div>';
+      showMsg(html, true);
+    }
+  } catch(e) { console.error('checkPendingInvoices error:', e); }
+}
+
+// Send all draft invoices at once
+async function sendAllDraftInvoices() {
+  try {
+    const org = API.getOrg();
+    if (!org) return;
+    const now = new Date();
+    const prevMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0);
+    const prevMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const { data: drafts } = await sb.from('invoices').select('id')
+      .eq('org_id', org.id).eq('status', 'draft')
+      .gte('created_at', prevMonthStart.toISOString())
+      .lte('created_at', prevMonthEnd.toISOString() + 'T23:59:59');
+    if (!drafts || !drafts.length) { showToast('Aucun brouillon a envoyer'); return; }
+    let sent = 0;
+    for (const d of drafts) {
+      const { error } = await sb.from('invoices').update({ status: 'sent' }).eq('id', d.id);
+      if (!error) sent++;
+    }
+    showToast(sent + ' facture' + (sent > 1 ? 's' : '') + ' envoyee' + (sent > 1 ? 's' : '') + ' !');
+    // Navigate to invoices
+    switchMainTab('billing');
+    setTimeout(() => switchFinanceTab('factures'), 300);
+  } catch(e) { console.error('sendAllDraftInvoices error:', e); showToast('Erreur'); }
 }
 
 // ── Owner Validation & Dispute ──
