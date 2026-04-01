@@ -967,7 +967,7 @@ async function loadPDF() {
 <body>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v7.16</div>
+<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v7.17</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -977,7 +977,7 @@ async function loadPDF() {
     <!-- Broom that sweeps -->
     <div id="splashBroom" style="position:absolute;top:50%;left:-60px;font-size:48px;transform:translateY(-50%) rotate(-30deg);opacity:0;transition:all 0.8s cubic-bezier(0.25,0.46,0.45,0.94);">✨</div>
   </div>
-  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v7.16</span></div>
+  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v7.17</span></div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie pour locations</div>
   <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou</div>
   <!-- Loading bar -->
@@ -2098,6 +2098,7 @@ function getStatusLabel(s) { return (STATUS_CONFIG[s] || {}).label || s || ''; }
 // ── Splash Changelog (update this with each significant version) ──
 // Full versioned changelog — add new entries at TOP
 const VERSION_CHANGELOG = [
+  { v: '7.17', changes: ['Factures auto-remplies depuis le planning', 'Nom proprio pre-rempli', 'Fix PDF: gestion erreur + fallback nom', 'Fix "Marquer payee"'] },
   { v: '7.16', changes: ['Fix "Marquer payee" avec gestion erreur', 'Fix nom facture "undefined"'] },
   { v: '7.15', changes: ['Onglets Finances reordonnes : Revenus > Factures > Tarifs', 'Revenus affiche par defaut'] },
   { v: '7.14', changes: ['Ajout changelog manquant pour v7.13'] },
@@ -5541,7 +5542,8 @@ function showCreateInvoiceModal(type) {
 
   html += '<label style="font-size:11px;color:var(--text3);text-transform:uppercase;">Client</label>';
   if (type === 'concierge_to_owner') {
-    html += '<input id="invClient" type="text" placeholder="Nom du proprietaire" style="width:100%;padding:10px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:13px;margin-bottom:10px;box-sizing:border-box;">';
+    const ownerName = prop?.owner_name || prop?.owner_email || '';
+    html += '<input id="invClient" type="text" value="' + esc(ownerName) + '" placeholder="Nom du proprietaire" style="width:100%;padding:10px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:13px;margin-bottom:10px;box-sizing:border-box;">';
   } else {
     html += '<input id="invClient" type="text" value="' + (member?.company_name || member?.display_name || '') + '" readonly style="width:100%;padding:10px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:13px;margin-bottom:10px;box-sizing:border-box;opacity:0.7;">';
   }
@@ -5580,8 +5582,8 @@ function showCreateInvoiceModal(type) {
 
   window._invoiceType = type;
   window._invoiceItems = [];
-  addInvoiceItem();
-  updateInvoiceTotals();
+  // Auto-fill from planning immediately
+  autoFillInvoiceItems(type);
 }
 
 function addInvoiceItem() {
@@ -6734,11 +6736,13 @@ async function deleteInvoice(id) {
 }
 
 async function downloadInvoicePDF(invoiceId) {
+  try {
   const org = API.getOrg();
-  const { data: inv } = await sb.from('invoices').select('*').eq('id', invoiceId).single();
+  const { data: inv, error: invErr } = await sb.from('invoices').select('*').eq('id', invoiceId).single();
   if (!inv) return showToast('Facture introuvable');
 
   await loadPDF();
+  if (!window.jspdf) return showToast('Erreur chargement librairie PDF');
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF();
   const pageW = doc.internal.pageSize.getWidth();
@@ -6763,7 +6767,7 @@ async function downloadInvoicePDF(invoiceId) {
   doc.text('FACTURE', pageW - 14, 20, { align: 'right' });
   doc.setTextColor(0, 0, 0);
   doc.setFontSize(11);
-  doc.text(inv.invoice_number, pageW - 14, 28, { align: 'right' });
+  doc.text(inv.invoice_number || 'Facture', pageW - 14, 28, { align: 'right' });
   doc.setFontSize(9);
   doc.setFont(undefined, 'normal');
   doc.text('Date: ' + new Date(inv.created_at).toLocaleDateString('fr-FR'), pageW - 14, 34, { align: 'right' });
@@ -6862,9 +6866,10 @@ async function downloadInvoicePDF(invoiceId) {
   doc.setFontSize(8);
   doc.setTextColor(150, 150, 150);
   doc.text('Facture generee par Lokizio - fabienlacaze.github.io/lokizio', 14, pageH - 8);
-  doc.text(inv.invoice_number + ' - Page 1/1', pageW - 14, pageH - 8, { align: 'right' });
+  doc.text((inv.invoice_number || 'Facture') + ' - Page 1/1', pageW - 14, pageH - 8, { align: 'right' });
 
-  doc.save(inv.invoice_number + '.pdf');
+  doc.save((inv.invoice_number || 'Facture') + '.pdf');
+  } catch(e) { console.error('downloadInvoicePDF error:', e); showToast('Erreur generation PDF: ' + (e.message || 'Verifiez votre connexion')); }
 }
 
 async function showAccountModal() {
