@@ -961,7 +961,7 @@ async function loadPDF() {
 <body>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v7.05</div>
+<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v7.06</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -971,7 +971,7 @@ async function loadPDF() {
     <!-- Broom that sweeps -->
     <div id="splashBroom" style="position:absolute;top:50%;left:-60px;font-size:48px;transform:translateY(-50%) rotate(-30deg);opacity:0;transition:all 0.8s cubic-bezier(0.25,0.46,0.45,0.94);">✨</div>
   </div>
-  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v7.05</span></div>
+  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v7.06</span></div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie pour locations</div>
   <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou</div>
   <!-- Loading bar -->
@@ -2320,6 +2320,38 @@ async function renderPropertyDetailsInline() {
   const sectionTitleStyle = 'font-size:12px;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;font-weight:700;display:flex;align-items:center;gap:6px;';
 
   let html = '';
+
+  // ── Property completeness bar ──
+  {
+    let score = 0; let total = 8;
+    const missing = [];
+    if (prop.name && prop.name !== 'Mon logement' && prop.name !== 'Nouvelle propriete') score++; else missing.push('nom');
+    if (prop.address) score++; else missing.push('adresse');
+    if (prop.type && prop.rooms) score++; else missing.push('type/pieces');
+    if (prop.photo) score++; else missing.push('photo');
+    if (prop.icals && prop.icals.length && prop.icals.some(ic => ic.url)) score++; else missing.push('calendrier iCal');
+    if (prop.providers && prop.providers.length) score++; else missing.push('prestataire');
+    if (prop.cleaningPrice) score++; else missing.push('tarif');
+    if (prop.checklist && prop.checklist.length) score++; else missing.push('instructions');
+    const pct = Math.round((score / total) * 100);
+    if (pct < 100) {
+      html += `<div style="${sectionStyle}padding:12px;border-left:3px solid ${pct >= 80 ? '#34d399' : pct >= 50 ? '#f59e0b' : '#e94560'};">`;
+      html += `<div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">`;
+      html += `<div style="flex:1;font-size:13px;font-weight:600;color:var(--text);">Configuration du bien</div>`;
+      html += `<span style="font-size:12px;font-weight:700;color:${pct >= 80 ? '#34d399' : pct >= 50 ? '#f59e0b' : '#e94560'};">${pct}%</span>`;
+      html += `</div>`;
+      html += `<div style="height:6px;background:var(--surface2);border-radius:3px;overflow:hidden;margin-bottom:6px;">`;
+      html += `<div style="height:100%;width:${pct}%;background:linear-gradient(90deg,#6c63ff,#34d399);border-radius:3px;transition:width 0.3s;"></div>`;
+      html += `</div>`;
+      html += `<div style="font-size:11px;color:var(--text3);">Completez : ${missing.join(', ')}</div>`;
+      html += `</div>`;
+    } else {
+      html += `<div style="${sectionStyle}padding:10px;border-left:3px solid #34d399;display:flex;align-items:center;gap:8px;">`;
+      html += `<span style="font-size:16px;">&#9989;</span>`;
+      html += `<span style="font-size:13px;font-weight:600;color:#34d399;">Bien entierement configure !</span>`;
+      html += `</div>`;
+    }
+  }
 
   // Owner info banner (if has owner)
   if (hasOwner) {
