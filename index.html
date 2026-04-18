@@ -148,7 +148,7 @@ async function loadPDF() {
   @keyframes fadeInUp { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:translateY(0); } }
   @keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
   @keyframes slideInRight { from { opacity:0; transform:translateX(20px); } to { opacity:1; transform:translateX(0); } }
-  @keyframes scaleIn { from { opacity:0; transform:scale(0.92); } to { opacity:1; transform:scale(1); } }
+  @keyframes scaleIn { from { opacity:0; transform:translate(-50%, -50%) scale(0.92); } to { opacity:1; transform:translate(-50%, -50%) scale(1); } }
   @keyframes shimmer { 0% { background-position:-200% 0; } 100% { background-position:200% 0; } }
   @keyframes glow { 0%,100% { box-shadow:0 0 8px rgba(108,99,255,0.2); } 50% { box-shadow:0 0 20px rgba(108,99,255,0.4); } }
   @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.6; } }
@@ -1054,12 +1054,12 @@ async function loadPDF() {
   .resultRow { transition: all 0.15s ease; }
   .resultRow:hover { background: rgba(108,99,255,0.04) !important; transform: translateX(2px); }
 
-  /* Smooth modal slide-up animation */
-  @keyframes slideUp {
-    from { opacity: 0; transform: translateY(60px) scale(0.95); }
-    to { opacity: 1; transform: translateY(0) scale(1); }
+  /* Smooth modal slide-up animation (preserves -50%/-50% centering) */
+  @keyframes modalSlideUp {
+    from { opacity: 0; transform: translate(-50%, calc(-50% + 60px)) scale(0.95); }
+    to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
   }
-  .modal { animation: slideUp 0.35s cubic-bezier(0.34, 1.56, 0.64, 1); }
+  .modal { animation: modalSlideUp 0.35s cubic-bezier(0.34, 1.56, 0.64, 1); }
 
   /* Better premium banner */
   .premiumBanner { animation: fadeIn 0.5s ease; transition: all 0.3s ease; }
@@ -1122,7 +1122,7 @@ async function loadPDF() {
 </script>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v7.68</div>
+<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v7.69</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -1132,7 +1132,7 @@ async function loadPDF() {
     <!-- Broom that sweeps -->
     <div id="splashBroom" style="position:absolute;top:50%;left:-60px;font-size:48px;transform:translateY(-50%) rotate(-30deg);opacity:0;transition:all 0.8s cubic-bezier(0.25,0.46,0.45,0.94);">✨</div>
   </div>
-  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v7.68</span></div>
+  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v7.69</span></div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie pour locations</div>
   <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou</div>
   <!-- Loading bar -->
@@ -1803,7 +1803,10 @@ async function loadPDF() {
   </div>
 </div>
 <div class="modal" id="msgModal" role="dialog" aria-modal="true">
-  <div class="modalHeader" id="msgTitle">Lokizio</div>
+  <div class="modalHeader" style="display:flex;justify-content:space-between;align-items:center;">
+    <span id="msgTitle">Lokizio</span>
+    <button class="modalClose" onclick="closeMsg()">&times;</button>
+  </div>
   <div class="modalBody" id="msgBody"></div>
   <div class="modalBtns" id="msgModalBtns"><button class="btn btnPrimary" style="padding:12px 32px;font-size:14px;" onclick="closeMsg()" data-i18n="modal.ok">OK</button></div>
 </div>
@@ -2403,6 +2406,7 @@ function getStatusLabel(s) { return (STATUS_CONFIG[s] || {}).label || s || ''; }
 // ── Splash Changelog (update this with each significant version) ──
 // Full versioned changelog — add new entries at TOP
 const VERSION_CHANGELOG = [
+  { v: '7.69', changes: ['Fix centrage des popups (animation overrait le translate(-50%,-50%))', 'Croix de fermeture ajoutee dans msgModal (popup Inviter, changelog, etc.)'] },
   { v: '7.68', changes: ['Section "Aujourd\'hui" rendue repliable dans les dashboards admin et proprio'] },
   { v: '7.67', changes: ['Mon profil personnel simplifie: infos editables + carte Securite compacte', 'Email/Mot de passe/Role en lignes avec bouton Modifier (plus de gros boutons en bas)'] },
   { v: '7.66', changes: ['Fix z-index: "Changer email" et "Changer role" s\'affichent au-dessus de la popup profil (plus en arriere-plan)'] },
