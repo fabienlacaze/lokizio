@@ -1139,7 +1139,7 @@ async function loadPDF() {
 </script>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v7.97</div>
+<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v7.98</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -1149,7 +1149,7 @@ async function loadPDF() {
     <!-- Broom that sweeps -->
     <div id="splashBroom" style="position:absolute;top:50%;left:-60px;font-size:48px;transform:translateY(-50%) rotate(-30deg);opacity:0;transition:all 0.8s cubic-bezier(0.25,0.46,0.45,0.94);">✨</div>
   </div>
-  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v7.97</span></div>
+  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v7.98</span></div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie pour locations</div>
   <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou</div>
   <!-- Loading bar -->
@@ -2083,6 +2083,7 @@ async function loadPDF() {
   </div>
   <div class="modalBody" style="padding:16px;overflow-x:auto;">
     <div id="premiumReason" style="display:none;background:rgba(233,69,96,0.15);border:1px solid rgba(233,69,96,0.3);border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:13px;color:var(--accent);text-align:center;font-weight:600;"></div>
+    <div id="premiumStatusBanner" style="display:none;padding:12px 14px;margin-bottom:14px;border-radius:10px;font-size:13px;text-align:center;line-height:1.5;"></div>
     <table id="pricingTable" style="width:100%;border-collapse:collapse;font-size:13px;" translate="no">
       <thead>
         <tr>
@@ -2436,6 +2437,7 @@ function getStatusLabel(s) { return (STATUS_CONFIG[s] || {}).label || s || ''; }
 // ── Splash Changelog (update this with each significant version) ──
 // Full versioned changelog — add new entries at TOP
 const VERSION_CHANGELOG = [
+  { v: '7.98', changes: ['Popup Premium: bandeau de statut clair en haut (abonnement actif / essai X jours / gratuit)', 'Boutons adaptes: Actuel (essai) / Gerer / Passer en Premium'] },
   { v: '7.97', changes: ['Changement role proprio->concierge: si deja abonne Premium, bypass du choix gratuit/premium', 'Affiche directement l\'ecran de confirmation (passage 3.99 -> 19.99 prorate)'] },
   { v: '7.96', changes: ['Footer Contact: email mis a jour lokizio.service@outlook.com', 'privacy.html: Cleaning Manager -> Lokizio, date maj 18 avril 2026', 'CSP: autorise connexion a cdn.jsdelivr.net (source maps)'] },
   { v: '7.95', changes: ['Popup Premium essai: "Activer Premium" demarre Stripe checkout, "Passer en gratuit" confirme', 'Annuaire: 2 sous-onglets Mes contacts / Rechercher'] },
@@ -9186,20 +9188,53 @@ function showPremiumModal(reason) {
   // Adapt buttons if already premium
   const upgradeBtn = document.querySelector('.btnUpgrade');
   const freeBtn = document.querySelector('#pricingTable tfoot .btnOutline');
+  const statusBanner = document.getElementById('premiumStatusBanner');
   if (API.isPremium()) {
     const org = API.getOrg();
     const hasStripe = org && org.stripe_subscription_id;
+    const trialDays = API.getTrialDaysLeft();
+    const isTrial = trialDays > 0 && !hasStripe;
+    // Status banner
+    if (statusBanner) {
+      if (hasStripe) {
+        statusBanner.style.display = 'block';
+        statusBanner.style.background = 'rgba(52,211,153,0.12)';
+        statusBanner.style.border = '1px solid rgba(52,211,153,0.4)';
+        statusBanner.style.color = '#34d399';
+        statusBanner.innerHTML = '<b>&#10003; Vous etes abonne Premium</b><br><span style="font-size:11px;opacity:0.8;">Cliquez "Gerer / Annuler" pour modifier votre abonnement.</span>';
+      } else if (isTrial) {
+        statusBanner.style.display = 'block';
+        statusBanner.style.background = 'rgba(108,99,255,0.12)';
+        statusBanner.style.border = '1px solid rgba(108,99,255,0.4)';
+        statusBanner.style.color = '#a78bfa';
+        statusBanner.innerHTML = `<b>&#127881; Essai Premium gratuit — ${trialDays} jour${trialDays>1?'s':''} restant${trialDays>1?'s':''}</b><br><span style="font-size:11px;opacity:0.9;color:var(--text2);">Vous profitez de toutes les fonctionnalites. A la fin de l'essai, vous devrez activer un abonnement pour les conserver.</span>`;
+      } else {
+        statusBanner.style.display = 'block';
+        statusBanner.style.background = 'rgba(52,211,153,0.12)';
+        statusBanner.style.border = '1px solid rgba(52,211,153,0.4)';
+        statusBanner.style.color = '#34d399';
+        statusBanner.innerHTML = '<b>&#10003; Premium actif</b>';
+      }
+    }
     if (upgradeBtn) {
       if (hasStripe) {
+        // Abonnement payant actif
         upgradeBtn.textContent = 'Gerer / Annuler';
         upgradeBtn.disabled = false;
         upgradeBtn.style.background = '';
         upgradeBtn.onclick = () => { closePremiumModal(); openStripePortal(); };
+      } else if (isTrial) {
+        // Periode d'essai en cours
+        upgradeBtn.textContent = `Actuel (essai ${trialDays}j restant${trialDays>1?'s':''})`;
+        upgradeBtn.disabled = true;
+        upgradeBtn.style.background = 'var(--success)';
+        upgradeBtn.onclick = null;
       } else {
-        upgradeBtn.textContent = 'Activer Premium';
-        upgradeBtn.disabled = false;
-        upgradeBtn.style.background = '';
-        upgradeBtn.onclick = upgradeToPremium;
+        // Premium sans Stripe ni essai (cas rare, ex: cadeau admin)
+        upgradeBtn.textContent = 'Actuel';
+        upgradeBtn.disabled = true;
+        upgradeBtn.style.background = 'var(--success)';
+        upgradeBtn.onclick = null;
       }
     }
     if (freeBtn) {
@@ -9208,18 +9243,15 @@ function showPremiumModal(reason) {
         freeBtn.disabled = false;
         freeBtn.onclick = () => { closePremiumModal(); openStripePortal(); };
       } else {
-        freeBtn.textContent = 'Passer en gratuit';
-        freeBtn.disabled = false;
-        freeBtn.onclick = async () => {
-          const ok = await customConfirm('Retrograder au plan Gratuit ? Vous perdrez les fonctionnalites Premium a la fin de votre essai.', 'Confirmation');
-          if (!ok) return;
-          showToast('Votre essai continuera sans souscription a la fin');
-          closePremiumModal();
-        };
+        // En essai ou premium offert : pas d'action
+        freeBtn.textContent = 'Gratuit';
+        freeBtn.disabled = true;
+        freeBtn.onclick = null;
       }
     }
   } else {
-    if (upgradeBtn) { upgradeBtn.textContent = 'Premium'; upgradeBtn.disabled = false; upgradeBtn.style.background = ''; upgradeBtn.onclick = upgradeToPremium; }
+    if (statusBanner) statusBanner.style.display = 'none';
+    if (upgradeBtn) { upgradeBtn.textContent = 'Passer en Premium'; upgradeBtn.disabled = false; upgradeBtn.style.background = ''; upgradeBtn.onclick = upgradeToPremium; }
     if (freeBtn) { freeBtn.textContent = 'Actuel'; freeBtn.disabled = true; }
   }
   document.getElementById('overlay').style.display = 'block';
