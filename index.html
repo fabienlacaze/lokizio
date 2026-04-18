@@ -1084,7 +1084,7 @@ async function loadPDF() {
 </script>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v7.61</div>
+<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v7.62</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -1094,7 +1094,7 @@ async function loadPDF() {
     <!-- Broom that sweeps -->
     <div id="splashBroom" style="position:absolute;top:50%;left:-60px;font-size:48px;transform:translateY(-50%) rotate(-30deg);opacity:0;transition:all 0.8s cubic-bezier(0.25,0.46,0.45,0.94);">✨</div>
   </div>
-  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v7.61</span></div>
+  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v7.62</span></div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie pour locations</div>
   <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou</div>
   <!-- Loading bar -->
@@ -1375,6 +1375,7 @@ async function loadPDF() {
   <div id="kpiCards" class="anim-stagger" style="display:none;"></div>
 
   <!-- Quick actions -->
+  <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:1px;font-weight:700;margin:4px 0 6px 2px;">Raccourcis</div>
   <div id="quickActions" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;">
     <button onclick="generatePlanning()" style="display:flex;align-items:center;gap:6px;padding:10px 16px;background:var(--surface);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:12px;font-weight:600;cursor:pointer;transition:all 0.2s;" onmouseover="this.style.borderColor='#6c63ff'" onmouseout="this.style.borderColor='var(--border)'">🔄 <span>Generer</span></button>
     <button onclick="showServiceRequestModal()" style="display:flex;align-items:center;gap:6px;padding:10px 16px;background:var(--surface);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:12px;font-weight:600;cursor:pointer;transition:all 0.2s;" onmouseover="this.style.borderColor='#6c63ff'" onmouseout="this.style.borderColor='var(--border)'">➕ <span>Prestation</span></button>
@@ -2295,6 +2296,7 @@ function getStatusLabel(s) { return (STATUS_CONFIG[s] || {}).label || s || ''; }
 // ── Splash Changelog (update this with each significant version) ──
 // Full versioned changelog — add new entries at TOP
 const VERSION_CHANGELOG = [
+  { v: '7.62', changes: ['Titre "Raccourcis" au-dessus de la barre de boutons du dashboard', 'Section Analytique du mois maintenant repliable'] },
   { v: '7.61', changes: ['Libelles PROFILS et APP ajoutes dans Mon compte pour structurer les groupes'] },
   { v: '7.60', changes: ['Suppression du bloc EMAIL doublon en haut de Mon compte (deja dans Mon profil personnel)'] },
   { v: '7.59', changes: ['Boutons mot de passe / email / role deplaces dans Mon profil personnel', 'Mon compte epure: juste email, plan, profils, theme, suppression'] },
@@ -12066,8 +12068,8 @@ function renderDashboardContent() {
     const trendColor = trend >= 0 ? '#34d399' : '#ef4444';
     const trendIcon = trend >= 0 ? '&#9650;' : '&#9660;';
 
-    let html = '<div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-top:12px;">';
-    html += '<div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:12px;">&#128202; Analytique du mois</div>';
+    let html = '<details open style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-top:12px;">';
+    html += '<summary style="list-style:none;cursor:pointer;display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;"><div style="font-size:14px;font-weight:700;color:var(--text);">&#128202; Analytique du mois</div><span class="collapseArrow">&#9662;</span></summary>';
     html += '<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;">';
     html += '<div style="background:var(--surface2);border-radius:10px;padding:12px;text-align:center;"><div style="font-size:22px;font-weight:800;color:var(--text);">' + thisMonthCount + '</div><div style="font-size:10px;color:var(--text3);">Prestations terminees</div>';
     if (trend !== 0) html += '<div style="font-size:10px;color:' + trendColor + ';margin-top:4px;">' + trendIcon + ' ' + Math.abs(trend) + '% vs mois dernier</div>';
@@ -12075,7 +12077,7 @@ function renderDashboardContent() {
     html += '<div style="background:var(--surface2);border-radius:10px;padding:12px;text-align:center;"><div style="font-size:22px;font-weight:800;color:#f59e0b;">' + thisMonthRevenue + '&euro;</div><div style="font-size:10px;color:var(--text3);">CA du mois</div></div>';
     html += '<div style="background:var(--surface2);border-radius:10px;padding:12px;text-align:center;"><div style="font-size:22px;font-weight:800;color:#f59e0b;">' + pending + '</div><div style="font-size:10px;color:var(--text3);">En attente</div></div>';
     html += '<div style="background:var(--surface2);border-radius:10px;padding:12px;text-align:center;"><div style="font-size:22px;font-weight:800;color:' + (disputed > 0 ? '#ef4444' : 'var(--text)') + ';">' + disputed + '</div><div style="font-size:10px;color:var(--text3);">Litiges</div></div>';
-    html += '</div></div>';
+    html += '</div></details>';
     div3.innerHTML = html;
   }
 }
