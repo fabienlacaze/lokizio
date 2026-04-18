@@ -1060,7 +1060,7 @@ async function loadPDF() {
 </script>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v7.35</div>
+<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v7.36</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -1070,7 +1070,7 @@ async function loadPDF() {
     <!-- Broom that sweeps -->
     <div id="splashBroom" style="position:absolute;top:50%;left:-60px;font-size:48px;transform:translateY(-50%) rotate(-30deg);opacity:0;transition:all 0.8s cubic-bezier(0.25,0.46,0.45,0.94);">✨</div>
   </div>
-  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v7.35</span></div>
+  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v7.36</span></div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie pour locations</div>
   <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou</div>
   <!-- Loading bar -->
@@ -1139,7 +1139,7 @@ async function loadPDF() {
     <input id="authEmail" type="email" placeholder="votre@email.com" style="width:100%;padding:12px 14px;font-size:14px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;margin-bottom:14px;outline:none;box-sizing:border-box;" onkeydown="if(event.key==='Enter')authSubmit()">
     <label style="display:block;font-size:12px;color:var(--text3);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.5px;" data-i18n="auth.password">Mot de passe</label>
     <div style="position:relative;">
-      <input id="authPass" type="password" placeholder="6 caracteres minimum" style="width:100%;padding:12px 14px;padding-right:42px;font-size:14px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;margin-bottom:8px;outline:none;box-sizing:border-box;" onkeydown="if(event.key==='Enter')authSubmit()">
+      <input id="authPass" type="password" placeholder="8 car + Maj + min + chiffre + special" style="width:100%;padding:12px 14px;padding-right:42px;font-size:14px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;margin-bottom:8px;outline:none;box-sizing:border-box;" onkeydown="if(event.key==='Enter')authSubmit()">
       <span onclick="togglePassVisibility('authPass',this)" style="position:absolute;right:12px;top:12px;cursor:pointer;color:var(--text3);font-size:16px;user-select:none;">&#128065;</span>
     </div>
     <!-- Confirm password (register only) -->
@@ -2280,6 +2280,7 @@ function getStatusLabel(s) { return (STATUS_CONFIG[s] || {}).label || s || ''; }
 // ── Splash Changelog (update this with each significant version) ──
 // Full versioned changelog — add new entries at TOP
 const VERSION_CHANGELOG = [
+  { v: '7.36', changes: ['Changement de mot de passe: formulaire complet avec oeil + regles complexite live', 'Inscription: validation complexite (8 car + Maj + min + chiffre + special)', 'Coherence regles entre reset, changement et inscription'] },
   { v: '7.35', changes: ['Fix "Auth session missing" lors du reset password', 'setSession manuel avec access_token + refresh_token du hash', 'Session etablie avant updateUser'] },
   { v: '7.34', changes: ['Toggle visibilite mot de passe (icone oeil)', 'Validation complexite: 8 car + Maj + min + chiffre + special', 'Indicateurs live des regles respectees'] },
   { v: '7.33', changes: ['Fix banner "nouvelle version disponible" qui restait bloque apres mise a jour', 'Suppression auto du banner stale quand versions egales'] },
@@ -6003,7 +6004,11 @@ async function authRegister() {
   const submitBtn = document.getElementById('authSubmitBtn');
   errEl.textContent = ''; errEl.style.color = '#e94560';
   if (!email || !pass) { errEl.textContent = t('auth.fill.all'); return; }
-  if (pass.length < 6) { errEl.textContent = t('auth.pass.min'); return; }
+  if (pass.length < 8) { errEl.textContent = '8 caracteres minimum'; return; }
+  if (!/[A-Z]/.test(pass)) { errEl.textContent = 'Au moins une lettre majuscule requise'; return; }
+  if (!/[a-z]/.test(pass)) { errEl.textContent = 'Au moins une lettre minuscule requise'; return; }
+  if (!/[0-9]/.test(pass)) { errEl.textContent = 'Au moins un chiffre requis'; return; }
+  if (!/[^A-Za-z0-9]/.test(pass)) { errEl.textContent = 'Au moins un caractere special requis (!@#$...)'; return; }
   if (pass !== passConfirm) { errEl.textContent = t('auth.pass.mismatch'); return; }
   try {
     submitBtn.disabled = true; submitBtn.textContent = t('auth.register.loading');
@@ -8007,12 +8012,76 @@ async function removeTeamMember(memberId) {
 }
 async function changePassword() {
   closeAccountModal();
-  const newPwd = await customPrompt(t('account.new_password') || 'Nouveau mot de passe (6 caracteres minimum) :', '', {type:'password',placeholder:'••••••'});
-  if (!newPwd) return;
-  if (newPwd.length < 6) { showMsg(t('account.pwd_short') || 'Le mot de passe doit faire au moins 6 caracteres.'); return; }
-  const { error } = await sb.auth.updateUser({ password: newPwd });
-  if (error) { showMsg((t('error') || 'Erreur') + ': ' + error.message); return; }
-  showToast(t('account.pwd_changed') || 'Mot de passe modifie !');
+  showChangePasswordForm();
+}
+
+function showChangePasswordForm() {
+  if (document.getElementById('changePwdOverlay')) return;
+  const overlay = document.createElement('div');
+  overlay.id = 'changePwdOverlay';
+  overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px;';
+  overlay.innerHTML = `
+    <div style="max-width:400px;width:100%;background:#1a1a2e;border-radius:16px;padding:32px;border:1px solid rgba(255,255,255,0.06);">
+      <div style="text-align:center;margin-bottom:24px;">
+        <div style="width:60px;height:60px;background:linear-gradient(135deg,#e94560,#6c63ff);border-radius:16px;display:inline-flex;align-items:center;justify-content:center;font-size:28px;font-weight:800;color:#fff;">L</div>
+        <h2 style="color:#fff;font-size:20px;margin:16px 0 8px;">&#128274; Changer de mot de passe</h2>
+        <p style="color:#9ca3af;font-size:13px;margin:0;">Definissez votre nouveau mot de passe</p>
+      </div>
+      <div style="position:relative;margin-bottom:8px;">
+        <input type="password" id="changePwd1" placeholder="Nouveau mot de passe" oninput="updateChangePwdStrength()" style="width:100%;padding:12px 44px 12px 16px;background:#0f0f1a;color:#fff;border:1px solid rgba(255,255,255,0.1);border-radius:10px;font-size:14px;box-sizing:border-box;font-family:Inter,sans-serif;">
+        <button type="button" onclick="togglePwdVisibility('changePwd1', this)" aria-label="Afficher le mot de passe" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:transparent;border:none;color:#9ca3af;font-size:16px;cursor:pointer;padding:6px;">&#128065;</button>
+      </div>
+      <div id="changePwdStrength" style="font-size:11px;color:#6b7280;line-height:1.5;margin-bottom:12px;">
+        <div id="changePwdReq-len" style="display:flex;align-items:center;gap:4px;"><span class="pwdReq-icon">&#9675;</span> <span>8 caracteres minimum</span></div>
+        <div id="changePwdReq-upper" style="display:flex;align-items:center;gap:4px;"><span class="pwdReq-icon">&#9675;</span> <span>Une majuscule</span></div>
+        <div id="changePwdReq-lower" style="display:flex;align-items:center;gap:4px;"><span class="pwdReq-icon">&#9675;</span> <span>Une minuscule</span></div>
+        <div id="changePwdReq-digit" style="display:flex;align-items:center;gap:4px;"><span class="pwdReq-icon">&#9675;</span> <span>Un chiffre</span></div>
+        <div id="changePwdReq-special" style="display:flex;align-items:center;gap:4px;"><span class="pwdReq-icon">&#9675;</span> <span>Un caractere special (!@#$...)</span></div>
+      </div>
+      <div style="position:relative;margin-bottom:16px;">
+        <input type="password" id="changePwd2" placeholder="Confirmez le mot de passe" style="width:100%;padding:12px 44px 12px 16px;background:#0f0f1a;color:#fff;border:1px solid rgba(255,255,255,0.1);border-radius:10px;font-size:14px;box-sizing:border-box;font-family:Inter,sans-serif;">
+        <button type="button" onclick="togglePwdVisibility('changePwd2', this)" aria-label="Afficher le mot de passe" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:transparent;border:none;color:#9ca3af;font-size:16px;cursor:pointer;padding:6px;">&#128065;</button>
+      </div>
+      <div id="changePwdMsg" style="color:#e94560;font-size:12px;margin-bottom:12px;min-height:16px;"></div>
+      <button onclick="submitChangePassword()" style="width:100%;padding:14px;background:linear-gradient(135deg,#e94560,#c73e54);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;">Mettre a jour</button>
+      <button onclick="document.getElementById('changePwdOverlay').remove()" style="width:100%;padding:10px;background:transparent;color:#9ca3af;border:none;font-size:12px;cursor:pointer;margin-top:8px;">Annuler</button>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+}
+
+function updateChangePwdStrength() {
+  const p = document.getElementById('changePwd1')?.value || '';
+  const rules = { len: p.length >= 8, upper: /[A-Z]/.test(p), lower: /[a-z]/.test(p), digit: /[0-9]/.test(p), special: /[^A-Za-z0-9]/.test(p) };
+  for (const key in rules) {
+    const el = document.getElementById('changePwdReq-' + key);
+    if (!el) continue;
+    el.style.color = rules[key] ? '#34d399' : '#6b7280';
+    const icon = el.querySelector('.pwdReq-icon');
+    if (icon) icon.innerHTML = rules[key] ? '&#10003;' : '&#9675;';
+  }
+}
+
+async function submitChangePassword() {
+  const p1 = document.getElementById('changePwd1').value;
+  const p2 = document.getElementById('changePwd2').value;
+  const msg = document.getElementById('changePwdMsg');
+  msg.style.color = '#e94560';
+  if (!p1 || p1.length < 8) { msg.textContent = '8 caracteres minimum'; return; }
+  if (!/[A-Z]/.test(p1)) { msg.textContent = 'Au moins une lettre majuscule requise'; return; }
+  if (!/[a-z]/.test(p1)) { msg.textContent = 'Au moins une lettre minuscule requise'; return; }
+  if (!/[0-9]/.test(p1)) { msg.textContent = 'Au moins un chiffre requis'; return; }
+  if (!/[^A-Za-z0-9]/.test(p1)) { msg.textContent = 'Au moins un caractere special requis (!@#$...)'; return; }
+  if (p1 !== p2) { msg.textContent = 'Les mots de passe ne correspondent pas'; return; }
+  msg.textContent = '';
+  try {
+    const { error } = await sb.auth.updateUser({ password: p1 });
+    if (error) throw error;
+    document.getElementById('changePwdOverlay').remove();
+    showToast(t('account.pwd_changed') || 'Mot de passe modifie !');
+  } catch(e) {
+    msg.textContent = 'Erreur: ' + (e.message || 'Impossible de mettre a jour');
+  }
 }
 async function changeEmail() {
   closeAccountModal();
