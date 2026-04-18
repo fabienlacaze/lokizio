@@ -95,8 +95,8 @@ async function loadChart() {
 }
 async function loadPDF() {
   if (_pdfLoaded) return;
-  await lazyLoad('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
-  await lazyLoad('https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js');
+  await lazyLoad('https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js');
+  await lazyLoad('https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.min.js');
   _pdfLoaded = true;
 }
 </script>
@@ -1140,7 +1140,7 @@ async function loadPDF() {
 </script>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v8.41</div>
+<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v8.42</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -1150,7 +1150,7 @@ async function loadPDF() {
     <!-- Broom that sweeps -->
     <div id="splashBroom" style="position:absolute;top:50%;left:-60px;font-size:48px;transform:translateY(-50%) rotate(-30deg);opacity:0;transition:all 0.8s cubic-bezier(0.25,0.46,0.45,0.94);">✨</div>
   </div>
-  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v8.41</span></div>
+  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v8.42</span></div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie pour locations</div>
   <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou</div>
   <!-- Loading bar -->
@@ -2488,6 +2488,7 @@ function getStatusLabel(s) { return (STATUS_CONFIG[s] || {}).label || s || ''; }
 // ── Splash Changelog (update this with each significant version) ──
 // Full versioned changelog — add new entries at TOP
 const VERSION_CHANGELOG = [
+  { v: '8.42', changes: ['Factures: backfill automatique des numeros manquants (FAC-AAAA-NNN)', 'Fix PDF: librairie jspdf chargee depuis jsdelivr (CSP)'] },
   { v: '8.41', changes: ['Filtres Acteur: recalcules dynamiquement selon categorie + statut (avec compteurs, ceux a 0 caches)', 'Fix: noms avec apostrophes filtrent correctement (JSON-encoded onclick)'] },
   { v: '8.40', changes: ['Prestations: filtre Acteur (prestataire / bien) ajoute', 'Stats: clic sur une ligne du tableau ou sur la legende/part du donut -> filtre la liste sur ce prestataire'] },
   { v: '8.39', changes: ['Stats: scope par bien selectionne ("Tous" agrege tous les biens, sinon filtre sur le bien)', 'Stats re-render automatique au changement de bien'] },
@@ -8394,6 +8395,19 @@ async function loadInvoices() {
   // Fetch all invoices (client-side filtering)
   const { data } = await sb.from('invoices').select('*').eq('org_id', org.id).order('created_at', { ascending: false }).limit(200);
   _invoicesCache = data || [];
+  // Backfill missing invoice_number sequentially (chronological order)
+  const missing = _invoicesCache.filter(i => !i.invoice_number).sort((a,b) => (a.created_at||'').localeCompare(b.created_at||''));
+  if (missing.length) {
+    const withNum = _invoicesCache.filter(i => i.invoice_number).length;
+    for (let k = 0; k < missing.length; k++) {
+      const inv = missing[k];
+      const yr = new Date(inv.created_at || Date.now()).getFullYear();
+      const num = String(withNum + k + 1).padStart(3, '0');
+      const generated = 'FAC-' + yr + '-' + num;
+      await sb.from('invoices').update({ invoice_number: generated }).eq('id', inv.id);
+      inv.invoice_number = generated;
+    }
+  }
   renderInvoicesView();
 }
 
@@ -8825,11 +8839,26 @@ async function deleteInvoice(id) {
   loadInvoices();
 }
 
+async function ensureInvoiceNumber(inv) {
+  if (inv.invoice_number) return inv;
+  // Generate: FAC-YYYY-NNN (sequential within org)
+  const org = API.getOrg();
+  if (!org) return inv;
+  const yr = new Date(inv.created_at || Date.now()).getFullYear();
+  const { count } = await sb.from('invoices').select('*', { count: 'exact', head: true }).eq('org_id', org.id).not('invoice_number','is',null);
+  const num = String((count || 0) + 1).padStart(3, '0');
+  const generated = 'FAC-' + yr + '-' + num;
+  await sb.from('invoices').update({ invoice_number: generated }).eq('id', inv.id);
+  inv.invoice_number = generated;
+  return inv;
+}
+
 async function downloadInvoicePDF(invoiceId) {
   try {
   const org = API.getOrg();
-  const { data: inv, error: invErr } = await sb.from('invoices').select('*').eq('id', invoiceId).single();
+  let { data: inv, error: invErr } = await sb.from('invoices').select('*').eq('id', invoiceId).single();
   if (!inv) return showToast('Facture introuvable');
+  inv = await ensureInvoiceNumber(inv);
 
   await loadPDF();
   if (!window.jspdf) return showToast('Erreur chargement librairie PDF');
