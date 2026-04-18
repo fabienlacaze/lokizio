@@ -1139,7 +1139,7 @@ async function loadPDF() {
 </script>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v8.10</div>
+<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v8.14</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -1149,7 +1149,7 @@ async function loadPDF() {
     <!-- Broom that sweeps -->
     <div id="splashBroom" style="position:absolute;top:50%;left:-60px;font-size:48px;transform:translateY(-50%) rotate(-30deg);opacity:0;transition:all 0.8s cubic-bezier(0.25,0.46,0.45,0.94);">✨</div>
   </div>
-  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v8.10</span></div>
+  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v8.14</span></div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie pour locations</div>
   <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou</div>
   <!-- Loading bar -->
@@ -1245,22 +1245,25 @@ async function loadPDF() {
       <div style="font-size:14px;color:var(--text3);line-height:1.6;max-width:400px;margin:0 auto;">Planning automatique, facturation, equipe — tout en un. Gratuit pour demarrer.</div>
     </div>
 
-    <!-- 3 role cards -->
+    <!-- 3 role cards (clickable) -->
     <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:28px;">
-      <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px 12px;text-align:center;transition:transform 0.2s;" onmouseenter="this.style.transform='translateY(-3px)'" onmouseleave="this.style.transform=''">
+      <div onclick="showRoleInfoPopup('concierge')" style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px 12px;text-align:center;transition:transform 0.2s, border-color 0.2s;cursor:pointer;" onmouseenter="this.style.transform='translateY(-3px)';this.style.borderColor='#6c63ff'" onmouseleave="this.style.transform='';this.style.borderColor='var(--border)'">
         <div style="width:48px;height:48px;background:linear-gradient(135deg,#6c63ff,#5a54e0);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;margin:0 auto 10px;">&#127970;</div>
         <div style="font-size:13px;font-weight:700;color:#6c63ff;margin-bottom:4px;">Conciergerie</div>
         <div style="font-size:11px;color:var(--text3);line-height:1.5;">Planning auto, facturation, equipe, analytics</div>
+        <div style="font-size:10px;color:#6c63ff;margin-top:6px;opacity:0.7;">En savoir plus &rsaquo;</div>
       </div>
-      <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px 12px;text-align:center;transition:transform 0.2s;" onmouseenter="this.style.transform='translateY(-3px)'" onmouseleave="this.style.transform=''">
+      <div onclick="showRoleInfoPopup('owner')" style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px 12px;text-align:center;transition:transform 0.2s, border-color 0.2s;cursor:pointer;" onmouseenter="this.style.transform='translateY(-3px)';this.style.borderColor='#f59e0b'" onmouseleave="this.style.transform='';this.style.borderColor='var(--border)'">
         <div style="width:48px;height:48px;background:linear-gradient(135deg,#f59e0b,#d97706);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;margin:0 auto 10px;">&#127968;</div>
         <div style="font-size:13px;font-weight:700;color:#f59e0b;margin-bottom:4px;">Proprietaire</div>
         <div style="font-size:11px;color:var(--text3);line-height:1.5;">Suivi temps reel, couts, validation, paiement</div>
+        <div style="font-size:10px;color:#f59e0b;margin-top:6px;opacity:0.7;">En savoir plus &rsaquo;</div>
       </div>
-      <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px 12px;text-align:center;transition:transform 0.2s;" onmouseenter="this.style.transform='translateY(-3px)'" onmouseleave="this.style.transform=''">
+      <div onclick="showRoleInfoPopup('provider')" style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px 12px;text-align:center;transition:transform 0.2s, border-color 0.2s;cursor:pointer;" onmouseenter="this.style.transform='translateY(-3px)';this.style.borderColor='#34d399'" onmouseleave="this.style.transform='';this.style.borderColor='var(--border)'">
         <div style="width:48px;height:48px;background:linear-gradient(135deg,#34d399,#059669);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;margin:0 auto 10px;">&#129529;</div>
         <div style="font-size:13px;font-weight:700;color:#34d399;margin-bottom:4px;">Prestataire</div>
         <div style="font-size:11px;color:var(--text3);line-height:1.5;">Missions, photos QC, revenus, disponibilite</div>
+        <div style="font-size:10px;color:#34d399;margin-top:6px;opacity:0.7;">En savoir plus &rsaquo;</div>
       </div>
     </div>
 
@@ -2451,6 +2454,9 @@ function getStatusLabel(s) { return (STATUS_CONFIG[s] || {}).label || s || ''; }
 // ── Splash Changelog (update this with each significant version) ──
 // Full versioned changelog — add new entries at TOP
 const VERSION_CHANGELOG = [
+  { v: '8.13', changes: ['Fix bouton "Trouver une conciergerie" (timing filtre annuaire)', 'Fix requete rating_count (etait reviews_count)', 'Cards role de l\'onboarding cliquables avec popup detaillee'] },
+  { v: '8.12', changes: ['Labels et tooltips adaptes selon le role dans l\'annuaire', 'Conciergerie: "X prestations organisees", avis des proprietaires/prestataires', 'Proprietaire: "X biens geres", avis des prestataires', 'Prestataire: "X prestations realisees", avis des clients'] },
+  { v: '8.11', changes: ['Bouton "Trouver une conciergerie" (mode proprio sans concierge): bascule vers l\'annuaire avec filtre "Conciergeries" active'] },
   { v: '8.10', changes: ['Tooltips detailles au survol sur chaque info du profil annuaire (note, prestations, anciennete, disponibilite)', 'Texte explicatif: provenance, dates, contexte'] },
   { v: '8.09', changes: ['Annuaire: affichage "☆☆☆☆☆ Pas encore note" si profil sans notes', 'Tooltip avec nombre d\'avis au survol'] },
   { v: '8.08', changes: ['Bouton "Annuler" a cote du badge "En attente" pour retirer une demande de connexion'] },
@@ -5267,7 +5273,7 @@ async function renderOwnerPropertyDetails() {
   } else {
     // No concierge — show "Trouver une conciergerie"
     const ownerAddr = (prop.address || '').replace(/'/g, "\\'");
-    html += '<div style="margin-bottom:12px;"><button onclick="showMarketplace(\'' + ownerAddr + '\').then(()=>{document.getElementById(\'mkRoleFilter\').value=\'admin\';filterMarketplace();})" style="width:100%;padding:12px 20px;background:linear-gradient(135deg,#6c63ff,#5a54e0);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;">&#127970; Trouver une conciergerie</button></div>';
+    html += '<div style="margin-bottom:12px;"><button onclick="findConciergerie()" style="width:100%;padding:12px 20px;background:linear-gradient(135deg,#6c63ff,#5a54e0);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;">&#127970; Trouver une conciergerie</button></div>';
   }
 
   const sectionTitleStyle = 'font-size:12px;color:var(--text3);text-transform:uppercase;letter-spacing:1px;font-weight:700;display:flex;align-items:center;gap:6px;';
@@ -5385,6 +5391,17 @@ async function handleOwnerPropPhoto(input) {
   }
   showToast('Photo mise a jour !');
   renderOwnerPropertyDetails();
+}
+
+async function findConciergerie() {
+  // Switch to annuaire tab (triggers renderAnnuaireTab which loads data)
+  switchOwnerNav('annuaire');
+  // Wait for render to complete (data load + DOM), then apply filter
+  await new Promise(r => setTimeout(r, 600));
+  if (typeof switchAnnuaireSubTab === 'function') switchAnnuaireSubTab('search');
+  await new Promise(r => setTimeout(r, 100));
+  const f = document.getElementById('annRoleFilter');
+  if (f) { f.value = 'concierge'; if (typeof filterAnnuaire === 'function') filterAnnuaire(); }
 }
 
 function switchOwnerNav(tab) {
@@ -11170,7 +11187,7 @@ async function renderProviders() {
     const provMembers = members.filter(m => m.role === 'provider');
     // Load marketplace profiles for services
     let mkProfiles = [];
-    try { const { data, error: mkErr } = await sb.from('marketplace_profiles').select('user_id,services,rating,reviews_count'); if (!mkErr) mkProfiles = data || []; } catch(e) { console.error('Marketplace stats load error:', e); }
+    try { const { data, error: mkErr } = await sb.from('marketplace_profiles').select('user_id,services,rating,rating_count'); if (!mkErr) mkProfiles = (data || []).map(m => ({ ...m, reviews_count: m.rating_count })); } catch(e) { console.error('Marketplace stats load error:', e); }
     providers.forEach(p => {
       const linked = provMembers.find(m => m.invited_email === p.email || m.display_name === p.name);
       if (linked) {
@@ -13060,6 +13077,69 @@ async function clearHistory(){cleaningHistory=[];await API.save_history([]);rend
 
 /* ── Utilities ── */
 function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
+
+// Role info popup shown from landing cards
+function showRoleInfoPopup(role) {
+  const data = {
+    concierge: {
+      color: '#6c63ff', icon: '&#127970;', title: 'Conciergerie',
+      intro: 'Vous gerez des menages pour plusieurs proprietaires ? Lokizio centralise toute votre activite.',
+      features: [
+        { icon: '&#128197;', title: 'Planning automatique', desc: 'Importez vos iCal (Airbnb, Booking) et generez automatiquement le planning de menages avec attribution aux prestataires.' },
+        { icon: '&#128101;', title: 'Equipe', desc: 'Ajoutez vos prestataires, definissez leurs pourcentages, tarifs, zones d\'intervention et congés.' },
+        { icon: '&#128179;', title: 'Facturation auto', desc: 'Une facture est creee automatiquement pour le proprietaire ET pour le prestataire apres validation.' },
+        { icon: '&#128202;', title: 'Analytics', desc: 'Tableau de bord avec CA, tendance mensuelle, taux de litige, nb de prestations terminees.' },
+        { icon: '&#128172;', title: 'Chat integre', desc: 'Communication centralisee avec vos proprietaires et prestataires.' },
+        { icon: '&#127758;', title: 'Annuaire pro', desc: 'Trouvez de nouveaux clients ou prestataires via la marketplace Lokizio.' }
+      ],
+      pricing: '19.99€/mois — Essai gratuit 10 jours'
+    },
+    owner: {
+      color: '#f59e0b', icon: '&#127968;', title: 'Proprietaire',
+      intro: 'Vous louez vos biens en courte duree ? Supervisez les menages et payez en toute serenite.',
+      features: [
+        { icon: '&#128065;', title: 'Suivi temps reel', desc: 'Voyez l\'etat de chaque prestation (en attente, accepte, en cours, termine) pour vos biens.' },
+        { icon: '&#128247;', title: 'Photos de controle', desc: 'Recevez les photos QC apres chaque menage pour verifier la qualite.' },
+        { icon: '&#9989;', title: 'Validation / Litige', desc: 'Validez ou contestez en 1 clic. Feedback direct au prestataire et a la conciergerie.' },
+        { icon: '&#128176;', title: 'Facturation claire', desc: 'Historique des depenses mensuelles, factures PDF, paiement securise par Stripe.' },
+        { icon: '&#128172;', title: 'Chat avec votre equipe', desc: 'Discussion directe avec votre conciergerie ou prestataires.' },
+        { icon: '&#128205;', title: 'Plusieurs biens', desc: 'Gerez tous vos logements depuis une seule interface.' }
+      ],
+      pricing: '3.99€/mois par bien (1 bien gratuit) — Essai 10 jours'
+    },
+    provider: {
+      color: '#34d399', icon: '&#129529;', title: 'Prestataire',
+      intro: 'Vous realisez des menages pour une ou plusieurs conciergeries ? Recevez vos missions et soyez paye.',
+      features: [
+        { icon: '&#128236;', title: 'Missions assignees', desc: 'Recevez les missions directement dans l\'app avec adresse, horaires et consignes.' },
+        { icon: '&#9989;', title: 'Accepter / Refuser', desc: 'Validez ou refusez chaque mission en 1 clic.' },
+        { icon: '&#128247;', title: 'Checklist photo', desc: 'Prenez les photos requises pour chaque piece apres le menage.' },
+        { icon: '&#128176;', title: 'Revenus en clair', desc: 'Voyez votre chiffre d\'affaires, vos factures, votre historique par mois.' },
+        { icon: '&#127796;', title: 'Congés', desc: 'Gerez vos periodes d\'indisponibilite avec un calendrier visuel.' },
+        { icon: '&#127970;', title: 'Multi-conciergeries', desc: 'Travaillez avec plusieurs conciergeries en meme temps.' }
+      ],
+      pricing: 'Gratuit — Sans abonnement'
+    }
+  };
+  const r = data[role]; if (!r) return;
+  let html = '<div style="padding:6px;">';
+  html += '<div style="text-align:center;margin-bottom:16px;">';
+  html += '<div style="width:64px;height:64px;background:linear-gradient(135deg,' + r.color + ',' + r.color + 'cc);border-radius:16px;display:inline-flex;align-items:center;justify-content:center;font-size:32px;margin-bottom:10px;">' + r.icon + '</div>';
+  html += '<div style="font-size:20px;font-weight:800;color:' + r.color + ';margin-bottom:6px;">' + r.title + '</div>';
+  html += '<div style="font-size:13px;color:var(--text2);line-height:1.5;">' + r.intro + '</div>';
+  html += '</div>';
+  html += '<div style="display:grid;gap:10px;margin-bottom:14px;">';
+  r.features.forEach(f => {
+    html += '<div style="display:flex;gap:10px;padding:10px 12px;background:var(--surface2);border-radius:10px;">';
+    html += '<div style="font-size:20px;flex-shrink:0;">' + f.icon + '</div>';
+    html += '<div><div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:2px;">' + esc(f.title) + '</div><div style="font-size:12px;color:var(--text3);line-height:1.4;">' + esc(f.desc) + '</div></div>';
+    html += '</div>';
+  });
+  html += '</div>';
+  html += '<div style="padding:10px;background:linear-gradient(135deg,' + r.color + '22,' + r.color + '11);border:1px solid ' + r.color + '55;border-radius:10px;text-align:center;font-size:12px;color:' + r.color + ';font-weight:700;">&#128176; ' + r.pricing + '</div>';
+  html += '</div>';
+  showMsg(html, true);
+}
 // Validate photo URL - only allow https:// and data:image/ (blocks javascript:, data:text/html, etc.)
 function safePhotoUrl(u){if(!u||typeof u!=='string')return '';const s=u.trim();if(s.startsWith('https://')||s.startsWith('data:image/'))return esc(s);return '';}
 // Generic-safe error label - avoids leaking DB/schema info
@@ -13943,22 +14023,46 @@ async function renderAnnuaireResults(profiles) {
     html += '</div>';
     // Info line
     html += '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:4px;">';
+    // Role-specific wording
+    const isConcierge = (p.role === 'concierge' || p.role === 'admin' || p.role === 'manager');
+    const isOwnerRole = (p.role === 'owner');
     // Rating
     const rating = parseFloat(p.rating) || 0;
     const ratingCount = parseInt(p.rating_count) || 0;
     if (rating > 0) {
       const stars = '&#11088;'.repeat(Math.round(rating));
-      const rtip = 'Note moyenne de ' + rating.toFixed(1) + '/5 sur ' + ratingCount + ' avis verifie' + (ratingCount > 1 ? 's' : '') + '. Donnee par les conciergeries et proprietaires apres validation de chaque prestation.';
+      let rtip;
+      if (isConcierge) rtip = 'Note moyenne de ' + rating.toFixed(1) + '/5 sur ' + ratingCount + ' avis verifie' + (ratingCount > 1 ? 's' : '') + '. Donnee par les proprietaires et prestataires avec lesquels cette conciergerie a travaille.';
+      else if (isOwnerRole) rtip = 'Note moyenne de ' + rating.toFixed(1) + '/5 sur ' + ratingCount + ' avis verifie' + (ratingCount > 1 ? 's' : '') + '. Donnee par les prestataires et conciergeries ayant collabore avec ce proprietaire.';
+      else rtip = 'Note moyenne de ' + rating.toFixed(1) + '/5 sur ' + ratingCount + ' avis verifie' + (ratingCount > 1 ? 's' : '') + '. Donnee par les conciergeries et proprietaires apres validation de chaque prestation realisee.';
       html += '<span style="font-size:11px;color:#f59e0b;cursor:help;" title="' + _escHtml(rtip) + '">' + stars + ' ' + rating.toFixed(1) + '/5</span>';
     } else {
-      html += '<span style="font-size:11px;color:var(--text3);cursor:help;" title="Aucun avis pour le moment. Les notes sont donnees par les clients apres validation d\'une prestation.">&#9734;&#9734;&#9734;&#9734;&#9734; Pas encore note</span>';
+      let notip;
+      if (isConcierge) notip = 'Aucun avis pour le moment. Les notes sont donnees par les proprietaires et prestataires ayant collabore avec cette conciergerie.';
+      else if (isOwnerRole) notip = 'Aucun avis pour le moment. Les notes sont donnees par les prestataires et conciergeries ayant travaille avec ce proprietaire.';
+      else notip = 'Aucun avis pour le moment. Les notes sont donnees par les clients apres validation d\'une prestation.';
+      html += '<span style="font-size:11px;color:var(--text3);cursor:help;" title="' + _escHtml(notip) + '">&#9734;&#9734;&#9734;&#9734;&#9734; Pas encore note</span>';
     }
-    // Prestations faites
+    // Stat count (prestations realisees OU organisees OU gerees selon role)
     const cleanings = parseInt(p.cleanings_done) || 0;
-    const cleanTip = cleanings === 0
-      ? 'Aucune prestation validee a ce jour via Lokizio.'
-      : cleanings + ' prestation' + (cleanings > 1 ? 's' : '') + ' realisee' + (cleanings > 1 ? 's' : '') + ' et validee' + (cleanings > 1 ? 's' : '') + ' via Lokizio.';
-    html += '<span style="font-size:11px;color:var(--text2);cursor:help;" title="' + _escHtml(cleanTip) + '">&#128700; ' + cleanings + ' prestation' + (cleanings > 1 ? 's' : '') + '</span>';
+    let statLabel, cleanTip;
+    if (isConcierge) {
+      statLabel = cleanings + ' prestation' + (cleanings > 1 ? 's' : '') + ' organisee' + (cleanings > 1 ? 's' : '');
+      cleanTip = cleanings === 0
+        ? 'Aucune prestation organisee a ce jour via Lokizio.'
+        : cleanings + ' prestation' + (cleanings > 1 ? 's' : '') + ' planifiee' + (cleanings > 1 ? 's' : '') + ' et coordonnee' + (cleanings > 1 ? 's' : '') + ' par cette conciergerie via Lokizio.';
+    } else if (isOwnerRole) {
+      statLabel = cleanings + ' bien' + (cleanings > 1 ? 's' : '') + ' gere' + (cleanings > 1 ? 's' : '');
+      cleanTip = cleanings === 0
+        ? 'Ce proprietaire n\'a pas encore de prestations realisees sur ses biens via Lokizio.'
+        : cleanings + ' prestation' + (cleanings > 1 ? 's' : '') + ' realisee' + (cleanings > 1 ? 's' : '') + ' sur les biens de ce proprietaire via Lokizio.';
+    } else {
+      statLabel = cleanings + ' prestation' + (cleanings > 1 ? 's' : '');
+      cleanTip = cleanings === 0
+        ? 'Aucune prestation validee a ce jour via Lokizio.'
+        : cleanings + ' prestation' + (cleanings > 1 ? 's' : '') + ' realisee' + (cleanings > 1 ? 's' : '') + ' et validee' + (cleanings > 1 ? 's' : '') + ' via Lokizio.';
+    }
+    html += '<span style="font-size:11px;color:var(--text2);cursor:help;" title="' + _escHtml(cleanTip) + '">&#128700; ' + statLabel + '</span>';
     // Anciennete dans l'annuaire
     if (p.created_at) {
       const daysSince = Math.floor((Date.now() - new Date(p.created_at).getTime()) / 86400000);
@@ -13972,9 +14076,11 @@ async function renderAnnuaireResults(profiles) {
     if (p.experience_years) html += '<span style="font-size:11px;color:var(--text2);cursor:help;" title="Experience professionnelle declaree par l\'utilisateur">&#128188; ' + p.experience_years + ' ans d\'exp.</span>';
     if (p.tarif) html += '<span style="font-size:11px;color:var(--text2);" title="Tarif indicatif">&#128176; ' + _escHtml(p.tarif) + '</span>';
     if (availHtml) {
-      const availTip = isProfileOnVacation(p)
-        ? 'Cette personne est actuellement en conges et ne prendra pas de nouvelles prestations.'
-        : 'Cette personne est disponible pour de nouvelles prestations.';
+      let availTip;
+      if (isProfileOnVacation(p)) availTip = 'Actuellement en conges, ne prendra pas de nouvelles missions.';
+      else if (isConcierge) availTip = 'Cette conciergerie accepte de nouveaux proprietaires et prestataires.';
+      else if (isOwnerRole) availTip = 'Ce proprietaire cherche des services pour ses biens.';
+      else availTip = 'Ce prestataire est disponible pour de nouvelles missions.';
       html += '<span style="font-size:11px;cursor:help;" title="' + _escHtml(availTip) + '">' + availHtml + '</span>';
     }
     html += '</div>';
