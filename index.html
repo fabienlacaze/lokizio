@@ -1060,7 +1060,7 @@ async function loadPDF() {
 </script>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v7.43</div>
+<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v7.44</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -1070,7 +1070,7 @@ async function loadPDF() {
     <!-- Broom that sweeps -->
     <div id="splashBroom" style="position:absolute;top:50%;left:-60px;font-size:48px;transform:translateY(-50%) rotate(-30deg);opacity:0;transition:all 0.8s cubic-bezier(0.25,0.46,0.45,0.94);">✨</div>
   </div>
-  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v7.43</span></div>
+  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v7.44</span></div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie pour locations</div>
   <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou</div>
   <!-- Loading bar -->
@@ -2280,6 +2280,7 @@ function getStatusLabel(s) { return (STATUS_CONFIG[s] || {}).label || s || ''; }
 // ── Splash Changelog (update this with each significant version) ──
 // Full versioned changelog — add new entries at TOP
 const VERSION_CHANGELOG = [
+  { v: '7.44', changes: ['Barre de completion: chaque item manquant est cliquable', 'Scroll + highlight vers le champ a completer', 'Ouverture auto section iCal si besoin'] },
   { v: '7.43', changes: ['Dashboard: limite "Prochaines prestations" a 5 entrees'] },
   { v: '7.42', changes: ['Suppression section Tarification (total dans Services requis)', 'Suppression section Checklist photos (temporairement)', 'Notes deplacees dans Horaires & Acces', 'Calendriers iCal dans section repliable avec indicateur'] },
   { v: '7.41', changes: ['Informations generales: photo a gauche, champs a droite', 'Responsive: stacke verticalement sur mobile'] },
@@ -2778,16 +2779,17 @@ async function renderPropertyDetailsInline() {
 
   // ── Property completeness bar ──
   {
-    let score = 0; let total = 8;
+    let score = 0; let total = 7;
     const missing = [];
-    if (prop.name && prop.name !== 'Mon logement' && prop.name !== 'Nouvelle propriete') score++; else missing.push('nom');
-    if (prop.address) score++; else missing.push('adresse');
-    if (prop.type && prop.rooms) score++; else missing.push('type/pieces');
-    if (prop.photo) score++; else missing.push('photo');
-    if (prop.icals && prop.icals.length && prop.icals.some(ic => ic.url)) score++; else missing.push('calendrier iCal');
-    if (prop.providers && prop.providers.length) score++; else missing.push('prestataire');
-    if (prop.cleaningPrice) score++; else missing.push('tarif');
-    if (prop.checklist && prop.checklist.length) score++; else missing.push('instructions');
+    // Each item: { label, target } — target is element id to focus
+    if (prop.name && prop.name !== 'Mon logement' && prop.name !== 'Nouvelle propriete') score++; else missing.push({ label: 'nom', target: 'inlinePropName' });
+    if (prop.address) score++; else missing.push({ label: 'adresse', target: 'inlinePropAddress' });
+    if (prop.type && prop.rooms) score++; else missing.push({ label: 'type/pieces', target: 'inlinePropType' });
+    if (prop.photo) score++; else missing.push({ label: 'photo', target: 'inlinePropPhotoPreview' });
+    if (prop.icals && prop.icals.length && prop.icals.some(ic => ic.url)) score++; else missing.push({ label: 'calendrier iCal', target: 'inlineIcal_0', action: 'openIcalSection' });
+    if (prop.providers && prop.providers.length) score++; else missing.push({ label: 'prestataire', target: 'inlinePropServicesChecks' });
+    const svcCount = Object.values(prop.serviceConfig || {}).filter(c => c && c.enabled).length;
+    if (svcCount > 0) score++; else missing.push({ label: 'services/tarif', target: 'inlinePropServicesChecks' });
     const pct = Math.round((score / total) * 100);
     if (pct < 100) {
       html += `<div style="${sectionStyle}padding:12px;border-left:3px solid ${pct >= 80 ? '#34d399' : pct >= 50 ? '#f59e0b' : '#e94560'};">`;
@@ -2798,7 +2800,12 @@ async function renderPropertyDetailsInline() {
       html += `<div style="height:6px;background:var(--surface2);border-radius:3px;overflow:hidden;margin-bottom:6px;">`;
       html += `<div style="height:100%;width:${pct}%;background:linear-gradient(90deg,#6c63ff,#34d399);border-radius:3px;transition:width 0.3s;"></div>`;
       html += `</div>`;
-      html += `<div style="font-size:11px;color:var(--text3);">Completez : ${missing.join(', ')}</div>`;
+      html += `<div style="font-size:11px;color:var(--text3);">Completez : `;
+      missing.forEach((m, i) => {
+        if (i > 0) html += ', ';
+        html += `<a href="#" onclick="scrollToPropField('${m.target}', '${m.action||''}');return false;" style="color:var(--accent2);text-decoration:underline;cursor:pointer;">${esc(m.label)}</a>`;
+      });
+      html += `</div>`;
       html += `</div>`;
     } else {
       html += `<div style="${sectionStyle}padding:10px;border-left:3px solid #34d399;display:flex;align-items:center;gap:8px;">`;
@@ -3089,6 +3096,38 @@ function recalcEstimate() {
   });
   // Auto-save after recalculation
   saveInlinePropDetail();
+}
+
+// Scroll to a property field and focus/highlight it
+function scrollToPropField(targetId, action) {
+  // If we need to open a collapsed section first
+  if (action === 'openIcalSection') {
+    // Find the details element containing iCal section and open it
+    document.querySelectorAll('details').forEach(d => {
+      const s = d.querySelector('summary');
+      if (s && s.textContent.includes('calendriers')) d.open = true;
+    });
+  }
+  setTimeout(() => {
+    const el = document.getElementById(targetId);
+    if (!el) return;
+    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    // Highlight effect
+    const prevOutline = el.style.outline;
+    const prevTransition = el.style.transition;
+    el.style.transition = 'outline 0.3s ease, box-shadow 0.3s ease';
+    el.style.outline = '2px solid #6c63ff';
+    el.style.boxShadow = '0 0 0 4px rgba(108,99,255,0.2)';
+    setTimeout(() => {
+      el.style.outline = prevOutline || '';
+      el.style.boxShadow = '';
+      el.style.transition = prevTransition || '';
+    }, 2000);
+    // Focus input if applicable
+    if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.tagName === 'SELECT') {
+      try { el.focus(); } catch(e) {}
+    }
+  }, 150);
 }
 
 // Render compact active services list + Add button
