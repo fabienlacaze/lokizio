@@ -1060,7 +1060,7 @@ async function loadPDF() {
 </script>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v7.44</div>
+<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v7.45</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -1070,7 +1070,7 @@ async function loadPDF() {
     <!-- Broom that sweeps -->
     <div id="splashBroom" style="position:absolute;top:50%;left:-60px;font-size:48px;transform:translateY(-50%) rotate(-30deg);opacity:0;transition:all 0.8s cubic-bezier(0.25,0.46,0.45,0.94);">✨</div>
   </div>
-  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v7.44</span></div>
+  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v7.45</span></div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie pour locations</div>
   <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou</div>
   <!-- Loading bar -->
@@ -2280,6 +2280,7 @@ function getStatusLabel(s) { return (STATUS_CONFIG[s] || {}).label || s || ''; }
 // ── Splash Changelog (update this with each significant version) ──
 // Full versioned changelog — add new entries at TOP
 const VERSION_CHANGELOG = [
+  { v: '7.45', changes: ['Popup details au clic sur une carte prestation', 'Texte explicatif pour la section iCal (fin/debut de location vs recurrents)'] },
   { v: '7.44', changes: ['Barre de completion: chaque item manquant est cliquable', 'Scroll + highlight vers le champ a completer', 'Ouverture auto section iCal si besoin'] },
   { v: '7.43', changes: ['Dashboard: limite "Prochaines prestations" a 5 entrees'] },
   { v: '7.42', changes: ['Suppression section Tarification (total dans Services requis)', 'Suppression section Checklist photos (temporairement)', 'Notes deplacees dans Horaires & Acces', 'Calendriers iCal dans section repliable avec indicateur'] },
@@ -2928,6 +2929,12 @@ async function renderPropertyDetailsInline() {
   html += `<div style="font-size:12px;color:${icalCount > 0 ? '#34d399' : 'var(--text3)'};">${icalCount > 0 ? '&#9989; ' + icalCount + ' calendrier' + (icalCount > 1 ? 's' : '') + ' connecte' + (icalCount > 1 ? 's' : '') : 'Aucun calendrier'}</div>`;
   html += `</summary>`;
   html += `<div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border);">`;
+  html += `<div style="font-size:12px;color:var(--text3);line-height:1.6;margin-bottom:12px;padding:10px 12px;background:var(--surface2);border-radius:8px;border-left:3px solid #6c63ff;">`;
+  html += `&#128161; <b>A quoi servent les iCal ?</b><br>`;
+  html += `Connectez vos calendriers Airbnb / Booking pour synchroniser automatiquement les reservations. `;
+  html += `Les services configures en <b>"fin de location"</b> ou <b>"debut de location"</b> (menage standard, check-in/out, etc.) seront declenches automatiquement aux bonnes dates.<br>`;
+  html += `<span style="color:var(--text3);font-size:11px;">Pour les services <b>recurrents</b> (hebdomadaire, mensuel...), les iCal ne sont pas necessaires.</span>`;
+  html += `</div>`;
   if (icals.length === 0) {
     html += `<div style="color:var(--text3);font-size:12px;text-align:center;padding:8px;">Aucun calendrier configure</div>`;
   } else {
@@ -13932,6 +13939,71 @@ setInterval(() => {
   }
 }, 30000);
 
+// Show detail popup for a prestation
+function showPrestationDetail(payload, event) {
+  // Don't open if clicking on a button/input inside the card
+  if (event && event.target) {
+    const tag = event.target.tagName.toLowerCase();
+    if (tag === 'button' || tag === 'select' || tag === 'input' || tag === 'option' || tag === 'a') return;
+    if (event.target.closest('button') || event.target.closest('select') || event.target.closest('a')) return;
+  }
+  let u;
+  try { u = JSON.parse(decodeURIComponent(payload)); } catch(e) { return; }
+  const catObj = SERVICE_CATALOG.find(c => c.services.some(s => s.id === u.type));
+  const svcObj = catObj ? catObj.services.find(s => s.id === u.type) : null;
+  const svcName = svcObj ? svcObj.label : u.type;
+  const svcIcon = svcObj ? svcObj.icon : '📋';
+  const color = getStatusColor(u.status);
+  const statusLabel = getStatusLabel(u.status) || u.status;
+  const statusHint = getStatusHint(u.status) || '';
+  const dateLabel = u.date ? new Date(u.date + 'T12:00:00').toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) : '';
+
+  // Resolve prop for additional info
+  const prop = (fullConfig.properties || []).find(p => p.id === u.propertyId);
+  const cancelPrice = getServicePriceForDate(u.propertyId || '', u.type || 'cleaning_standard', 'price_owner', u.date || '');
+
+  let html = `<div style="padding:4px;">`;
+  html += `<div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">`;
+  html += `<div style="font-size:40px;">${svcIcon}</div>`;
+  html += `<div style="flex:1;min-width:0;">`;
+  html += `<div style="font-size:18px;font-weight:700;color:var(--text);">${esc(svcName)}</div>`;
+  html += `<div style="font-size:12px;color:var(--text3);text-transform:capitalize;">${esc(dateLabel)}</div>`;
+  html += `</div>`;
+  html += `<span style="font-size:12px;padding:4px 10px;border-radius:6px;background:${color}22;color:${color};font-weight:700;" title="${esc(statusHint)}">${esc(statusLabel)}</span>`;
+  html += `</div>`;
+
+  // Info grid
+  html += `<div style="display:grid;gap:8px;margin-bottom:16px;">`;
+  if (u.propertyName) html += `<div style="display:flex;gap:10px;padding:10px;background:var(--surface2);border-radius:8px;"><span style="font-size:18px;">&#127968;</span><div><div style="font-size:10px;color:var(--text3);text-transform:uppercase;">Propriete</div><div style="font-size:13px;color:var(--text);font-weight:600;">${esc(u.propertyName)}</div>${prop && prop.address ? `<div style="font-size:11px;color:var(--text3);margin-top:2px;">${esc(prop.address)}</div>` : ''}</div></div>`;
+  if (u.provider) html += `<div style="display:flex;gap:10px;padding:10px;background:var(--surface2);border-radius:8px;"><span style="font-size:18px;">&#128100;</span><div><div style="font-size:10px;color:var(--text3);text-transform:uppercase;">Prestataire</div><div style="font-size:13px;color:var(--text);font-weight:600;">${esc(u.provider)}</div></div></div>`;
+  if (u.source) html += `<div style="display:flex;gap:10px;padding:10px;background:var(--surface2);border-radius:8px;"><span style="font-size:18px;">&#128197;</span><div><div style="font-size:10px;color:var(--text3);text-transform:uppercase;">Source</div><div style="font-size:13px;color:var(--text);font-weight:600;">${esc(u.source)}</div></div></div>`;
+  if (u.priority === 'high') html += `<div style="display:flex;gap:10px;padding:10px;background:rgba(239,68,68,0.1);border-radius:8px;border:1px solid #ef4444;"><span style="font-size:18px;">&#9888;</span><div style="color:#ef4444;font-weight:700;font-size:13px;">URGENT</div></div>`;
+  if (u.description) html += `<div style="padding:10px;background:var(--surface2);border-radius:8px;"><div style="font-size:10px;color:var(--text3);text-transform:uppercase;margin-bottom:4px;">Description</div><div style="font-size:13px;color:var(--text);">${esc(u.description)}</div></div>`;
+  if (u.cancel_reason) html += `<div style="padding:10px;background:rgba(239,68,68,0.1);border-radius:8px;"><div style="font-size:10px;color:#ef4444;text-transform:uppercase;margin-bottom:4px;">Raison annulation</div><div style="font-size:13px;color:var(--text);">${esc(u.cancel_reason)}</div>${u.cancel_penalty_amount ? `<div style="font-size:11px;color:#f59e0b;margin-top:4px;">Penalite: ${u.cancel_penalty_amount}€</div>` : ''}</div>`;
+  html += `</div>`;
+
+  // Actions
+  html += `<div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;">`;
+  const cancellable = u._source === 'service_request' && !['done', 'departed', 'in_progress', 'cancelled'].includes(u.status);
+  if (u._source === 'service_request' && u.status === 'pending_validation') {
+    html += `<button onclick="adminValidateService('${u._id}','done');closeMsg()" style="padding:10px 16px;background:#34d399;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">&#10003; Valider</button>`;
+  }
+  if (u._source === 'service_request' && u.status === 'disputed') {
+    html += `<button onclick="adminValidateService('${u._id}','in_progress');closeMsg()" style="padding:10px 16px;background:#6c63ff;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">&#128260; Reprendre</button>`;
+  }
+  if (u.status === 'done' && u._source === 'service_request' && u.provider) {
+    html += `<button onclick="showRatingModal('${u._id}','${esc(u.provider).replace(/'/g,"\\'")}');closeMsg()" style="padding:10px 16px;background:#f59e0b;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">&#11088; Noter</button>`;
+  }
+  if (cancellable) {
+    html += `<button onclick="showCancelModal('${u._id}','${u.date||''}','${esc(svcName).replace(/'/g,"\\'")}',${cancelPrice});closeMsg()" style="padding:10px 16px;background:rgba(239,68,68,0.15);color:#ef4444;border:1px solid #ef4444;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">&#128465; Annuler</button>`;
+  }
+  html += `<button onclick="closeMsg()" style="padding:10px 16px;background:var(--surface2);color:var(--text2);border:1px solid var(--border2);border-radius:8px;font-size:13px;cursor:pointer;">Fermer</button>`;
+  html += `</div>`;
+
+  html += `</div>`;
+  showMsg(html, true);
+}
+
 async function loadAdminPrestations(forceReload) {
   try {
   const org = API.getOrg();
@@ -14127,7 +14199,13 @@ async function loadAdminPrestations(forceReload) {
     const cancellable = u._source === 'service_request' && !['done', 'departed', 'in_progress', 'cancelled'].includes(u.status);
     const cancelPrice = getServicePriceForDate(u.propertyId || '', u.type || 'cleaning_standard', 'price_owner', u.date || '');
 
-    html += '<div class="adminPrestCard" data-category="' + cat + '" data-status="' + u.status + '" data-date="' + (u.date||'') + '" data-type="' + (u.type||'') + '" data-provider="' + esc(u.provider||'') + '" style="border-left:4px solid ' + color + ';' + (isToday ? 'box-shadow:0 0 0 1px rgba(233,69,96,0.3);' : '') + '">';
+    const prestPayload = encodeURIComponent(JSON.stringify({
+      _source: u._source, _id: u._id || '', type: u.type, date: u.date, propertyName: u.propertyName,
+      propertyId: u.propertyId, provider: u.provider, status: u.status, source: u.source,
+      priority: u.priority, description: u.description, cancel_reason: u.cancel_reason,
+      cancel_penalty_amount: u.cancel_penalty_amount
+    }));
+    html += '<div class="adminPrestCard" data-category="' + cat + '" data-status="' + u.status + '" data-date="' + (u.date||'') + '" data-type="' + (u.type||'') + '" data-provider="' + esc(u.provider||'') + '" onclick="showPrestationDetail(\'' + prestPayload + '\', event)" style="border-left:4px solid ' + color + ';cursor:pointer;' + (isToday ? 'box-shadow:0 0 0 1px rgba(233,69,96,0.3);' : '') + '">';
     html += '<div style="display:flex;align-items:stretch;gap:0;padding:0;">';
     // Date block
     if (dayNum) {
