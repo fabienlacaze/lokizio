@@ -1060,7 +1060,7 @@ async function loadPDF() {
 </script>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v7.36</div>
+<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v7.37</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -1070,7 +1070,7 @@ async function loadPDF() {
     <!-- Broom that sweeps -->
     <div id="splashBroom" style="position:absolute;top:50%;left:-60px;font-size:48px;transform:translateY(-50%) rotate(-30deg);opacity:0;transition:all 0.8s cubic-bezier(0.25,0.46,0.45,0.94);">✨</div>
   </div>
-  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v7.36</span></div>
+  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v7.37</span></div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie pour locations</div>
   <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou</div>
   <!-- Loading bar -->
@@ -2280,6 +2280,7 @@ function getStatusLabel(s) { return (STATUS_CONFIG[s] || {}).label || s || ''; }
 // ── Splash Changelog (update this with each significant version) ──
 // Full versioned changelog — add new entries at TOP
 const VERSION_CHANGELOG = [
+  { v: '7.37', changes: ['Services requis: UI compacte avec liste + bouton Ajouter', 'Popup de parametrage par service (type + declencheur + params + prix)', 'Tarification auto (formules par service) ou manuelle', 'Total = somme des services actifs (lecture seule)'] },
   { v: '7.36', changes: ['Changement de mot de passe: formulaire complet avec oeil + regles complexite live', 'Inscription: validation complexite (8 car + Maj + min + chiffre + special)', 'Coherence regles entre reset, changement et inscription'] },
   { v: '7.35', changes: ['Fix "Auth session missing" lors du reset password', 'setSession manuel avec access_token + refresh_token du hash', 'Session etablie avant updateUser'] },
   { v: '7.34', changes: ['Toggle visibilite mot de passe (icone oeil)', 'Validation complexite: 8 car + Maj + min + chiffre + special', 'Indicateurs live des regles respectees'] },
@@ -2413,6 +2414,162 @@ const SERVICE_CATALOG = [
 ];
 function getServiceLabel(id) { for (const c of SERVICE_CATALOG) for (const s of c.services) if (s.id === id) return s.icon + ' ' + s.label; return id; }
 function getServiceIcon(id) { for (const c of SERVICE_CATALOG) for (const s of c.services) if (s.id === id) return s.icon; return '📋'; }
+
+// Service pricing formulas - semi-automatic price calculation
+// Each entry defines: params (input fields), calc (formula), summary (short label)
+const SERVICE_PRICING = {
+  cleaning_standard: {
+    params: [
+      { key: 'rooms', label: 'Chambres', type: 'number', min: 0, default: 0, fromProp: 'rooms' },
+      { key: 'bathrooms', label: 'SdB', type: 'number', min: 0, default: 1, fromProp: 'bathrooms' },
+      { key: 'surface', label: 'Surface (m²)', type: 'number', min: 0, default: 0, fromProp: 'surface' },
+    ],
+    calc: (p) => 20 + (p.rooms||0)*10 + (p.bathrooms||0)*15 + Math.round((p.surface||0)/20)*5,
+    summary: (p) => `${p.rooms||0}p · ${p.bathrooms||0}sdb · ${p.surface||0}m²`,
+  },
+  cleaning_deep: {
+    params: [
+      { key: 'rooms', label: 'Chambres', type: 'number', min: 0, default: 0, fromProp: 'rooms' },
+      { key: 'bathrooms', label: 'SdB', type: 'number', min: 0, default: 1, fromProp: 'bathrooms' },
+      { key: 'surface', label: 'Surface (m²)', type: 'number', min: 0, default: 0, fromProp: 'surface' },
+    ],
+    calc: (p) => Math.round((20 + (p.rooms||0)*10 + (p.bathrooms||0)*15 + Math.round((p.surface||0)/20)*5) * 1.8),
+    summary: (p) => `${p.rooms||0}p · ${p.bathrooms||0}sdb · ${p.surface||0}m² (x1.8)`,
+  },
+  windows: {
+    params: [
+      { key: 'windows', label: 'Nombre de fenetres', type: 'number', min: 0, default: 5 },
+      { key: 'pricePerUnit', label: 'Prix par fenetre (€)', type: 'number', min: 0, default: 4 },
+    ],
+    calc: (p) => (p.windows||0) * (p.pricePerUnit||0),
+    summary: (p) => `${p.windows||0} fenetres × ${p.pricePerUnit||0}€`,
+  },
+  handyman: {
+    params: [
+      { key: 'hours', label: 'Heures estimees', type: 'number', min: 0, step: 0.5, default: 1 },
+      { key: 'hourlyRate', label: 'Taux horaire (€)', type: 'number', min: 0, default: 35 },
+    ],
+    calc: (p) => Math.round((p.hours||0) * (p.hourlyRate||0)),
+    summary: (p) => `${p.hours||0}h × ${p.hourlyRate||0}€`,
+  },
+  laundry: {
+    params: [
+      { key: 'beds', label: 'Nombre de lits', type: 'number', min: 0, default: 2 },
+      { key: 'pricePerBed', label: 'Prix par lit (€)', type: 'number', min: 0, default: 8 },
+    ],
+    calc: (p) => (p.beds||0) * (p.pricePerBed||0),
+    summary: (p) => `${p.beds||0} lits × ${p.pricePerBed||0}€`,
+  },
+  ironing: {
+    params: [
+      { key: 'items', label: 'Nombre de pieces', type: 'number', min: 0, default: 10 },
+      { key: 'pricePerItem', label: 'Prix par piece (€)', type: 'number', min: 0, default: 2 },
+    ],
+    calc: (p) => (p.items||0) * (p.pricePerItem||0),
+    summary: (p) => `${p.items||0} pieces × ${p.pricePerItem||0}€`,
+  },
+  pressing: {
+    params: [
+      { key: 'items', label: 'Nombre de pieces', type: 'number', min: 0, default: 5 },
+      { key: 'pricePerItem', label: 'Prix par piece (€)', type: 'number', min: 0, default: 6 },
+    ],
+    calc: (p) => (p.items||0) * (p.pricePerItem||0),
+    summary: (p) => `${p.items||0} pieces × ${p.pricePerItem||0}€`,
+  },
+  checkin: {
+    params: [
+      { key: 'fee', label: 'Forfait (€)', type: 'number', min: 0, default: 15 },
+    ],
+    calc: (p) => p.fee||0,
+    summary: (p) => `Forfait ${p.fee||0}€`,
+  },
+  checkout: {
+    params: [
+      { key: 'fee', label: 'Forfait (€)', type: 'number', min: 0, default: 15 },
+    ],
+    calc: (p) => p.fee||0,
+    summary: (p) => `Forfait ${p.fee||0}€`,
+  },
+  key_handover: {
+    params: [
+      { key: 'fee', label: 'Forfait (€)', type: 'number', min: 0, default: 10 },
+    ],
+    calc: (p) => p.fee||0,
+    summary: (p) => `Forfait ${p.fee||0}€`,
+  },
+  gardening: {
+    params: [
+      { key: 'surface', label: 'Surface jardin (m²)', type: 'number', min: 0, default: 50 },
+      { key: 'pricePerSqm', label: 'Prix par m² (€)', type: 'number', min: 0, step: 0.1, default: 0.5 },
+    ],
+    calc: (p) => Math.round((p.surface||0) * (p.pricePerSqm||0)),
+    summary: (p) => `${p.surface||0}m² × ${p.pricePerSqm||0}€`,
+  },
+  pool: {
+    params: [
+      { key: 'fee', label: 'Forfait par passage (€)', type: 'number', min: 0, default: 40 },
+    ],
+    calc: (p) => p.fee||0,
+    summary: (p) => `Forfait ${p.fee||0}€`,
+  },
+  snow: {
+    params: [
+      { key: 'fee', label: 'Forfait par passage (€)', type: 'number', min: 0, default: 30 },
+    ],
+    calc: (p) => p.fee||0,
+    summary: (p) => `Forfait ${p.fee||0}€`,
+  },
+  shopping: {
+    params: [
+      { key: 'hours', label: 'Heures estimees', type: 'number', min: 0, step: 0.5, default: 1 },
+      { key: 'hourlyRate', label: 'Taux horaire (€)', type: 'number', min: 0, default: 25 },
+    ],
+    calc: (p) => Math.round((p.hours||0) * (p.hourlyRate||0)),
+    summary: (p) => `${p.hours||0}h × ${p.hourlyRate||0}€`,
+  },
+  cooking: {
+    params: [
+      { key: 'guests', label: 'Nombre de convives', type: 'number', min: 1, default: 2 },
+      { key: 'pricePerGuest', label: 'Prix par convive (€)', type: 'number', min: 0, default: 35 },
+    ],
+    calc: (p) => (p.guests||0) * (p.pricePerGuest||0),
+    summary: (p) => `${p.guests||0} convives × ${p.pricePerGuest||0}€`,
+  },
+  childcare: {
+    params: [
+      { key: 'hours', label: 'Heures', type: 'number', min: 0, step: 0.5, default: 2 },
+      { key: 'hourlyRate', label: 'Taux horaire (€)', type: 'number', min: 0, default: 15 },
+    ],
+    calc: (p) => Math.round((p.hours||0) * (p.hourlyRate||0)),
+    summary: (p) => `${p.hours||0}h × ${p.hourlyRate||0}€`,
+  },
+  petcare: {
+    params: [
+      { key: 'visits', label: 'Passages', type: 'number', min: 1, default: 1 },
+      { key: 'pricePerVisit', label: 'Prix par passage (€)', type: 'number', min: 0, default: 20 },
+    ],
+    calc: (p) => (p.visits||0) * (p.pricePerVisit||0),
+    summary: (p) => `${p.visits||0} passages × ${p.pricePerVisit||0}€`,
+  },
+};
+
+const SERVICE_FREQ_OPTIONS = [
+  { v: 'booking_start', l: 'Debut de location' },
+  { v: 'booking_end', l: 'Fin de location' },
+  { v: 'weekly', l: 'Hebdomadaire' },
+  { v: 'biweekly', l: 'Bi-mensuel' },
+  { v: 'monthly', l: 'Mensuel' },
+  { v: 'one_time', l: 'Ponctuel' }
+];
+
+function getFreqLabel(v) { const o = SERVICE_FREQ_OPTIONS.find(x => x.v === v); return o ? o.l : v; }
+
+// Compute auto-price for a service based on its params
+function computeServicePrice(svcId, params) {
+  const formula = SERVICE_PRICING[svcId];
+  if (!formula) return 0;
+  return formula.calc(params || {});
+}
 
 // Global error boundary for unhandled promise rejections
 window.addEventListener('unhandledrejection', event => {
@@ -2713,17 +2870,20 @@ async function renderPropertyDetailsInline() {
   html += `</div>`;
   html += `</div>`; // end general info section
 
-  // SECTION: Tarification
+  // SECTION: Tarification (total lecture seule + tarif proprio)
+  const svcSum = Object.values(prop.serviceConfig || {}).filter(c => c && c.enabled).reduce((s, c) => s + (parseFloat(c.price)||0), 0);
   html += `<div style="${sectionStyle}">`;
-  html += `<div style="${sectionTitleStyle}">&#128176; Tarification estimative</div>`;
-  html += `<div style="display:flex;gap:10px;margin-bottom:12px;flex-wrap:wrap;">`;
-  html += `<div style="flex:1;min-width:120px;"><label style="${labelStyle}">Tarif estimatif (&euro;)</label>
-    <input id="inlinePropPrice" type="number" min="0" step="5" placeholder="65" value="${prop.cleaningPrice || ''}" oninput="this.dataset.auto='0'" style="${inputStyle}"></div>`;
+  html += `<div style="${sectionTitleStyle}">&#128176; Tarification</div>`;
+  html += `<div style="display:flex;gap:10px;margin-bottom:12px;flex-wrap:wrap;align-items:flex-end;">`;
+  html += `<div style="flex:1;min-width:120px;"><label style="${labelStyle}">Total services (€)</label>
+    <div id="inlinePropPriceDisplay" style="padding:12px 14px;font-size:14px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-weight:700;">${svcSum.toFixed(2)} €</div>
+    <div style="font-size:10px;color:var(--text3);margin-top:4px;">Somme calculee des services actifs</div></div>`;
   html += `<div style="flex:1;min-width:120px;"><label style="${labelStyle}">Duree estimative</label>
     <select id="inlinePropDuration" style="${inputStyle}">`;
   durationOptions.forEach(o => { html += `<option value="${o.v}" ${String(prop.cleaningDuration || '90') === o.v ? 'selected' : ''}>${o.l}</option>`; });
   html += `</select></div>`;
   html += `</div>`;
+  html += `<input id="inlinePropPrice" type="hidden" value="${svcSum}">`;
   html += `<div style="margin-bottom:4px;"><label style="${labelStyle}">Tarif proprietaire (&euro;/menage)</label>
     <input id="inlinePropOwnerPrice" type="number" min="0" step="5" placeholder="Ex: 50" value="${prop.ownerPrice || ''}" style="${inputStyle}">
     <div style="font-size:10px;color:var(--text3);margin-top:4px;">Montant facture au proprietaire pour chaque menage</div></div>`;
@@ -2805,71 +2965,8 @@ async function renderPropertyDetailsInline() {
   // Render QC checklist
   renderQcChecklist();
 
-  // Render services config
-  const svcDiv = document.getElementById('inlinePropServicesChecks');
-  if (svcDiv) {
-    const svcConfig = prop.serviceConfig || {};
-    const propServices = prop.required_services || [];
-    const propProviders = prop.providers || [];
-    const freqOptions = [
-      { v: 'booking_start', l: 'Debut de location' },
-      { v: 'booking_end', l: 'Fin de location' },
-      { v: 'weekly', l: 'Hebdomadaire' },
-      { v: 'biweekly', l: 'Bi-mensuel' },
-      { v: 'monthly', l: 'Mensuel' },
-      { v: 'one_time', l: 'Ponctuel' }
-    ];
-    let shtml = '';
-    SERVICE_CATALOG.forEach(cat => {
-      shtml += `<div style="margin-bottom:10px;">`;
-      shtml += `<div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;font-weight:700;margin-bottom:6px;padding-left:2px;">${esc(cat.label)}</div>`;
-      cat.services.forEach(s => {
-        const cfg = svcConfig[s.id];
-        const isEnabled = cfg ? cfg.enabled : propServices.includes(s.id);
-        const freq = cfg ? cfg.frequency : 'booking_end';
-        const provider = cfg ? cfg.provider : '';
-        const price = cfg ? cfg.price : 0;
-        const checked = isEnabled ? 'checked' : '';
-        const detailDisplay = isEnabled ? 'flex' : 'none';
-        shtml += `<div class="svcConfigCard" style="border:1px solid var(--border);border-radius:8px;padding:8px 10px;margin-bottom:6px;background:var(--surface2);">`;
-        shtml += `<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">`;
-        shtml += `<input type="checkbox" class="svcConfigCb" data-svc="${s.id}" ${checked} style="accent-color:#6c63ff;cursor:pointer;">`;
-        shtml += `<span style="font-size:13px;font-weight:500;min-width:120px;">${s.icon} ${s.label}</span>`;
-        shtml += `<div class="svcConfigDetails" style="display:${detailDisplay};gap:6px;align-items:center;flex-wrap:wrap;">`;
-        // Frequency select
-        shtml += `<select class="svcFreq" data-svc="${s.id}" style="padding:4px 8px;background:var(--surface);color:var(--text);border:1px solid var(--border2);border-radius:6px;font-size:12px;">`;
-        freqOptions.forEach(o => { shtml += `<option value="${o.v}" ${freq === o.v ? 'selected' : ''}>${o.l}</option>`; });
-        shtml += `</select>`;
-        // Price input
-        shtml += `<input type="number" class="svcPrice" data-svc="${s.id}" placeholder="Prix \u20ac" value="${price || ''}" min="0" step="1" style="width:70px;padding:4px 8px;background:var(--surface);color:var(--text);border:1px solid var(--border2);border-radius:6px;font-size:12px;">`;
-        shtml += `</div>`; // close svcConfigDetails
-        shtml += `</div>`; // close flex row
-        shtml += `</div>`; // close svcConfigCard
-      });
-      shtml += `</div>`;
-    });
-    svcDiv.innerHTML = shtml;
-    // Toggle details visibility on checkbox change
-    document.querySelectorAll('.svcConfigCb').forEach(cb => {
-      cb.addEventListener('change', function() {
-        const card = this.closest('.svcConfigCard');
-        const details = card.querySelector('.svcConfigDetails');
-        const headerDiv = this.parentElement;
-        if (details) details.style.display = this.checked ? 'flex' : 'none';
-        if (headerDiv) headerDiv.style.marginBottom = this.checked ? '6px' : '0';
-      });
-    });
-    // Auto-save with debounce on any service config change
-    let svcSaveTimer = null;
-    const autoSaveSvc = () => {
-      clearTimeout(svcSaveTimer);
-      svcSaveTimer = setTimeout(() => { saveInlinePropDetail(); }, 800);
-    };
-    document.querySelectorAll('.svcFreq, .svcProvider, .svcPrice').forEach(el => {
-      el.addEventListener('change', autoSaveSvc);
-      el.addEventListener('input', autoSaveSvc);
-    });
-  }
+  // Render services config (compact list + add button)
+  renderInlineServicesList(prop);
 
   // Render checklist
   renderInlineChecklist();
@@ -3015,6 +3112,237 @@ function recalcEstimate() {
   saveInlinePropDetail();
 }
 
+// Render compact active services list + Add button
+function renderInlineServicesList(prop) {
+  const container = document.getElementById('inlinePropServicesChecks');
+  if (!container) return;
+  const svcConfig = prop.serviceConfig || {};
+  const active = Object.entries(svcConfig).filter(([k,v]) => v && v.enabled);
+  let html = '';
+  if (active.length === 0) {
+    html += `<div style="padding:16px;text-align:center;color:var(--text3);font-size:12px;background:var(--surface2);border-radius:8px;border:1px dashed var(--border2);">Aucun service configure</div>`;
+  } else {
+    active.forEach(([svcId, cfg]) => {
+      const label = getServiceLabel(svcId);
+      const freqLabel = getFreqLabel(cfg.frequency || 'booking_end');
+      const formula = SERVICE_PRICING[svcId];
+      const summary = formula && cfg.params ? formula.summary(cfg.params) : '';
+      const price = parseFloat(cfg.price) || 0;
+      html += `<div style="background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:10px 12px;margin-bottom:6px;display:flex;align-items:center;gap:10px;">`;
+      html += `<div style="flex:1;min-width:0;">`;
+      html += `<div style="font-size:13px;font-weight:600;color:var(--text);display:flex;align-items:center;gap:6px;flex-wrap:wrap;">${label}<span style="font-size:11px;color:var(--text3);font-weight:400;">· ${esc(freqLabel)}</span><span style="font-size:13px;color:#34d399;font-weight:700;">${price.toFixed(2)}€</span></div>`;
+      if (summary) html += `<div style="font-size:11px;color:var(--text3);margin-top:2px;">${esc(summary)}</div>`;
+      html += `</div>`;
+      html += `<button onclick="openServiceEditor('${svcId}')" title="Modifier" style="background:transparent;border:none;color:var(--text3);font-size:16px;cursor:pointer;padding:4px 8px;">&#9881;</button>`;
+      html += `<button onclick="removeServiceFromProp('${svcId}')" title="Retirer" style="background:transparent;border:none;color:#e94560;font-size:14px;cursor:pointer;padding:4px 8px;">&#128465;</button>`;
+      html += `</div>`;
+    });
+  }
+  html += `<button onclick="openServiceEditor()" style="width:100%;margin-top:8px;padding:10px;background:linear-gradient(135deg,#6c63ff,#5a54e0);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">+ Ajouter un service</button>`;
+  container.innerHTML = html;
+}
+
+// Remove a service from active property
+async function removeServiceFromProp(svcId) {
+  const ok = await customConfirm('Retirer ce service du bien ?', 'Confirmation');
+  if (!ok) return;
+  const prop = API.getActiveProperty(fullConfig);
+  if (!prop || !prop.serviceConfig) return;
+  delete prop.serviceConfig[svcId];
+  syncAndSaveConfig();
+  renderInlineServicesList(prop);
+  refreshInlineTotals(prop);
+}
+
+// Refresh totals display
+function refreshInlineTotals(prop) {
+  const svcSum = Object.values(prop.serviceConfig || {}).filter(c => c && c.enabled).reduce((s, c) => s + (parseFloat(c.price)||0), 0);
+  const disp = document.getElementById('inlinePropPriceDisplay');
+  if (disp) disp.textContent = svcSum.toFixed(2) + ' €';
+  const hidden = document.getElementById('inlinePropPrice');
+  if (hidden) hidden.value = svcSum;
+}
+
+// Open popup to add or edit a service
+function openServiceEditor(existingSvcId) {
+  const prop = API.getActiveProperty(fullConfig);
+  if (!prop) return;
+  const svcConfig = prop.serviceConfig || {};
+  const editing = !!existingSvcId;
+  const current = editing ? svcConfig[existingSvcId] : null;
+  let selectedSvc = existingSvcId || null;
+
+  const overlay = document.createElement('div');
+  overlay.id = 'serviceEditorOverlay';
+  overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px;overflow-y:auto;';
+  overlay.innerHTML = `
+    <div style="max-width:480px;width:100%;background:var(--surface);border-radius:16px;padding:24px;border:1px solid var(--border);max-height:90vh;overflow-y:auto;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+        <h2 style="color:var(--text);font-size:18px;margin:0;">${editing ? '&#9881; Modifier le service' : '+ Ajouter un service'}</h2>
+        <button onclick="document.getElementById('serviceEditorOverlay').remove()" style="background:transparent;border:none;color:var(--text3);font-size:22px;cursor:pointer;">&times;</button>
+      </div>
+      <div id="serviceEditorBody"></div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+  renderServiceEditorBody(selectedSvc, current, editing);
+}
+
+function renderServiceEditorBody(selectedSvc, current, editing) {
+  const body = document.getElementById('serviceEditorBody');
+  if (!body) return;
+  const prop = API.getActiveProperty(fullConfig);
+  let html = '';
+
+  // Step 1: Service type selector (if not editing)
+  if (!editing) {
+    html += `<label style="display:block;font-size:12px;color:var(--text3);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.5px;">Type de service</label>`;
+    html += `<select id="svcEditorType" onchange="onServiceTypeChange(this.value)" style="width:100%;padding:10px 12px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;margin-bottom:16px;">`;
+    html += `<option value="">-- Choisir un service --</option>`;
+    SERVICE_CATALOG.forEach(cat => {
+      html += `<optgroup label="${esc(cat.label)}">`;
+      cat.services.forEach(s => {
+        // Skip already-active services (except if editing)
+        const already = prop.serviceConfig && prop.serviceConfig[s.id] && prop.serviceConfig[s.id].enabled;
+        if (already) return;
+        const selAttr = selectedSvc === s.id ? 'selected' : '';
+        html += `<option value="${s.id}" ${selAttr}>${s.icon} ${esc(s.label)}</option>`;
+      });
+      html += `</optgroup>`;
+    });
+    html += `</select>`;
+  } else {
+    html += `<div style="padding:10px 12px;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;font-size:14px;font-weight:600;color:var(--text);margin-bottom:16px;">${getServiceLabel(selectedSvc)}</div>`;
+  }
+
+  // Step 2: Details if service is selected
+  if (selectedSvc) {
+    const freqVal = current ? current.frequency : 'booking_end';
+    html += `<label style="display:block;font-size:12px;color:var(--text3);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.5px;">Declencheur</label>`;
+    html += `<select id="svcEditorFreq" style="width:100%;padding:10px 12px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;margin-bottom:16px;">`;
+    SERVICE_FREQ_OPTIONS.forEach(o => { html += `<option value="${o.v}" ${freqVal === o.v ? 'selected' : ''}>${esc(o.l)}</option>`; });
+    html += `</select>`;
+
+    const formula = SERVICE_PRICING[selectedSvc];
+    const currentParams = (current && current.params) || {};
+    if (formula) {
+      html += `<div style="font-size:12px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">Parametres</div>`;
+      html += `<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;">`;
+      formula.params.forEach(p => {
+        let val = currentParams[p.key];
+        if (val === undefined || val === null || val === '') {
+          val = (p.fromProp && prop[p.fromProp] !== undefined) ? prop[p.fromProp] : p.default;
+        }
+        html += `<div>`;
+        html += `<label style="display:block;font-size:11px;color:var(--text3);margin-bottom:4px;">${esc(p.label)}</label>`;
+        html += `<input type="${p.type}" class="svcEditorParam" data-key="${p.key}" min="${p.min||0}" step="${p.step||1}" value="${val}" oninput="recomputeServiceEditorPrice()" style="width:100%;padding:8px 10px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:13px;">`;
+        html += `</div>`;
+      });
+      html += `</div>`;
+    }
+
+    // Price: calculated + editable
+    const computed = formula ? formula.calc(currentParams) : 0;
+    const priceVal = current && current.price !== undefined ? current.price : computed;
+    const priceAuto = current ? (current.priceAuto !== false) : true;
+    html += `<label style="display:block;font-size:12px;color:var(--text3);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.5px;">Prix estime (€)</label>`;
+    html += `<div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;">`;
+    html += `<input type="number" id="svcEditorPrice" min="0" step="1" value="${priceVal}" oninput="onServicePriceManualChange()" style="flex:1;padding:10px 12px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;">`;
+    html += `<button onclick="recomputeServiceEditorPrice(true)" title="Recalculer auto" style="padding:10px 14px;background:var(--surface2);color:var(--accent);border:1px solid var(--border2);border-radius:8px;font-size:13px;cursor:pointer;">&#128259;</button>`;
+    html += `</div>`;
+    html += `<div id="svcEditorPriceInfo" style="font-size:11px;color:var(--text3);margin-bottom:16px;">${priceAuto ? 'Calcul automatique actif' : 'Prix personnalise (cliquez sur &#128259; pour recalculer)'}</div>`;
+    html += `<input type="hidden" id="svcEditorPriceAuto" value="${priceAuto ? '1' : '0'}" data-svc="${esc(selectedSvc)}">`;
+
+    // Actions
+    html += `<div style="display:flex;gap:10px;margin-top:8px;">`;
+    html += `<button onclick="document.getElementById('serviceEditorOverlay').remove()" style="flex:1;padding:12px;background:var(--surface2);color:var(--text2);border:1px solid var(--border2);border-radius:8px;font-size:14px;cursor:pointer;">Annuler</button>`;
+    html += `<button onclick="saveServiceEditor('${selectedSvc}')" style="flex:1;padding:12px;background:linear-gradient(135deg,#6c63ff,#5a54e0);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;">${editing ? 'Enregistrer' : 'Ajouter'}</button>`;
+    html += `</div>`;
+  }
+
+  body.innerHTML = html;
+}
+
+function onServiceTypeChange(svcId) {
+  if (!svcId) return;
+  renderServiceEditorBody(svcId, null, false);
+}
+
+function recomputeServiceEditorPrice(forceAuto) {
+  const svcType = document.getElementById('svcEditorType')?.value || document.querySelector('#serviceEditorBody [data-editing-svc]')?.dataset.editingSvc;
+  const svcId = svcType || window.__svcEditorCurrentSvc;
+  // Find the current svcId from context by reading the last selected service - simpler: use a global
+  const body = document.getElementById('serviceEditorBody');
+  if (!body) return;
+  const inputs = body.querySelectorAll('.svcEditorParam');
+  const params = {};
+  inputs.forEach(el => {
+    const v = parseFloat(el.value);
+    params[el.dataset.key] = isNaN(v) ? 0 : v;
+  });
+  // Resolve svcId from the editor state
+  let currentSvcId = null;
+  const sel = document.getElementById('svcEditorType');
+  if (sel && sel.value) currentSvcId = sel.value;
+  if (!currentSvcId) {
+    // Editing mode: look at the header
+    const hiddenAuto = document.getElementById('svcEditorPriceAuto');
+    if (hiddenAuto && hiddenAuto.dataset.svc) currentSvcId = hiddenAuto.dataset.svc;
+  }
+  if (!currentSvcId) return;
+  const formula = SERVICE_PRICING[currentSvcId];
+  if (!formula) return;
+  const priceInput = document.getElementById('svcEditorPrice');
+  const autoFlag = document.getElementById('svcEditorPriceAuto');
+  const infoEl = document.getElementById('svcEditorPriceInfo');
+  const isAuto = autoFlag && autoFlag.value === '1';
+  if (isAuto || forceAuto) {
+    const computed = formula.calc(params);
+    if (priceInput) priceInput.value = computed;
+    if (autoFlag) autoFlag.value = '1';
+    if (infoEl) infoEl.textContent = 'Calcul automatique actif';
+  }
+}
+
+function onServicePriceManualChange() {
+  const autoFlag = document.getElementById('svcEditorPriceAuto');
+  const infoEl = document.getElementById('svcEditorPriceInfo');
+  if (autoFlag) autoFlag.value = '0';
+  if (infoEl) infoEl.innerHTML = 'Prix personnalise (cliquez sur &#128259; pour recalculer)';
+}
+
+function saveServiceEditor(svcId) {
+  const prop = API.getActiveProperty(fullConfig);
+  if (!prop) return;
+  const sel = document.getElementById('svcEditorType');
+  const finalSvcId = (sel && sel.value) ? sel.value : svcId;
+  if (!finalSvcId) { showToast('Choisissez un service'); return; }
+  const freq = document.getElementById('svcEditorFreq')?.value || 'booking_end';
+  const price = parseFloat(document.getElementById('svcEditorPrice')?.value) || 0;
+  const autoFlag = document.getElementById('svcEditorPriceAuto');
+  const priceAuto = autoFlag ? autoFlag.value === '1' : true;
+  const params = {};
+  document.querySelectorAll('.svcEditorParam').forEach(el => {
+    const v = parseFloat(el.value);
+    params[el.dataset.key] = isNaN(v) ? 0 : v;
+  });
+  prop.serviceConfig = prop.serviceConfig || {};
+  prop.serviceConfig[finalSvcId] = {
+    enabled: true,
+    frequency: freq,
+    price: price,
+    priceAuto: priceAuto,
+    params: params,
+  };
+  prop.cleaningPrice = Object.values(prop.serviceConfig).filter(c => c && c.enabled).reduce((s, c) => s + (parseFloat(c.price)||0), 0);
+  prop.required_services = Object.keys(prop.serviceConfig).filter(k => prop.serviceConfig[k] && prop.serviceConfig[k].enabled);
+  syncAndSaveConfig();
+  document.getElementById('serviceEditorOverlay')?.remove();
+  renderInlineServicesList(prop);
+  refreshInlineTotals(prop);
+  showToast('Service enregistre');
+}
+
 function saveInlinePropDetail() {
   const prop = API.getActiveProperty(fullConfig);
   if (!prop) return;
@@ -3033,23 +3361,12 @@ function saveInlinePropDetail() {
   prop.accessCode = (document.getElementById('inlinePropAccessCode').value || '').trim();
   prop.consignes = (document.getElementById('inlinePropConsignes').value || '').trim();
   prop.checklist = inlinePropCheckItems.slice();
-  // Collect service config
-  const svcConfig = {};
-  document.querySelectorAll('.svcConfigCb').forEach(cb => {
-    const svcId = cb.dataset.svc;
-    if (cb.checked) {
-      const freq = document.querySelector('.svcFreq[data-svc="' + svcId + '"]');
-      const price = document.querySelector('.svcPrice[data-svc="' + svcId + '"]');
-      svcConfig[svcId] = {
-        enabled: true,
-        frequency: freq ? freq.value : 'booking_end',
-        price: price ? parseFloat(price.value) || 0 : 0
-      };
-    }
-  });
-  prop.serviceConfig = svcConfig;
+  // serviceConfig is managed directly via the service popup — keep existing
+  prop.serviceConfig = prop.serviceConfig || {};
+  // cleaningPrice is now computed from serviceConfig sum (kept for backward compat)
+  prop.cleaningPrice = Object.values(prop.serviceConfig).filter(c => c && c.enabled).reduce((sum, c) => sum + (parseFloat(c.price)||0), 0);
   // Maintain requiredServices for backward compatibility
-  prop.required_services = Object.keys(svcConfig);
+  prop.required_services = Object.keys(prop.serviceConfig).filter(k => prop.serviceConfig[k] && prop.serviceConfig[k].enabled);
   // Photo
   const img = document.getElementById('inlinePropPhotoImg');
   if (img && img.style.display !== 'none' && img.src && img.src.startsWith('data:')) {
