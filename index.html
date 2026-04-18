@@ -1065,7 +1065,7 @@ async function loadPDF() {
 </script>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v7.48</div>
+<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v7.49</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -1075,7 +1075,7 @@ async function loadPDF() {
     <!-- Broom that sweeps -->
     <div id="splashBroom" style="position:absolute;top:50%;left:-60px;font-size:48px;transform:translateY(-50%) rotate(-30deg);opacity:0;transition:all 0.8s cubic-bezier(0.25,0.46,0.45,0.94);">✨</div>
   </div>
-  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v7.48</span></div>
+  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v7.49</span></div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie pour locations</div>
   <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou</div>
   <!-- Loading bar -->
@@ -2295,6 +2295,7 @@ function getStatusLabel(s) { return (STATUS_CONFIG[s] || {}).label || s || ''; }
 // ── Splash Changelog (update this with each significant version) ──
 // Full versioned changelog — add new entries at TOP
 const VERSION_CHANGELOG = [
+  { v: '7.49', changes: ['KPI: suppression "Prestations a venir" (doublon avec "Cette semaine")', 'Barre de completion ajoutee en modes proprietaire et prestataire', 'Liens cliquables sur items manquants'] },
   { v: '7.48', changes: ['Bouton cloche 🔔 masque s\'il n\'y a aucune demande de connexion', 'Apparait automatiquement quand une demande arrive'] },
   { v: '7.47', changes: ['Popup Mon profil dediee (annuaire/marketplace)', 'Separation claire: Mon profil (public) vs Mon compte (prive)', 'Nouveau bouton 👤 dans le header'] },
   { v: '7.46', changes: ['Sections Bien repliables (concierge + proprietaire)', 'Mode proprietaire: photo a gauche comme concierge', 'Notes integrees dans Horaires & Acces', 'Fleche de repli animee'] },
@@ -4068,10 +4069,6 @@ async function loadKpiCards() {
         <div style="font-size:24px;font-weight:800;color:#fff;">${(properties||[]).length}</div>
         <div style="font-size:11px;color:rgba(255,255,255,0.8);">${t('kpi.properties')}</div>
       </div>
-      <div onclick="switchMainTab('prestations')" style="background:linear-gradient(135deg,#6c63ff,#5a54e0);border-radius:12px;padding:16px;text-align:center;cursor:pointer;transition:transform 0.15s;user-select:none;" onmousedown="this.style.transform='scale(0.96)'" onmouseup="this.style.transform=''" onmouseleave="this.style.transform=''">
-        <div style="font-size:24px;font-weight:800;color:#fff;">${future}</div>
-        <div style="font-size:11px;color:rgba(255,255,255,0.8);">${t('kpi.upcoming')}</div>
-      </div>
       <div onclick="switchMainTab('prestations')" style="background:linear-gradient(135deg,#f59e0b,#d97706);border-radius:12px;padding:16px;text-align:center;cursor:pointer;transition:transform 0.15s;user-select:none;" onmousedown="this.style.transform='scale(0.96)'" onmouseup="this.style.transform=''" onmouseleave="this.style.transform=''">
         <div style="font-size:24px;font-weight:800;color:#fff;">${week}</div>
         <div style="font-size:11px;color:rgba(255,255,255,0.8);">${t('kpi.this_week')}</div>
@@ -4447,6 +4444,35 @@ async function showProviderMode() {
 
   // ═══ TAB 1: Apercu (Overview) ═══
   html += '<div id="provContentOverview">';
+
+  // ── Provider profile completeness bar ──
+  try {
+    const { data: { user: _pu } } = await sb.auth.getUser();
+    if (_pu) {
+      const { data: _mk } = await sb.from('marketplace_profiles').select('*').eq('user_id', _pu.id).maybeSingle();
+      let score = 0; let total = 5;
+      const missing = [];
+      if (_mk && _mk.display_name) score++; else missing.push('nom affiche');
+      if (_mk && _mk.city) score++; else missing.push('ville');
+      if (_mk && _mk.phone) score++; else missing.push('telephone');
+      if (_mk && _mk.services && _mk.services.length) score++; else missing.push('services');
+      if (_mk && _mk.description) score++; else missing.push('description');
+      const pct = Math.round((score / total) * 100);
+      if (pct < 100) {
+        const barColor = pct >= 80 ? '#34d399' : pct >= 50 ? '#f59e0b' : '#e94560';
+        html += '<div style="background:var(--surface);border:1px solid var(--border2);border-radius:12px;padding:12px;margin-bottom:12px;border-left:3px solid ' + barColor + ';">';
+        html += '<div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">';
+        html += '<div style="flex:1;font-size:13px;font-weight:600;color:var(--text);">Completez votre profil annuaire</div>';
+        html += '<span style="font-size:12px;font-weight:700;color:' + barColor + ';">' + pct + '%</span>';
+        html += '</div>';
+        html += '<div style="height:6px;background:var(--surface2);border-radius:3px;overflow:hidden;margin-bottom:6px;">';
+        html += '<div style="height:100%;width:' + pct + '%;background:linear-gradient(90deg,#6c63ff,#34d399);border-radius:3px;transition:width 0.3s;"></div>';
+        html += '</div>';
+        html += '<div style="font-size:11px;color:var(--text3);">Completez : <a href="#" onclick="showProfileModal();return false;" style="color:var(--accent2);text-decoration:underline;cursor:pointer;">' + missing.join(', ') + '</a></div>';
+        html += '</div>';
+      }
+    }
+  } catch(e) {}
 
   // Org switcher (if provider belongs to multiple orgs)
   const provMemberships = API.getAllMemberships();
@@ -4936,6 +4962,36 @@ async function renderOwnerPropertyDetails() {
   const inputStyle = 'width:100%;padding:10px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:13px;margin-bottom:10px;box-sizing:border-box;';
 
   let html = '';
+
+  // ── Property completeness bar (clickable items) ──
+  {
+    let score = 0; let total = 6;
+    const missing = [];
+    if (prop.name && prop.name !== 'Mon logement' && prop.name !== 'Nouveau bien') score++; else missing.push({ label: 'nom', target: 'ownerPropName' });
+    if (prop.address) score++; else missing.push({ label: 'adresse', target: 'ownerPropAddress' });
+    if (prop.type && prop.rooms) score++; else missing.push({ label: 'type/pieces', target: 'ownerPropType' });
+    if (prop.photo) score++; else missing.push({ label: 'photo', target: 'ownerPropPhotoInput' });
+    if (prop.checkinTime && prop.checkoutTime) score++; else missing.push({ label: 'horaires', target: 'ownerPropCheckin' });
+    if (prop.accessCode) score++; else missing.push({ label: 'code d\'acces', target: 'ownerPropAccessCode' });
+    const pct = Math.round((score / total) * 100);
+    if (pct < 100) {
+      const barColor = pct >= 80 ? '#34d399' : pct >= 50 ? '#f59e0b' : '#e94560';
+      html += '<div style="' + sectionStyle + 'padding:12px;border-left:3px solid ' + barColor + ';">';
+      html += '<div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">';
+      html += '<div style="flex:1;font-size:13px;font-weight:600;color:var(--text);">Configuration du bien</div>';
+      html += '<span style="font-size:12px;font-weight:700;color:' + barColor + ';">' + pct + '%</span>';
+      html += '</div>';
+      html += '<div style="height:6px;background:var(--surface2);border-radius:3px;overflow:hidden;margin-bottom:6px;">';
+      html += '<div style="height:100%;width:' + pct + '%;background:linear-gradient(90deg,#6c63ff,#34d399);border-radius:3px;transition:width 0.3s;"></div>';
+      html += '</div>';
+      html += '<div style="font-size:11px;color:var(--text3);">Completez : ';
+      missing.forEach((m, i) => {
+        if (i > 0) html += ', ';
+        html += '<a href="#" onclick="scrollToPropField(\'' + m.target + '\');return false;" style="color:var(--accent2);text-decoration:underline;cursor:pointer;">' + esc(m.label) + '</a>';
+      });
+      html += '</div></div>';
+    }
+  }
 
   // Ma conciergerie section (top of page)
   const { data: adminsOfOrg } = await sb.from('members').select('*').eq('org_id', org.id).in('role', ['admin','manager']);
@@ -5547,11 +5603,7 @@ async function showOwnerMode() {
   }
 
   // KPI cards - clickable to navigate to planning/overview tabs
-  html += `<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px;">
-    <div onclick="switchOwnerNav('prestations')" style="background:linear-gradient(135deg,#6c63ff,#5a54e0);border-radius:12px;padding:16px;text-align:center;cursor:pointer;transition:transform 0.1s,opacity 0.1s;" onpointerdown="this.style.transform='scale(0.95)';this.style.opacity='0.85'" onpointerup="this.style.transform='';this.style.opacity=''" onpointerleave="this.style.transform='';this.style.opacity=''">
-      <div style="font-size:24px;font-weight:800;color:#fff;">${futureCleanings.length}</div>
-      <div style="font-size:11px;color:rgba(255,255,255,0.8);">${t('kpi.upcoming')}</div>
-    </div>
+  html += `<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:16px;">
     <div onclick="switchOwnerNav('prestations')" style="background:linear-gradient(135deg,#f59e0b,#d97706);border-radius:12px;padding:16px;text-align:center;cursor:pointer;transition:transform 0.1s,opacity 0.1s;" onpointerdown="this.style.transform='scale(0.95)';this.style.opacity='0.85'" onpointerup="this.style.transform='';this.style.opacity=''" onpointerleave="this.style.transform='';this.style.opacity=''">
       <div style="font-size:24px;font-weight:800;color:#fff;">${weekCleanings.length}</div>
       <div style="font-size:11px;color:rgba(255,255,255,0.8);">${t('kpi.this_week')}</div>
