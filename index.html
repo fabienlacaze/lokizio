@@ -1126,7 +1126,7 @@ async function loadPDF() {
 </script>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v7.75</div>
+<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v7.76</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -1136,7 +1136,7 @@ async function loadPDF() {
     <!-- Broom that sweeps -->
     <div id="splashBroom" style="position:absolute;top:50%;left:-60px;font-size:48px;transform:translateY(-50%) rotate(-30deg);opacity:0;transition:all 0.8s cubic-bezier(0.25,0.46,0.45,0.94);">✨</div>
   </div>
-  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v7.75</span></div>
+  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v7.76</span></div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie pour locations</div>
   <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou</div>
   <!-- Loading bar -->
@@ -2410,6 +2410,7 @@ function getStatusLabel(s) { return (STATUS_CONFIG[s] || {}).label || s || ''; }
 // ── Splash Changelog (update this with each significant version) ──
 // Full versioned changelog — add new entries at TOP
 const VERSION_CHANGELOG = [
+  { v: '7.76', changes: ['Fix filtre annuaire "Conciergeries": inclut aussi les roles admin et manager'] },
   { v: '7.75', changes: ['Historique depenses (proprietaire) collapsable et collapse par defaut'] },
   { v: '7.74', changes: ['Fix: clic sur le fond d\'une popup profil ne ferme plus Mon compte', 'Clic sur le backdrop ferme uniquement la popup profil', 'Overlay de Mon compte non-interactif quand une popup est ouverte'] },
   { v: '7.73', changes: ['Menus Bien fermes par defaut (Infos generales, Services requis, Horaires, iCal)'] },
@@ -13559,7 +13560,12 @@ function filterMarketplace() {
   const radius = parseInt(document.getElementById('mkRadiusFilter').value) || 0;
   const sort = document.getElementById('mkSortFilter')?.value || 'recent';
   let filtered = _mkAllProfiles;
-  if (role) filtered = filtered.filter(p => p.role === role);
+  if (role) {
+    filtered = filtered.filter(p => {
+      if (role === 'concierge') return p.role === 'concierge' || p.role === 'admin' || p.role === 'manager';
+      return p.role === role;
+    });
+  }
   if (city) filtered = filtered.filter(p => !p.city || (p.city || '').toLowerCase().includes(city) || (p.postal_code || '').includes(city) || (p.display_name || '').toLowerCase().includes(city));
   if (radius > 0) {
     filtered = filtered.filter(p => {
