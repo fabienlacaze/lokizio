@@ -1140,7 +1140,7 @@ async function loadPDF() {
 </script>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v8.31</div>
+<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v8.32</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -1150,7 +1150,7 @@ async function loadPDF() {
     <!-- Broom that sweeps -->
     <div id="splashBroom" style="position:absolute;top:50%;left:-60px;font-size:48px;transform:translateY(-50%) rotate(-30deg);opacity:0;transition:all 0.8s cubic-bezier(0.25,0.46,0.45,0.94);">✨</div>
   </div>
-  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v8.31</span></div>
+  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v8.32</span></div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie pour locations</div>
   <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou</div>
   <!-- Loading bar -->
@@ -2484,6 +2484,7 @@ function getStatusLabel(s) { return (STATUS_CONFIG[s] || {}).label || s || ''; }
 // ── Splash Changelog (update this with each significant version) ──
 // Full versioned changelog — add new entries at TOP
 const VERSION_CHANGELOG = [
+  { v: '8.32', changes: ['Popup detail: bouton Annuler corrige (utilisait un popup intermediaire)', 'Nouveau bouton Relancer (max 2/2) pour owner/concierge sur prestations en attente de reponse', 'Cartes prestations passees: mention "Date passee" en haut a droite', 'SQL: add-relance-columns.sql (relance_count, relance_at)'] },
   { v: '8.31', changes: ['Liste prestations: mois passes ne sont plus auto-replies (le bouton Masquer passees fait le job)', 'Filtres: statuts en 1ere ligne, categories en 2eme'] },
   { v: '8.30', changes: ['Popup detail mensuel: colonne Benef. cumule (running) ajoutee'] },
   { v: '8.29', changes: ['Filtres statut recalcules dynamiquement selon la categorie selectionnee', '"Masquer passees" sur sa propre ligne'] },
@@ -15150,6 +15151,33 @@ function getCancelPenalty(dateStr) {
   for (const rule of CANCEL_POLICY) { if (diff >= rule.minDays) return { ...rule, daysUntil: diff }; }
   return { percent: 75, label: '75% du prix', daysUntil: diff };
 }
+async function relancePrestation(requestId, currentCount) {
+  const newCount = (parseInt(currentCount) || 0) + 1;
+  if (newCount > 2) { showToast('Limite de relances atteinte'); return; }
+  try {
+    // Try updating relance_count; if column missing we still proceed with the notification
+    const { error } = await sb.from('service_requests').update({ relance_count: newCount, relance_at: new Date().toISOString() }).eq('id', requestId);
+    if (error && !/relance_count|relance_at/i.test(error.message || '')) throw error;
+    // Fetch prestation + provider info for notification
+    const { data: req } = await sb.from('service_requests').select('*').eq('id', requestId).maybeSingle();
+    if (req && req.assigned_provider_user_id) {
+      await sb.from('messages').insert({
+        org_id: req.org_id,
+        sender_id: (await sb.auth.getUser()).data.user.id,
+        recipient_id: req.assigned_provider_user_id,
+        body: 'Relance: merci de repondre a la demande "' + (req.service_type || 'prestation') + '" du ' + fmtDate(req.requested_date || req.preferred_date || ''),
+        created_at: new Date().toISOString()
+      });
+    }
+    showToast('Relance envoyee (' + newCount + '/2)');
+    closeMsg();
+    setTimeout(() => loadAdminPrestations(true), 300);
+  } catch(e) {
+    console.error('relancePrestation error:', e);
+    showToast('Erreur: ' + (e.message || 'impossible de relancer'));
+  }
+}
+
 function showCancelModal(requestId, dateStr, svcLabel, price) {
   const penalty = getCancelPenalty(dateStr);
   const penaltyAmount = price > 0 ? Math.round(price * penalty.percent / 100 * 100) / 100 : 0;
@@ -15302,8 +15330,18 @@ function showPrestationDetail(payload, event) {
   if (u.status === 'done' && u._source === 'service_request' && u.provider) {
     html += `<button onclick="showRatingModal('${u._id}','${esc(u.provider).replace(/'/g,"\\'")}');closeMsg()" style="padding:10px 16px;background:#f59e0b;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">&#11088; Noter</button>`;
   }
+  // Relancer: only for owner/admin roles, on assigned prestations, max 2 re-notifications
+  const _role = API.getRole && API.getRole();
+  const canRelance = u._source === 'service_request' && u.status === 'assigned' && ['owner','admin','manager','concierge'].includes(_role);
+  const _relanceCount = parseInt(u.relance_count) || 0;
+  if (canRelance && _relanceCount < 2) {
+    const label = _relanceCount === 0 ? 'Relancer' : 'Relancer (' + _relanceCount + '/2)';
+    html += `<button onclick="relancePrestation('${u._id}',${_relanceCount})" style="padding:10px 16px;background:rgba(245,158,11,0.15);color:#f59e0b;border:1px solid #f59e0b;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">&#128276; ${label}</button>`;
+  } else if (canRelance && _relanceCount >= 2) {
+    html += `<button disabled style="padding:10px 16px;background:var(--surface2);color:var(--text3);border:1px solid var(--border2);border-radius:8px;font-size:13px;cursor:not-allowed;">&#128276; Relances epuisees (2/2)</button>`;
+  }
   if (cancellable) {
-    html += `<button onclick="showCancelModal('${u._id}','${u.date||''}','${esc(svcName).replace(/'/g,"\\'")}',${cancelPrice});closeMsg()" style="padding:10px 16px;background:rgba(239,68,68,0.15);color:#ef4444;border:1px solid #ef4444;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">&#128465; Annuler</button>`;
+    html += `<button onclick="closeMsg();setTimeout(()=>showCancelModal('${u._id}','${u.date||''}','${esc(svcName).replace(/'/g,"\\'")}',${cancelPrice}),200)" style="padding:10px 16px;background:rgba(239,68,68,0.15);color:#ef4444;border:1px solid #ef4444;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">&#128465; Annuler</button>`;
   }
   html += `<button onclick="closeMsg()" style="padding:10px 16px;background:var(--surface2);color:var(--text2);border:1px solid var(--border2);border-radius:8px;font-size:13px;cursor:pointer;">Fermer</button>`;
   html += `</div>`;
@@ -15504,8 +15542,9 @@ async function loadAdminPrestations(forceReload) {
       cancel_penalty_amount: u.cancel_penalty_amount
     }));
     const isPast = u.date && u.date < today;
-    const pastStyle = isPast ? 'opacity:0.5;filter:grayscale(0.6);' : '';
-    html += '<div class="adminPrestCard" data-category="' + cat + '" data-status="' + u.status + '" data-date="' + (u.date||'') + '" data-type="' + (u.type||'') + '" data-provider="' + esc(u.provider||'') + '" onclick="showPrestationDetail(\'' + prestPayload + '\', event)" style="border-left:4px solid ' + color + ';cursor:pointer;' + pastStyle + (isToday ? 'box-shadow:0 0 0 1px rgba(233,69,96,0.3);' : '') + '">';
+    const pastStyle = isPast ? 'opacity:0.5;filter:grayscale(0.6);position:relative;' : '';
+    html += '<div class="adminPrestCard" data-category="' + cat + '" data-status="' + u.status + '" data-date="' + (u.date||'') + '" data-type="' + (u.type||'') + '" data-provider="' + esc(u.provider||'') + '" onclick="showPrestationDetail(\'' + prestPayload + '\', event)" style="border-left:4px solid ' + color + ';cursor:pointer;' + pastStyle + (isToday ? 'box-shadow:0 0 0 1px rgba(233,69,96,0.3);' : '') + '" title="' + (isPast ? 'Date passee' : '') + '">';
+    if (isPast) html += '<div style="position:absolute;top:4px;right:8px;font-size:9px;color:var(--text3);font-style:italic;letter-spacing:0.3px;pointer-events:none;">&#128197; Date passee</div>';
     html += '<div style="display:flex;align-items:stretch;gap:0;padding:0;">';
     // Date block
     if (dayNum) {
