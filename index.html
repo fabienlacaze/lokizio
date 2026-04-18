@@ -1060,7 +1060,7 @@ async function loadPDF() {
 </script>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v7.39</div>
+<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v7.40</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -1070,7 +1070,7 @@ async function loadPDF() {
     <!-- Broom that sweeps -->
     <div id="splashBroom" style="position:absolute;top:50%;left:-60px;font-size:48px;transform:translateY(-50%) rotate(-30deg);opacity:0;transition:all 0.8s cubic-bezier(0.25,0.46,0.45,0.94);">✨</div>
   </div>
-  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v7.39</span></div>
+  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v7.40</span></div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie pour locations</div>
   <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou</div>
   <!-- Loading bar -->
@@ -2280,6 +2280,7 @@ function getStatusLabel(s) { return (STATUS_CONFIG[s] || {}).label || s || ''; }
 // ── Splash Changelog (update this with each significant version) ──
 // Full versioned changelog — add new entries at TOP
 const VERSION_CHANGELOG = [
+  { v: '7.40', changes: ['Fix prix initial popup service: prend en compte les donnees du bien', 'Pas besoin de cliquer sur recalcul pour voir le vrai prix'] },
   { v: '7.39', changes: ['Popup service: donnees du bien (pieces/sdb/surface) affichees en lecture seule', 'Plus de duplication avec Informations generales'] },
   { v: '7.38', changes: ['Suppression section Instructions de menage (redondant avec Horaires & Acces)'] },
   { v: '7.37', changes: ['Services requis: UI compacte avec liste + bouton Ajouter', 'Popup de parametrage par service (type + declencheur + params + prix)', 'Tarification auto (formules par service) ou manuelle', 'Total = somme des services actifs (lecture seule)'] },
@@ -3247,7 +3248,17 @@ function renderServiceEditorBody(selectedSvc, current, editing) {
     }
 
     // Price: calculated + editable
-    const computed = formula ? formula.calc(currentParams) : 0;
+    // For initial computation, merge fromProp values into params (they're read-only but still feed the formula)
+    const effectiveParams = Object.assign({}, currentParams);
+    if (formula) {
+      formula.params.forEach(p => {
+        if (effectiveParams[p.key] === undefined || effectiveParams[p.key] === null || effectiveParams[p.key] === '') {
+          if (p.fromProp && prop[p.fromProp] !== undefined) effectiveParams[p.key] = prop[p.fromProp];
+          else effectiveParams[p.key] = p.default;
+        }
+      });
+    }
+    const computed = formula ? formula.calc(effectiveParams) : 0;
     const priceVal = current && current.price !== undefined ? current.price : computed;
     const priceAuto = current ? (current.priceAuto !== false) : true;
     html += `<label style="display:block;font-size:12px;color:var(--text3);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.5px;">Prix estime (€)</label>`;
