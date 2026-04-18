@@ -1140,7 +1140,7 @@ async function loadPDF() {
 </script>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v8.17</div>
+<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v8.18</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -1150,7 +1150,7 @@ async function loadPDF() {
     <!-- Broom that sweeps -->
     <div id="splashBroom" style="position:absolute;top:50%;left:-60px;font-size:48px;transform:translateY(-50%) rotate(-30deg);opacity:0;transition:all 0.8s cubic-bezier(0.25,0.46,0.45,0.94);">✨</div>
   </div>
-  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v8.17</span></div>
+  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v8.18</span></div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie pour locations</div>
   <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou</div>
   <!-- Loading bar -->
@@ -2484,6 +2484,7 @@ function getStatusLabel(s) { return (STATUS_CONFIG[s] || {}).label || s || ''; }
 // ── Splash Changelog (update this with each significant version) ──
 // Full versioned changelog — add new entries at TOP
 const VERSION_CHANGELOG = [
+  { v: '8.18', changes: ['Revenus: sections "Detail mensuel" et "Evolution mensuelle" repliables', 'Graph: courbe Marge ajoutee (CA - Couts)', 'Graph: legende cliquable pour masquer/afficher chaque courbe'] },
   { v: '8.17', changes: ['Calendrier: filtrage par bien selectionne', 'Revenus: lignes du detail mensuel cliquables (popup detail par mois)', 'Revenus: graph courbes CA vs Couts sous le tableau'] },
   { v: '8.16', changes: ['Popup Se connecter: liste cochable des services proposes (pre-cochee depuis le profil annuaire)', 'Services inclus dans le message envoye'] },
   { v: '8.15', changes: ['Bouton "Se connecter" ouvre une popup: choix du motif + message (300 car max)', 'Motif stocke avec le message dans connection_requests.message'] },
@@ -8122,8 +8123,8 @@ function renderRevenueContent() {
   // Monthly breakdown
   const months = Object.keys(monthlyData).sort();
   if (months.length > 0) {
-    html += '<div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:8px;">Detail mensuel</div>';
-    html += '<table style="width:100%;border-collapse:collapse;font-size:11px;">';
+    html += '<details open style="margin-bottom:14px;"><summary style="cursor:pointer;font-size:12px;font-weight:700;color:var(--text);padding:8px 0;list-style:none;display:flex;align-items:center;gap:6px;"><span class="collapseArrow" style="transition:transform 0.2s;display:inline-block;">&#9656;</span> Detail mensuel</summary>';
+    html += '<table style="width:100%;border-collapse:collapse;font-size:11px;margin-top:6px;">';
     html += '<tr><th style="text-align:left;padding:6px;color:var(--text3);border-bottom:1px solid var(--border);">Mois</th><th style="text-align:center;padding:6px;color:var(--text3);border-bottom:1px solid var(--border);">Prestas</th><th style="text-align:right;padding:6px;color:var(--text3);border-bottom:1px solid var(--border);">CA</th><th style="text-align:right;padding:6px;color:var(--text3);border-bottom:1px solid var(--border);">Couts</th><th style="text-align:right;padding:6px;color:var(--text3);border-bottom:1px solid var(--border);">Marge</th></tr>';
     months.forEach(m => {
       const d = monthlyData[m];
@@ -8140,34 +8141,46 @@ function renderRevenueContent() {
       html += '</tr>';
     });
     html += '</table>';
+    html += '</details>';
 
-    // Line chart: revenue vs costs
+    // Line chart: revenue vs costs vs margin
     if (months.length >= 2) {
       const W = 600, H = 220, padL = 40, padR = 20, padT = 20, padB = 30;
       const innerW = W - padL - padR, innerH = H - padT - padB;
-      let maxVal = 0;
-      months.forEach(m => { maxVal = Math.max(maxVal, monthlyData[m].revenue, monthlyData[m].cost); });
+      let maxVal = 0, minVal = 0;
+      months.forEach(m => {
+        const margin = monthlyData[m].revenue - monthlyData[m].cost;
+        maxVal = Math.max(maxVal, monthlyData[m].revenue, monthlyData[m].cost, margin);
+        minVal = Math.min(minVal, margin);
+      });
       if (maxVal < 10) maxVal = 10;
-      // Round up to a nice step
+      // Round up/down to nice steps including negative for margin
       const niceMax = Math.ceil(maxVal / 50) * 50;
+      const niceMin = minVal < 0 ? Math.floor(minVal / 50) * 50 : 0;
+      const range = niceMax - niceMin;
+      const yFor = v => padT + innerH - ((v - niceMin) / range) * innerH;
       const step = months.length > 1 ? innerW / (months.length - 1) : innerW;
       const MONTHS_SHORT = ['Jan','Fev','Mar','Avr','Mai','Jun','Jul','Aou','Sep','Oct','Nov','Dec'];
+      const getVal = (m, key) => key === 'margin' ? (monthlyData[m].revenue - monthlyData[m].cost) : monthlyData[m][key];
       const pts = (key) => months.map((m, i) => {
         const x = padL + i * step;
-        const y = padT + innerH - (monthlyData[m][key] / niceMax) * innerH;
+        const y = yFor(getVal(m, key));
         return x + ',' + y;
       }).join(' ');
-      const revPts = pts('revenue');
-      const costPts = pts('cost');
-      html += '<div style="margin-top:20px;font-size:12px;font-weight:700;color:var(--text);margin-bottom:8px;">Evolution mensuelle</div>';
-      html += '<div style="background:var(--surface2);border-radius:10px;padding:10px;">';
-      html += '<svg viewBox="0 0 ' + W + ' ' + H + '" style="width:100%;height:auto;font-size:10px;">';
-      // Grid + Y axis ticks (4 lines)
+      html += '<details open style="margin-top:8px;"><summary style="cursor:pointer;font-size:12px;font-weight:700;color:var(--text);padding:8px 0;list-style:none;display:flex;align-items:center;gap:6px;"><span class="collapseArrow" style="transition:transform 0.2s;display:inline-block;">&#9656;</span> Evolution mensuelle</summary>';
+      html += '<div style="background:var(--surface2);border-radius:10px;padding:10px;margin-top:6px;">';
+      html += '<svg id="revenueChart" viewBox="0 0 ' + W + ' ' + H + '" style="width:100%;height:auto;font-size:10px;">';
+      // Grid + Y axis ticks (5 lines)
       for (let i = 0; i <= 4; i++) {
-        const y = padT + (innerH * i) / 4;
-        const val = Math.round(niceMax * (1 - i / 4));
-        html += '<line x1="' + padL + '" y1="' + y + '" x2="' + (W - padR) + '" y2="' + y + '" stroke="rgba(255,255,255,0.08)" stroke-width="1"/>';
-        html += '<text x="' + (padL - 6) + '" y="' + (y + 3) + '" text-anchor="end" fill="rgba(255,255,255,0.45)" font-size="9">' + val + '€</text>';
+        const yPix = padT + (innerH * i) / 4;
+        const val = Math.round(niceMax - (range * i) / 4);
+        html += '<line x1="' + padL + '" y1="' + yPix + '" x2="' + (W - padR) + '" y2="' + yPix + '" stroke="rgba(255,255,255,0.08)" stroke-width="1"/>';
+        html += '<text x="' + (padL - 6) + '" y="' + (yPix + 3) + '" text-anchor="end" fill="rgba(255,255,255,0.45)" font-size="9">' + val + '€</text>';
+      }
+      // Zero line emphasis (if negative values)
+      if (niceMin < 0) {
+        const y0 = yFor(0);
+        html += '<line x1="' + padL + '" y1="' + y0 + '" x2="' + (W - padR) + '" y2="' + y0 + '" stroke="rgba(255,255,255,0.25)" stroke-width="1" stroke-dasharray="3,3"/>';
       }
       // X axis labels
       months.forEach((m, i) => {
@@ -8176,29 +8189,46 @@ function renderRevenueContent() {
         const lbl = MONTHS_SHORT[parseInt(mm)-1] + ' ' + yy.substring(2);
         html += '<text x="' + x + '" y="' + (H - 10) + '" text-anchor="middle" fill="rgba(255,255,255,0.55)" font-size="9">' + lbl + '</text>';
       });
-      // Revenue polyline
-      html += '<polyline fill="none" stroke="#34d399" stroke-width="2.5" points="' + revPts + '"/>';
-      // Cost polyline
-      html += '<polyline fill="none" stroke="#ef4444" stroke-width="2.5" points="' + costPts + '"/>';
-      // Points
-      months.forEach((m, i) => {
-        const x = padL + i * step;
-        const yRev = padT + innerH - (monthlyData[m].revenue / niceMax) * innerH;
-        const yCost = padT + innerH - (monthlyData[m].cost / niceMax) * innerH;
-        html += '<circle cx="' + x + '" cy="' + yRev + '" r="3" fill="#34d399"/>';
-        html += '<circle cx="' + x + '" cy="' + yCost + '" r="3" fill="#ef4444"/>';
+      // Series groups (each toggleable)
+      const series = [
+        { key:'revenue', color:'#34d399', label:'CA' },
+        { key:'cost', color:'#ef4444', label:'Couts' },
+        { key:'margin', color:'#6c63ff', label:'Marge' }
+      ];
+      series.forEach(s => {
+        html += '<g data-series="' + s.key + '">';
+        html += '<polyline fill="none" stroke="' + s.color + '" stroke-width="2.5" points="' + pts(s.key) + '"/>';
+        months.forEach((m, i) => {
+          const x = padL + i * step;
+          const y = yFor(getVal(m, s.key));
+          html += '<circle cx="' + x + '" cy="' + y + '" r="3" fill="' + s.color + '"/>';
+        });
+        html += '</g>';
       });
       html += '</svg>';
-      // Legend
-      html += '<div style="display:flex;gap:16px;justify-content:center;margin-top:6px;font-size:11px;">';
-      html += '<span style="display:flex;align-items:center;gap:6px;color:var(--text2);"><span style="width:18px;height:3px;background:#34d399;border-radius:2px;"></span>CA</span>';
-      html += '<span style="display:flex;align-items:center;gap:6px;color:var(--text2);"><span style="width:18px;height:3px;background:#ef4444;border-radius:2px;"></span>Couts</span>';
+      // Clickable legend
+      html += '<div style="display:flex;gap:16px;justify-content:center;margin-top:6px;font-size:11px;flex-wrap:wrap;">';
+      series.forEach(s => {
+        html += '<span data-toggle-series="' + s.key + '" onclick="toggleChartSeries(this,\'' + s.key + '\')" style="display:flex;align-items:center;gap:6px;color:var(--text2);cursor:pointer;user-select:none;padding:3px 8px;border-radius:6px;transition:background 0.2s;" onmouseover="this.style.background=\'rgba(255,255,255,0.05)\'" onmouseout="this.style.background=\'\'"><span style="width:18px;height:3px;background:' + s.color + ';border-radius:2px;"></span>' + s.label + '</span>';
+      });
       html += '</div>';
       html += '</div>';
+      html += '</details>';
     }
   }
 
   div.innerHTML = html;
+}
+
+function toggleChartSeries(el, key) {
+  const svg = document.getElementById('revenueChart');
+  if (!svg) return;
+  const g = svg.querySelector('g[data-series="' + key + '"]');
+  if (!g) return;
+  const hidden = g.style.display === 'none';
+  g.style.display = hidden ? '' : 'none';
+  el.style.opacity = hidden ? '' : '0.35';
+  el.style.textDecoration = hidden ? '' : 'line-through';
 }
 
 function showMonthRevenueDetail(monthKey) {
