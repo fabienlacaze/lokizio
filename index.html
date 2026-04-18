@@ -1139,7 +1139,7 @@ async function loadPDF() {
 </script>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v8.01</div>
+<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v8.02</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -1149,7 +1149,7 @@ async function loadPDF() {
     <!-- Broom that sweeps -->
     <div id="splashBroom" style="position:absolute;top:50%;left:-60px;font-size:48px;transform:translateY(-50%) rotate(-30deg);opacity:0;transition:all 0.8s cubic-bezier(0.25,0.46,0.45,0.94);">✨</div>
   </div>
-  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v8.01</span></div>
+  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v8.02</span></div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie pour locations</div>
   <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou</div>
   <!-- Loading bar -->
@@ -1974,6 +1974,9 @@ async function loadPDF() {
           <button class="btn btnSmall btnOutline" style="padding:5px 12px;font-size:11px;" onclick="showRoleChangeModal()">Changer</button>
         </div>
       </div>
+      <div style="margin-top:14px;">
+        <button class="btn btnOutline" style="width:100%;padding:12px;font-size:13px;" onclick="showVacationPlanner()">&#127796; Gerer mes conges</button>
+      </div>
 
     </div>
   </div>
@@ -2044,6 +2047,21 @@ async function loadPDF() {
         </div>
         <div style="font-size:10px;color:var(--text3);text-align:center;margin-top:4px;">&#10003; Sauvegarde automatique a chaque modification</div>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- Vacation planner overlay (provider + concierge) -->
+<div id="vacationPlannerOverlay" class="stackedOverlay">
+  <div class="stackedOverlayBox" style="max-width:520px;">
+    <div class="stackedOverlayHeader">
+      <span>&#127796; Mes conges</span>
+      <button class="modalClose" onclick="closeOverlayPopup('vacationPlannerOverlay')">&times;</button>
+    </div>
+    <div class="stackedOverlayBody">
+      <div style="font-size:12px;color:var(--text3);margin-bottom:12px;line-height:1.5;">Pendant vos periodes de conges, vous n'apparaitrez pas disponible pour de nouvelles prestations.</div>
+      <div id="vacationPlannerCalendar"></div>
+      <div id="vacationPlannerList" style="margin-top:12px;"></div>
     </div>
   </div>
 </div>
@@ -2437,6 +2455,7 @@ function getStatusLabel(s) { return (STATUS_CONFIG[s] || {}).label || s || ''; }
 // ── Splash Changelog (update this with each significant version) ──
 // Full versioned changelog — add new entries at TOP
 const VERSION_CHANGELOG = [
+  { v: '8.02', changes: ['Planning de conges: bouton "Gerer mes conges" dans Mon profil personnel', 'Calendrier visuel: clic debut + clic fin pour ajouter une periode', 'Liste des periodes avec suppression', 'Stocke dans marketplace_profiles.vacation_periods (JSONB)'] },
   { v: '8.01', changes: ['Annuaire proprio et prestataire: sous-onglets Mes contacts / Rechercher (comme admin)'] },
   { v: '8.00', changes: ['Badge BUSINESS / PRO cliquable dans le header: ouvre la popup Premium pour gerer l\'abonnement', 'Bandeau sticky Premium: fond opaque (plus de texte qui passe a travers)'] },
   { v: '7.99', changes: ['Proprietaire: cartes prestations cliquables (popup detail)', 'Prestataire: section Aujourd\'hui repliable', 'Bandeau Premium sticky en haut de la popup'] },
@@ -8744,6 +8763,121 @@ function closeProfileModal() {
 // Toggle helpers for "save only if changed"
 function showSaveBtn(id) { const b = document.getElementById(id); if (b) b.style.display = ''; }
 function hideSaveBtn(id) { const b = document.getElementById(id); if (b) b.style.display = 'none'; }
+
+// ══ Vacation planner (provider + concierge personal) ══
+let _vacationPeriods = [];
+let _vacationCurrentMonth = new Date();
+let _vacationRangeStart = null;
+
+async function showVacationPlanner() {
+  // Load from marketplace_profiles (stored user-level)
+  try {
+    const { data: { user } } = await sb.auth.getUser();
+    if (!user) { showToast('Non connecte'); return; }
+    const { data: mk } = await sb.from('marketplace_profiles').select('vacation_periods').eq('user_id', user.id).maybeSingle();
+    _vacationPeriods = (mk && Array.isArray(mk.vacation_periods)) ? mk.vacation_periods : [];
+  } catch(e) { console.error('load vacations:', e); _vacationPeriods = []; }
+  _vacationCurrentMonth = new Date();
+  _vacationRangeStart = null;
+  renderVacationCalendar();
+  renderVacationList();
+  openOverlayPopup('vacationPlannerOverlay');
+}
+
+function renderVacationCalendar() {
+  const el = document.getElementById('vacationPlannerCalendar');
+  if (!el) return;
+  const d = _vacationCurrentMonth;
+  const year = d.getFullYear();
+  const month = d.getMonth();
+  const first = new Date(year, month, 1);
+  const last = new Date(year, month + 1, 0);
+  const startDow = (first.getDay() + 6) % 7; // Monday = 0
+  const daysCount = last.getDate();
+  const monthNames = ['Janvier','Fevrier','Mars','Avril','Mai','Juin','Juillet','Aout','Septembre','Octobre','Novembre','Decembre'];
+  let html = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">';
+  html += '<button onclick="vacationChangeMonth(-1)" style="background:var(--surface2);border:1px solid var(--border2);color:var(--text);border-radius:8px;width:32px;height:32px;cursor:pointer;font-size:14px;">&lsaquo;</button>';
+  html += '<div style="font-size:14px;font-weight:700;color:var(--text);text-transform:capitalize;">' + monthNames[month] + ' ' + year + '</div>';
+  html += '<button onclick="vacationChangeMonth(1)" style="background:var(--surface2);border:1px solid var(--border2);color:var(--text);border-radius:8px;width:32px;height:32px;cursor:pointer;font-size:14px;">&rsaquo;</button>';
+  html += '</div>';
+  html += '<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;font-size:11px;color:var(--text3);text-align:center;margin-bottom:4px;">';
+  ['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'].forEach(dn => { html += '<div>' + dn + '</div>'; });
+  html += '</div>';
+  html += '<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;">';
+  for (let i = 0; i < startDow; i++) html += '<div></div>';
+  const today = new Date().toISOString().split('T')[0];
+  for (let day = 1; day <= daysCount; day++) {
+    const dateStr = year + '-' + String(month+1).padStart(2,'0') + '-' + String(day).padStart(2,'0');
+    const isInVac = _vacationPeriods.some(p => dateStr >= p.from && dateStr <= p.to);
+    const isToday = dateStr === today;
+    const isStart = _vacationRangeStart === dateStr;
+    let bg = 'var(--surface2)';
+    let color = 'var(--text)';
+    if (isInVac) { bg = 'rgba(233,69,96,0.3)'; color = '#e94560'; }
+    if (isStart) { bg = 'rgba(108,99,255,0.4)'; color = '#fff'; }
+    let border = isToday ? '2px solid var(--accent)' : '1px solid var(--border2)';
+    html += '<button onclick="vacationClickDay(\'' + dateStr + '\')" style="background:' + bg + ';color:' + color + ';border:' + border + ';border-radius:6px;padding:8px 0;font-size:12px;cursor:pointer;font-weight:' + (isToday || isInVac ? '700' : '400') + ';">' + day + '</button>';
+  }
+  html += '</div>';
+  if (_vacationRangeStart) {
+    html += '<div style="font-size:11px;color:var(--accent2);margin-top:8px;text-align:center;">Debut : ' + _vacationRangeStart + ' — cliquez une date de fin</div>';
+  } else {
+    html += '<div style="font-size:11px;color:var(--text3);margin-top:8px;text-align:center;">Cliquez une date de debut puis une date de fin pour ajouter une periode</div>';
+  }
+  el.innerHTML = html;
+}
+
+function vacationChangeMonth(delta) {
+  _vacationCurrentMonth = new Date(_vacationCurrentMonth.getFullYear(), _vacationCurrentMonth.getMonth() + delta, 1);
+  renderVacationCalendar();
+}
+
+async function vacationClickDay(dateStr) {
+  if (!_vacationRangeStart) {
+    _vacationRangeStart = dateStr;
+    renderVacationCalendar();
+    return;
+  }
+  const from = _vacationRangeStart < dateStr ? _vacationRangeStart : dateStr;
+  const to = _vacationRangeStart < dateStr ? dateStr : _vacationRangeStart;
+  _vacationPeriods.push({ from, to, note: '' });
+  _vacationRangeStart = null;
+  await saveVacationPeriods();
+  renderVacationCalendar();
+  renderVacationList();
+}
+
+function renderVacationList() {
+  const el = document.getElementById('vacationPlannerList');
+  if (!el) return;
+  if (!_vacationPeriods.length) { el.innerHTML = '<div style="font-size:12px;color:var(--text3);text-align:center;padding:10px;">Aucune periode configuree</div>'; return; }
+  let html = '<div style="font-size:11px;color:var(--text3);text-transform:uppercase;margin-bottom:6px;">Periodes enregistrees</div>';
+  _vacationPeriods.forEach((p, i) => {
+    html += '<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--surface2);border-radius:8px;margin-bottom:4px;font-size:12px;">';
+    html += '<span style="flex:1;color:var(--text);">&#128197; Du <b>' + esc(p.from) + '</b> au <b>' + esc(p.to) + '</b></span>';
+    html += '<button onclick="vacationRemove(' + i + ')" style="background:transparent;border:none;color:#e94560;font-size:14px;cursor:pointer;">&#128465;</button>';
+    html += '</div>';
+  });
+  el.innerHTML = html;
+}
+
+async function vacationRemove(idx) {
+  _vacationPeriods.splice(idx, 1);
+  await saveVacationPeriods();
+  renderVacationCalendar();
+  renderVacationList();
+}
+
+async function saveVacationPeriods() {
+  try {
+    const { data: { user } } = await sb.auth.getUser();
+    if (!user) return;
+    // Upsert on marketplace_profiles
+    const { error } = await sb.from('marketplace_profiles').upsert({ user_id: user.id, vacation_periods: _vacationPeriods, updated_at: new Date().toISOString() }, { onConflict: 'user_id' });
+    if (error) { console.error('saveVacation:', error); showToast('Erreur: ' + safeErr(error, 'sauvegarde impossible')); return; }
+    showToast('✓ Conges enregistres');
+  } catch(e) { console.error('saveVacation:', e); }
+}
 
 // Stacked popup overlays (stay on top of account modal, don't close it)
 function _stackedOverlayClickHandler(e) {
