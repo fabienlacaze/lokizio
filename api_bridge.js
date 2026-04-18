@@ -199,7 +199,11 @@ const API = (function() {
   async function savePlanningData(propId, field, value) {
     const { data: existing } = await sb.from('plannings').select('id').eq('property_id', propId).maybeSingle();
     if (existing) {
-      await sb.from('plannings').update({ [field]: value, updated_at: new Date().toISOString() }).eq('property_id', propId);
+      const { error: _upErr } = await sb.from('plannings').update({ [field]: value, updated_at: new Date().toISOString() }).eq('property_id', propId);
+      if (_upErr) {
+        // updated_at column may not exist — retry without it
+        await sb.from('plannings').update({ [field]: value }).eq('property_id', propId);
+      }
     } else {
       await sb.from('plannings').insert({ property_id: propId, [field]: value });
     }
@@ -210,7 +214,7 @@ const API = (function() {
   async function loadRawLegacy(column, defaultVal) {
     try {
       const userId = await getUserId();
-      const { data, error } = await sb.from('user_data').select(column).eq('user_id', userId).single();
+      const { data, error } = await sb.from('user_data').select(column).eq('user_id', userId).maybeSingle();
       if (error || !data) return defaultVal;
       const val = data[column];
       if (val !== null && val !== undefined) return val;
