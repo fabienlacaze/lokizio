@@ -1139,7 +1139,7 @@ async function loadPDF() {
 </script>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v8.14</div>
+<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v8.16</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -1149,7 +1149,7 @@ async function loadPDF() {
     <!-- Broom that sweeps -->
     <div id="splashBroom" style="position:absolute;top:50%;left:-60px;font-size:48px;transform:translateY(-50%) rotate(-30deg);opacity:0;transition:all 0.8s cubic-bezier(0.25,0.46,0.45,0.94);">✨</div>
   </div>
-  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v8.14</span></div>
+  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v8.16</span></div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie pour locations</div>
   <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou</div>
   <!-- Loading bar -->
@@ -2050,6 +2050,35 @@ async function loadPDF() {
   </div>
 </div>
 
+<!-- Connection request overlay -->
+<div id="connectRequestOverlay" class="stackedOverlay">
+  <div class="stackedOverlayBox" style="max-width:480px;">
+    <div class="stackedOverlayHeader">
+      <span>&#128279; Envoyer une demande de connexion</span>
+      <button class="modalClose" onclick="closeOverlayPopup('connectRequestOverlay')">&times;</button>
+    </div>
+    <div class="stackedOverlayBody">
+      <div style="font-size:12px;color:var(--text3);margin-bottom:12px;line-height:1.5;">Vous envoyez une demande de connexion a <b id="connectReqTarget" style="color:var(--text);"></b></div>
+      <label style="display:block;font-size:12px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">Motif</label>
+      <select id="connectReqReason" style="width:100%;padding:10px 12px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;margin-bottom:14px;">
+        <option value="work">Collaborer sur des prestations</option>
+        <option value="hire">Recruter / Proposer des missions</option>
+        <option value="service">Demander un service pour mes biens</option>
+        <option value="network">Reseau professionnel</option>
+        <option value="other">Autre</option>
+      </select>
+      <label style="display:block;font-size:12px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">Services proposes</label>
+      <div id="connectReqServices" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px;padding:10px;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;max-height:180px;overflow-y:auto;"></div>
+      <label style="display:block;font-size:12px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">Message <span id="connectReqCounter" style="float:right;color:var(--text3);font-weight:400;text-transform:none;letter-spacing:0;">0 / 300</span></label>
+      <textarea id="connectReqMessage" maxlength="300" placeholder="Presentez-vous en quelques mots..." rows="4" oninput="const c=document.getElementById('connectReqCounter');if(c)c.textContent=this.value.length+' / 300';" style="width:100%;padding:10px 12px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;resize:vertical;font-family:'Inter',sans-serif;margin-bottom:12px;box-sizing:border-box;"></textarea>
+      <div style="display:flex;gap:10px;">
+        <button onclick="closeOverlayPopup('connectRequestOverlay')" style="flex:1;padding:12px;background:var(--surface2);color:var(--text2);border:1px solid var(--border2);border-radius:8px;font-size:14px;cursor:pointer;">Annuler</button>
+        <button onclick="submitConnectionRequest()" style="flex:2;padding:12px;background:linear-gradient(135deg,#6c63ff,#5a54e0);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;">Envoyer la demande</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- Vacation planner overlay (provider + concierge) -->
 <div id="vacationPlannerOverlay" class="stackedOverlay">
   <div class="stackedOverlayBox" style="max-width:520px;">
@@ -2454,6 +2483,8 @@ function getStatusLabel(s) { return (STATUS_CONFIG[s] || {}).label || s || ''; }
 // ── Splash Changelog (update this with each significant version) ──
 // Full versioned changelog — add new entries at TOP
 const VERSION_CHANGELOG = [
+  { v: '8.16', changes: ['Popup Se connecter: liste cochable des services proposes (pre-cochee depuis le profil annuaire)', 'Services inclus dans le message envoye'] },
+  { v: '8.15', changes: ['Bouton "Se connecter" ouvre une popup: choix du motif + message (300 car max)', 'Motif stocke avec le message dans connection_requests.message'] },
   { v: '8.13', changes: ['Fix bouton "Trouver une conciergerie" (timing filtre annuaire)', 'Fix requete rating_count (etait reviews_count)', 'Cards role de l\'onboarding cliquables avec popup detaillee'] },
   { v: '8.12', changes: ['Labels et tooltips adaptes selon le role dans l\'annuaire', 'Conciergerie: "X prestations organisees", avis des proprietaires/prestataires', 'Proprietaire: "X biens geres", avis des prestataires', 'Prestataire: "X prestations realisees", avis des clients'] },
   { v: '8.11', changes: ['Bouton "Trouver une conciergerie" (mode proprio sans concierge): bascule vers l\'annuaire avec filtre "Conciergeries" active'] },
@@ -13549,7 +13580,7 @@ async function disconnectUser(targetUserId, targetName) {
   } catch(e) { console.error('disconnectUser error:', e); showToast('Erreur'); }
 }
 
-async function sendConnectionRequest(targetUserId, targetName, targetRole) {
+async function sendConnectionRequest(targetUserId, targetName, targetRole, customMessage) {
   try {
     const { data: { user } } = await sb.auth.getUser();
     if (!user) return;
@@ -13588,7 +13619,7 @@ async function sendConnectionRequest(targetUserId, targetName, targetRole) {
       receiver_role: targetRole,
       proposed_role: proposedRole,
       status: 'pending',
-      message: ''
+      message: customMessage || ''
     });
     if (error) throw error;
     showToast('Demande envoyee a ' + targetName + ' !');
@@ -13603,6 +13634,62 @@ async function sendConnectionRequest(targetUserId, targetName, targetRole) {
     console.error('sendConnectionRequest error:', e);
     showToast('Erreur: ' + (e.message || 'Impossible d\'envoyer'));
   }
+}
+
+let _pendingConnect = null;
+async function openConnectRequestPopup(targetUserId, targetName, targetRole) {
+  _pendingConnect = { targetUserId, targetName, targetRole };
+  const tgt = document.getElementById('connectReqTarget');
+  if (tgt) tgt.textContent = targetName || '';
+  const reason = document.getElementById('connectReqReason');
+  if (reason) reason.value = 'work';
+  const msg = document.getElementById('connectReqMessage');
+  if (msg) msg.value = '';
+  const cnt = document.getElementById('connectReqCounter');
+  if (cnt) cnt.textContent = '0 / 300';
+  // Render services checkboxes, pre-checked based on user's marketplace profile
+  const container = document.getElementById('connectReqServices');
+  if (container) {
+    let myServices = [];
+    try {
+      const { data: { user } } = await sb.auth.getUser();
+      if (user) {
+        const { data: mk } = await sb.from('marketplace_profiles').select('services').eq('user_id', user.id).maybeSingle();
+        if (mk && Array.isArray(mk.services)) myServices = mk.services;
+      }
+    } catch(e) { console.warn('load my services:', e); }
+    let chtml = '';
+    SERVICE_CATALOG.forEach(cat => {
+      cat.services.forEach(s => {
+        const isChecked = myServices.includes(s.id) ? 'checked' : '';
+        chtml += '<label style="display:inline-flex;align-items:center;gap:4px;padding:5px 10px;background:var(--surface);border:1px solid var(--border2);border-radius:16px;font-size:11px;cursor:pointer;color:var(--text);"><input type="checkbox" class="connectReqServiceCb" value="' + s.id + '" ' + isChecked + ' style="accent-color:#6c63ff;margin:0;"> ' + s.icon + ' ' + s.label + '</label>';
+      });
+    });
+    container.innerHTML = chtml;
+  }
+  openOverlayPopup('connectRequestOverlay');
+}
+
+async function submitConnectionRequest() {
+  if (!_pendingConnect) { closeOverlayPopup('connectRequestOverlay'); return; }
+  const reason = document.getElementById('connectReqReason')?.value || 'work';
+  const message = (document.getElementById('connectReqMessage')?.value || '').trim().slice(0, 300);
+  const reasonLabels = {
+    work: 'Collaborer sur des prestations',
+    hire: 'Recruter / Proposer des missions',
+    service: 'Demander un service pour mes biens',
+    network: 'Reseau professionnel',
+    other: 'Autre'
+  };
+  const selectedServices = [...document.querySelectorAll('.connectReqServiceCb:checked')].map(c => c.value);
+  const svcLabels = selectedServices.map(id => getServiceLabel(id)).join(', ');
+  let fullMessage = '[' + (reasonLabels[reason] || reason) + ']';
+  if (svcLabels) fullMessage += ' Services: ' + svcLabels + '.';
+  if (message) fullMessage += ' ' + message;
+  closeOverlayPopup('connectRequestOverlay');
+  const { targetUserId, targetName, targetRole } = _pendingConnect;
+  _pendingConnect = null;
+  await sendConnectionRequest(targetUserId, targetName, targetRole, fullMessage);
 }
 
 async function cancelConnectionRequest(targetUserId, targetName) {
@@ -14106,7 +14193,7 @@ async function renderAnnuaireResults(profiles) {
         html += '<span style="margin-left:auto;padding:6px 14px;background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.3);border-radius:8px;font-size:11px;color:#f59e0b;font-weight:600;">&#9203; En attente</span>';
         html += '<button onclick="cancelConnectionRequest(\'' + _escHtml(p.user_id) + '\',\'' + _escHtml(p.display_name || '') + '\')" style="padding:6px 10px;background:none;color:var(--text3);border:1px solid var(--border2);border-radius:8px;font-size:10px;cursor:pointer;" title="Annuler la demande">Annuler</button>';
       } else if (isPrem) {
-        html += '<button onclick="sendConnectionRequest(\'' + _escHtml(p.user_id) + '\',\'' + _escHtml(p.display_name || '') + '\',\'' + _escHtml(p.role) + '\')" style="margin-left:auto;padding:6px 14px;background:linear-gradient(135deg,#6c63ff,#5a54e0);color:#fff;border:none;border-radius:8px;font-size:11px;font-weight:600;cursor:pointer;">&#128279; Se connecter</button>';
+        html += '<button onclick="openConnectRequestPopup(\'' + _escHtml(p.user_id) + '\',\'' + _escHtml(p.display_name || '') + '\',\'' + _escHtml(p.role) + '\')" style="margin-left:auto;padding:6px 14px;background:linear-gradient(135deg,#6c63ff,#5a54e0);color:#fff;border:none;border-radius:8px;font-size:11px;font-weight:600;cursor:pointer;">&#128279; Se connecter</button>';
       } else {
         html += '<button onclick="showPremiumModal(\'Passez Premium pour vous connecter avec d\\\'autres professionnels.\')" style="margin-left:auto;padding:6px 14px;background:var(--surface);color:var(--text3);border:1px solid var(--border2);border-radius:8px;font-size:11px;cursor:pointer;">&#128274; Premium</button>';
       }
