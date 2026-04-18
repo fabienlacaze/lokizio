@@ -1065,7 +1065,7 @@ async function loadPDF() {
 </script>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v7.46</div>
+<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v7.47</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -1075,7 +1075,7 @@ async function loadPDF() {
     <!-- Broom that sweeps -->
     <div id="splashBroom" style="position:absolute;top:50%;left:-60px;font-size:48px;transform:translateY(-50%) rotate(-30deg);opacity:0;transition:all 0.8s cubic-bezier(0.25,0.46,0.45,0.94);">✨</div>
   </div>
-  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v7.46</span></div>
+  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v7.47</span></div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie pour locations</div>
   <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou</div>
   <!-- Loading bar -->
@@ -1320,6 +1320,7 @@ async function loadPDF() {
     <!-- Visible buttons -->
     <button class="btnHelp" id="btnConnections" onclick="showConnectionRequests()" title="Demandes de connexion" aria-label="Demandes de connexion" style="font-size:13px;position:relative;">&#128276;<span id="connectionBadge" style="display:none;position:absolute;top:-4px;right:-4px;background:#e94560;color:#fff;font-size:9px;font-weight:700;min-width:16px;height:16px;border-radius:8px;align-items:center;justify-content:center;">0</span></button>
     <button class="btnHelp" onclick="showInviteModal()" title="Inviter" aria-label="Inviter un membre" style="font-size:13px;">&#128279;</button>
+    <button class="btnHelp" onclick="showProfileModal()" title="Mon profil" aria-label="Mon profil" style="font-size:13px;">&#128100;</button>
     <button class="btnHelp" onclick="showAccountModal()" title="Mon compte" aria-label="Mon compte" style="font-size:13px;">&#9881;</button>
     <button class="btnHelp" onclick="customConfirm(t('auth.logout.confirm')||'Se deconnecter ?','Deconnexion').then(ok=>{if(ok)authLogout()})" data-i18n-attr="title" data-i18n="header.logout" title="Deconnexion" aria-label="Deconnexion" style="font-size:13px;">&#9211;</button>
   </div>
@@ -1841,7 +1842,21 @@ async function loadPDF() {
         <button class="btn btnSmall btnOutline" onclick="closeAccountModal();showLangModal()" style="padding:6px 12px;font-size:12px;" id="langBtnAccount">🇫🇷 FR</button>
       </div>
     </div>
-    <div style="padding:14px;background:var(--surface2);border-radius:10px;margin-bottom:8px;">
+    <div style="display:flex;flex-direction:column;gap:10px;">
+      <button class="btn btnOutline" style="padding:12px;font-size:13px;" onclick="changePassword()">&#128274; Changer le mot de passe</button>
+      <button class="btn btnOutline" style="padding:12px;font-size:13px;" onclick="changeEmail()">&#9993; Changer l'email</button>
+      <button class="btn btnOutline" style="padding:12px;font-size:13px;" onclick="closeAccountModal();showRoleChangeModal()">&#128101; Changer de role</button>
+      <button class="btn btnDanger" style="padding:12px;font-size:13px;margin-top:10px;" onclick="deleteAccount()">&#128465; Supprimer mon compte</button>
+    </div>
+  </div>
+</div>
+<div class="modal" id="profileModal" style="max-width:520px;">
+  <div class="modalHeader" style="display:flex;justify-content:space-between;align-items:center;">
+    <span>&#128100; Mon profil</span>
+    <button class="modalClose" onclick="closeProfileModal()">&times;</button>
+  </div>
+  <div class="modalBody">
+    <div style="padding:14px;background:var(--surface2);border-radius:10px;margin-bottom:12px;">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
         <div>
           <div style="font-size:13px;font-weight:600;">&#127758; Visible dans l'annuaire</div>
@@ -1889,14 +1904,9 @@ async function loadPDF() {
         <div style="font-size:10px;color:var(--text3);margin-top:4px;text-align:center;">Sauvegarde automatique</div>
       </div>
     </div>
-    <div style="display:flex;flex-direction:column;gap:10px;">
-      <button class="btn btnOutline" style="padding:12px;font-size:13px;" onclick="changePassword()">&#128274; Changer le mot de passe</button>
-      <button class="btn btnOutline" style="padding:12px;font-size:13px;" onclick="changeEmail()">&#9993; Changer l'email</button>
-      <button class="btn btnOutline" style="padding:12px;font-size:13px;" onclick="closeAccountModal();showRoleChangeModal()">&#128101; Changer de role</button>
-      <button class="btn btnDanger" style="padding:12px;font-size:13px;margin-top:10px;" onclick="deleteAccount()">&#128465; Supprimer mon compte</button>
-    </div>
   </div>
 </div>
+
 <div class="modal" id="teamModal" style="max-width:520px;">
   <div class="modalHeader" style="display:flex;justify-content:space-between;align-items:center;">
     <span>&#128101; Equipe</span>
@@ -2285,6 +2295,7 @@ function getStatusLabel(s) { return (STATUS_CONFIG[s] || {}).label || s || ''; }
 // ── Splash Changelog (update this with each significant version) ──
 // Full versioned changelog — add new entries at TOP
 const VERSION_CHANGELOG = [
+  { v: '7.47', changes: ['Popup Mon profil dediee (annuaire/marketplace)', 'Separation claire: Mon profil (public) vs Mon compte (prive)', 'Nouveau bouton 👤 dans le header'] },
   { v: '7.46', changes: ['Sections Bien repliables (concierge + proprietaire)', 'Mode proprietaire: photo a gauche comme concierge', 'Notes integrees dans Horaires & Acces', 'Fleche de repli animee'] },
   { v: '7.45', changes: ['Popup details au clic sur une carte prestation', 'Texte explicatif pour la section iCal (fin/debut de location vs recurrents)'] },
   { v: '7.44', changes: ['Barre de completion: chaque item manquant est cliquable', 'Scroll + highlight vers le champ a completer', 'Ouverture auto section iCal si besoin'] },
@@ -8326,6 +8337,41 @@ function closeAccountModal() {
   document.getElementById('overlay').style.display = 'none';
   document.getElementById('accountModal').style.display = 'none';
 }
+
+async function showProfileModal() {
+  const { data: { user } } = await sb.auth.getUser();
+  if (!user) return;
+  // Load marketplace profile from DB
+  try {
+    const { data: mkProfile } = await sb.from('marketplace_profiles').select('*').eq('user_id', user.id).maybeSingle();
+    const toggle = document.getElementById('mkVisibleToggle');
+    const fields = document.getElementById('mkProfileFields');
+    const visible = !!(mkProfile && mkProfile.visible);
+    if (toggle) toggle.checked = visible;
+    // Style toggle track
+    const spans = toggle?.parentElement?.querySelectorAll('span');
+    if (spans && spans[0]) spans[0].style.background = visible ? 'var(--accent)' : 'var(--border2)';
+    if (spans && spans[1]) spans[1].style.left = visible ? '22px' : '2px';
+    if (fields) fields.style.display = visible ? 'flex' : 'none';
+    if (mkProfile) {
+      const name = document.getElementById('mkName'); if (name) name.value = mkProfile.display_name || '';
+      const city = document.getElementById('mkCity'); if (city) city.value = mkProfile.city || '';
+      const phone = document.getElementById('mkPhone'); if (phone) phone.value = mkProfile.phone || '';
+      const desc = document.getElementById('mkDescription'); if (desc) desc.value = mkProfile.description || '';
+      const years = document.getElementById('mkExperienceYears'); if (years) years.value = mkProfile.experience_years || '';
+      const avail = document.getElementById('mkAvailability'); if (avail) avail.value = mkProfile.availability || 'available';
+    }
+    // Render service checkboxes
+    if (typeof renderMkServiceCheckboxes === 'function') renderMkServiceCheckboxes(mkProfile && mkProfile.services ? mkProfile.services : []);
+  } catch(e) { console.error('showProfileModal error:', e); }
+  document.getElementById('overlay').style.display = 'block';
+  document.getElementById('profileModal').style.display = 'block';
+}
+
+function closeProfileModal() {
+  document.getElementById('overlay').style.display = 'none';
+  document.getElementById('profileModal').style.display = 'none';
+}
 /* ── Team Management ── */
 async function showTeamModal() {
   const org = API.getOrg();
@@ -13477,12 +13523,7 @@ async function loadMarketplaceProfile() {
   }
 }
 
-// Hook into showAccountModal to load marketplace profile
-const _origShowAccountModal = showAccountModal;
-showAccountModal = async function() {
-  await _origShowAccountModal();
-  loadMarketplaceProfile();
-};
+// Marketplace profile is now loaded by showProfileModal() directly
 
 // ─── Service Requests ───
 async function showServiceRequestModal() {
