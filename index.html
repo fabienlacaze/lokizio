@@ -12,7 +12,7 @@
 </script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://js.stripe.com https://unpkg.com; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.stripe.com https://nominatim.openstreetmap.org https://*.tile.openstreetmap.org; img-src 'self' data: blob: https:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net https://unpkg.com; font-src 'self' data: https://fonts.gstatic.com; frame-src https://js.stripe.com https://hooks.stripe.com; object-src 'none'; base-uri 'self'; form-action 'self';">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://js.stripe.com https://unpkg.com; connect-src 'self' https://cdn.jsdelivr.net https://*.supabase.co wss://*.supabase.co https://api.stripe.com https://nominatim.openstreetmap.org https://*.tile.openstreetmap.org; img-src 'self' data: blob: https:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net https://unpkg.com; font-src 'self' data: https://fonts.gstatic.com; frame-src https://js.stripe.com https://hooks.stripe.com; object-src 'none'; base-uri 'self'; form-action 'self';">
 <meta name="theme-color" content="#1a1a2e">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -625,6 +625,10 @@ async function loadPDF() {
     padding: 18px 22px; font-size: 16px; font-weight: 600; color: #fff;
     border-bottom: 1px solid var(--border);
   }
+  /* Annuaire sub-tabs */
+  .annSubTab { background: transparent; color: var(--text3); transition: background 0.15s, color 0.15s; }
+  .annSubTab:hover { color: var(--text); }
+  .annSubTabActive { background: var(--accent); color: #fff !important; }
   /* Stacked popup overlay (shown on top of existing modal) */
   .stackedOverlay {
     display: none; position: fixed;
@@ -1135,7 +1139,7 @@ async function loadPDF() {
 </script>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v7.93</div>
+<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v7.96</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -1145,7 +1149,7 @@ async function loadPDF() {
     <!-- Broom that sweeps -->
     <div id="splashBroom" style="position:absolute;top:50%;left:-60px;font-size:48px;transform:translateY(-50%) rotate(-30deg);opacity:0;transition:all 0.8s cubic-bezier(0.25,0.46,0.45,0.94);">✨</div>
   </div>
-  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v7.93</span></div>
+  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v7.96</span></div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie pour locations</div>
   <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou</div>
   <!-- Loading bar -->
@@ -1530,29 +1534,39 @@ async function loadPDF() {
     <div id="annuaireRequests"></div>
     <!-- My profile completeness -->
     <div id="annuaireMyProfile"></div>
-    <!-- Filters -->
-    <div id="annuaireFilters" style="margin-bottom:12px;">
-      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;">
-        <select id="annRoleFilter" onchange="filterAnnuaire()" style="padding:8px 12px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:13px;">
-          <option value="">Tous les profils</option>
-          <option value="provider">Prestataires</option>
-          <option value="owner">Proprietaires</option>
-          <option value="concierge">Conciergeries</option>
-        </select>
-        <input type="text" id="annCityFilter" placeholder="Ville ou code postal..." oninput="filterAnnuaire()" style="flex:1;min-width:120px;padding:8px 12px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:13px;">
-        <select id="annSortFilter" onchange="filterAnnuaire()" style="padding:8px 12px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:13px;">
-          <option value="recent">Plus recents</option>
-          <option value="rating">Meilleure note</option>
-          <option value="cleanings">Plus d'experience</option>
-        </select>
-      </div>
-      <!-- Service filter chips -->
-      <div id="annServiceFilters" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;"></div>
+
+    <!-- Sub-tabs: Mes contacts / Rechercher -->
+    <div style="display:flex;gap:4px;background:var(--surface2);padding:4px;border-radius:10px;margin-bottom:14px;">
+      <button id="annSubTab_team" class="annSubTab annSubTabActive" onclick="switchAnnuaireSubTab('team')" style="flex:1;padding:10px 14px;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">&#128101; Mes contacts</button>
+      <button id="annSubTab_search" class="annSubTab" onclick="switchAnnuaireSubTab('search')" style="flex:1;padding:10px 14px;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">&#128269; Rechercher</button>
     </div>
-    <!-- My team -->
-    <div id="annuaireTeam"></div>
-    <!-- Marketplace results -->
-    <div id="annuaireResults" style="min-height:200px;"></div>
+
+    <!-- Panel: Mes contacts (team) -->
+    <div id="annuairePanel_team">
+      <div id="annuaireTeam"></div>
+    </div>
+
+    <!-- Panel: Rechercher -->
+    <div id="annuairePanel_search" style="display:none;">
+      <div id="annuaireFilters" style="margin-bottom:12px;">
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;">
+          <select id="annRoleFilter" onchange="filterAnnuaire()" style="padding:8px 12px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:13px;">
+            <option value="">Tous les profils</option>
+            <option value="provider">Prestataires</option>
+            <option value="owner">Proprietaires</option>
+            <option value="concierge">Conciergeries</option>
+          </select>
+          <input type="text" id="annCityFilter" placeholder="Ville ou code postal..." oninput="filterAnnuaire()" style="flex:1;min-width:120px;padding:8px 12px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:13px;">
+          <select id="annSortFilter" onchange="filterAnnuaire()" style="padding:8px 12px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:13px;">
+            <option value="recent">Plus recents</option>
+            <option value="rating">Meilleure note</option>
+            <option value="cleanings">Plus d'experience</option>
+          </select>
+        </div>
+        <div id="annServiceFilters" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;"></div>
+      </div>
+      <div id="annuaireResults" style="min-height:200px;"></div>
+    </div>
   </div><!-- /tabAnnuaire -->
 
   <!-- ═══ TAB: PRESTATIONS ═══ -->
@@ -1774,7 +1788,7 @@ async function loadPDF() {
   <div style="margin-top:4px;">
     <a href="privacy.html" target="_blank" style="color:var(--text3);text-decoration:none;margin:0 8px;">Confidentialite</a>
     <span>•</span>
-    <a href="mailto:cleaningmanager.service@outlook.com" style="color:var(--text3);text-decoration:none;margin:0 8px;">Contact</a>
+    <a href="mailto:lokizio.service@outlook.com" style="color:var(--text3);text-decoration:none;margin:0 8px;">Contact</a>
     <span>•</span>
     <a href="#" id="footerPremiumLink" onclick="showPremiumModal();return false;" style="color:var(--accent2);text-decoration:none;margin:0 8px;">Premium</a>
   </div>
@@ -2422,6 +2436,8 @@ function getStatusLabel(s) { return (STATUS_CONFIG[s] || {}).label || s || ''; }
 // ── Splash Changelog (update this with each significant version) ──
 // Full versioned changelog — add new entries at TOP
 const VERSION_CHANGELOG = [
+  { v: '7.96', changes: ['Footer Contact: email mis a jour lokizio.service@outlook.com', 'privacy.html: Cleaning Manager -> Lokizio, date maj 18 avril 2026', 'CSP: autorise connexion a cdn.jsdelivr.net (source maps)'] },
+  { v: '7.95', changes: ['Popup Premium essai: "Activer Premium" demarre Stripe checkout, "Passer en gratuit" confirme', 'Annuaire: 2 sous-onglets Mes contacts / Rechercher'] },
   { v: '7.93', changes: ['Popup Premium: bouton "Actuel" devient "Gerer / Annuler" (Stripe Portal) si abonnement Stripe actif', 'Bouton Gratuit devient "Retrograder" permettant aussi d\'ouvrir Stripe Portal', 'Affiche "Actuel (essai)" si en periode d\'essai sans Stripe'] },
   { v: '7.92', changes: ['Bloc PLAN cliquable: ouvre Stripe Portal si abonne, sinon popup Premium', 'Texte info stockage Supabase (Frankfurt, UE, TLS) dans Mon profil personnel et popup suppression'] },
   { v: '7.91', changes: ['Auto-save profils: declenche aussi sur oninput (en temps reel debounce)', 'Flush des saves en attente a la fermeture de la popup (plus de perte de donnees)'] },
@@ -9165,13 +9181,28 @@ function showPremiumModal(reason) {
         upgradeBtn.style.background = '';
         upgradeBtn.onclick = () => { closePremiumModal(); openStripePortal(); };
       } else {
-        upgradeBtn.textContent = 'Actuel (essai)';
-        upgradeBtn.disabled = true;
-        upgradeBtn.style.background = 'var(--success)';
-        upgradeBtn.onclick = null;
+        upgradeBtn.textContent = 'Activer Premium';
+        upgradeBtn.disabled = false;
+        upgradeBtn.style.background = '';
+        upgradeBtn.onclick = upgradeToPremium;
       }
     }
-    if (freeBtn) { freeBtn.textContent = 'Retrograder'; freeBtn.disabled = !hasStripe; freeBtn.onclick = hasStripe ? (() => { closePremiumModal(); openStripePortal(); }) : null; }
+    if (freeBtn) {
+      if (hasStripe) {
+        freeBtn.textContent = 'Retrograder';
+        freeBtn.disabled = false;
+        freeBtn.onclick = () => { closePremiumModal(); openStripePortal(); };
+      } else {
+        freeBtn.textContent = 'Passer en gratuit';
+        freeBtn.disabled = false;
+        freeBtn.onclick = async () => {
+          const ok = await customConfirm('Retrograder au plan Gratuit ? Vous perdrez les fonctionnalites Premium a la fin de votre essai.', 'Confirmation');
+          if (!ok) return;
+          showToast('Votre essai continuera sans souscription a la fin');
+          closePremiumModal();
+        };
+      }
+    }
   } else {
     if (upgradeBtn) { upgradeBtn.textContent = 'Premium'; upgradeBtn.disabled = false; upgradeBtn.style.background = ''; upgradeBtn.onclick = upgradeToPremium; }
     if (freeBtn) { freeBtn.textContent = 'Actuel'; freeBtn.disabled = true; }
@@ -9225,10 +9256,10 @@ async function openStripePortal() {
     });
     const data = await resp.json();
     if (data.url) { window.location.href = data.url; return; }
-    showToast('Contactez cleaningmanager.service@gmail.com pour gerer votre abonnement.');
+    showToast('Contactez lokizio.service@outlook.com pour gerer votre abonnement.');
   } catch(e) {
     console.error('Portal error:', e);
-    showToast('Contactez cleaningmanager.service@gmail.com pour gerer votre abonnement.');
+    showToast('Contactez lokizio.service@outlook.com pour gerer votre abonnement.');
   }
 }
 function checkProviderLimit() {
@@ -13535,6 +13566,25 @@ function toggleAnnServiceFilter(btn) {
     btn.style.borderColor = '#6c63ff';
   }
   filterAnnuaire();
+}
+
+function switchAnnuaireSubTab(tab) {
+  const teamBtn = document.getElementById('annSubTab_team');
+  const searchBtn = document.getElementById('annSubTab_search');
+  const teamPanel = document.getElementById('annuairePanel_team');
+  const searchPanel = document.getElementById('annuairePanel_search');
+  if (!teamBtn || !searchBtn || !teamPanel || !searchPanel) return;
+  if (tab === 'team') {
+    teamBtn.classList.add('annSubTabActive');
+    searchBtn.classList.remove('annSubTabActive');
+    teamPanel.style.display = '';
+    searchPanel.style.display = 'none';
+  } else {
+    searchBtn.classList.add('annSubTabActive');
+    teamBtn.classList.remove('annSubTabActive');
+    teamPanel.style.display = 'none';
+    searchPanel.style.display = '';
+  }
 }
 
 function filterAnnuaire() {
