@@ -1122,7 +1122,7 @@ async function loadPDF() {
 </script>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v7.69</div>
+<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v7.70</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -1132,7 +1132,7 @@ async function loadPDF() {
     <!-- Broom that sweeps -->
     <div id="splashBroom" style="position:absolute;top:50%;left:-60px;font-size:48px;transform:translateY(-50%) rotate(-30deg);opacity:0;transition:all 0.8s cubic-bezier(0.25,0.46,0.45,0.94);">✨</div>
   </div>
-  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v7.69</span></div>
+  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v7.70</span></div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie pour locations</div>
   <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou</div>
   <!-- Loading bar -->
@@ -1413,7 +1413,7 @@ async function loadPDF() {
   <div id="kpiCards" class="anim-stagger" style="display:none;"></div>
 
   <!-- Quick actions (collapsible) -->
-  <details open id="quickActionsWrapper" style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:14px;">
+  <details id="quickActionsWrapper" style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:14px;">
     <summary style="list-style:none;cursor:pointer;display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
       <div style="font-size:14px;font-weight:700;color:var(--text);">&#9889; Raccourcis</div>
       <span class="collapseArrow">&#9662;</span>
@@ -2406,6 +2406,7 @@ function getStatusLabel(s) { return (STATUS_CONFIG[s] || {}).label || s || ''; }
 // ── Splash Changelog (update this with each significant version) ──
 // Full versioned changelog — add new entries at TOP
 const VERSION_CHANGELOG = [
+  { v: '7.70', changes: ['Sections dashboard fermees par defaut au lancement de l\'appli', 'Raccourcis, Aujourd\'hui, Prochaines, Activite, Analytique: tous collapses'] },
   { v: '7.69', changes: ['Fix centrage des popups (animation overrait le translate(-50%,-50%))', 'Croix de fermeture ajoutee dans msgModal (popup Inviter, changelog, etc.)'] },
   { v: '7.68', changes: ['Section "Aujourd\'hui" rendue repliable dans les dashboards admin et proprio'] },
   { v: '7.67', changes: ['Mon profil personnel simplifie: infos editables + carte Securite compacte', 'Email/Mot de passe/Role en lignes avec bouton Modifier (plus de gros boutons en bas)'] },
@@ -4712,7 +4713,7 @@ async function showProviderMode() {
     return d > today && !['done','cancelled','departed'].includes(u.status);
   }).slice(0, 8);
   if (upcomingItems.length > 0) {
-    html += '<details open style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:12px;">';
+    html += '<details style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:12px;">';
     html += '<summary style="list-style:none;cursor:pointer;display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;"><div style="font-weight:700;font-size:14px;">&#128203; Prochaines prestations</div><span class="collapseArrow">&#9662;</span></summary>';
     upcomingItems.forEach(u => {
       html += '<div onclick="goToPrestation(\'' + (u.date||'') + '\',\'' + (u.type||'') + '\',\'\')" style="display:flex;align-items:center;gap:8px;padding:8px 0;border-top:1px solid var(--border);cursor:pointer;" onmouseover="this.style.background=\'rgba(255,255,255,0.03)\'" onmouseout="this.style.background=\'\'">';
@@ -4733,7 +4734,7 @@ async function showProviderMode() {
   try {
     const { data: recentMsgs } = await sb.from('messages').select('*').eq('org_id', org.id).order('created_at', { ascending: false }).limit(10);
     if (recentMsgs && recentMsgs.length) {
-      html += '<details open style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:12px;">';
+      html += '<details style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:12px;">';
       html += '<summary style="list-style:none;cursor:pointer;display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;"><div style="font-weight:700;font-size:14px;">&#128276; Activite recente</div><span class="collapseArrow">&#9662;</span></summary>';
       recentMsgs.forEach(m => {
         const d = new Date(m.created_at);
@@ -5782,7 +5783,7 @@ async function showOwnerMode() {
   // Today's cleanings summary in overview
   const todayCleaningsOwner = allCleanings.filter(c => (c.cleaningDate || c.date) === today);
   if (todayCleaningsOwner.length > 0) {
-    html += `<details open style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:12px;">
+    html += `<details style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:12px;">
       <summary style="list-style:none;cursor:pointer;display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;"><div style="font-weight:700;font-size:14px;">&#128197; Aujourd'hui — ${todayCleaningsOwner.length} prestation(s)</div><span class="collapseArrow">&#9662;</span></summary>`;
     todayCleaningsOwner.forEach(c => {
       const key = c.propertyId + '_' + (c.cleaningDate || c.date) + '_' + (c.provider || '');
@@ -5797,7 +5798,7 @@ async function showOwnerMode() {
     });
     html += '</details>';
   } else {
-    html += `<details open style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:12px;">
+    html += `<details style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:12px;">
       <summary style="list-style:none;cursor:pointer;display:flex;justify-content:space-between;align-items:center;"><div style="font-weight:700;font-size:14px;">&#128197; Aujourd'hui</div><span class="collapseArrow">&#9662;</span></summary>
       <div style="color:var(--text3);font-size:13px;margin-top:8px;">Aucune prestation prevue aujourd'hui</div>
     </details>`;
@@ -5811,7 +5812,7 @@ async function showOwnerMode() {
   if (ownerUpcoming.length > 0) {
     const _osc = { done:'#34d399', in_progress:'#3b82f6', assigned:'#8b5cf6', accepted:'#34d399', pending:'#f59e0b', pending_validation:'#f59e0b', refused:'#ef4444' };
     const _osl = { done:'Termine', in_progress:'En cours', assigned:'En attente de reponse', accepted:'Accepte', pending:'Attente', pending_validation:'Validation', refused:'Refuse' };
-    html += '<details open style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:12px;">';
+    html += '<details style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:12px;">';
     html += '<summary style="list-style:none;cursor:pointer;display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;"><div style="font-weight:700;font-size:14px;">&#128203; Prochaines prestations</div><span class="collapseArrow">&#9662;</span></summary>';
     ownerUpcoming.forEach(u => {
       const svcLabel = getServiceLabel(u.type);
@@ -5957,7 +5958,7 @@ async function showOwnerMode() {
   if (isOwnerPro) {
     const { data: recentMsgs } = await sb.from('messages').select('*').eq('org_id', org.id).eq('sender_role', 'provider').order('created_at', { ascending: false }).limit(10);
     if (recentMsgs && recentMsgs.length) {
-      activityHtml += `<details open style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:12px;">
+      activityHtml += `<details style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:12px;">
         <summary style="list-style:none;cursor:pointer;display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;"><div style="font-weight:700;font-size:14px;">&#128276; Activite recente</div><span class="collapseArrow">&#9662;</span></summary>`;
       recentMsgs.forEach(m => {
         const time = new Date(m.created_at).toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
@@ -12149,7 +12150,7 @@ function renderDashboardContent() {
   // Today section
   const div1 = document.getElementById('dashTodayCleanings');
   if (div1) {
-    let html = '<details open style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:12px;">';
+    let html = '<details style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:12px;">';
     html += '<summary style="list-style:none;cursor:pointer;display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;"><div style="font-size:14px;font-weight:700;color:var(--text);">&#128197; Aujourd\'hui — ' + todayItems.length + ' prestation(s)</div><span class="collapseArrow">&#9662;</span></summary>';
     if (todayItems.length === 0) {
       html += '<div style="color:var(--text3);font-size:13px;">Aucune prestation aujourd\'hui</div>';
@@ -12170,7 +12171,7 @@ function renderDashboardContent() {
   // Upcoming section
   const div2 = document.getElementById('dashPendingRequests');
   if (div2 && upcomingItems.length > 0) {
-    let html = '<details open style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;">';
+    let html = '<details style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;">';
     html += '<summary style="list-style:none;cursor:pointer;display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;"><div style="font-size:14px;font-weight:700;color:var(--text);">&#128203; Prochaines prestations</div><span class="collapseArrow">&#9662;</span></summary>';
     upcomingItems.forEach(u => {
       html += '<div onclick="goToPrestation(\'' + u.date + '\',\'' + (u.type||'') + '\',\'' + esc(u.provider||'').replace(/'/g,"\\'") + '\')" style="display:flex;align-items:center;gap:8px;padding:8px 0;border-top:1px solid var(--border);cursor:pointer;" onmouseover="this.style.background=\'rgba(255,255,255,0.03)\'" onmouseout="this.style.background=\'\'">';
@@ -12227,7 +12228,7 @@ function renderDashboardContent() {
     const trendColor = trend >= 0 ? '#34d399' : '#ef4444';
     const trendIcon = trend >= 0 ? '&#9650;' : '&#9660;';
 
-    let html = '<details open style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-top:12px;">';
+    let html = '<details style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-top:12px;">';
     html += '<summary style="list-style:none;cursor:pointer;display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;"><div style="font-size:14px;font-weight:700;color:var(--text);">&#128202; Analytique du mois</div><span class="collapseArrow">&#9662;</span></summary>';
     html += '<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;">';
     html += '<div style="background:var(--surface2);border-radius:10px;padding:12px;text-align:center;"><div style="font-size:22px;font-weight:800;color:var(--text);">' + thisMonthCount + '</div><div style="font-size:10px;color:var(--text3);">Prestations terminees</div>';
