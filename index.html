@@ -1051,7 +1051,7 @@ async function loadPDF() {
 </script>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v7.29</div>
+<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v7.30</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -1061,7 +1061,7 @@ async function loadPDF() {
     <!-- Broom that sweeps -->
     <div id="splashBroom" style="position:absolute;top:50%;left:-60px;font-size:48px;transform:translateY(-50%) rotate(-30deg);opacity:0;transition:all 0.8s cubic-bezier(0.25,0.46,0.45,0.94);">✨</div>
   </div>
-  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v7.29</span></div>
+  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v7.30</span></div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie pour locations</div>
   <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou</div>
   <!-- Loading bar -->
@@ -2271,6 +2271,7 @@ function getStatusLabel(s) { return (STATUS_CONFIG[s] || {}).label || s || ''; }
 // ── Splash Changelog (update this with each significant version) ──
 // Full versioned changelog — add new entries at TOP
 const VERSION_CHANGELOG = [
+  { v: '7.30', changes: ['Fix lien reset password: formulaire nouveau mot de passe affiche', 'Templates emails Supabase rebrandes Lokizio', 'Detection type=recovery dans URL hash'] },
   { v: '7.29', changes: ['Fix deconnexion: statut se met a jour immediatement', 'Reload memberships apres retrait', 'Log erreur si suppression echoue'] },
   { v: '7.28', changes: ['Notification quand un membre est retire', 'Notification quand une demande est refusee', 'Rafraichissement immediat apres retrait'] },
   { v: '7.27', changes: ['Reassignation auto apres refus prestataire', 'Validation proprio: verification statut obligatoire', 'finalizeServiceCompletion: gestion erreur complete', 'Catch vides critiques corriges'] },
@@ -3374,9 +3375,74 @@ function restorePanelStates() {
 }
 
 /* ── Init ── */
+// Show "new password" form when user arrives from reset password email
+async function showPasswordRecoveryForm() {
+  // Hide auth screen and app, show recovery form
+  const authScreen = document.getElementById('authScreen');
+  const appMain = document.getElementById('appMain');
+  if (authScreen) authScreen.style.display = 'none';
+  if (appMain) appMain.style.display = 'none';
+
+  // Remove any splash
+  const splash = document.getElementById('splashScreen');
+  if (splash) splash.style.display = 'none';
+
+  const overlay = document.createElement('div');
+  overlay.id = 'recoveryOverlay';
+  overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px;';
+  overlay.innerHTML = `
+    <div style="max-width:400px;width:100%;background:#1a1a2e;border-radius:16px;padding:32px;border:1px solid rgba(255,255,255,0.06);">
+      <div style="text-align:center;margin-bottom:24px;">
+        <div style="width:60px;height:60px;background:linear-gradient(135deg,#e94560,#6c63ff);border-radius:16px;display:inline-flex;align-items:center;justify-content:center;font-size:28px;font-weight:800;color:#fff;">L</div>
+        <h2 style="color:#fff;font-size:20px;margin:16px 0 8px;">&#128274; Nouveau mot de passe</h2>
+        <p style="color:#9ca3af;font-size:13px;margin:0;">Definissez votre nouveau mot de passe pour Lokizio</p>
+      </div>
+      <input type="password" id="recoveryPwd1" placeholder="Nouveau mot de passe" style="width:100%;padding:12px 16px;background:#0f0f1a;color:#fff;border:1px solid rgba(255,255,255,0.1);border-radius:10px;font-size:14px;margin-bottom:10px;box-sizing:border-box;font-family:Inter,sans-serif;">
+      <input type="password" id="recoveryPwd2" placeholder="Confirmez le mot de passe" style="width:100%;padding:12px 16px;background:#0f0f1a;color:#fff;border:1px solid rgba(255,255,255,0.1);border-radius:10px;font-size:14px;margin-bottom:16px;box-sizing:border-box;font-family:Inter,sans-serif;">
+      <div id="recoveryMsg" style="color:#e94560;font-size:12px;margin-bottom:12px;min-height:16px;"></div>
+      <button onclick="submitPasswordRecovery()" style="width:100%;padding:14px;background:linear-gradient(135deg,#e94560,#c73e54);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;">Mettre a jour le mot de passe</button>
+      <button onclick="cancelPasswordRecovery()" style="width:100%;padding:10px;background:transparent;color:#9ca3af;border:none;font-size:12px;cursor:pointer;margin-top:8px;">Annuler</button>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+}
+
+async function submitPasswordRecovery() {
+  const p1 = document.getElementById('recoveryPwd1').value;
+  const p2 = document.getElementById('recoveryPwd2').value;
+  const msg = document.getElementById('recoveryMsg');
+  if (!p1 || p1.length < 6) { msg.textContent = 'Mot de passe trop court (6 caracteres minimum)'; return; }
+  if (p1 !== p2) { msg.textContent = 'Les mots de passe ne correspondent pas'; return; }
+  msg.textContent = '';
+  try {
+    const { error } = await sb.auth.updateUser({ password: p1 });
+    if (error) throw error;
+    msg.style.color = '#34d399';
+    msg.textContent = 'Mot de passe mis a jour ! Redirection...';
+    setTimeout(() => {
+      window.location.hash = '';
+      window.location.reload();
+    }, 1500);
+  } catch(e) {
+    msg.style.color = '#e94560';
+    msg.textContent = 'Erreur: ' + (e.message || 'Impossible de mettre a jour');
+  }
+}
+
+function cancelPasswordRecovery() {
+  window.location.hash = '';
+  window.location.reload();
+}
+
 async function init() {
   // Init theme button icon
   if(document.documentElement.getAttribute('data-theme')==='light'&&document.getElementById('themeBtn'))document.getElementById('themeBtn').innerHTML='&#9790;';
+
+  // Handle password recovery (from reset email link)
+  if (window.location.hash && window.location.hash.includes('type=recovery')) {
+    showPasswordRecoveryForm();
+    return;
+  }
 
   // Load plan (also loads org + member)
   await API.load_plan();
