@@ -1140,7 +1140,7 @@ async function loadPDF() {
 </script>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v8.52</div>
+<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v8.53</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -1150,7 +1150,7 @@ async function loadPDF() {
     <!-- Broom that sweeps -->
     <div id="splashBroom" style="position:absolute;top:50%;left:-60px;font-size:48px;transform:translateY(-50%) rotate(-30deg);opacity:0;transition:all 0.8s cubic-bezier(0.25,0.46,0.45,0.94);">✨</div>
   </div>
-  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v8.52</span></div>
+  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v8.53</span></div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie pour locations</div>
   <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou</div>
   <!-- Loading bar -->
@@ -2509,6 +2509,7 @@ function getStatusLabel(s) { return (STATUS_CONFIG[s] || {}).label || s || ''; }
 // ── Splash Changelog (update this with each significant version) ──
 // Full versioned changelog — add new entries at TOP
 const VERSION_CHANGELOG = [
+  { v: '8.53', changes: ['Prestataire: ordre des onglets Factures aligne sur concierge - Creer | Auto | Consulter'] },
   { v: '8.52', changes: ['Prestataire: nouvel onglet Auto dans Factures - facturation auto aux conciergeries et proprietaires', 'Edge Function auto-bill refactoree pour gerer 2 roles (concierge + provider)', 'Types supportes: provider_to_concierge (groupe par concierge) et provider_to_owner (prestations en direct)', 'DB: billing_settings etendu (user_id + role), RLS elargie au role provider'] },
   { v: '8.51', changes: ['Auto-billing: dropdown Frequence simplifie (Mensuelle uniquement, biweekly retire car incoherent avec jour fixe)', 'Popup de confirmation "Tester maintenant" utilise customConfirm (plus de popup native moche)'] },
   { v: '8.50', changes: ['Finance: 3eme onglet "Auto" - Facturation automatique parametrable (toggle, frequence, jour, periode, statut, echeance, types)', 'Bouton "Tester maintenant" pour declencher une generation manuelle', 'Edge Function auto-bill + pg_cron quotidien (setup-auto-bill-cron.sql)', 'SQL: add-billing-settings.sql (billing_settings + billing_runs pour eviter doublons)'] },
@@ -5155,9 +5156,9 @@ async function showProviderMode() {
   html += '<div style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:12px;">💰 Mes revenus</div>';
   // Tabs
   html += '<div style="display:flex;gap:4px;background:var(--surface2);padding:4px;border-radius:10px;margin-bottom:14px;">';
-  html += '<button id="provFinTab_list" class="annSubTab annSubTabActive" onclick="switchProvFinTab(\'list\')" style="flex:1;padding:10px 14px;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">&#128196; Consulter</button>';
   html += '<button id="provFinTab_create" class="annSubTab" onclick="switchProvFinTab(\'create\')" style="flex:1;padding:10px 14px;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">&#10133; Creer</button>';
   html += '<button id="provFinTab_auto" class="annSubTab" onclick="switchProvFinTab(\'auto\')" style="flex:1;padding:10px 14px;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">&#9889; Auto</button>';
+  html += '<button id="provFinTab_list" class="annSubTab annSubTabActive" onclick="switchProvFinTab(\'list\')" style="flex:1;padding:10px 14px;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">&#128196; Consulter</button>';
   html += '</div>';
   html += '<div id="provFinPanel_auto" style="display:none;"><div id="provAutoBillingPanel"></div></div>';
   html += '<div id="provFinPanel_create" style="display:none;">';
