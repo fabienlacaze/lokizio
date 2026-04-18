@@ -1140,7 +1140,7 @@ async function loadPDF() {
 </script>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v8.48</div>
+<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v8.49</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -1150,7 +1150,7 @@ async function loadPDF() {
     <!-- Broom that sweeps -->
     <div id="splashBroom" style="position:absolute;top:50%;left:-60px;font-size:48px;transform:translateY(-50%) rotate(-30deg);opacity:0;transition:all 0.8s cubic-bezier(0.25,0.46,0.45,0.94);">✨</div>
   </div>
-  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v8.48</span></div>
+  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v8.49</span></div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie pour locations</div>
   <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou</div>
   <!-- Loading bar -->
@@ -2504,6 +2504,7 @@ function getStatusLabel(s) { return (STATUS_CONFIG[s] || {}).label || s || ''; }
 // ── Splash Changelog (update this with each significant version) ──
 // Full versioned changelog — add new entries at TOP
 const VERSION_CHANGELOG = [
+  { v: '8.49', changes: ['Popup facture: boutons Brouillon/Envoyer desactives tant que les infos minimales manquent (client + 1 ligne valide), message d\'erreur live'] },
   { v: '8.48', changes: ['Popup facture: dropdown Client toujours affiche (filtre par role) + option "Saisir un autre nom..." qui revele un champ texte libre'] },
   { v: '8.47', changes: ['Prestataire peut maintenant emettre une facture directement a un proprietaire (type provider_to_owner)', 'Owner voit les factures recues des prestataires en plus des factures de la conciergerie'] },
   { v: '8.46', changes: ['Popup creer facture: refonte complete (header colore, dropdown client, periode + echeance, tableau lignes avec totaux ligne, totaux HT/TVA/TTC, auto-remplissage)', 'Fix: insert facture resilient aux colonnes manquantes (client_address, total_ht, etc.) - le bouton Brouillon/Envoyer fonctionne maintenant meme sur anciens schemas'] },
@@ -7526,7 +7527,7 @@ async function showCreateInvoiceModal(type) {
   // Custom text field (hidden by default, shown when user picks "Autre" or if no clients)
   const showCustom = clients.length === 0;
   html += '<div id="invClientCustomWrap" style="' + (showCustom ? '' : 'display:none;') + 'margin-top:6px;">';
-  html += '<input id="invClient" type="text" placeholder="Nom du client (saisie libre)" style="width:100%;padding:10px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:13px;box-sizing:border-box;">';
+  html += '<input id="invClient" type="text" placeholder="Nom du client (saisie libre)" oninput="validateInvoiceForm()" style="width:100%;padding:10px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:13px;box-sizing:border-box;">';
   if (clients.length === 0) html += '<div style="font-size:10px;color:var(--text3);margin-top:3px;">Aucun contact trouve dans votre organisation. Saisissez le nom manuellement.</div>';
   html += '</div>';
   window._invoiceClients = clients;
@@ -7563,11 +7564,13 @@ async function showCreateInvoiceModal(type) {
   html += '<div id="invTotals" style="background:linear-gradient(135deg,rgba(108,99,255,0.1),rgba(108,99,255,0.05));border:1px solid rgba(108,99,255,0.3);border-radius:10px;padding:12px;margin-bottom:14px;"></div>';
 
   // Actions
+  html += '<div id="invValidationHint" style="font-size:11px;color:var(--text3);text-align:center;margin-bottom:8px;min-height:14px;"></div>';
   html += '<div style="display:flex;gap:8px;">';
   html += '<button class="btn btnOutline" style="flex:1;padding:12px;" onclick="closeMsg()">Annuler</button>';
-  html += '<button class="btn btnSmall" style="flex:1;padding:12px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);" onclick="saveInvoice(\'draft\',\'' + type + '\')">Brouillon</button>';
-  html += '<button class="btn" style="flex:1;padding:12px;background:linear-gradient(135deg,' + typeColor + ',' + typeColor + 'cc);color:#fff;border:none;font-weight:700;" onclick="saveInvoice(\'sent\',\'' + type + '\')">&#128228; Envoyer</button>';
+  html += '<button id="invBtnDraft" class="btn btnSmall" disabled style="flex:1;padding:12px;background:var(--surface2);color:var(--text3);border:1px solid var(--border2);opacity:0.5;cursor:not-allowed;" onclick="saveInvoice(\'draft\',\'' + type + '\')">Brouillon</button>';
+  html += '<button id="invBtnSend" class="btn" disabled style="flex:1;padding:12px;background:var(--surface2);color:var(--text3);border:1px solid var(--border2);font-weight:700;opacity:0.5;cursor:not-allowed;" onclick="saveInvoice(\'sent\',\'' + type + '\')">&#128228; Envoyer</button>';
   html += '</div></div>';
+  window._invoiceTypeColor = typeColor;
 
   showMsg(html, true);
   const titleEl = document.getElementById('msgTitle');
@@ -7596,9 +7599,57 @@ function onInvoiceClientChange() {
   const custom = document.getElementById('invClientCustomWrap');
   if (sel.value === '__custom__') {
     if (custom) custom.style.display = '';
-  } else if (custom) {
+  } else if (custom && (window._invoiceClients || []).length > 0) {
     custom.style.display = 'none';
   }
+  validateInvoiceForm();
+}
+
+function validateInvoiceForm() {
+  const sel = document.getElementById('invClientSelect');
+  const customInput = document.getElementById('invClient');
+  const hint = document.getElementById('invValidationHint');
+  const btnDraft = document.getElementById('invBtnDraft');
+  const btnSend = document.getElementById('invBtnSend');
+  if (!btnDraft || !btnSend) return;
+
+  const clients = window._invoiceClients || [];
+  let clientName = '';
+  if (sel && sel.value && sel.value !== '__custom__' && clients[parseInt(sel.value)]) {
+    clientName = clients[parseInt(sel.value)].name || clients[parseInt(sel.value)].label || '';
+  } else if (customInput) {
+    clientName = (customInput.value || '').trim();
+  }
+
+  const items = window._invoiceItems || [];
+  const validItems = items.filter(i => (i.description || '').trim() && (parseFloat(i.unit_price) || 0) > 0 && (parseFloat(i.quantity) || 0) > 0);
+
+  const errors = [];
+  if (!clientName) errors.push('Client manquant');
+  if (!validItems.length) errors.push('Au moins 1 ligne valide (description + qte + prix)');
+
+  const ok = errors.length === 0;
+  const tc = window._invoiceTypeColor || '#6c63ff';
+
+  [btnDraft, btnSend].forEach(b => {
+    b.disabled = !ok;
+    b.style.opacity = ok ? '1' : '0.5';
+    b.style.cursor = ok ? 'pointer' : 'not-allowed';
+  });
+  if (ok) {
+    btnDraft.style.color = 'var(--text)';
+    btnSend.style.background = 'linear-gradient(135deg,' + tc + ',' + tc + 'cc)';
+    btnSend.style.color = '#fff';
+    btnSend.style.border = 'none';
+  } else {
+    btnDraft.style.color = 'var(--text3)';
+    btnSend.style.background = 'var(--surface2)';
+    btnSend.style.color = 'var(--text3)';
+    btnSend.style.border = '1px solid var(--border2)';
+  }
+  if (hint) hint.textContent = ok ? '' : '&#9888; ' + errors.join(' · ');
+  if (hint && !ok) hint.innerHTML = '&#9888; ' + errors.join(' · ');
+  if (hint && ok) hint.innerHTML = '';
 }
 
 function addInvoiceItem() {
@@ -7620,7 +7671,7 @@ function renderInvoiceItems() {
   items.forEach((item, i) => {
     const lineTotal = (parseFloat(item.quantity) || 0) * (parseFloat(item.unit_price) || 0);
     html += '<div style="display:grid;grid-template-columns:1fr 60px 80px 70px 26px;gap:6px;margin-bottom:5px;align-items:center;">';
-    html += '<input type="text" value="' + esc(item.description || '') + '" placeholder="Description" onchange="window._invoiceItems[' + i + '].description=this.value" style="padding:7px 9px;background:var(--surface);color:var(--text);border:1px solid var(--border2);border-radius:6px;font-size:12px;min-width:0;">';
+    html += '<input type="text" value="' + esc(item.description || '') + '" placeholder="Description" oninput="window._invoiceItems[' + i + '].description=this.value;validateInvoiceForm()" style="padding:7px 9px;background:var(--surface);color:var(--text);border:1px solid var(--border2);border-radius:6px;font-size:12px;min-width:0;">';
     html += '<input type="number" value="' + (item.quantity || 1) + '" min="0.5" step="0.5" onchange="window._invoiceItems[' + i + '].quantity=parseFloat(this.value)||1;updateInvoiceTotals();renderInvoiceItems()" style="padding:7px 6px;background:var(--surface);color:var(--text);border:1px solid var(--border2);border-radius:6px;font-size:12px;text-align:center;min-width:0;">';
     html += '<input type="number" value="' + (item.unit_price || 0) + '" min="0" step="0.01" onchange="window._invoiceItems[' + i + '].unit_price=parseFloat(this.value)||0;updateInvoiceTotals();renderInvoiceItems()" style="padding:7px 6px;background:var(--surface);color:var(--text);border:1px solid var(--border2);border-radius:6px;font-size:12px;text-align:right;min-width:0;">';
     html += '<div style="font-size:12px;font-weight:700;color:var(--text);text-align:right;">' + lineTotal.toFixed(2) + '€</div>';
@@ -7648,6 +7699,7 @@ function updateInvoiceTotals() {
   }
   html += '<div style="display:flex;justify-content:space-between;font-size:14px;font-weight:700;border-top:1px solid var(--border2);padding-top:6px;"><span>Total TTC</span><span>' + total.toFixed(2) + ' \u20ac</span></div>';
   div.innerHTML = html;
+  validateInvoiceForm();
 }
 
 async function autoFillInvoiceItems(type) {
