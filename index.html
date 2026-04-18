@@ -1140,7 +1140,7 @@ async function loadPDF() {
 </script>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v8.20</div>
+<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v8.21</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -1150,7 +1150,7 @@ async function loadPDF() {
     <!-- Broom that sweeps -->
     <div id="splashBroom" style="position:absolute;top:50%;left:-60px;font-size:48px;transform:translateY(-50%) rotate(-30deg);opacity:0;transition:all 0.8s cubic-bezier(0.25,0.46,0.45,0.94);">✨</div>
   </div>
-  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v8.20</span></div>
+  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v8.21</span></div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie pour locations</div>
   <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou</div>
   <!-- Loading bar -->
@@ -2484,6 +2484,7 @@ function getStatusLabel(s) { return (STATUS_CONFIG[s] || {}).label || s || ''; }
 // ── Splash Changelog (update this with each significant version) ──
 // Full versioned changelog — add new entries at TOP
 const VERSION_CHANGELOG = [
+  { v: '8.21', changes: ['Graph revenus: courbe Benefice cumule ajoutee (orange)', 'Popup detail mensuel: lignes cliquables qui ouvrent la prestation correspondante et la highlight'] },
   { v: '8.20', changes: ['Calendrier: clic sur un evenement ouvre la liste, scrolle et highlight la carte correspondante (orange 1.5s)'] },
   { v: '8.19', changes: ['Calendrier: legende corrigee (couleur par prestataire + Service + Reservation)'] },
   { v: '8.18', changes: ['Revenus: sections "Detail mensuel" et "Evolution mensuelle" repliables', 'Graph: courbe Marge ajoutee (CA - Couts)', 'Graph: legende cliquable pour masquer/afficher chaque courbe'] },
@@ -8145,15 +8146,19 @@ function renderRevenueContent() {
     html += '</table>';
     html += '</details>';
 
-    // Line chart: revenue vs costs vs margin
+    // Line chart: revenue vs costs vs margin vs cumulative margin
     if (months.length >= 2) {
       const W = 600, H = 220, padL = 40, padR = 20, padT = 20, padB = 30;
       const innerW = W - padL - padR, innerH = H - padT - padB;
       let maxVal = 0, minVal = 0;
+      let cum = 0;
+      const cumMargin = {};
       months.forEach(m => {
         const margin = monthlyData[m].revenue - monthlyData[m].cost;
-        maxVal = Math.max(maxVal, monthlyData[m].revenue, monthlyData[m].cost, margin);
-        minVal = Math.min(minVal, margin);
+        cum += margin;
+        cumMargin[m] = cum;
+        maxVal = Math.max(maxVal, monthlyData[m].revenue, monthlyData[m].cost, margin, cum);
+        minVal = Math.min(minVal, margin, cum);
       });
       if (maxVal < 10) maxVal = 10;
       // Round up/down to nice steps including negative for margin
@@ -8163,7 +8168,11 @@ function renderRevenueContent() {
       const yFor = v => padT + innerH - ((v - niceMin) / range) * innerH;
       const step = months.length > 1 ? innerW / (months.length - 1) : innerW;
       const MONTHS_SHORT = ['Jan','Fev','Mar','Avr','Mai','Jun','Jul','Aou','Sep','Oct','Nov','Dec'];
-      const getVal = (m, key) => key === 'margin' ? (monthlyData[m].revenue - monthlyData[m].cost) : monthlyData[m][key];
+      const getVal = (m, key) => {
+        if (key === 'margin') return monthlyData[m].revenue - monthlyData[m].cost;
+        if (key === 'cumMargin') return cumMargin[m];
+        return monthlyData[m][key];
+      };
       const pts = (key) => months.map((m, i) => {
         const x = padL + i * step;
         const y = yFor(getVal(m, key));
@@ -8195,7 +8204,8 @@ function renderRevenueContent() {
       const series = [
         { key:'revenue', color:'#34d399', label:'CA' },
         { key:'cost', color:'#ef4444', label:'Couts' },
-        { key:'margin', color:'#6c63ff', label:'Marge' }
+        { key:'margin', color:'#6c63ff', label:'Marge' },
+        { key:'cumMargin', color:'#f59e0b', label:'Benefice cumule' }
       ];
       series.forEach(s => {
         html += '<g data-series="' + s.key + '">';
@@ -8279,7 +8289,9 @@ function showMonthRevenueDetail(monthKey) {
       const dt = new Date(it.date + 'T12:00:00');
       const dLabel = String(dt.getDate()).padStart(2,'0') + '/' + String(dt.getMonth()+1).padStart(2,'0');
       const svcLabel = (typeof getServiceLabel === 'function' ? getServiceLabel(it.type) : it.type);
-      html += '<tr style="border-bottom:1px solid var(--border);">';
+      const provEsc = (it.provider||'').replace(/'/g,"\\'").replace(/"/g,'&quot;');
+      const typeEsc = (it.type||'').replace(/'/g,"\\'");
+      html += '<tr style="border-bottom:1px solid var(--border);cursor:pointer;" onmouseover="this.style.background=\'rgba(108,99,255,0.08)\'" onmouseout="this.style.background=\'\'" onclick="closeMsg();setTimeout(()=>goToPrestation(\'' + it.date + '\',\'' + typeEsc + '\',\'' + provEsc + '\'),200)">';
       html += '<td style="padding:6px;">' + dLabel + '</td>';
       html += '<td style="padding:6px;font-weight:600;">' + esc(it.propertyName) + '</td>';
       html += '<td style="padding:6px;">' + esc(svcLabel) + '</td>';
