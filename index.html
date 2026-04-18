@@ -1060,7 +1060,7 @@ async function loadPDF() {
 </script>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v7.37</div>
+<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v7.38</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -1070,7 +1070,7 @@ async function loadPDF() {
     <!-- Broom that sweeps -->
     <div id="splashBroom" style="position:absolute;top:50%;left:-60px;font-size:48px;transform:translateY(-50%) rotate(-30deg);opacity:0;transition:all 0.8s cubic-bezier(0.25,0.46,0.45,0.94);">✨</div>
   </div>
-  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v7.37</span></div>
+  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v7.38</span></div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie pour locations</div>
   <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou</div>
   <!-- Loading bar -->
@@ -2280,6 +2280,7 @@ function getStatusLabel(s) { return (STATUS_CONFIG[s] || {}).label || s || ''; }
 // ── Splash Changelog (update this with each significant version) ──
 // Full versioned changelog — add new entries at TOP
 const VERSION_CHANGELOG = [
+  { v: '7.38', changes: ['Suppression section Instructions de menage (redondant avec Horaires & Acces)'] },
   { v: '7.37', changes: ['Services requis: UI compacte avec liste + bouton Ajouter', 'Popup de parametrage par service (type + declencheur + params + prix)', 'Tarification auto (formules par service) ou manuelle', 'Total = somme des services actifs (lecture seule)'] },
   { v: '7.36', changes: ['Changement de mot de passe: formulaire complet avec oeil + regles complexite live', 'Inscription: validation complexite (8 car + Maj + min + chiffre + special)', 'Coherence regles entre reset, changement et inscription'] },
   { v: '7.35', changes: ['Fix "Auth session missing" lors du reset password', 'setSession manuel avec access_token + refresh_token du hash', 'Session etablie avant updateUser'] },
@@ -2895,15 +2896,6 @@ async function renderPropertyDetailsInline() {
   html += `<div id="inlinePropServicesChecks"></div>`;
   html += `</div>`;
 
-  // SECTION: Checklist
-  html += `<div style="${sectionStyle}">`;
-  html += `<div style="${sectionTitleStyle}">&#9745; Instructions de menage</div>`;
-  html += `<div id="inlinePropChecklist" style="background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:10px;margin-bottom:12px;max-height:200px;overflow-y:auto;"></div>`;
-  html += `<div style="display:flex;gap:8px;">
-    <input id="inlinePropNewCheckItem" type="text" placeholder="Nouvelle instruction..." style="flex:1;padding:8px 12px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:13px;" onkeydown="if(event.key==='Enter')addInlineCheckItem()">
-    <button class="btn btnSmall btnSuccess" onclick="addInlineCheckItem()" style="padding:6px 14px;">+</button>
-  </div>`;
-  html += `</div>`;
 
   // SECTION: Horaires & Acces
   html += `<div style="${sectionStyle}">`;
@@ -2967,9 +2959,6 @@ async function renderPropertyDetailsInline() {
 
   // Render services config (compact list + add button)
   renderInlineServicesList(prop);
-
-  // Render checklist
-  renderInlineChecklist();
 
   // Auto-save all property fields on change
   const _autoSaveInline = debounce(() => saveInlinePropDetail(), 1500);
