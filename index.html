@@ -1139,7 +1139,7 @@ async function loadPDF() {
 </script>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v7.98</div>
+<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v7.99</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -1149,7 +1149,7 @@ async function loadPDF() {
     <!-- Broom that sweeps -->
     <div id="splashBroom" style="position:absolute;top:50%;left:-60px;font-size:48px;transform:translateY(-50%) rotate(-30deg);opacity:0;transition:all 0.8s cubic-bezier(0.25,0.46,0.45,0.94);">✨</div>
   </div>
-  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v7.98</span></div>
+  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v7.99</span></div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie pour locations</div>
   <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou</div>
   <!-- Loading bar -->
@@ -2083,7 +2083,7 @@ async function loadPDF() {
   </div>
   <div class="modalBody" style="padding:16px;overflow-x:auto;">
     <div id="premiumReason" style="display:none;background:rgba(233,69,96,0.15);border:1px solid rgba(233,69,96,0.3);border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:13px;color:var(--accent);text-align:center;font-weight:600;"></div>
-    <div id="premiumStatusBanner" style="display:none;padding:12px 14px;margin-bottom:14px;border-radius:10px;font-size:13px;text-align:center;line-height:1.5;"></div>
+    <div id="premiumStatusBanner" style="display:none;position:sticky;top:0;z-index:2;padding:12px 14px;margin-bottom:14px;border-radius:10px;font-size:13px;text-align:center;line-height:1.5;box-shadow:0 2px 8px rgba(0,0,0,0.3);"></div>
     <table id="pricingTable" style="width:100%;border-collapse:collapse;font-size:13px;" translate="no">
       <thead>
         <tr>
@@ -2437,6 +2437,7 @@ function getStatusLabel(s) { return (STATUS_CONFIG[s] || {}).label || s || ''; }
 // ── Splash Changelog (update this with each significant version) ──
 // Full versioned changelog — add new entries at TOP
 const VERSION_CHANGELOG = [
+  { v: '7.99', changes: ['Proprietaire: cartes prestations cliquables (popup detail)', 'Prestataire: section Aujourd\'hui repliable', 'Bandeau Premium sticky en haut de la popup'] },
   { v: '7.98', changes: ['Popup Premium: bandeau de statut clair en haut (abonnement actif / essai X jours / gratuit)', 'Boutons adaptes: Actuel (essai) / Gerer / Passer en Premium'] },
   { v: '7.97', changes: ['Changement role proprio->concierge: si deja abonne Premium, bypass du choix gratuit/premium', 'Affiche directement l\'ecran de confirmation (passage 3.99 -> 19.99 prorate)'] },
   { v: '7.96', changes: ['Footer Contact: email mis a jour lokizio.service@outlook.com', 'privacy.html: Cleaning Manager -> Lokizio, date maj 18 avril 2026', 'CSP: autorise connexion a cdn.jsdelivr.net (source maps)'] },
@@ -4775,8 +4776,8 @@ async function showProviderMode() {
   const _sc = { done:'#34d399', departed:'#34d399', in_progress:'#3b82f6', arrived:'#6c63ff', assigned:'#8b5cf6', accepted:'#34d399', pending:'#f59e0b', pending_validation:'#f59e0b', refused:'#ef4444', cancelled:'#ef4444' };
   const _sl = { done:'Termine', departed:'Parti', in_progress:'En cours', arrived:'Sur place', assigned:'En attente de reponse', accepted:'Accepte', pending:'Attente', pending_validation:'Validation', refused:'Refuse', cancelled:'Annulee' };
   const todayItems = unified.filter(u => u.date === today && !['done','cancelled','departed'].includes(u.status));
-  html += '<div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:12px;">';
-  html += '<div style="font-weight:700;font-size:14px;margin-bottom:10px;">&#128197; Aujourd\'hui — ' + todayItems.length + ' prestation(s)</div>';
+  html += '<details style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:12px;">';
+  html += '<summary style="list-style:none;cursor:pointer;display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;"><div style="font-weight:700;font-size:14px;">&#128197; Aujourd\'hui — ' + todayItems.length + ' prestation(s)</div><span class="collapseArrow">&#9662;</span></summary>';
   if (todayItems.length === 0) {
     html += '<div style="color:var(--text3);font-size:13px;">Aucune prestation aujourd\'hui</div>';
   } else {
@@ -4789,7 +4790,7 @@ async function showProviderMode() {
       html += '</div>';
     });
   }
-  html += '</div>';
+  html += '</details>';
 
   // Upcoming prestations (excluding today, excluding terminal)
   const upcomingItems = unified.filter(u => {
@@ -6018,7 +6019,13 @@ async function showOwnerMode() {
         dowStr = _odays[d.getDay()];
       }
 
-      html += '<div class="adminPrestCard" data-category="' + catKey + '" data-date="' + dateStr + '" data-type="' + (u.type||'') + '" data-provider="' + esc(u.provider||'') + '" style="border-left:4px solid ' + color + ';' + (isToday ? 'box-shadow:0 0 0 1px rgba(233,69,96,0.3);' : '') + '">';
+      const ownerPrestPayload = encodeURIComponent(JSON.stringify({
+        _source: u._source, _id: u._id || '', type: u.type, date: dateStr, propertyName: u.propertyName,
+        propertyId: u.propertyId, provider: u.provider, status: u.status, source: u.source,
+        priority: u.priority, description: u.description, cancel_reason: u.cancel_reason,
+        cancel_penalty_amount: u.cancel_penalty_amount
+      }));
+      html += '<div class="adminPrestCard" data-category="' + catKey + '" data-date="' + dateStr + '" data-type="' + (u.type||'') + '" data-provider="' + esc(u.provider||'') + '" onclick="showPrestationDetail(\'' + ownerPrestPayload + '\', event)" style="border-left:4px solid ' + color + ';cursor:pointer;' + (isToday ? 'box-shadow:0 0 0 1px rgba(233,69,96,0.3);' : '') + '">';
       html += '<div style="display:flex;align-items:stretch;gap:0;padding:0;">';
       if (dayNum) {
         html += '<div class="card-date-block">';
