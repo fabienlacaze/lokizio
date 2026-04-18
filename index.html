@@ -1065,7 +1065,7 @@ async function loadPDF() {
 </script>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v7.47</div>
+<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v7.48</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -1075,7 +1075,7 @@ async function loadPDF() {
     <!-- Broom that sweeps -->
     <div id="splashBroom" style="position:absolute;top:50%;left:-60px;font-size:48px;transform:translateY(-50%) rotate(-30deg);opacity:0;transition:all 0.8s cubic-bezier(0.25,0.46,0.45,0.94);">✨</div>
   </div>
-  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v7.47</span></div>
+  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v7.48</span></div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie pour locations</div>
   <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou</div>
   <!-- Loading bar -->
@@ -1318,7 +1318,7 @@ async function loadPDF() {
     <button class="btnHelp" onclick="showHelp()" title="Aide" style="display:none;">?</button>
     <button class="btnHelp" onclick="toggleTheme()" title="Theme" id="themeBtn" style="display:none;">&#9788;</button>
     <!-- Visible buttons -->
-    <button class="btnHelp" id="btnConnections" onclick="showConnectionRequests()" title="Demandes de connexion" aria-label="Demandes de connexion" style="font-size:13px;position:relative;">&#128276;<span id="connectionBadge" style="display:none;position:absolute;top:-4px;right:-4px;background:#e94560;color:#fff;font-size:9px;font-weight:700;min-width:16px;height:16px;border-radius:8px;align-items:center;justify-content:center;">0</span></button>
+    <button class="btnHelp" id="btnConnections" onclick="showConnectionRequests()" title="Demandes de connexion" aria-label="Demandes de connexion" style="display:none;font-size:13px;position:relative;">&#128276;<span id="connectionBadge" style="display:none;position:absolute;top:-4px;right:-4px;background:#e94560;color:#fff;font-size:9px;font-weight:700;min-width:16px;height:16px;border-radius:8px;align-items:center;justify-content:center;">0</span></button>
     <button class="btnHelp" onclick="showInviteModal()" title="Inviter" aria-label="Inviter un membre" style="font-size:13px;">&#128279;</button>
     <button class="btnHelp" onclick="showProfileModal()" title="Mon profil" aria-label="Mon profil" style="font-size:13px;">&#128100;</button>
     <button class="btnHelp" onclick="showAccountModal()" title="Mon compte" aria-label="Mon compte" style="font-size:13px;">&#9881;</button>
@@ -2295,6 +2295,7 @@ function getStatusLabel(s) { return (STATUS_CONFIG[s] || {}).label || s || ''; }
 // ── Splash Changelog (update this with each significant version) ──
 // Full versioned changelog — add new entries at TOP
 const VERSION_CHANGELOG = [
+  { v: '7.48', changes: ['Bouton cloche 🔔 masque s\'il n\'y a aucune demande de connexion', 'Apparait automatiquement quand une demande arrive'] },
   { v: '7.47', changes: ['Popup Mon profil dediee (annuaire/marketplace)', 'Separation claire: Mon profil (public) vs Mon compte (prive)', 'Nouveau bouton 👤 dans le header'] },
   { v: '7.46', changes: ['Sections Bien repliables (concierge + proprietaire)', 'Mode proprietaire: photo a gauche comme concierge', 'Notes integrees dans Horaires & Acces', 'Fleche de repli animee'] },
   { v: '7.45', changes: ['Popup details au clic sur une carte prestation', 'Texte explicatif pour la section iCal (fin/debut de location vs recurrents)'] },
@@ -13210,16 +13211,22 @@ let _connectionBadgeInterval = null;
 async function updateConnectionBadge() {
   const requests = await loadConnectionRequests();
   const badge = document.getElementById('connectionBadge');
+  const btn = document.getElementById('btnConnections');
   if (badge) {
     badge.textContent = requests.length;
     badge.style.display = requests.length > 0 ? 'flex' : 'none';
+  }
+  if (btn) {
+    btn.style.display = requests.length > 0 ? '' : 'none';
   }
   // Start auto-refresh every 30s if not already running
   if (!_connectionBadgeInterval) {
     _connectionBadgeInterval = setInterval(async () => {
       const reqs = await loadConnectionRequests();
       const b = document.getElementById('connectionBadge');
+      const bt = document.getElementById('btnConnections');
       if (b) { b.textContent = reqs.length; b.style.display = reqs.length > 0 ? 'flex' : 'none'; }
+      if (bt) { bt.style.display = reqs.length > 0 ? '' : 'none'; }
     }, 30000);
   }
 }
