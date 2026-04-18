@@ -1140,7 +1140,7 @@ async function loadPDF() {
 </script>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v8.39</div>
+<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v8.40</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -1150,7 +1150,7 @@ async function loadPDF() {
     <!-- Broom that sweeps -->
     <div id="splashBroom" style="position:absolute;top:50%;left:-60px;font-size:48px;transform:translateY(-50%) rotate(-30deg);opacity:0;transition:all 0.8s cubic-bezier(0.25,0.46,0.45,0.94);">✨</div>
   </div>
-  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v8.39</span></div>
+  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v8.40</span></div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie pour locations</div>
   <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou</div>
   <!-- Loading bar -->
@@ -2488,6 +2488,7 @@ function getStatusLabel(s) { return (STATUS_CONFIG[s] || {}).label || s || ''; }
 // ── Splash Changelog (update this with each significant version) ──
 // Full versioned changelog — add new entries at TOP
 const VERSION_CHANGELOG = [
+  { v: '8.40', changes: ['Prestations: filtre Acteur (prestataire / bien) ajoute', 'Stats: clic sur une ligne du tableau ou sur la legende/part du donut -> filtre la liste sur ce prestataire'] },
   { v: '8.39', changes: ['Stats: scope par bien selectionne ("Tous" agrege tous les biens, sinon filtre sur le bien)', 'Stats re-render automatique au changement de bien'] },
   { v: '8.38', changes: ['Prestations: bouton "Masquer passees" active par defaut (les prestations passees sont cachees au chargement)'] },
   { v: '8.37', changes: ['Factures: KPIs en haut (En attente / Encaisse / En retard / Nb factures) cliquables comme filtres', 'Recherche (numero/client/propriete)', 'Chips periode (Tout / Ce mois / Mois dernier / Cette annee)', 'Chips statut avec compteurs', 'Cartes redessinees (prestation + client, montant a droite, badge echeance)', 'Groupement par mois avec sous-totaux', 'Bouton Relancer pour factures en retard'] },
@@ -13371,7 +13372,8 @@ async function renderStats() {
         ${provNames.map((name,i)=>{
           const diff=actuals[i]-targets[i];
           const diffColor=Math.abs(diff)<2?'var(--success)':diff>0?'var(--warning)':'var(--danger)';
-          return`<tr><td><span class="provDot" style="background:${colors[i]}"></span>${esc(name)}</td><td style="font-weight:600">${counts[i]}</td><td>${targets[i]}%</td><td>${actuals[i]}%</td><td style="color:${diffColor};font-weight:600">${diff>0?'+':''}${diff.toFixed(1)}%</td></tr>`;
+          const nameEsc = esc(name).replace(/'/g,"\\'");
+          return`<tr style="cursor:pointer;" onmouseover="this.style.background='rgba(108,99,255,0.08)'" onmouseout="this.style.background=''" onclick="goToProviderPrestations('${nameEsc}')" title="Voir les prestations de ${nameEsc}"><td><span class="provDot" style="background:${colors[i]}"></span>${esc(name)}</td><td style="font-weight:600">${counts[i]}</td><td>${targets[i]}%</td><td>${actuals[i]}%</td><td style="color:${diffColor};font-weight:600">${diff>0?'+':''}${diff.toFixed(1)}%</td></tr>`;
         }).join('')}
       </table>
       </div>
@@ -13403,7 +13405,7 @@ async function renderStats() {
     const chartEl = document.getElementById('chartDistribution');
     if(chartEl && isPrem) {
     if(chartDistrib)chartDistrib.destroy();
-    chartDistrib=new Chart(chartEl.getContext('2d'),{type:'doughnut',data:{labels:provNames,datasets:[{data:counts,backgroundColor:colors,borderColor:'var(--surface)',borderWidth:3}]},options:{plugins:{legend:{position:'bottom',labels:{color:'#9ca3af',font:{size:12,family:'Inter'},padding:16}}},cutout:'65%'}});
+    chartDistrib=new Chart(chartEl.getContext('2d'),{type:'doughnut',data:{labels:provNames,datasets:[{data:counts,backgroundColor:colors,borderColor:'var(--surface)',borderWidth:3}]},options:{onClick:(e,els)=>{if(els.length){const n=provNames[els[0].index];if(n)goToProviderPrestations(n);}},plugins:{legend:{position:'bottom',labels:{color:'#9ca3af',font:{size:12,family:'Inter'},padding:16},onClick:(e,item)=>{const n=provNames[item.index];if(n)goToProviderPrestations(n);}}},cutout:'65%'}});
     if(chartCompare)chartCompare.destroy();
     chartCompare=new Chart(document.getElementById('chartComparison').getContext('2d'),{type:'bar',data:{labels:provNames,datasets:[{label:'Cible %',data:targets,backgroundColor:'rgba(108,99,255,0.4)',borderColor:'#6c63ff',borderWidth:1,borderRadius:6},{label:'Reel %',data:actuals,backgroundColor:colors.map(c=>c+'aa'),borderColor:colors,borderWidth:1,borderRadius:6}]},options:{scales:{x:{ticks:{color:'#9ca3af',font:{family:'Inter'}},grid:{color:'rgba(255,255,255,0.04)'}},y:{ticks:{color:'#9ca3af',font:{family:'Inter'}},grid:{color:'rgba(255,255,255,0.04)'},max:100}},plugins:{legend:{labels:{color:'#9ca3af',font:{size:12,family:'Inter'}}}}}});
     }
@@ -15713,6 +15715,16 @@ async function loadAdminPrestations(forceReload) {
   // Cache unified for status recount when category changes
   window._adminUnified = unified;
 
+  // Collect unique providers and owners (property names as proxy for owner)
+  const provSet = new Set();
+  const ownerSet = new Set(); // property names (each property represents an owner context)
+  unified.forEach(u => {
+    if (u.provider) provSet.add(u.provider);
+    if (u.propertyName) ownerSet.add(u.propertyName);
+  });
+  const providersList = Array.from(provSet).sort();
+  const ownersList = Array.from(ownerSet).sort();
+
   // Render filters
   if (filtersEl) {
     // Line 1: status row (container only, populated by renderStatusFilterRow)
@@ -15727,7 +15739,22 @@ async function loadAdminPrestations(forceReload) {
       }
     });
     fHtml += '</div>';
-    // Line 3: Hide past toggle (on by default)
+    // Line 3: Actor filter (provider + owner via property)
+    if (providersList.length || ownersList.length) {
+      fHtml += '<div style="display:flex;gap:6px;overflow-x:auto;padding-bottom:6px;margin-bottom:4px;-webkit-overflow-scrolling:touch;align-items:center;">';
+      const actAll = (_adminPrestFilterActor && _adminPrestFilterActor.type === 'all') || !_adminPrestFilterActor ? ' active' : '';
+      fHtml += '<button class="prestFilter' + actAll + '" onclick="filterAdminPrestActor(\'all\',\'\')" title="Tous les acteurs">&#128101; Tous</button>';
+      providersList.forEach(name => {
+        const a = (_adminPrestFilterActor && _adminPrestFilterActor.type === 'provider' && _adminPrestFilterActor.value === name) ? ' active' : '';
+        fHtml += '<button class="prestFilter' + a + '" onclick="filterAdminPrestActor(\'provider\',\'' + esc(name).replace(/'/g,"\\'") + '\')" title="Prestataire" style="border-color:#34d39960;color:#34d399;">&#129529; ' + esc(name) + '</button>';
+      });
+      ownersList.forEach(name => {
+        const a = (_adminPrestFilterActor && _adminPrestFilterActor.type === 'owner' && _adminPrestFilterActor.value === name) ? ' active' : '';
+        fHtml += '<button class="prestFilter' + a + '" onclick="filterAdminPrestActor(\'owner\',\'' + esc(name).replace(/'/g,"\\'") + '\')" title="Bien / proprietaire" style="border-color:#f59e0b60;color:#f59e0b;">&#127968; ' + esc(name) + '</button>';
+      });
+      fHtml += '</div>';
+    }
+    // Line 4: Hide past toggle (on by default)
     if (window._adminHidePast === undefined) window._adminHidePast = true;
     const hidePastActive = !!window._adminHidePast;
     fHtml += '<div style="display:flex;padding-bottom:8px;margin-bottom:8px;">';
@@ -15804,7 +15831,7 @@ async function loadAdminPrestations(forceReload) {
     }));
     const isPast = u.date && u.date < today;
     const pastStyle = isPast ? 'opacity:0.5;filter:grayscale(0.6);position:relative;' : '';
-    html += '<div class="adminPrestCard" data-category="' + cat + '" data-status="' + u.status + '" data-date="' + (u.date||'') + '" data-type="' + (u.type||'') + '" data-provider="' + esc(u.provider||'') + '" onclick="showPrestationDetail(\'' + prestPayload + '\', event)" style="border-left:4px solid ' + color + ';cursor:pointer;' + pastStyle + (isToday ? 'box-shadow:0 0 0 1px rgba(233,69,96,0.3);' : '') + '" title="' + (isPast ? 'Date passee' : '') + '">';
+    html += '<div class="adminPrestCard" data-category="' + cat + '" data-status="' + u.status + '" data-date="' + (u.date||'') + '" data-type="' + (u.type||'') + '" data-provider="' + esc(u.provider||'') + '" data-owner="' + esc(u.propertyName||'') + '" onclick="showPrestationDetail(\'' + prestPayload + '\', event)" style="border-left:4px solid ' + color + ';cursor:pointer;' + pastStyle + (isToday ? 'box-shadow:0 0 0 1px rgba(233,69,96,0.3);' : '') + '" title="' + (isPast ? 'Date passee' : '') + '">';
     if (isPast) html += '<div style="position:absolute;top:4px;right:8px;font-size:9px;color:var(--text3);font-style:italic;letter-spacing:0.3px;pointer-events:none;">&#128197; Date passee</div>';
     html += '<div style="display:flex;align-items:stretch;gap:0;padding:0;">';
     // Date block
@@ -15896,6 +15923,21 @@ async function loadAdminPrestations(forceReload) {
 
 let _adminPrestFilterCat = 'all';
 let _adminPrestFilterStatus = 'all';
+let _adminPrestFilterActor = { type: 'all', value: '' };
+
+function filterAdminPrestActor(type, value) {
+  _adminPrestFilterActor = { type, value };
+  loadAdminPrestations(); // re-render filter buttons to update active state
+}
+
+function goToProviderPrestations(providerName) {
+  _adminPrestFilterActor = { type: 'provider', value: providerName };
+  // Make sure past prestations are visible so user sees full history
+  window._adminHidePast = false;
+  if (typeof switchMainTab === 'function') switchMainTab('prestations');
+  if (typeof switchPrestSubTab === 'function') switchPrestSubTab('list');
+  setTimeout(() => loadAdminPrestations(true), 150);
+}
 
 function filterAdminPrest(cat, btn) {
   _adminPrestFilterCat = cat;
@@ -15953,12 +15995,16 @@ function filterAdminPrestStatus(status, btn) {
 function applyAdminPrestFilters() {
   const todayStr = new Date().toISOString().split('T')[0];
   const hidePast = !!window._adminHidePast;
+  const actor = _adminPrestFilterActor || { type: 'all', value: '' };
   document.querySelectorAll('.adminPrestCard').forEach(card => {
     const catMatch = _adminPrestFilterCat === 'all' || card.dataset.category === _adminPrestFilterCat;
     const statusMatch = _adminPrestFilterStatus === 'all' || card.dataset.status === _adminPrestFilterStatus;
     const cardDate = card.dataset.date || '';
     const pastMatch = !hidePast || !cardDate || cardDate >= todayStr;
-    card.style.display = (catMatch && statusMatch && pastMatch) ? '' : 'none';
+    let actorMatch = true;
+    if (actor.type === 'provider') actorMatch = (card.dataset.provider || '') === actor.value;
+    else if (actor.type === 'owner') actorMatch = (card.dataset.owner || '') === actor.value;
+    card.style.display = (catMatch && statusMatch && pastMatch && actorMatch) ? '' : 'none';
   });
   // Also hide month-group <details> that have no visible cards
   document.querySelectorAll('#adminPrestList details').forEach(det => {
