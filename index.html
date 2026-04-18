@@ -1139,7 +1139,7 @@ async function loadPDF() {
 </script>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v8.02</div>
+<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v8.05</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -1149,7 +1149,7 @@ async function loadPDF() {
     <!-- Broom that sweeps -->
     <div id="splashBroom" style="position:absolute;top:50%;left:-60px;font-size:48px;transform:translateY(-50%) rotate(-30deg);opacity:0;transition:all 0.8s cubic-bezier(0.25,0.46,0.45,0.94);">✨</div>
   </div>
-  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v8.02</span></div>
+  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v8.05</span></div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie pour locations</div>
   <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou</div>
   <!-- Loading bar -->
@@ -2037,14 +2037,10 @@ async function loadPDF() {
         <textarea id="mkDescription" placeholder="Description" rows="3" oninput="autoSaveMarketplaceField()" style="padding:10px 12px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;font-family:'Inter',sans-serif;resize:vertical;"></textarea>
         <div style="font-size:11px;color:var(--text3);text-transform:uppercase;">Services proposes</div>
         <div style="display:flex;flex-wrap:wrap;gap:6px;" id="mkServicesCheckboxes"></div>
-        <div style="display:flex;gap:8px;">
-          <input type="number" id="mkExperienceYears" min="0" max="50" placeholder="Annees d'experience" oninput="autoSaveMarketplaceField()" style="flex:1;padding:10px 12px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;">
-          <select id="mkAvailability" oninput="autoSaveMarketplaceField()" style="flex:1;padding:10px 12px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;">
-            <option value="available">Disponible</option>
-            <option value="full">Complet</option>
-            <option value="vacation">En vacances</option>
-          </select>
-        </div>
+        <input type="number" id="mkExperienceYears" min="0" max="50" placeholder="Annees d'experience" oninput="autoSaveMarketplaceField()" style="padding:10px 12px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;">
+        <!-- Hidden: availability is now driven by vacation calendar -->
+        <select id="mkAvailability" style="display:none;"><option value="available">available</option></select>
+        <div style="font-size:11px;color:var(--text3);background:var(--surface2);border-radius:8px;padding:10px;line-height:1.4;">&#128197; <b>Disponibilite</b> : geree automatiquement via <a href="#" onclick="event.preventDefault();closeOverlayPopup('marketplaceProfileOverlay');showVacationPlanner();" style="color:var(--accent2);text-decoration:underline;">Mes conges</a>. Vous apparaitrez "En vacances" pendant vos periodes.</div>
         <div style="font-size:10px;color:var(--text3);text-align:center;margin-top:4px;">&#10003; Sauvegarde automatique a chaque modification</div>
       </div>
     </div>
@@ -2455,6 +2451,8 @@ function getStatusLabel(s) { return (STATUS_CONFIG[s] || {}).label || s || ''; }
 // ── Splash Changelog (update this with each significant version) ──
 // Full versioned changelog — add new entries at TOP
 const VERSION_CHANGELOG = [
+  { v: '8.05', changes: ['Dropdown Disponibilite retire du profil annuaire (gere par Mes conges)', 'Lien vers Mes conges dans la popup annuaire', 'Annuaire affiche automatiquement "En vacances" si periode active'] },
+  { v: '8.04', changes: ['Planning conges: jours passes desactives (grises)', 'Navigation mois precedent bloquee dans le passe', 'Exclusion de son propre profil dans l\'annuaire'] },
   { v: '8.02', changes: ['Planning de conges: bouton "Gerer mes conges" dans Mon profil personnel', 'Calendrier visuel: clic debut + clic fin pour ajouter une periode', 'Liste des periodes avec suppression', 'Stocke dans marketplace_profiles.vacation_periods (JSONB)'] },
   { v: '8.01', changes: ['Annuaire proprio et prestataire: sous-onglets Mes contacts / Rechercher (comme admin)'] },
   { v: '8.00', changes: ['Badge BUSINESS / PRO cliquable dans le header: ouvre la popup Premium pour gerer l\'abonnement', 'Bandeau sticky Premium: fond opaque (plus de texte qui passe a travers)'] },
@@ -8764,6 +8762,13 @@ function closeProfileModal() {
 function showSaveBtn(id) { const b = document.getElementById(id); if (b) b.style.display = ''; }
 function hideSaveBtn(id) { const b = document.getElementById(id); if (b) b.style.display = 'none'; }
 
+// Check if a profile is currently on vacation (used in annuaire rendering)
+function isProfileOnVacation(p) {
+  if (!p || !Array.isArray(p.vacation_periods)) return false;
+  const today = new Date().toISOString().split('T')[0];
+  return p.vacation_periods.some(v => v && v.from && v.to && today >= v.from && today <= v.to);
+}
+
 // ══ Vacation planner (provider + concierge personal) ══
 let _vacationPeriods = [];
 let _vacationCurrentMonth = new Date();
@@ -8795,8 +8800,11 @@ function renderVacationCalendar() {
   const startDow = (first.getDay() + 6) % 7; // Monday = 0
   const daysCount = last.getDate();
   const monthNames = ['Janvier','Fevrier','Mars','Avril','Mai','Juin','Juillet','Aout','Septembre','Octobre','Novembre','Decembre'];
+  const now = new Date();
+  const isCurrentOrFutureMonth = year > now.getFullYear() || (year === now.getFullYear() && month >= now.getMonth());
+  const canGoBack = year > now.getFullYear() || (year === now.getFullYear() && month > now.getMonth());
   let html = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">';
-  html += '<button onclick="vacationChangeMonth(-1)" style="background:var(--surface2);border:1px solid var(--border2);color:var(--text);border-radius:8px;width:32px;height:32px;cursor:pointer;font-size:14px;">&lsaquo;</button>';
+  html += '<button onclick="vacationChangeMonth(-1)" ' + (canGoBack ? '' : 'disabled') + ' style="background:var(--surface2);border:1px solid var(--border2);color:var(--text);border-radius:8px;width:32px;height:32px;cursor:' + (canGoBack ? 'pointer' : 'not-allowed') + ';font-size:14px;opacity:' + (canGoBack ? '1' : '0.4') + ';">&lsaquo;</button>';
   html += '<div style="font-size:14px;font-weight:700;color:var(--text);text-transform:capitalize;">' + monthNames[month] + ' ' + year + '</div>';
   html += '<button onclick="vacationChangeMonth(1)" style="background:var(--surface2);border:1px solid var(--border2);color:var(--text);border-radius:8px;width:32px;height:32px;cursor:pointer;font-size:14px;">&rsaquo;</button>';
   html += '</div>';
@@ -8811,12 +8819,17 @@ function renderVacationCalendar() {
     const isInVac = _vacationPeriods.some(p => dateStr >= p.from && dateStr <= p.to);
     const isToday = dateStr === today;
     const isStart = _vacationRangeStart === dateStr;
+    const isPast = dateStr < today;
     let bg = 'var(--surface2)';
     let color = 'var(--text)';
     if (isInVac) { bg = 'rgba(233,69,96,0.3)'; color = '#e94560'; }
     if (isStart) { bg = 'rgba(108,99,255,0.4)'; color = '#fff'; }
     let border = isToday ? '2px solid var(--accent)' : '1px solid var(--border2)';
-    html += '<button onclick="vacationClickDay(\'' + dateStr + '\')" style="background:' + bg + ';color:' + color + ';border:' + border + ';border-radius:6px;padding:8px 0;font-size:12px;cursor:pointer;font-weight:' + (isToday || isInVac ? '700' : '400') + ';">' + day + '</button>';
+    if (isPast) {
+      html += '<button disabled style="background:transparent;color:var(--text3);border:1px solid var(--border);border-radius:6px;padding:8px 0;font-size:12px;opacity:0.4;cursor:not-allowed;">' + day + '</button>';
+    } else {
+      html += '<button onclick="vacationClickDay(\'' + dateStr + '\')" style="background:' + bg + ';color:' + color + ';border:' + border + ';border-radius:6px;padding:8px 0;font-size:12px;cursor:pointer;font-weight:' + (isToday || isInVac ? '700' : '400') + ';">' + day + '</button>';
+    }
   }
   html += '</div>';
   if (_vacationRangeStart) {
@@ -13722,6 +13735,8 @@ async function renderAnnuaireTab() {
 
   // ── 5. Load marketplace profiles ──
   try {
+    // Store current user id for self-exclusion in filterAnnuaire
+    try { const { data: { user: _u } } = await sb.auth.getUser(); if (_u) window.__currentUserId = _u.id; } catch(_) {}
     const { data: mkData } = await sb.from('marketplace_profiles').select('*').eq('visible', true);
     _annuaireProfiles = mkData || [];
     // Also add org members not on marketplace
@@ -13791,6 +13806,9 @@ function filterAnnuaire() {
   const sort = sortEl ? sortEl.value : 'recent';
 
   let filtered = _annuaireProfiles;
+
+  // Exclude self from the annuaire listing
+  if (window.__currentUserId) filtered = filtered.filter(p => p.user_id !== window.__currentUserId);
 
   // Role filter (concierge matches admin and manager)
   if (role) {
@@ -13866,7 +13884,7 @@ async function renderAnnuaireResults(profiles) {
     const initial = (name.charAt(0) || '?').toUpperCase();
     const isNew = p.created_at && (Date.now() - new Date(p.created_at).getTime()) < 7 * 86400000;
     const services = p.services || [];
-    const availHtml = availLabels[p.availability] || '';
+    const availHtml = isProfileOnVacation(p) ? availLabels['vacation'] : (availLabels[p.availability] || '');
 
     html += '<div style="padding:14px;margin-bottom:8px;background:var(--surface2);border-radius:12px;border-left:4px solid ' + color + ';transition:transform 0.15s;" onmouseenter="this.style.transform=\'translateY(-1px)\'" onmouseleave="this.style.transform=\'\'">';
     html += '<div style="display:flex;gap:12px;align-items:flex-start;">';
@@ -14075,7 +14093,7 @@ async function renderMarketplaceResults(profiles) {
     const isNew = _mkIsNew(p.created_at);
     const services = p.services || [];
     const starHtml = _mkStarRating(p.rating);
-    const availHtml = availLabels[p.availability] || '';
+    const availHtml = isProfileOnVacation(p) ? availLabels['vacation'] : (availLabels[p.availability] || '');
 
     html += `<div style="padding:16px;margin-bottom:10px;background:var(--surface2);border-radius:12px;border-left:4px solid ${color};transition:transform 0.15s,box-shadow 0.15s;cursor:default;" onmouseenter="this.style.transform='translateY(-2px)';this.style.boxShadow='0 4px 20px rgba(0,0,0,0.3)';" onmouseleave="this.style.transform='';this.style.boxShadow='';">
       <div style="display:flex;gap:12px;align-items:flex-start;">
