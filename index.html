@@ -1140,7 +1140,7 @@ async function loadPDF() {
 </script>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v8.28</div>
+<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v8.29</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -1150,7 +1150,7 @@ async function loadPDF() {
     <!-- Broom that sweeps -->
     <div id="splashBroom" style="position:absolute;top:50%;left:-60px;font-size:48px;transform:translateY(-50%) rotate(-30deg);opacity:0;transition:all 0.8s cubic-bezier(0.25,0.46,0.45,0.94);">✨</div>
   </div>
-  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v8.28</span></div>
+  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v8.29</span></div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie pour locations</div>
   <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou</div>
   <!-- Loading bar -->
@@ -2484,6 +2484,7 @@ function getStatusLabel(s) { return (STATUS_CONFIG[s] || {}).label || s || ''; }
 // ── Splash Changelog (update this with each significant version) ──
 // Full versioned changelog — add new entries at TOP
 const VERSION_CHANGELOG = [
+  { v: '8.29', changes: ['Filtres statut recalcules dynamiquement selon la categorie selectionnee', '"Masquer passees" sur sa propre ligne'] },
   { v: '8.28', changes: ['Graph revenus: clic sur un point ouvre la popup detail du mois'] },
   { v: '8.27', changes: ['Filtres sur 2 lignes: categories / statuts', 'Table Detail mensuel: colonne Benef. cumule ajoutee', 'Survol cellule table <-> point graph synchronises (highlight mutuel)'] },
   { v: '8.26', changes: ['Filtres statut: bouton "Tout" ajoute', 'Bouton "Masquer passees" pour cacher les prestations dont la date est anterieure'] },
@@ -15407,45 +15408,30 @@ async function loadAdminPrestations(forceReload) {
     counts[cat] = (counts[cat] || 0) + 1;
   });
 
-  // Count by status
-  const statusCounts = {};
-  unified.forEach(u => { statusCounts[u.status] = (statusCounts[u.status] || 0) + 1; });
+  // Cache unified for status recount when category changes
+  window._adminUnified = unified;
 
   // Render filters
   if (filtersEl) {
-    const statusDefs = [
-      { id: 'pending', label: 'Attente', color: '#f59e0b' },
-      { id: 'assigned', label: 'Attente reponse', color: '#8b5cf6' },
-      { id: 'accepted', label: 'Accepte', color: '#34d399' },
-      { id: 'in_progress', label: 'En cours', color: '#3b82f6' },
-      { id: 'done', label: 'Termine', color: '#059669' },
-      { id: 'refused', label: 'Refuse', color: '#ef4444' },
-      { id: 'pending_validation', label: 'A valider', color: '#f59e0b' },
-      { id: 'cancelled', label: 'Annulee', color: '#ef4444' },
-    ];
     // Line 1: categories
     let fHtml = '<div style="display:flex;gap:6px;overflow-x:auto;padding-bottom:6px;margin-bottom:4px;-webkit-overflow-scrolling:touch;align-items:center;">';
-    fHtml += '<button class="prestFilter active" data-filter-type="cat" onclick="filterAdminPrest(\'all\',this)">Tout ' + counts.all + '</button>';
+    fHtml += '<button class="prestFilter' + (_adminPrestFilterCat === 'all' ? ' active' : '') + '" data-filter-type="cat" onclick="filterAdminPrest(\'all\',this)">Tout ' + counts.all + '</button>';
     SERVICE_CATALOG.forEach(cat => {
       if (counts[cat.cat]) {
-        fHtml += '<button class="prestFilter" data-filter-type="cat" onclick="filterAdminPrest(\'' + cat.cat + '\',this)">' + cat.services[0].icon + ' ' + counts[cat.cat] + '</button>';
+        const act = (_adminPrestFilterCat === cat.cat) ? ' active' : '';
+        fHtml += '<button class="prestFilter' + act + '" data-filter-type="cat" onclick="filterAdminPrest(\'' + cat.cat + '\',this)">' + cat.services[0].icon + ' ' + counts[cat.cat] + '</button>';
       }
     });
     fHtml += '</div>';
-    // Line 2: statuses + hide past
-    fHtml += '<div style="display:flex;gap:6px;overflow-x:auto;padding-bottom:8px;margin-bottom:8px;-webkit-overflow-scrolling:touch;align-items:center;">';
-    const statusAllActive = (_adminPrestFilterStatus === 'all');
-    fHtml += '<button class="prestFilter' + (statusAllActive ? ' active' : '') + '" data-filter-type="status" onclick="filterAdminPrestStatus(\'all\',this)">Tout (' + unified.length + ')</button>';
-    statusDefs.forEach(s => {
-      if (statusCounts[s.id]) {
-        fHtml += '<button class="prestFilter" data-filter-type="status" onclick="filterAdminPrestStatus(\'' + s.id + '\',this)" style="border-color:' + s.color + '40;color:' + s.color + ';">' + s.label + ' (' + statusCounts[s.id] + ')</button>';
-      }
-    });
-    fHtml += '<span style="width:1px;height:20px;background:var(--border2);flex-shrink:0;margin:0 4px;"></span>';
+    // Line 2: status row (container only, populated by renderStatusFilterRow)
+    fHtml += '<div id="adminPrestStatusRow" style="display:flex;gap:6px;overflow-x:auto;padding-bottom:6px;margin-bottom:4px;-webkit-overflow-scrolling:touch;align-items:center;"></div>';
+    // Line 3: Hide past toggle
     const hidePastActive = !!window._adminHidePast;
+    fHtml += '<div style="display:flex;padding-bottom:8px;margin-bottom:8px;">';
     fHtml += '<button id="togglePastBtn" class="prestFilter' + (hidePastActive ? ' active' : '') + '" onclick="toggleAdminHidePast(this)" title="Masquer/afficher les prestations passees" style="white-space:nowrap;">' + (hidePastActive ? '&#128065; Afficher passees' : '&#128065;&#65039; Masquer passees') + '</button>';
     fHtml += '</div>';
     filtersEl.innerHTML = fHtml;
+    renderStatusFilterRow();
   }
 
   // Update nav badge
@@ -15613,7 +15599,46 @@ function filterAdminPrest(cat, btn) {
   _adminPrestFilterCat = cat;
   document.querySelectorAll('#adminPrestFilters .prestFilter[data-filter-type="cat"]').forEach(b => b.classList.remove('active'));
   if (btn) btn.classList.add('active');
+  // Status filter may no longer match after cat change — reset to "all"
+  _adminPrestFilterStatus = 'all';
+  renderStatusFilterRow();
   applyAdminPrestFilters();
+}
+
+function renderStatusFilterRow() {
+  const row = document.getElementById('adminPrestStatusRow');
+  if (!row) return;
+  const unified = window._adminUnified || [];
+  const cat = _adminPrestFilterCat;
+  // Filter unified by active category
+  const scope = unified.filter(u => {
+    if (cat === 'all') return true;
+    const catObj = SERVICE_CATALOG.find(c => c.services.some(s => s.id === u.type));
+    const cc = catObj ? catObj.cat : 'autre';
+    return cc === cat;
+  });
+  const statusCounts = {};
+  scope.forEach(u => { statusCounts[u.status] = (statusCounts[u.status] || 0) + 1; });
+  const statusDefs = [
+    { id: 'pending', label: 'Attente', color: '#f59e0b' },
+    { id: 'assigned', label: 'Attente reponse', color: '#8b5cf6' },
+    { id: 'accepted', label: 'Accepte', color: '#34d399' },
+    { id: 'in_progress', label: 'En cours', color: '#3b82f6' },
+    { id: 'done', label: 'Termine', color: '#059669' },
+    { id: 'refused', label: 'Refuse', color: '#ef4444' },
+    { id: 'pending_validation', label: 'A valider', color: '#f59e0b' },
+    { id: 'cancelled', label: 'Annulee', color: '#ef4444' },
+  ];
+  let h = '';
+  const statusAllActive = (_adminPrestFilterStatus === 'all');
+  h += '<button class="prestFilter' + (statusAllActive ? ' active' : '') + '" data-filter-type="status" onclick="filterAdminPrestStatus(\'all\',this)">Tout (' + scope.length + ')</button>';
+  statusDefs.forEach(s => {
+    if (statusCounts[s.id]) {
+      const act = (_adminPrestFilterStatus === s.id) ? ' active' : '';
+      h += '<button class="prestFilter' + act + '" data-filter-type="status" onclick="filterAdminPrestStatus(\'' + s.id + '\',this)" style="border-color:' + s.color + '40;color:' + s.color + ';">' + s.label + ' (' + statusCounts[s.id] + ')</button>';
+    }
+  });
+  row.innerHTML = h;
 }
 
 function filterAdminPrestStatus(status, btn) {
