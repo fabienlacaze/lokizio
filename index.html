@@ -1126,7 +1126,7 @@ async function loadPDF() {
 </script>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v7.76</div>
+<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v7.77</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -1136,7 +1136,7 @@ async function loadPDF() {
     <!-- Broom that sweeps -->
     <div id="splashBroom" style="position:absolute;top:50%;left:-60px;font-size:48px;transform:translateY(-50%) rotate(-30deg);opacity:0;transition:all 0.8s cubic-bezier(0.25,0.46,0.45,0.94);">✨</div>
   </div>
-  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v7.76</span></div>
+  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v7.77</span></div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie pour locations</div>
   <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou</div>
   <!-- Loading bar -->
@@ -2410,6 +2410,7 @@ function getStatusLabel(s) { return (STATUS_CONFIG[s] || {}).label || s || ''; }
 // ── Splash Changelog (update this with each significant version) ──
 // Full versioned changelog — add new entries at TOP
 const VERSION_CHANGELOG = [
+  { v: '7.77', changes: ['Mode proprietaire: liste des prestations au meme style que le mode conciergerie', 'Bloc date a gauche, badge source (Airbnb/Booking), groupes par mois repliables'] },
   { v: '7.76', changes: ['Fix filtre annuaire "Conciergeries": inclut aussi les roles admin et manager'] },
   { v: '7.75', changes: ['Historique depenses (proprietaire) collapsable et collapse par defaut'] },
   { v: '7.74', changes: ['Fix: clic sur le fond d\'une popup profil ne ferme plus Mon compte', 'Clic sur le backdrop ferme uniquement la popup profil', 'Overlay de Mon compte non-interactif quand une popup est ouverte'] },
@@ -5909,54 +5910,82 @@ async function showOwnerMode() {
       <div style="font-size:13px;color:var(--text3);">Votre conciergerie n'a pas encore programme de prestations.</div>
     </div>`;
   } else {
-    const _osc2 = { done:'#34d399', departed:'#34d399', in_progress:'#f59e0b', arrived:'#6c63ff', assigned:'#8b5cf6', accepted:'#34d399', seen:'#6c63ff', sent:'var(--text3)', refused:'#ef4444', cancelled:'#ef4444', pending_validation:'#f59e0b', pending:'var(--text3)' };
-    const _osl2 = { done:'Termine', departed:'Parti', in_progress:'En cours', arrived:'Sur place', assigned:'En attente de reponse', accepted:'Accepte', refused:'Refuse', cancelled:'Annulee', pending_validation:'A valider', pending:'En attente' };
-    let lastOwnerDate = '';
+    const _omonths = ['Jan','Fev','Mar','Avr','Mai','Jun','Jul','Aou','Sep','Oct','Nov','Dec'];
+    const _omonthsFull = ['Janvier','Fevrier','Mars','Avril','Mai','Juin','Juillet','Aout','Septembre','Octobre','Novembre','Decembre'];
+    const _odays = ['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'];
+    let ownerLastMonth = '';
     ownerUnified.forEach(u => {
       const dateStr = u.date || '';
-      // Date separator
-      if (dateStr && dateStr !== lastOwnerDate) {
-        lastOwnerDate = dateStr;
-        const gd = new Date(dateStr + 'T12:00:00');
-        const isGd = dateStr === today;
-        const gdLabel = isGd ? 'Aujourd\'hui' : gd.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
-        html += '<div style="font-size:12px;font-weight:700;color:' + (isGd ? 'var(--accent)' : 'var(--text3)') + ';margin:12px 0 4px 4px;text-transform:capitalize;">' + gdLabel + '</div>';
+      // Month group (collapsible)
+      if (dateStr) {
+        const monthKey = dateStr.substring(0, 7);
+        if (monthKey !== ownerLastMonth) {
+          if (ownerLastMonth !== '') html += '</details>';
+          ownerLastMonth = monthKey;
+          const gd = new Date(dateStr + 'T12:00:00');
+          const monthLabel = _omonthsFull[gd.getMonth()] + ' ' + gd.getFullYear();
+          html += '<details open style="margin-bottom:8px;"><summary style="list-style:none;cursor:pointer;display:flex;align-items:center;gap:8px;padding:10px 4px;font-size:13px;font-weight:700;color:var(--text2);text-transform:capitalize;border-bottom:1px solid var(--border);"><span class="collapseArrow">&#9662;</span>' + monthLabel + '</summary>';
+        }
       }
       const catObj = SERVICE_CATALOG.find(c => c.services.some(s => s.id === u.type));
       const catKey = catObj ? catObj.cat : 'autre';
       const svcObj = (catObj ? catObj.services : []).find(s => s.id === u.type);
       const svcIcon = svcObj ? svcObj.icon : '📋';
       const svcName = svcObj ? svcObj.label : u.type;
-      const color = _osc2[u.status] || '#666';
-      const label = _osl2[u.status] || u.status;
-      const ownerCanCancel = u._source === 'service_request' && !['done','departed','in_progress','cancelled'].includes(u.status);
+      const color = getStatusColor(u.status);
+      const label = getStatusLabel(u.status) || u.status;
+      const isToday = dateStr === today;
 
-      html += '<div class="prestCard adminPrestCard" data-category="' + catKey + '" data-date="' + dateStr + '" data-type="' + (u.type||'') + '" data-provider="' + esc(u.provider||'') + '" style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:0;margin-bottom:8px;overflow:hidden;">';
-      html += '<div style="display:flex;align-items:center;gap:10px;padding:10px 14px;">';
-      html += '<div style="font-size:22px;flex-shrink:0;width:28px;text-align:center;">' + svcIcon + '</div>';
-      html += '<div style="flex:1;min-width:0;">';
-      html += '<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">';
-      html += '<span style="font-size:13px;font-weight:700;color:var(--text);">' + esc(svcName) + '</span>';
-      html += '</div>';
-      html += '<div style="font-size:11px;color:var(--text3);margin-top:2px;">';
-      const mp = [];
-      if (u.propertyName) mp.push('🏠 ' + esc(u.propertyName));
-      if (u.provider) mp.push('👤 ' + esc(u.provider));
-      html += mp.join(' · ');
-      html += '</div>';
-      html += '</div>';
-      html += '<div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">';
-      html += '<span class="card-status" title="' + (getStatusHint(u.status)||'') + '" style="background:' + color + '18;color:' + color + ';cursor:help;">' + label + '</span>';
-      if (ownerCanCancel) { const _cp = getServicePriceForDate(u.propertyId || '', u.type || 'cleaning_standard', 'price_owner', dateStr); html += '<a href="#" onclick="showCancelModal(\'' + u._id + '\',\'' + dateStr + '\',\'' + esc(svcName).replace(/'/g,"\\\\'") + '\',' + _cp + ');return false;" style="font-size:10px;color:var(--text3);text-decoration:none;" title="Annuler">&#128465;</a>'; }
-      if (u.status === 'pending_validation' && u._source === 'service_request') {
-        html += '<button onclick="ownerValidateService(\'' + u._id + '\',true)" style="padding:4px 8px;font-size:10px;background:#34d399;color:#fff;border:none;border-radius:6px;cursor:pointer;margin-left:4px;" title="Valider">&#10003;</button>';
-        html += '<button onclick="ownerDisputeService(\'' + u._id + '\',\'' + esc(u.provider || '').replace(/'/g,"\\\\'") + '\',\'' + esc(svcName).replace(/'/g,"\\\\'") + '\')" style="padding:4px 8px;font-size:10px;background:#e94560;color:#fff;border:none;border-radius:6px;cursor:pointer;margin-left:2px;" title="Contester">&#10007;</button>';
+      // Date block parts
+      let dayNum = '', monthStr = '', dowStr = '';
+      if (dateStr) {
+        const d = new Date(dateStr + 'T12:00:00');
+        dayNum = d.getDate();
+        monthStr = _omonths[d.getMonth()];
+        dowStr = _odays[d.getDay()];
       }
-      if ((u.status === 'done' || u.status === 'pending_validation') && u._source === 'service_request' && u.provider) html += '<a href="#" onclick="showRatingModal(\'' + u._id + '\',\'' + esc(u.provider).replace(/'/g,"\\\\'") + '\');return false;" style="font-size:10px;color:#f59e0b;text-decoration:none;" title="Noter">&#11088;</a>';
+
+      html += '<div class="adminPrestCard" data-category="' + catKey + '" data-date="' + dateStr + '" data-type="' + (u.type||'') + '" data-provider="' + esc(u.provider||'') + '" style="border-left:4px solid ' + color + ';' + (isToday ? 'box-shadow:0 0 0 1px rgba(233,69,96,0.3);' : '') + '">';
+      html += '<div style="display:flex;align-items:stretch;gap:0;padding:0;">';
+      if (dayNum) {
+        html += '<div class="card-date-block">';
+        html += '<div class="card-dow">' + dowStr + '</div>';
+        html += '<div class="card-day">' + dayNum + '</div>';
+        html += '<div class="card-month">' + monthStr + '</div>';
+        html += '</div>';
+      }
+      html += '<div style="display:flex;align-items:center;padding:0 8px;font-size:26px;flex-shrink:0;">' + svcIcon + '</div>';
+      html += '<div style="flex:1;min-width:0;padding:10px 8px 10px 0;">';
+      html += '<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">';
+      html += '<span style="font-size:14px;font-weight:700;color:var(--text);">' + esc(svcName) + '</span>';
+      if (u.source) html += '<span style="font-size:9px;padding:1px 5px;border-radius:3px;background:' + (u.source.toLowerCase().includes('airbnb') ? '#e9456030' : '#2563eb30') + ';color:' + (u.source.toLowerCase().includes('airbnb') ? '#e94560' : '#2563eb') + ';font-weight:700;">' + esc(u.source).toUpperCase() + '</span>';
+      html += '</div>';
+      html += '<div style="font-size:11px;color:var(--text3);margin-top:3px;">';
+      const mp = [];
+      if (u.propertyName) mp.push('&#127968; ' + esc(u.propertyName));
+      if (u.provider) mp.push('&#128100; ' + esc(u.provider));
+      html += mp.join(' &middot; ');
+      html += '</div>';
+      html += '</div>';
+      html += '<div style="display:flex;align-items:center;gap:6px;flex-shrink:0;padding:0 12px;">';
+      html += '<span class="card-status" title="' + (getStatusHint(u.status)||'') + '" style="background:' + color + '18;color:' + color + ';cursor:help;">' + label + '</span>';
+      const ownerCanCancel = u._source === 'service_request' && !['done','departed','in_progress','cancelled'].includes(u.status);
+      if (ownerCanCancel) {
+        const _cp = getServicePriceForDate(u.propertyId || '', u.type || 'cleaning_standard', 'price_owner', dateStr);
+        html += '<a href="#" onclick="showCancelModal(\'' + u._id + '\',\'' + dateStr + '\',\'' + esc(svcName).replace(/'/g,"\\\\'") + '\',' + _cp + ');return false;" style="font-size:10px;color:var(--text3);text-decoration:none;" title="Annuler">&#128465;</a>';
+      }
+      if (u.status === 'pending_validation' && u._source === 'service_request') {
+        html += '<button onclick="ownerValidateService(\'' + u._id + '\',true)" style="padding:4px 8px;font-size:10px;background:#34d399;color:#fff;border:none;border-radius:6px;cursor:pointer;" title="Valider">&#10003;</button>';
+        html += '<button onclick="ownerDisputeService(\'' + u._id + '\',\'' + esc(u.provider || '').replace(/'/g,"\\\\'") + '\',\'' + esc(svcName).replace(/'/g,"\\\\'") + '\')" style="padding:4px 8px;font-size:10px;background:#e94560;color:#fff;border:none;border-radius:6px;cursor:pointer;" title="Contester">&#10007;</button>';
+      }
+      if ((u.status === 'done' || u.status === 'pending_validation') && u._source === 'service_request' && u.provider) {
+        html += '<a href="#" onclick="showRatingModal(\'' + u._id + '\',\'' + esc(u.provider).replace(/'/g,"\\\\'") + '\');return false;" style="font-size:10px;color:#f59e0b;text-decoration:none;" title="Noter">&#11088;</a>';
+      }
       html += '</div>';
       html += '</div>';
       html += '</div>';
     });
+    if (ownerLastMonth !== '') html += '</details>';
   }
 
   html += '</div>'; // close ownerContentPrestations
