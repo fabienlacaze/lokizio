@@ -1134,7 +1134,7 @@ async function loadPDF() {
 </script>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v7.87</div>
+<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v7.88</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -1144,7 +1144,7 @@ async function loadPDF() {
     <!-- Broom that sweeps -->
     <div id="splashBroom" style="position:absolute;top:50%;left:-60px;font-size:48px;transform:translateY(-50%) rotate(-30deg);opacity:0;transition:all 0.8s cubic-bezier(0.25,0.46,0.45,0.94);">✨</div>
   </div>
-  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v7.87</span></div>
+  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v7.88</span></div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie pour locations</div>
   <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou</div>
   <!-- Loading bar -->
@@ -2419,6 +2419,7 @@ function getStatusLabel(s) { return (STATUS_CONFIG[s] || {}).label || s || ''; }
 // ── Splash Changelog (update this with each significant version) ──
 // Full versioned changelog — add new entries at TOP
 const VERSION_CHANGELOG = [
+  { v: '7.88', changes: ['Bouton "Mettre a jour" mot de passe desactive tant que criteres non remplis', 'Fix popup "Changer de role" qui s\'ouvrait derriere la popup profil'] },
   { v: '7.87', changes: ['Auto-save uniforme sur les 3 popups profil (personnel, facturation, annuaire)', 'Suppression des boutons Enregistrer, indicateur "✓ Sauvegarde auto"'] },
   { v: '7.86', changes: ['Profil annuaire: bouton Enregistrer visible pendant la saisie, disparait apres save', 'Fix saveProfile / saveBillingProfile: gestion erreur + update local', 'SQL migration ajoutee pour colonnes billing (add-profile-columns.sql)'] },
   { v: '7.85', changes: ['Service "Ponctuel": champ date obligatoire ajoute', 'Affichage de la date dans la liste compacte', 'Stockage dans scheduled_date'] },
@@ -8442,6 +8443,7 @@ async function showRoleChangeModal() {
   document.getElementById('msgBody').innerHTML = html;
   document.getElementById('overlay').style.display = 'block';
   document.getElementById('msgModal').style.display = 'block';
+  if (document.body.classList.contains('hasStackedOverlay')) document.body.classList.add('msgAboveStacked');
 }
 
 async function changeRole(newRole) {
@@ -8849,11 +8851,11 @@ function showChangePasswordForm() {
         <div id="changePwdReq-special" style="display:flex;align-items:center;gap:4px;"><span class="pwdReq-icon">&#9675;</span> <span>Un caractere special (!@#$...)</span></div>
       </div>
       <div style="position:relative;margin-bottom:16px;">
-        <input type="password" id="changePwd2" placeholder="Confirmez le mot de passe" style="width:100%;padding:12px 44px 12px 16px;background:#0f0f1a;color:#fff;border:1px solid rgba(255,255,255,0.1);border-radius:10px;font-size:14px;box-sizing:border-box;font-family:Inter,sans-serif;">
+        <input type="password" id="changePwd2" placeholder="Confirmez le mot de passe" oninput="updateChangePwdStrength()" style="width:100%;padding:12px 44px 12px 16px;background:#0f0f1a;color:#fff;border:1px solid rgba(255,255,255,0.1);border-radius:10px;font-size:14px;box-sizing:border-box;font-family:Inter,sans-serif;">
         <button type="button" onclick="togglePwdVisibility('changePwd2', this)" aria-label="Afficher le mot de passe" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:transparent;border:none;color:#9ca3af;font-size:16px;cursor:pointer;padding:6px;">&#128065;</button>
       </div>
       <div id="changePwdMsg" style="color:#e94560;font-size:12px;margin-bottom:12px;min-height:16px;"></div>
-      <button onclick="submitChangePassword()" style="width:100%;padding:14px;background:linear-gradient(135deg,#e94560,#c73e54);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;">Mettre a jour</button>
+      <button id="submitChangePwdBtn" onclick="submitChangePassword()" disabled style="width:100%;padding:14px;background:linear-gradient(135deg,#e94560,#c73e54);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:not-allowed;opacity:0.5;transition:opacity 0.2s;">Mettre a jour</button>
       <button onclick="document.getElementById('changePwdOverlay').remove()" style="width:100%;padding:10px;background:transparent;color:#9ca3af;border:none;font-size:12px;cursor:pointer;margin-top:8px;">Annuler</button>
     </div>
   `;
@@ -8862,6 +8864,7 @@ function showChangePasswordForm() {
 
 function updateChangePwdStrength() {
   const p = document.getElementById('changePwd1')?.value || '';
+  const p2 = document.getElementById('changePwd2')?.value || '';
   const rules = { len: p.length >= 8, upper: /[A-Z]/.test(p), lower: /[a-z]/.test(p), digit: /[0-9]/.test(p), special: /[^A-Za-z0-9]/.test(p) };
   for (const key in rules) {
     const el = document.getElementById('changePwdReq-' + key);
@@ -8869,6 +8872,13 @@ function updateChangePwdStrength() {
     el.style.color = rules[key] ? '#34d399' : '#6b7280';
     const icon = el.querySelector('.pwdReq-icon');
     if (icon) icon.innerHTML = rules[key] ? '&#10003;' : '&#9675;';
+  }
+  const allOk = Object.values(rules).every(v => v) && p === p2 && p2.length > 0;
+  const btn = document.getElementById('submitChangePwdBtn');
+  if (btn) {
+    btn.disabled = !allOk;
+    btn.style.opacity = allOk ? '1' : '0.5';
+    btn.style.cursor = allOk ? 'pointer' : 'not-allowed';
   }
 }
 
