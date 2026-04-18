@@ -1140,7 +1140,7 @@ async function loadPDF() {
 </script>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v8.34</div>
+<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v8.35</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -1150,7 +1150,7 @@ async function loadPDF() {
     <!-- Broom that sweeps -->
     <div id="splashBroom" style="position:absolute;top:50%;left:-60px;font-size:48px;transform:translateY(-50%) rotate(-30deg);opacity:0;transition:all 0.8s cubic-bezier(0.25,0.46,0.45,0.94);">✨</div>
   </div>
-  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v8.34</span></div>
+  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v8.35</span></div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie pour locations</div>
   <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou</div>
   <!-- Loading bar -->
@@ -2484,6 +2484,7 @@ function getStatusLabel(s) { return (STATUS_CONFIG[s] || {}).label || s || ''; }
 // ── Splash Changelog (update this with each significant version) ──
 // Full versioned changelog — add new entries at TOP
 const VERSION_CHANGELOG = [
+  { v: '8.35', changes: ['Popup Facture: intitule de la prestation mis en evidence + clic pour voir toutes les infos utiles (client, emetteur, SIRET, adresse, lignes, totaux)'] },
   { v: '8.34', changes: ['Chat owner: meme logique de clic sur les messages systeme pour ouvrir la prestation', 'Fix double attribut style qui desactivait le cursor pointer'] },
   { v: '8.33', changes: ['Chat: messages systeme (Mission assignee, accepte, refuse, Annulation) cliquables pour ouvrir la prestation', 'Chat: fix entites HTML encodees deux fois'] },
   { v: '8.32', changes: ['Popup detail: bouton Annuler corrige (utilisait un popup intermediaire)', 'Nouveau bouton Relancer (max 2/2) pour owner/concierge sur prestations en attente de reponse', 'Cartes prestations passees: mention "Date passee" en haut a droite', 'SQL: add-relance-columns.sql (relance_count, relance_at)'] },
@@ -8451,6 +8452,60 @@ function renderInvoiceSummary(invoices) {
   div.innerHTML = html;
 }
 
+async function showInvoicePrestationDetail(invoiceId) {
+  try {
+    const { data: inv } = await sb.from('invoices').select('*').eq('id', invoiceId).maybeSingle();
+    if (!inv) return;
+    let html = '<div style="padding:6px;max-height:70vh;overflow-y:auto;">';
+    // Prestation header
+    const firstItem = (inv.items && inv.items.length) ? inv.items[0] : null;
+    const prestLabel = firstItem ? firstItem.description : '(Sans titre)';
+    html += '<div style="font-size:18px;font-weight:800;color:var(--text);margin-bottom:4px;">' + esc(prestLabel) + '</div>';
+    if (inv.property_name) html += '<div style="font-size:12px;color:var(--text3);margin-bottom:14px;">&#127968; ' + esc(inv.property_name) + '</div>';
+    // Info grid
+    html += '<div style="display:grid;gap:8px;margin-bottom:14px;">';
+    const row = (icon, lbl, val) => {
+      if (!val) return '';
+      return '<div style="display:flex;gap:10px;padding:10px;background:var(--surface2);border-radius:8px;"><span style="font-size:16px;">' + icon + '</span><div style="flex:1;min-width:0;"><div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;">' + lbl + '</div><div style="font-size:13px;color:var(--text);font-weight:600;word-break:break-word;">' + esc(val) + '</div></div></div>';
+    };
+    html += row('&#128197;', 'Periode', (inv.period_start ? fmtDate(inv.period_start) : '') + (inv.period_end ? ' → ' + fmtDate(inv.period_end) : ''));
+    html += row('&#128100;', inv.type === 'concierge_to_owner' ? 'Client (proprietaire)' : 'Client', inv.client_name);
+    html += row('&#127970;', 'Emetteur', inv.issuer_name);
+    html += row('&#128205;', 'Adresse emetteur', inv.issuer_address);
+    html += row('&#128221;', 'SIRET', inv.issuer_siret);
+    html += row('&#9993;', 'Email emetteur', inv.issuer_email);
+    if (inv.due_date) html += row('&#9201;', 'Echeance', fmtDate(inv.due_date));
+    html += '</div>';
+    // Items list (all)
+    if (inv.items && inv.items.length) {
+      html += '<div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:6px;">Lignes de la facture</div>';
+      html += '<table style="width:100%;border-collapse:collapse;font-size:11px;margin-bottom:14px;">';
+      html += '<tr><th style="text-align:left;padding:6px;color:var(--text3);border-bottom:1px solid var(--border);">Description</th><th style="text-align:center;padding:6px;color:var(--text3);border-bottom:1px solid var(--border);">Qte</th><th style="text-align:right;padding:6px;color:var(--text3);border-bottom:1px solid var(--border);">PU</th><th style="text-align:right;padding:6px;color:var(--text3);border-bottom:1px solid var(--border);">Total</th></tr>';
+      inv.items.forEach(it => {
+        html += '<tr style="border-bottom:1px solid var(--border);">';
+        html += '<td style="padding:6px;">' + esc(it.description || '') + '</td>';
+        html += '<td style="text-align:center;padding:6px;">' + (it.quantity || 1) + '</td>';
+        html += '<td style="text-align:right;padding:6px;">' + (parseFloat(it.unit_price) || 0).toFixed(2) + '€</td>';
+        html += '<td style="text-align:right;padding:6px;font-weight:600;">' + (parseFloat(it.amount) || 0).toFixed(2) + '€</td>';
+        html += '</tr>';
+      });
+      html += '</table>';
+    }
+    // Totals
+    html += '<div style="padding:10px 12px;background:var(--surface2);border-radius:10px;">';
+    if (inv.total_ht) html += '<div style="display:flex;justify-content:space-between;padding:2px 0;"><span style="color:var(--text3);">HT</span><span>' + inv.total_ht.toFixed(2) + '€</span></div>';
+    if (inv.total_tva) html += '<div style="display:flex;justify-content:space-between;padding:2px 0;"><span style="color:var(--text3);">TVA</span><span>' + inv.total_tva.toFixed(2) + '€</span></div>';
+    html += '<div style="display:flex;justify-content:space-between;padding:4px 0;font-weight:800;font-size:15px;border-top:1px solid var(--border);margin-top:4px;"><span>TTC</span><span>' + (inv.total_ttc || 0).toFixed(2) + '€</span></div>';
+    html += '</div>';
+    html += '<div style="display:flex;gap:8px;margin-top:14px;">';
+    html += '<button class="btn btnOutline" style="flex:1;padding:10px;" onclick="closeMsg();setTimeout(()=>showInvoiceDetail(\'' + inv.id + '\'),150)">&larr; Retour a la facture</button>';
+    html += '</div>';
+    html += '</div>';
+    closeMsg();
+    setTimeout(() => showMsg(html, true), 150);
+  } catch(e) { console.error('showInvoicePrestationDetail error:', e); showToast('Erreur'); }
+}
+
 async function showInvoiceDetail(id) {
   try {
     const { data: inv } = await sb.from('invoices').select('*').eq('id', id).single();
@@ -8462,15 +8517,28 @@ async function showInvoiceDetail(id) {
     const color = statusColors[isOverdue ? 'overdue' : inv.status] || '#888';
     const label = isOverdue ? 'En retard' : (statusLabels[inv.status] || inv.status);
 
+    // Pick first item as main prestation summary
+    const firstItem = (inv.items && inv.items.length) ? inv.items[0] : null;
+    const prestLabel = firstItem ? firstItem.description : '';
+
     let html = '<div style="padding:6px;">';
     // Header
-    html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">';
+    html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">';
     html += '<div>';
     html += '<div style="font-size:18px;font-weight:800;color:var(--text);">' + esc(inv.invoice_number || 'Facture') + '</div>';
     html += '<div style="font-size:12px;color:var(--text3);">' + (inv.type === 'concierge_to_owner' ? '&#127968; Facture proprietaire' : '&#129529; Facture concierge') + '</div>';
     html += '</div>';
     html += '<span style="padding:4px 12px;background:' + color + '20;color:' + color + ';border-radius:6px;font-weight:700;font-size:13px;">' + label + '</span>';
     html += '</div>';
+    // Prestation summary card
+    if (prestLabel || inv.property_name) {
+      html += '<div onclick="showInvoicePrestationDetail(\'' + inv.id + '\')" style="background:rgba(108,99,255,0.1);border:1px solid rgba(108,99,255,0.3);border-radius:10px;padding:10px 12px;margin-bottom:16px;cursor:pointer;transition:background 0.2s;" onmouseover="this.style.background=\'rgba(108,99,255,0.18)\'" onmouseout="this.style.background=\'rgba(108,99,255,0.1)\'" title="Voir le detail">';
+      html += '<div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:3px;">&#128203; Prestation</div>';
+      if (prestLabel) html += '<div style="font-size:14px;font-weight:700;color:var(--text);">' + esc(prestLabel) + '</div>';
+      if (inv.property_name) html += '<div style="font-size:11px;color:var(--text3);margin-top:2px;">&#127968; ' + esc(inv.property_name) + '</div>';
+      html += '<div style="font-size:10px;color:#a78bfa;margin-top:4px;">&#128279; Cliquer pour plus d\'infos</div>';
+      html += '</div>';
+    }
 
     // Timeline
     html += '<div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:10px;">&#128340; Historique</div>';
