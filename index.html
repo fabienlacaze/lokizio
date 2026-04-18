@@ -12,6 +12,7 @@
 </script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://js.stripe.com https://unpkg.com; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.stripe.com https://nominatim.openstreetmap.org https://*.tile.openstreetmap.org; img-src 'self' data: blob: https:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net https://unpkg.com; font-src 'self' data: https://fonts.gstatic.com; frame-src https://js.stripe.com https://hooks.stripe.com; object-src 'none'; base-uri 'self'; form-action 'self';">
 <meta name="theme-color" content="#1a1a2e">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -1134,7 +1135,7 @@ async function loadPDF() {
 </script>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v7.88</div>
+<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v7.89</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -1144,7 +1145,7 @@ async function loadPDF() {
     <!-- Broom that sweeps -->
     <div id="splashBroom" style="position:absolute;top:50%;left:-60px;font-size:48px;transform:translateY(-50%) rotate(-30deg);opacity:0;transition:all 0.8s cubic-bezier(0.25,0.46,0.45,0.94);">✨</div>
   </div>
-  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v7.88</span></div>
+  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v7.89</span></div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie pour locations</div>
   <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou</div>
   <!-- Loading bar -->
@@ -1973,7 +1974,7 @@ async function loadPDF() {
         <label style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;">Raison sociale</label>
         <input id="billingCompany" type="text" placeholder="Raison sociale / Nom commercial" onchange="saveBillingProfile()" style="padding:10px 12px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;">
         <label style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;">SIRET</label>
-        <input id="billingSiret" type="text" placeholder="14 chiffres" maxlength="14" onchange="saveBillingProfile()" style="padding:10px 12px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;">
+        <input id="billingSiret" type="text" inputmode="numeric" pattern="[0-9]{14}" placeholder="14 chiffres" maxlength="14" oninput="this.value=this.value.replace(/[^0-9]/g,'')" onchange="saveBillingProfile()" style="padding:10px 12px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;">
         <label style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;">N° TVA intracommunautaire</label>
         <input id="billingVat" type="text" placeholder="FR12345678901" onchange="saveBillingProfile()" style="padding:10px 12px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;">
         <label style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;">Adresse de facturation</label>
@@ -2419,6 +2420,7 @@ function getStatusLabel(s) { return (STATUS_CONFIG[s] || {}).label || s || ''; }
 // ── Splash Changelog (update this with each significant version) ──
 // Full versioned changelog — add new entries at TOP
 const VERSION_CHANGELOG = [
+  { v: '7.89', changes: ['SECURITE: CSP ajoutee, XSS corriges (owner, factures, photos QC/dispute, planning)', 'safePhotoUrl: whitelist https + data:image', 'Validation SIRET/TVA/telephone', 'Edge Function create-portal: auth JWT obligatoire', 'safeErr: messages erreur DB masques en prod', 'Requete properties .or() remplacee par 2 requetes sures'] },
   { v: '7.88', changes: ['Bouton "Mettre a jour" mot de passe desactive tant que criteres non remplis', 'Fix popup "Changer de role" qui s\'ouvrait derriere la popup profil'] },
   { v: '7.87', changes: ['Auto-save uniforme sur les 3 popups profil (personnel, facturation, annuaire)', 'Suppression des boutons Enregistrer, indicateur "✓ Sauvegarde auto"'] },
   { v: '7.86', changes: ['Profil annuaire: bouton Enregistrer visible pendant la saisie, disparait apres save', 'Fix saveProfile / saveBillingProfile: gestion erreur + update local', 'SQL migration ajoutee pour colonnes billing (add-profile-columns.sql)'] },
@@ -6135,8 +6137,15 @@ async function loadOwnerInvoices() {
       .order('created_at', { ascending: false }).limit(20);
     const { data: allInvoices } = await query;
     // Client-side filter: match owner by client_name or property ownership
-    const { data: myProps } = await sb.from('properties').select('name').eq('org_id', org.id).or('owner_member_id.eq.' + (member?.id || '') + ',owner_email.eq.' + (user?.email || ''));
-    const myPropNames = (myProps || []).map(p => p.name);
+    let myPropNames = [];
+    if (member?.id) {
+      const { data: p1 } = await sb.from('properties').select('name').eq('org_id', org.id).eq('owner_member_id', member.id);
+      (p1 || []).forEach(p => { if (p.name && !myPropNames.includes(p.name)) myPropNames.push(p.name); });
+    }
+    if (user?.email) {
+      const { data: p2 } = await sb.from('properties').select('name').eq('org_id', org.id).eq('owner_email', user.email);
+      (p2 || []).forEach(p => { if (p.name && !myPropNames.includes(p.name)) myPropNames.push(p.name); });
+    }
     const invoices = (allInvoices || []).filter(inv => {
       if (inv.client_name && inv.client_name.toLowerCase().includes(ownerName.toLowerCase())) return true;
       if (inv.property_name && myPropNames.includes(inv.property_name)) return true;
@@ -6154,8 +6163,8 @@ async function loadOwnerInvoices() {
       const dateStr = new Date(inv.created_at).toLocaleDateString('fr-FR');
       html += '<div style="display:flex;justify-content:space-between;align-items:center;padding:12px;background:var(--surface);border:1px solid var(--border);border-left:3px solid ' + color + ';border-radius:8px;margin-bottom:6px;">';
       html += '<div>';
-      html += '<div style="font-weight:600;font-size:13px;color:var(--text);">' + (inv.invoice_number || 'Facture') + '</div>';
-      html += '<div style="font-size:11px;color:var(--text3);">' + dateStr + ' — ' + (inv.property_name || '') + '</div>';
+      html += '<div style="font-weight:600;font-size:13px;color:var(--text);">' + esc(inv.invoice_number || 'Facture') + '</div>';
+      html += '<div style="font-size:11px;color:var(--text3);">' + esc(dateStr) + ' — ' + esc(inv.property_name || '') + '</div>';
       html += '</div>';
       html += '<div style="display:flex;align-items:center;gap:8px;">';
       html += '<span style="font-weight:700;font-size:14px;color:' + color + ';">' + (inv.total_ttc || 0).toFixed(2) + ' &euro;</span>';
@@ -6774,12 +6783,13 @@ async function authLogout() {
 async function saveProfile() {
   const member = API.getMember();
   if (!member) return;
-  const name = document.getElementById('profileName').value.trim();
-  const phone = document.getElementById('profilePhone').value.trim();
-  const address = document.getElementById('profileAddress').value.trim();
+  const name = document.getElementById('profileName').value.trim().slice(0, 100);
+  const phone = document.getElementById('profilePhone').value.trim().slice(0, 30);
+  const address = document.getElementById('profileAddress').value.trim().slice(0, 300);
+  // Phone format: digits, spaces, +, -, parentheses only
+  if (phone && !/^[\d\s+\-().]{5,30}$/.test(phone)) { showToast('Telephone invalide'); return; }
   const { error } = await sb.from('members').update({ display_name: name, phone, address }).eq('id', member.id);
-  if (error) { showToast('Erreur: ' + error.message); console.error('saveProfile error:', error); return; }
-  // Update local copy so next open shows latest
+  if (error) { showToast('Erreur: impossible de sauvegarder'); console.error('saveProfile error:', error); return; }
   member.display_name = name; member.phone = phone; member.address = address;
   showToast('Profil mis a jour !');
 }
@@ -6787,16 +6797,21 @@ async function saveProfile() {
 async function saveBillingProfile() {
   const member = API.getMember();
   if (!member) return;
+  const siret = document.getElementById('billingSiret').value.trim();
+  const vat = document.getElementById('billingVat').value.trim();
+  // Validate SIRET format (14 digits) if non-empty
+  if (siret && !/^\d{14}$/.test(siret)) { showToast('SIRET invalide (14 chiffres attendus)'); return; }
+  // Validate VAT format (country code + digits/letters) if non-empty
+  if (vat && !/^[A-Z]{2}[A-Z0-9]{2,13}$/i.test(vat)) { showToast('N° TVA invalide'); return; }
   const data = {
-    company_name: document.getElementById('billingCompany').value.trim(),
-    siret: document.getElementById('billingSiret').value.trim(),
-    vat_number: document.getElementById('billingVat').value.trim(),
-    billing_address: document.getElementById('billingAddress').value.trim(),
+    company_name: document.getElementById('billingCompany').value.trim().slice(0, 200),
+    siret: siret,
+    vat_number: vat.toUpperCase(),
+    billing_address: document.getElementById('billingAddress').value.trim().slice(0, 500),
     vat_regime: document.getElementById('billingVatRegime').value
   };
   const { error } = await sb.from('members').update(data).eq('id', member.id);
-  if (error) { showToast('Erreur: ' + error.message); console.error('saveBillingProfile error:', error); return; }
-  // Update local copy
+  if (error) { showToast('Erreur: impossible de sauvegarder'); console.error('saveBillingProfile error:', error); return; }
   Object.assign(member, data);
   showToast('Profil facturation sauvegarde !');
 }
@@ -7025,7 +7040,7 @@ async function saveInvoice(status, type) {
   };
 
   const { error } = await sb.from('invoices').insert(invoice);
-  if (error) { console.error('Invoice error:', error); return showToast('Erreur: ' + error.message); }
+  if (error) { console.error('Invoice error:', error); return showToast('Erreur: ' + safeErr(error, 'Creation impossible')); }
 
   closeMsg();
   showToast(status === 'draft' ? 'Brouillon sauvegarde' : 'Facture ' + invoiceNumber + ' creee !');
@@ -7137,7 +7152,7 @@ async function showQcReview(requestId) {
   req.qc_photos.forEach((p, i) => {
     html += '<div style="margin-bottom:12px;">';
     html += '<div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:6px;">' + (p.icon || '&#128247;') + ' ' + esc(p.room) + '</div>';
-    html += '<img src="' + p.photo + '" style="width:100%;max-height:250px;object-fit:cover;border-radius:10px;border:1px solid var(--border);" onclick="window.open(this.src)">';
+    html += '<img src="' + safePhotoUrl(p.photo) + '" style="width:100%;max-height:250px;object-fit:cover;border-radius:10px;border:1px solid var(--border);" onclick="window.open(this.src)">';
     if (p.timestamp) html += '<div style="font-size:10px;color:var(--text3);margin-top:2px;">' + new Date(p.timestamp).toLocaleString('fr-FR') + '</div>';
     html += '</div>';
   });
@@ -8221,7 +8236,7 @@ async function updateInvoiceStatus(id, status) {
   try {
     const update = { status };
     const { error } = await sb.from('invoices').update(update).eq('id', id);
-    if (error) { console.error('updateInvoiceStatus error:', error); showToast('Erreur: ' + (error.message || 'Mise a jour impossible')); return; }
+    if (error) { console.error('updateInvoiceStatus error:', error); showToast('Erreur: ' + safeErr(error, 'Mise a jour impossible')); return; }
     showToast('Facture mise a jour');
     loadInvoices();
   } catch(e) { console.error('updateInvoiceStatus:', e); showToast('Erreur: ' + e.message); }
@@ -10542,9 +10557,9 @@ function openPropDetail() {
     let ownerHtml = '<div style="background:var(--surface2);border:1px solid var(--border2);border-radius:10px;padding:12px;margin-bottom:12px;">';
     ownerHtml += '<div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">&#128100; PROPRIETAIRE</div>';
     ownerHtml += '<div style="display:flex;flex-direction:column;gap:4px;font-size:13px;">';
-    ownerHtml += '<div style="color:var(--text);">' + (prop.owner_name || prop.owner_email || 'Non renseigne') + '</div>';
-    if (prop.owner_phone) ownerHtml += '<div><a href="tel:' + prop.owner_phone + '" style="color:var(--accent2);text-decoration:none;">&#128222; ' + prop.owner_phone + '</a></div>';
-    if (prop.owner_email) ownerHtml += '<div><a href="mailto:' + prop.owner_email + '" style="color:var(--accent2);text-decoration:none;">&#9993; ' + prop.owner_email + '</a></div>';
+    ownerHtml += '<div style="color:var(--text);">' + esc(prop.owner_name || prop.owner_email || 'Non renseigne') + '</div>';
+    if (prop.owner_phone) ownerHtml += '<div><a href="tel:' + encodeURIComponent(prop.owner_phone) + '" style="color:var(--accent2);text-decoration:none;">&#128222; ' + esc(prop.owner_phone) + '</a></div>';
+    if (prop.owner_email) ownerHtml += '<div><a href="mailto:' + encodeURIComponent(prop.owner_email) + '" style="color:var(--accent2);text-decoration:none;">&#9993; ' + esc(prop.owner_email) + '</a></div>';
     ownerHtml += '</div></div>';
     ownerDiv.innerHTML = ownerHtml;
   } else {
@@ -11367,7 +11382,7 @@ function renderResults() {
     const days=getIntervalDays(c.prevCheckout,c.date);
     let intervalCls='',intervalBadge='';
     if(days>=0){if(days===0){intervalCls='intervalShort';intervalBadge=`<span class="intervalBadge short">${days}j</span>`;}else if(days<=2){intervalCls='intervalMed';intervalBadge=`<span class="intervalBadge med">${days}j</span>`;}else{intervalCls='intervalLong';intervalBadge=`<span class="intervalBadge long">${days}j</span>`;}}
-    html+=`<tr class="${rowCls} ${intervalCls}"><td style="color:var(--text3);font-size:12px">${num+1}</td><td><span class="srcBadge ${getSourceClass(c.source)}">${esc(c.source)}</span>${newBadge}</td><td style="font-weight:600">${c.dayName} ${c.dateFR}</td><td style="color:var(--text2)">${c.checkoutDateFR}</td><td class="center">${intervalBadge}</td><td><input type="date" value="${c.cleaningDate}" min="${minDate}" max="${maxDate}" onchange="changeCleaningDate(${i},this.value)" style="background:rgba(255,255,255,0.04);color:var(--success);border:1px solid var(--border2);font-size:12px;padding:6px;font-weight:600;border-radius:8px;font-family:'Inter',sans-serif;"></td><td>${buildProvSelect(i,c.provider)}${vacHtml}${lockedBadge}</td><td class="center"><input type="checkbox"${checked} onchange="toggleTransmit(${i})" title="Marquer comme transmis"></td><td class="center"><button class="btn btnSmall" style="padding:4px 6px;" onclick="setReminder(${i})" title="Rappel">&#128276;</button></td></tr>`;
+    html+=`<tr class="${rowCls} ${intervalCls}"><td style="color:var(--text3);font-size:12px">${num+1}</td><td><span class="srcBadge ${getSourceClass(c.source)}">${esc(c.source)}</span>${newBadge}</td><td style="font-weight:600">${esc(c.dayName||'')} ${esc(c.dateFR||'')}</td><td style="color:var(--text2)">${esc(c.checkoutDateFR||'')}</td><td class="center">${intervalBadge}</td><td><input type="date" value="${esc(c.cleaningDate||'')}" min="${esc(minDate)}" max="${esc(maxDate)}" onchange="changeCleaningDate(${i},this.value)" style="background:rgba(255,255,255,0.04);color:var(--success);border:1px solid var(--border2);font-size:12px;padding:6px;font-weight:600;border-radius:8px;font-family:'Inter',sans-serif;"></td><td>${buildProvSelect(i,c.provider)}${vacHtml}${lockedBadge}</td><td class="center"><input type="checkbox"${checked} onchange="toggleTransmit(${i})" title="Marquer comme transmis"></td><td class="center"><button class="btn btnSmall" style="padding:4px 6px;" onclick="setReminder(${i})" title="Rappel">&#128276;</button></td></tr>`;
   });
   html+='</table>'; document.getElementById('resultDiv').innerHTML=html; renderSummary();
   if(currentTab==='calendar')renderCalendar();
@@ -12744,6 +12759,10 @@ async function clearHistory(){cleaningHistory=[];await API.save_history([]);rend
 
 /* ── Utilities ── */
 function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
+// Validate photo URL - only allow https:// and data:image/ (blocks javascript:, data:text/html, etc.)
+function safePhotoUrl(u){if(!u||typeof u!=='string')return '';const s=u.trim();if(s.startsWith('https://')||s.startsWith('data:image/'))return esc(s);return '';}
+// Generic-safe error label - avoids leaking DB/schema info
+function safeErr(err, fallback){const m=err&&err.message?String(err.message):'';if(/row-level|permission|jwt|policy|violates|duplicate|foreign key/i.test(m))return fallback||'Operation impossible';return m||fallback||'Erreur';}
 function fmtDate(iso){if(!iso||iso.length<10)return iso||'';return iso.substring(8,10)+'/'+iso.substring(5,7)+'/'+iso.substring(0,4);}
 function getProvColor(name){const i=config.providers.findIndex(p=>p.name===name);return COLORS[i]||'#888';}
 function setStatus(html){document.getElementById('statusText').innerHTML=html;}
@@ -14077,7 +14096,7 @@ async function submitServiceRequest() {
     assigned_provider: document.getElementById('svcReqProvider')?.value || null,
     status: document.getElementById('svcReqProvider')?.value ? 'assigned' : 'pending'
   });
-  if (error) { console.error('Service request error:', error); return showToast('Erreur: ' + error.message); }
+  if (error) { console.error('Service request error:', error); return showToast('Erreur: ' + safeErr(error, 'Creation impossible')); }
   // Capture values before closing the dialog
   const role = API.getRole();
   const member = API.getMember();
@@ -14215,7 +14234,7 @@ async function loadServiceRequests() {
         if (r.dispute_details) html += `<div style="font-size:11px;color:var(--text3);margin-bottom:6px;line-height:1.4;">${esc(r.dispute_details)}</div>`;
         if (r.dispute_photos && r.dispute_photos.length) {
           html += `<div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:6px;">`;
-          r.dispute_photos.forEach(p => { html += `<img src="${p}" onclick="window.open(this.src)" style="width:48px;height:48px;object-fit:cover;border-radius:6px;cursor:pointer;border:1px solid var(--border2);">`; });
+          r.dispute_photos.forEach(p => { html += `<img src="${safePhotoUrl(p)}" onclick="window.open(this.src)" style="width:48px;height:48px;object-fit:cover;border-radius:6px;cursor:pointer;border:1px solid var(--border2);">`; });
           html += `</div>`;
         }
         html += `<div style="display:flex;gap:6px;">`;
