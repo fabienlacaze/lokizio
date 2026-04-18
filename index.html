@@ -1139,7 +1139,7 @@ async function loadPDF() {
 </script>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v8.06</div>
+<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v8.07</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -1149,7 +1149,7 @@ async function loadPDF() {
     <!-- Broom that sweeps -->
     <div id="splashBroom" style="position:absolute;top:50%;left:-60px;font-size:48px;transform:translateY(-50%) rotate(-30deg);opacity:0;transition:all 0.8s cubic-bezier(0.25,0.46,0.45,0.94);">✨</div>
   </div>
-  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v8.06</span></div>
+  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v8.07</span></div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie pour locations</div>
   <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou</div>
   <!-- Loading bar -->
@@ -2451,6 +2451,7 @@ function getStatusLabel(s) { return (STATUS_CONFIG[s] || {}).label || s || ''; }
 // ── Splash Changelog (update this with each significant version) ──
 // Full versioned changelog — add new entries at TOP
 const VERSION_CHANGELOG = [
+  { v: '8.07', changes: ['Annuaire: refresh apres envoi d\'une demande (bouton devient En attente)', 'Rating moyen calcule depuis service_requests.rating_owner/concierge et sauve dans marketplace_profiles.rating', 'cleanings_done incremente automatiquement a chaque validation (admin)', 'SQL: add-rating-stats-columns.sql + RPC increment_cleanings_done'] },
   { v: '8.06', changes: ['Annuaire: note globale (etoiles + /5), anciennete dans l\'annuaire, nombre de prestations visibles sur chaque profil', 'Message "Aucun contact pour l\'instant" avec bouton vers recherche'] },
   { v: '8.05', changes: ['Dropdown Disponibilite retire du profil annuaire (gere par Mes conges)', 'Lien vers Mes conges dans la popup annuaire', 'Annuaire affiche automatiquement "En vacances" si periode active'] },
   { v: '8.04', changes: ['Planning conges: jours passes desactives (grises)', 'Navigation mois precedent bloquee dans le passe', 'Exclusion de son propre profil dans l\'annuaire'] },
@@ -7245,6 +7246,16 @@ async function adminValidateService(requestId, newStatus) {
           '&#9989; ' + svcLabel + ' validee et terminee' + (propName ? ' pour ' + propName : '') + '.');
         // Auto-generate invoice line
         await autoInvoiceOnDone(req);
+        // Increment marketplace cleanings_done counter for the provider
+        if (req.assigned_provider_user_id) {
+          try { await sb.rpc('increment_cleanings_done', { p_user_id: req.assigned_provider_user_id }); }
+          catch(_) {
+            // Fallback: read + update
+            const { data: mk } = await sb.from('marketplace_profiles').select('cleanings_done').eq('user_id', req.assigned_provider_user_id).maybeSingle();
+            const newVal = (mk && mk.cleanings_done || 0) + 1;
+            await sb.from('marketplace_profiles').update({ cleanings_done: newVal }).eq('user_id', req.assigned_provider_user_id);
+          }
+        }
         // Propose rating
         if (req.assigned_provider) setTimeout(() => showRatingModal(requestId, req.assigned_provider), 500);
       } else {
@@ -13503,6 +13514,8 @@ async function sendConnectionRequest(targetUserId, targetName, targetRole) {
       await sendAutoMessage(org.id, myName, myRole, targetName,
         '&#128279; ' + myName + ' souhaite se connecter avec vous sur Lokizio');
     }
+    // Refresh annuaire so button updates to "En attente"
+    if (typeof renderAnnuaireTab === 'function') setTimeout(() => renderAnnuaireTab(), 300);
   } catch(e) {
     console.error('sendConnectionRequest error:', e);
     showToast('Erreur: ' + (e.message || 'Impossible d\'envoyer'));
@@ -15484,7 +15497,7 @@ async function submitRating(requestId, providerName) {
     update[commentField] = comment;
     await sb.from('service_requests').update(update).eq('id', requestId);
 
-    // Update provider's average rating in config
+    // Update provider's average rating in config (local providers)
     if (role === 'admin' || role === 'manager') {
       const prop = API.getActiveProperty(fullConfig);
       if (prop && prop.providers) {
@@ -15497,6 +15510,25 @@ async function submitRating(requestId, providerName) {
         }
       }
     }
+
+    // Also update marketplace_profiles.rating for the rated user (if linked)
+    try {
+      const { data: req } = await sb.from('service_requests').select('assigned_provider_user_id').eq('id', requestId).maybeSingle();
+      const providerUserId = req && req.assigned_provider_user_id;
+      if (providerUserId) {
+        // Compute new average from all rated requests for this user
+        const { data: ratedReqs } = await sb.from('service_requests')
+          .select('rating_owner,rating_concierge')
+          .eq('assigned_provider_user_id', providerUserId);
+        const ratings = [];
+        (ratedReqs || []).forEach(r => {
+          if (r.rating_owner) ratings.push(r.rating_owner);
+          if (r.rating_concierge) ratings.push(r.rating_concierge);
+        });
+        const avg = ratings.length ? ratings.reduce((a, b) => a + b, 0) / ratings.length : 0;
+        await sb.from('marketplace_profiles').update({ rating: avg, rating_count: ratings.length }).eq('user_id', providerUserId);
+      }
+    } catch(e) { console.warn('marketplace rating update failed:', e); }
 
     // Send auto-message with rating
     const stars = '⭐'.repeat(rating) + '☆'.repeat(5 - rating);
