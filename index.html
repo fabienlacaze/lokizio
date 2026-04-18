@@ -1060,7 +1060,7 @@ async function loadPDF() {
 </script>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v7.33</div>
+<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v7.34</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -1070,7 +1070,7 @@ async function loadPDF() {
     <!-- Broom that sweeps -->
     <div id="splashBroom" style="position:absolute;top:50%;left:-60px;font-size:48px;transform:translateY(-50%) rotate(-30deg);opacity:0;transition:all 0.8s cubic-bezier(0.25,0.46,0.45,0.94);">✨</div>
   </div>
-  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v7.33</span></div>
+  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v7.34</span></div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie pour locations</div>
   <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou</div>
   <!-- Loading bar -->
@@ -2280,6 +2280,7 @@ function getStatusLabel(s) { return (STATUS_CONFIG[s] || {}).label || s || ''; }
 // ── Splash Changelog (update this with each significant version) ──
 // Full versioned changelog — add new entries at TOP
 const VERSION_CHANGELOG = [
+  { v: '7.34', changes: ['Toggle visibilite mot de passe (icone oeil)', 'Validation complexite: 8 car + Maj + min + chiffre + special', 'Indicateurs live des regles respectees'] },
   { v: '7.33', changes: ['Fix banner "nouvelle version disponible" qui restait bloque apres mise a jour', 'Suppression auto du banner stale quand versions egales'] },
   { v: '7.32', changes: ['Fix reset password: capture hash dans head avant tous les scripts', 'checkAuth detecte recovery et affiche formulaire', 'Bypass init() pour recovery flow'] },
   { v: '7.31', changes: ['Fix reset password: capture hash avant consommation Supabase', 'Listener onAuthStateChange PASSWORD_RECOVERY', 'Cache buster supabase_config.js'] },
@@ -3387,6 +3388,39 @@ function restorePanelStates() {
 }
 
 /* ── Init ── */
+// Live password strength feedback
+function updatePwdStrength() {
+  const p = document.getElementById('recoveryPwd1')?.value || '';
+  const rules = {
+    len: p.length >= 8,
+    upper: /[A-Z]/.test(p),
+    lower: /[a-z]/.test(p),
+    digit: /[0-9]/.test(p),
+    special: /[^A-Za-z0-9]/.test(p),
+  };
+  for (const key in rules) {
+    const el = document.getElementById('pwdReq-' + key);
+    if (!el) continue;
+    const ok = rules[key];
+    el.style.color = ok ? '#34d399' : '#6b7280';
+    const icon = el.querySelector('.pwdReq-icon');
+    if (icon) icon.innerHTML = ok ? '&#10003;' : '&#9675;';
+  }
+}
+
+// Toggle password input visibility
+function togglePwdVisibility(inputId, btn) {
+  const input = document.getElementById(inputId);
+  if (!input) return;
+  if (input.type === 'password') {
+    input.type = 'text';
+    if (btn) btn.innerHTML = '&#128584;';
+  } else {
+    input.type = 'password';
+    if (btn) btn.innerHTML = '&#128065;';
+  }
+}
+
 // Show "new password" form when user arrives from reset password email
 async function showPasswordRecoveryForm() {
   // Prevent duplicate display
@@ -3411,8 +3445,21 @@ async function showPasswordRecoveryForm() {
         <h2 style="color:#fff;font-size:20px;margin:16px 0 8px;">&#128274; Nouveau mot de passe</h2>
         <p style="color:#9ca3af;font-size:13px;margin:0;">Definissez votre nouveau mot de passe pour Lokizio</p>
       </div>
-      <input type="password" id="recoveryPwd1" placeholder="Nouveau mot de passe" style="width:100%;padding:12px 16px;background:#0f0f1a;color:#fff;border:1px solid rgba(255,255,255,0.1);border-radius:10px;font-size:14px;margin-bottom:10px;box-sizing:border-box;font-family:Inter,sans-serif;">
-      <input type="password" id="recoveryPwd2" placeholder="Confirmez le mot de passe" style="width:100%;padding:12px 16px;background:#0f0f1a;color:#fff;border:1px solid rgba(255,255,255,0.1);border-radius:10px;font-size:14px;margin-bottom:16px;box-sizing:border-box;font-family:Inter,sans-serif;">
+      <div style="position:relative;margin-bottom:8px;">
+        <input type="password" id="recoveryPwd1" placeholder="Nouveau mot de passe" oninput="updatePwdStrength()" style="width:100%;padding:12px 44px 12px 16px;background:#0f0f1a;color:#fff;border:1px solid rgba(255,255,255,0.1);border-radius:10px;font-size:14px;box-sizing:border-box;font-family:Inter,sans-serif;">
+        <button type="button" onclick="togglePwdVisibility('recoveryPwd1', this)" aria-label="Afficher le mot de passe" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:transparent;border:none;color:#9ca3af;font-size:16px;cursor:pointer;padding:6px;">&#128065;</button>
+      </div>
+      <div id="pwdStrength" style="font-size:11px;color:#6b7280;line-height:1.5;margin-bottom:12px;">
+        <div id="pwdReq-len" data-label="8 caracteres minimum" style="display:flex;align-items:center;gap:4px;"><span class="pwdReq-icon">&#9675;</span> <span>8 caracteres minimum</span></div>
+        <div id="pwdReq-upper" data-label="Une majuscule" style="display:flex;align-items:center;gap:4px;"><span class="pwdReq-icon">&#9675;</span> <span>Une majuscule</span></div>
+        <div id="pwdReq-lower" data-label="Une minuscule" style="display:flex;align-items:center;gap:4px;"><span class="pwdReq-icon">&#9675;</span> <span>Une minuscule</span></div>
+        <div id="pwdReq-digit" data-label="Un chiffre" style="display:flex;align-items:center;gap:4px;"><span class="pwdReq-icon">&#9675;</span> <span>Un chiffre</span></div>
+        <div id="pwdReq-special" data-label="Un caractere special" style="display:flex;align-items:center;gap:4px;"><span class="pwdReq-icon">&#9675;</span> <span>Un caractere special (!@#$...)</span></div>
+      </div>
+      <div style="position:relative;margin-bottom:16px;">
+        <input type="password" id="recoveryPwd2" placeholder="Confirmez le mot de passe" style="width:100%;padding:12px 44px 12px 16px;background:#0f0f1a;color:#fff;border:1px solid rgba(255,255,255,0.1);border-radius:10px;font-size:14px;box-sizing:border-box;font-family:Inter,sans-serif;">
+        <button type="button" onclick="togglePwdVisibility('recoveryPwd2', this)" aria-label="Afficher le mot de passe" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:transparent;border:none;color:#9ca3af;font-size:16px;cursor:pointer;padding:6px;">&#128065;</button>
+      </div>
       <div id="recoveryMsg" style="color:#e94560;font-size:12px;margin-bottom:12px;min-height:16px;"></div>
       <button onclick="submitPasswordRecovery()" style="width:100%;padding:14px;background:linear-gradient(135deg,#e94560,#c73e54);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;">Mettre a jour le mot de passe</button>
       <button onclick="cancelPasswordRecovery()" style="width:100%;padding:10px;background:transparent;color:#9ca3af;border:none;font-size:12px;cursor:pointer;margin-top:8px;">Annuler</button>
@@ -3425,7 +3472,12 @@ async function submitPasswordRecovery() {
   const p1 = document.getElementById('recoveryPwd1').value;
   const p2 = document.getElementById('recoveryPwd2').value;
   const msg = document.getElementById('recoveryMsg');
-  if (!p1 || p1.length < 6) { msg.textContent = 'Mot de passe trop court (6 caracteres minimum)'; return; }
+  msg.style.color = '#e94560';
+  if (!p1 || p1.length < 8) { msg.textContent = '8 caracteres minimum'; return; }
+  if (!/[A-Z]/.test(p1)) { msg.textContent = 'Au moins une lettre majuscule requise'; return; }
+  if (!/[a-z]/.test(p1)) { msg.textContent = 'Au moins une lettre minuscule requise'; return; }
+  if (!/[0-9]/.test(p1)) { msg.textContent = 'Au moins un chiffre requis'; return; }
+  if (!/[^A-Za-z0-9]/.test(p1)) { msg.textContent = 'Au moins un caractere special requis (!@#$...)'; return; }
   if (p1 !== p2) { msg.textContent = 'Les mots de passe ne correspondent pas'; return; }
   msg.textContent = '';
   try {
