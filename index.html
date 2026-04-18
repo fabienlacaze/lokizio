@@ -1140,7 +1140,7 @@ async function loadPDF() {
 </script>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v8.44</div>
+<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v8.45</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -1150,7 +1150,7 @@ async function loadPDF() {
     <!-- Broom that sweeps -->
     <div id="splashBroom" style="position:absolute;top:50%;left:-60px;font-size:48px;transform:translateY(-50%) rotate(-30deg);opacity:0;transition:all 0.8s cubic-bezier(0.25,0.46,0.45,0.94);">✨</div>
   </div>
-  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v8.44</span></div>
+  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v8.45</span></div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie pour locations</div>
   <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou</div>
   <!-- Loading bar -->
@@ -1737,28 +1737,44 @@ async function loadPDF() {
 
   <!-- SUB: Factures -->
   <div id="finSubFactures" class="finSubContent" style="display:none;">
-    <!-- Action buttons -->
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:8px;">
-      <div style="display:flex;gap:6px;flex-wrap:wrap;">
-        <button class="btn btnSmall btnPrimary" onclick="showCreateInvoiceModal('concierge_to_owner')" style="padding:6px 10px;font-size:11px;">+ Facture proprietaire</button>
-        <button class="btn btnSmall" onclick="showCreateInvoiceModal('provider_to_concierge')" style="padding:6px 10px;font-size:11px;background:#34d399;color:#fff;">+ Facture concierge</button>
+    <!-- Top segmented tabs -->
+    <div style="display:flex;gap:4px;background:var(--surface2);padding:4px;border-radius:10px;margin-bottom:14px;">
+      <button id="finFactTab_list" class="annSubTab annSubTabActive" onclick="switchFinFactTab('list')" style="flex:1;padding:10px 14px;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">&#128196; Consulter</button>
+      <button id="finFactTab_create" class="annSubTab" onclick="switchFinFactTab('create')" style="flex:1;padding:10px 14px;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">&#10133; Creer</button>
+    </div>
+    <!-- Panel: Consulter -->
+    <div id="finFactPanel_list">
+      <div style="display:flex;justify-content:flex-end;margin-bottom:10px;">
         <button class="btn btnSmall btnOutline" onclick="exportComptableCSV()" style="padding:6px 10px;font-size:11px;">&#128196; Export CSV</button>
       </div>
-    </div>
-    <!-- Top KPI strip (always visible) -->
-    <div id="invoiceSummary" style="margin-bottom:12px;"></div>
-    <!-- Search + period chips -->
-    <div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap;align-items:center;">
-      <div style="flex:1;min-width:200px;position:relative;">
-        <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text3);font-size:13px;">&#128269;</span>
-        <input type="text" id="invoiceSearch" placeholder="Numero, client, propriete..." oninput="loadInvoices()" style="width:100%;padding:7px 10px 7px 30px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:12px;box-sizing:border-box;">
+      <div id="invoiceSummary" style="margin-bottom:12px;"></div>
+      <div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap;align-items:center;">
+        <div style="flex:1;min-width:200px;position:relative;">
+          <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text3);font-size:13px;">&#128269;</span>
+          <input type="text" id="invoiceSearch" placeholder="Numero, client, propriete..." oninput="loadInvoices()" style="width:100%;padding:7px 10px 7px 30px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:12px;box-sizing:border-box;">
+        </div>
+        <div id="invoicePeriodChips" style="display:flex;gap:4px;flex-wrap:wrap;"></div>
       </div>
-      <div id="invoicePeriodChips" style="display:flex;gap:4px;flex-wrap:wrap;"></div>
+      <div id="invoiceStatusChips" style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:10px;"></div>
+      <input type="hidden" id="invoiceFilter" value="all">
+      <div id="invoicesList"></div>
     </div>
-    <!-- Status chips -->
-    <div id="invoiceStatusChips" style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:10px;"></div>
-    <input type="hidden" id="invoiceFilter" value="all">
-    <div id="invoicesList"></div>
+    <!-- Panel: Creer -->
+    <div id="finFactPanel_create" style="display:none;">
+      <div style="font-size:14px;color:var(--text2);margin-bottom:12px;">Quel type de facture voulez-vous emettre ?</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        <button onclick="showCreateInvoiceModal('concierge_to_owner')" style="padding:18px 14px;background:linear-gradient(135deg,#e94560,#c73e54);color:#fff;border:none;border-radius:12px;font-weight:700;cursor:pointer;transition:transform 0.15s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''">
+          <div style="font-size:28px;margin-bottom:6px;">&#127968;</div>
+          <div style="font-size:14px;">Facture proprietaire</div>
+          <div style="font-size:10px;opacity:0.85;margin-top:4px;font-weight:400;">Emise par la conciergerie</div>
+        </button>
+        <button onclick="showCreateInvoiceModal('provider_to_concierge')" style="padding:18px 14px;background:linear-gradient(135deg,#34d399,#059669);color:#fff;border:none;border-radius:12px;font-weight:700;cursor:pointer;transition:transform 0.15s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''">
+          <div style="font-size:28px;margin-bottom:6px;">&#129529;</div>
+          <div style="font-size:14px;">Facture prestataire</div>
+          <div style="font-size:10px;opacity:0.85;margin-top:4px;font-weight:400;">Emise par un prestataire</div>
+        </button>
+      </div>
+    </div>
   </div>
 
   </div><!-- /tabBilling -->
@@ -2488,6 +2504,7 @@ function getStatusLabel(s) { return (STATUS_CONFIG[s] || {}).label || s || ''; }
 // ── Splash Changelog (update this with each significant version) ──
 // Full versioned changelog — add new entries at TOP
 const VERSION_CHANGELOG = [
+  { v: '8.45', changes: ['Finance: segments "Consulter / Creer" pour admin, owner, prestataire (meme logique que l\'annuaire)', 'Popup Modifier ma reponse: avertissement sur les penalites si refus apres acceptation (politique CANCEL_POLICY)', 'Wording "menage" remplace par "prestation" dans les popups'] },
   { v: '8.44', changes: ['Prestations a venir (proprietaire + prestataire): meme mise en page que la liste admin (bloc date, icone service, groupement par mois + totaux, badge statut)'] },
   { v: '8.43', changes: ['Factures proprietaire: refonte (KPIs A payer / Paye / En retard / Nb, recherche, chips periode + statut, groupement mensuel, cartes detaillees avec echeance)', 'Factures prestataire: meme refonte adaptee (En attente / Encaisse / En retard / Nb factures)', 'Deux: prestations a venir dans un volet repliable separe'] },
   { v: '8.42', changes: ['Factures: backfill automatique des numeros manquants (FAC-AAAA-NNN)', 'Fix PDF: librairie jspdf chargee depuis jsdelivr (CSP)'] },
@@ -5120,6 +5137,18 @@ async function showProviderMode() {
   // Billing page (redesigned)
   html += '<div id="provContentBilling" style="display:none;">';
   html += '<div style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:12px;">💰 Mes revenus</div>';
+  // Tabs
+  html += '<div style="display:flex;gap:4px;background:var(--surface2);padding:4px;border-radius:10px;margin-bottom:14px;">';
+  html += '<button id="provFinTab_list" class="annSubTab annSubTabActive" onclick="switchProvFinTab(\'list\')" style="flex:1;padding:10px 14px;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">&#128196; Consulter</button>';
+  html += '<button id="provFinTab_create" class="annSubTab" onclick="switchProvFinTab(\'create\')" style="flex:1;padding:10px 14px;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">&#10133; Creer</button>';
+  html += '</div>';
+  html += '<div id="provFinPanel_create" style="display:none;">';
+  html += '<div style="font-size:14px;color:var(--text2);margin-bottom:12px;">Emettre une facture a la conciergerie</div>';
+  html += '<button onclick="showCreateInvoiceModal(\'provider_to_concierge\')" style="padding:18px 14px;background:linear-gradient(135deg,#34d399,#059669);color:#fff;border:none;border-radius:12px;font-weight:700;cursor:pointer;width:100%;">';
+  html += '<div style="font-size:28px;margin-bottom:6px;">&#129529;</div><div style="font-size:14px;">Nouvelle facture</div>';
+  html += '<div style="font-size:10px;opacity:0.85;margin-top:4px;font-weight:400;">Addressee a la conciergerie</div>';
+  html += '</button></div>';
+  html += '<div id="provFinPanel_list">';
   html += '<div id="provInvoiceSummary" style="margin-bottom:12px;"></div>';
   html += '<div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap;align-items:center;">';
   html += '<div style="flex:1;min-width:200px;position:relative;"><span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text3);font-size:13px;">&#128269;</span><input type="text" id="provInvoiceSearch" placeholder="Numero, propriete..." oninput="renderProvInvoicesView()" style="width:100%;padding:7px 10px 7px 30px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:12px;box-sizing:border-box;"></div>';
@@ -5128,6 +5157,7 @@ async function showProviderMode() {
   html += '</div>';
   html += '<div id="provInvoiceStatusChips" style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:10px;"></div>';
   html += '<div id="provInvoicesList"></div>';
+  html += '</div>'; // close provFinPanel_list
   // Upcoming / in-progress prestations — admin-style cards grouped by month
   const upcomingList = unified.filter(u => u.status === 'accepted' || u.status === 'assigned' || u.status === 'in_progress' || u.status === 'arrived');
   html += '<details style="margin-top:16px;"><summary style="cursor:pointer;font-size:13px;font-weight:700;color:var(--text);padding:8px 0;list-style:none;display:flex;align-items:center;gap:6px;"><span class="collapseArrow">&#9662;</span> Prestations a venir (' + upcomingList.length + ' · ' + upcomingEarnings + '€)</summary>';
@@ -5450,6 +5480,26 @@ function renderProvInvoiceStatusChips(invoices) {
 
 function setProvInvoicePeriod(p) { _provInvoicePeriod = p; renderProvInvoicesView(); }
 function setProvInvoiceStatus(s) { _provInvoiceStatus = s; renderProvInvoicesView(); }
+
+function switchProvFinTab(tab) {
+  const listBtn = document.getElementById('provFinTab_list');
+  const createBtn = document.getElementById('provFinTab_create');
+  const listPanel = document.getElementById('provFinPanel_list');
+  const createPanel = document.getElementById('provFinPanel_create');
+  if (!listBtn || !createBtn) return;
+  if (tab === 'create') {
+    listBtn.classList.remove('annSubTabActive');
+    createBtn.classList.add('annSubTabActive');
+    if (listPanel) listPanel.style.display = 'none';
+    if (createPanel) createPanel.style.display = '';
+  } else {
+    listBtn.classList.add('annSubTabActive');
+    createBtn.classList.remove('annSubTabActive');
+    if (listPanel) listPanel.style.display = '';
+    if (createPanel) createPanel.style.display = 'none';
+    loadProviderInvoices();
+  }
+}
 
 /* ── Owner Nav Switching ── */
 function switchOwnerProperty(idx) {
@@ -6424,6 +6474,18 @@ async function showOwnerMode() {
   // Billing page (redesigned)
   html += '<div id="ownerContentBilling" style="display:none;">';
   html += '<div style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:12px;">💰 Mes factures</div>';
+  // Tabs
+  html += '<div style="display:flex;gap:4px;background:var(--surface2);padding:4px;border-radius:10px;margin-bottom:14px;">';
+  html += '<button id="ownerFinTab_list" class="annSubTab annSubTabActive" onclick="switchOwnerFinTab(\'list\')" style="flex:1;padding:10px 14px;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">&#128196; Consulter</button>';
+  html += '<button id="ownerFinTab_create" class="annSubTab" onclick="switchOwnerFinTab(\'create\')" style="flex:1;padding:10px 14px;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">&#10133; Creer</button>';
+  html += '</div>';
+  html += '<div id="ownerFinPanel_create" style="display:none;">';
+  html += '<div style="font-size:14px;color:var(--text2);margin-bottom:12px;">Creer une facture a la conciergerie (remboursement, frais...)</div>';
+  html += '<button onclick="showCreateInvoiceModal(\'owner_to_concierge\')" style="padding:18px 14px;background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;border:none;border-radius:12px;font-weight:700;cursor:pointer;width:100%;">';
+  html += '<div style="font-size:28px;margin-bottom:6px;">&#127968;</div><div style="font-size:14px;">Nouvelle facture</div>';
+  html += '<div style="font-size:10px;opacity:0.85;margin-top:4px;font-weight:400;">Addressee a la conciergerie</div>';
+  html += '</button></div>';
+  html += '<div id="ownerFinPanel_list">';
   html += '<div id="ownerInvoiceSummary" style="margin-bottom:12px;"></div>';
   html += '<div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap;align-items:center;">';
   html += '<div style="flex:1;min-width:200px;position:relative;"><span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text3);font-size:13px;">&#128269;</span><input type="text" id="ownerInvoiceSearch" placeholder="Numero, propriete..." oninput="renderOwnerInvoicesView()" style="width:100%;padding:7px 10px 7px 30px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:12px;box-sizing:border-box;"></div>';
@@ -6431,6 +6493,7 @@ async function showOwnerMode() {
   html += '</div>';
   html += '<div id="ownerInvoiceStatusChips" style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:10px;"></div>';
   html += '<div id="ownerInvoicesList"></div>';
+  html += '</div>'; // close ownerFinPanel_list
   // Upcoming prestations section (forecast) — same layout as admin prestation list
   html += '<details style="margin-top:16px;"><summary style="cursor:pointer;font-size:13px;font-weight:700;color:var(--text);padding:8px 0;list-style:none;display:flex;align-items:center;gap:6px;"><span class="collapseArrow">&#9662;</span> Prestations a venir (' + futureCleanings.length + ')</summary>';
   html += '<div style="padding-top:8px;">';
@@ -6687,6 +6750,26 @@ function renderOwnerInvoiceStatusChips(invoices) {
 
 function setOwnerInvoicePeriod(p) { _ownerInvoicePeriod = p; renderOwnerInvoicesView(); }
 function setOwnerInvoiceStatus(s) { _ownerInvoiceStatus = s; renderOwnerInvoicesView(); }
+
+function switchOwnerFinTab(tab) {
+  const listBtn = document.getElementById('ownerFinTab_list');
+  const createBtn = document.getElementById('ownerFinTab_create');
+  const listPanel = document.getElementById('ownerFinPanel_list');
+  const createPanel = document.getElementById('ownerFinPanel_create');
+  if (!listBtn || !createBtn) return;
+  if (tab === 'create') {
+    listBtn.classList.remove('annSubTabActive');
+    createBtn.classList.add('annSubTabActive');
+    if (listPanel) listPanel.style.display = 'none';
+    if (createPanel) createPanel.style.display = '';
+  } else {
+    listBtn.classList.add('annSubTabActive');
+    createBtn.classList.remove('annSubTabActive');
+    if (listPanel) listPanel.style.display = '';
+    if (createPanel) createPanel.style.display = 'none';
+    loadOwnerInvoices();
+  }
+}
 
 async function ownerPayInvoice(invoiceId, amount) {
   // Create Stripe checkout for invoice payment
@@ -7062,11 +7145,21 @@ function showModifyResponsePopup(propId, date, provName, currentStatus) {
   html += '<label style="font-size:12px;color:var(--text3);display:block;margin-bottom:4px;">Raison / commentaire (optionnel) :</label>';
   html += '<textarea id="changeStatusReason" placeholder="Ex: imprevu, indisponibilite..." style="width:100%;padding:10px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:13px;font-family:Inter,sans-serif;resize:vertical;min-height:50px;box-sizing:border-box;"></textarea>';
   html += '</div>';
+  // Warning: provider canceling an accepted prestation = penalty policy
+  if (currentStatus === 'accepted') {
+    const _p = getCancelPenalty(date);
+    html += '<div style="padding:10px 12px;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);border-radius:8px;margin-bottom:10px;font-size:12px;color:var(--text2);line-height:1.5;">';
+    html += '<div style="font-weight:700;color:#ef4444;margin-bottom:4px;">&#9888; Attention</div>';
+    html += 'Vous avez deja accepte cette prestation. Un refus tardif peut vous etre facture selon la politique d\'annulation:<br>';
+    html += '<b style="color:' + (_p.percent > 0 ? '#ef4444' : '#34d399') + ';">' + _p.label + '</b>';
+    if (_p.daysUntil >= 0) html += ' <span style="color:var(--text3);">(dans ' + _p.daysUntil + 'j)</span>';
+    html += '</div>';
+  }
   html += '<div style="display:flex;flex-direction:column;gap:8px;">';
   if (currentStatus === 'accepted') {
-    html += '<button class="btn" style="padding:12px;background:#ef4444;color:#fff;border:none;font-weight:600;border-radius:8px;" onclick="confirmModifyResponse(\'' + propId + '\',\'' + date + '\',\'' + esc(provName) + '\',\'refused\')">&#10007; Refuser ce menage</button>';
+    html += '<button class="btn" style="padding:12px;background:#ef4444;color:#fff;border:none;font-weight:600;border-radius:8px;" onclick="confirmModifyResponse(\'' + propId + '\',\'' + date + '\',\'' + esc(provName) + '\',\'refused\')">&#10007; Refuser cette prestation</button>';
   } else {
-    html += '<button class="btn" style="padding:12px;background:#34d399;color:#fff;border:none;font-weight:600;border-radius:8px;" onclick="confirmModifyResponse(\'' + propId + '\',\'' + date + '\',\'' + esc(provName) + '\',\'accepted\')">&#10003; Accepter ce menage</button>';
+    html += '<button class="btn" style="padding:12px;background:#34d399;color:#fff;border:none;font-weight:600;border-radius:8px;" onclick="confirmModifyResponse(\'' + propId + '\',\'' + date + '\',\'' + esc(provName) + '\',\'accepted\')">&#10003; Accepter cette prestation</button>';
   }
   html += '<button class="btn btnOutline" style="padding:10px;font-size:13px;" onclick="closeMsg()">Annuler</button>';
   html += '</div></div>';
@@ -7106,7 +7199,7 @@ async function acceptCleaning(propId, date, provName, reason) {
     await sb.from('messages').insert({ org_id: org.id, property_id: propId, sender_id: user.id, sender_name: provName, sender_role: 'provider', recipient_name: 'gestionnaire', body: msg });
   }
   const gName = await getGestionnaireName();
-  showToast('✓ Menage accepte — ' + gName + ' a ete notifie(e)');
+  showToast('✓ Prestation acceptee — ' + gName + ' a ete notifie(e)');
   showProviderMode();
 }
 
@@ -7580,6 +7673,26 @@ async function saveInvoice(status, type) {
   closeMsg();
   showToast(status === 'draft' ? 'Brouillon sauvegarde' : 'Facture ' + invoiceNumber + ' creee !');
   loadInvoices();
+}
+
+function switchFinFactTab(tab) {
+  const listBtn = document.getElementById('finFactTab_list');
+  const createBtn = document.getElementById('finFactTab_create');
+  const listPanel = document.getElementById('finFactPanel_list');
+  const createPanel = document.getElementById('finFactPanel_create');
+  if (!listBtn || !createBtn) return;
+  if (tab === 'create') {
+    listBtn.classList.remove('annSubTabActive');
+    createBtn.classList.add('annSubTabActive');
+    if (listPanel) listPanel.style.display = 'none';
+    if (createPanel) createPanel.style.display = '';
+  } else {
+    listBtn.classList.add('annSubTabActive');
+    createBtn.classList.remove('annSubTabActive');
+    if (listPanel) listPanel.style.display = '';
+    if (createPanel) createPanel.style.display = 'none';
+    loadInvoices();
+  }
 }
 
 // ── Finance Sub-Tabs ──
