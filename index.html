@@ -1140,7 +1140,7 @@ async function loadPDF() {
 </script>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v8.47</div>
+<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v8.48</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -1150,7 +1150,7 @@ async function loadPDF() {
     <!-- Broom that sweeps -->
     <div id="splashBroom" style="position:absolute;top:50%;left:-60px;font-size:48px;transform:translateY(-50%) rotate(-30deg);opacity:0;transition:all 0.8s cubic-bezier(0.25,0.46,0.45,0.94);">✨</div>
   </div>
-  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v8.47</span></div>
+  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v8.48</span></div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie pour locations</div>
   <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou</div>
   <!-- Loading bar -->
@@ -2504,6 +2504,7 @@ function getStatusLabel(s) { return (STATUS_CONFIG[s] || {}).label || s || ''; }
 // ── Splash Changelog (update this with each significant version) ──
 // Full versioned changelog — add new entries at TOP
 const VERSION_CHANGELOG = [
+  { v: '8.48', changes: ['Popup facture: dropdown Client toujours affiche (filtre par role) + option "Saisir un autre nom..." qui revele un champ texte libre'] },
   { v: '8.47', changes: ['Prestataire peut maintenant emettre une facture directement a un proprietaire (type provider_to_owner)', 'Owner voit les factures recues des prestataires en plus des factures de la conciergerie'] },
   { v: '8.46', changes: ['Popup creer facture: refonte complete (header colore, dropdown client, periode + echeance, tableau lignes avec totaux ligne, totaux HT/TVA/TTC, auto-remplissage)', 'Fix: insert facture resilient aux colonnes manquantes (client_address, total_ht, etc.) - le bouton Brouillon/Envoyer fonctionne maintenant meme sur anciens schemas'] },
   { v: '8.45', changes: ['Finance: segments "Consulter / Creer" pour admin, owner, prestataire (meme logique que l\'annuaire)', 'Popup Modifier ma reponse: avertissement sur les penalites si refus apres acceptation (politique CANCEL_POLICY)', 'Wording "menage" remplace par "prestation" dans les popups'] },
@@ -7511,20 +7512,23 @@ async function showCreateInvoiceModal(type) {
   html += '<div style="font-size:11px;color:var(--text3);">' + typeLabel + ' · Numero genere automatiquement</div></div>';
   html += '</div>';
 
-  // Client selector
+  // Client selector (always show dropdown + custom option)
   html += '<div style="margin-bottom:12px;"><label style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:4px;">Client</label>';
+  html += '<select id="invClientSelect" onchange="onInvoiceClientChange()" style="width:100%;padding:10px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:13px;box-sizing:border-box;">';
+  html += '<option value="">-- Choisir un client --</option>';
   if (clients.length > 0) {
-    html += '<select id="invClientSelect" onchange="onInvoiceClientChange()" style="width:100%;padding:10px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:13px;box-sizing:border-box;">';
-    html += '<option value="">-- Choisir un client --</option>';
     clients.forEach((c, i) => {
       html += '<option value="' + i + '">' + esc(c.label) + '</option>';
     });
-    html += '<option value="__custom__">+ Autre (saisie libre)</option>';
-    html += '</select>';
-    html += '<div id="invClientCustomWrap" style="display:none;margin-top:6px;"><input id="invClient" type="text" placeholder="Nom du client" style="width:100%;padding:10px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:13px;box-sizing:border-box;"></div>';
-  } else {
-    html += '<input id="invClient" type="text" placeholder="Nom du client" style="width:100%;padding:10px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:13px;box-sizing:border-box;">';
   }
+  html += '<option value="__custom__">&#9999; Saisir un autre nom...</option>';
+  html += '</select>';
+  // Custom text field (hidden by default, shown when user picks "Autre" or if no clients)
+  const showCustom = clients.length === 0;
+  html += '<div id="invClientCustomWrap" style="' + (showCustom ? '' : 'display:none;') + 'margin-top:6px;">';
+  html += '<input id="invClient" type="text" placeholder="Nom du client (saisie libre)" style="width:100%;padding:10px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:13px;box-sizing:border-box;">';
+  if (clients.length === 0) html += '<div style="font-size:10px;color:var(--text3);margin-top:3px;">Aucun contact trouve dans votre organisation. Saisissez le nom manuellement.</div>';
+  html += '</div>';
   window._invoiceClients = clients;
   html += '</div>';
 
