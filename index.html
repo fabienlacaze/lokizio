@@ -1065,7 +1065,7 @@ async function loadPDF() {
 </script>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v7.53</div>
+<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v7.54</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -1075,7 +1075,7 @@ async function loadPDF() {
     <!-- Broom that sweeps -->
     <div id="splashBroom" style="position:absolute;top:50%;left:-60px;font-size:48px;transform:translateY(-50%) rotate(-30deg);opacity:0;transition:all 0.8s cubic-bezier(0.25,0.46,0.45,0.94);">✨</div>
   </div>
-  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v7.53</span></div>
+  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v7.54</span></div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie pour locations</div>
   <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou</div>
   <!-- Loading bar -->
@@ -2295,6 +2295,7 @@ function getStatusLabel(s) { return (STATUS_CONFIG[s] || {}).label || s || ''; }
 // ── Splash Changelog (update this with each significant version) ──
 // Full versioned changelog — add new entries at TOP
 const VERSION_CHANGELOG = [
+  { v: '7.54', changes: ['Sections dashboard repliables: Prochaines prestations, Activite recente', 'Fleche animee au repli', 'Applique aux 3 modes (admin, proprio, prestataire)'] },
   { v: '7.53', changes: ['KPI "Cette semaine" renomme en "Prestations cette semaine"', 'Plus clair sur ce qui est compte'] },
   { v: '7.52', changes: ['Menu "Apercu" renomme "Dashboard" en modes proprietaire et prestataire', 'Coherence de nommage entre tous les modes'] },
   { v: '7.51', changes: ['Changelog: version courante mise en evidence (badge DERNIERE)', 'Scroll auto en haut pour voir la derniere version', 'Fix banner mise a jour: suppression du gate lokizio_seen_version bloquant'] },
@@ -4585,8 +4586,8 @@ async function showProviderMode() {
     return d > today && !['done','cancelled','departed'].includes(u.status);
   }).slice(0, 8);
   if (upcomingItems.length > 0) {
-    html += '<div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:12px;">';
-    html += '<div style="font-weight:700;font-size:14px;margin-bottom:10px;">&#128203; Prochaines prestations</div>';
+    html += '<details open style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:12px;">';
+    html += '<summary style="list-style:none;cursor:pointer;display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;"><div style="font-weight:700;font-size:14px;">&#128203; Prochaines prestations</div><span class="collapseArrow">&#9662;</span></summary>';
     upcomingItems.forEach(u => {
       html += '<div onclick="goToPrestation(\'' + (u.date||'') + '\',\'' + (u.type||'') + '\',\'\')" style="display:flex;align-items:center;gap:8px;padding:8px 0;border-top:1px solid var(--border);cursor:pointer;" onmouseover="this.style.background=\'rgba(255,255,255,0.03)\'" onmouseout="this.style.background=\'\'">';
       html += '<div style="min-width:40px;font-size:11px;color:var(--text3);">' + fmtDate(u.date).substring(0,5) + '</div>';
@@ -4599,15 +4600,15 @@ async function showProviderMode() {
     if (unified.filter(u => (u.date||'') >= today && !['done','cancelled','departed'].includes(u.status)).length > 5) {
       html += '<div onclick="switchProviderNav(\'prestations\')" style="text-align:center;padding:8px;font-size:11px;color:var(--accent2);cursor:pointer;font-weight:600;">Voir tout &#8250;</div>';
     }
-    html += '</div>';
+    html += '</details>';
   }
 
   // Recent activity (messages)
   try {
     const { data: recentMsgs } = await sb.from('messages').select('*').eq('org_id', org.id).order('created_at', { ascending: false }).limit(10);
     if (recentMsgs && recentMsgs.length) {
-      html += '<div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:12px;">';
-      html += '<div style="font-weight:700;font-size:14px;margin-bottom:10px;">&#128276; Activite recente</div>';
+      html += '<details open style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:12px;">';
+      html += '<summary style="list-style:none;cursor:pointer;display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;"><div style="font-weight:700;font-size:14px;">&#128276; Activite recente</div><span class="collapseArrow">&#9662;</span></summary>';
       recentMsgs.forEach(m => {
         const d = new Date(m.created_at);
         const dateStr2 = d.toLocaleDateString('fr-FR', {day:'2-digit',month:'2-digit'}) + ' ' + d.toLocaleTimeString('fr-FR', {hour:'2-digit',minute:'2-digit'});
@@ -4615,7 +4616,7 @@ async function showProviderMode() {
         html += '<span style="color:var(--text3);font-size:10px;">' + dateStr2 + '</span> — ' + esc(m.content || '');
         html += '</div>';
       });
-      html += '</div>';
+      html += '</details>';
     }
   } catch(e) {}
 
@@ -5685,8 +5686,8 @@ async function showOwnerMode() {
   if (ownerUpcoming.length > 0) {
     const _osc = { done:'#34d399', in_progress:'#3b82f6', assigned:'#8b5cf6', accepted:'#34d399', pending:'#f59e0b', pending_validation:'#f59e0b', refused:'#ef4444' };
     const _osl = { done:'Termine', in_progress:'En cours', assigned:'En attente de reponse', accepted:'Accepte', pending:'Attente', pending_validation:'Validation', refused:'Refuse' };
-    html += '<div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:12px;">';
-    html += '<div style="font-weight:700;font-size:14px;margin-bottom:10px;">&#128203; Prochaines prestations</div>';
+    html += '<details open style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:12px;">';
+    html += '<summary style="list-style:none;cursor:pointer;display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;"><div style="font-weight:700;font-size:14px;">&#128203; Prochaines prestations</div><span class="collapseArrow">&#9662;</span></summary>';
     ownerUpcoming.forEach(u => {
       const svcLabel = getServiceLabel(u.type);
       html += '<div onclick="goToPrestation(\'' + (u.date||'') + '\',\'' + (u.type||'') + '\',\'' + esc(u.provider||'').replace(/'/g,"\\\\'") + '\')" style="display:flex;align-items:center;gap:8px;padding:8px 0;border-top:1px solid var(--border);cursor:pointer;" onmouseover="this.style.background=\'rgba(255,255,255,0.03)\'" onmouseout="this.style.background=\'\'">';
@@ -5700,7 +5701,7 @@ async function showOwnerMode() {
     if (ownerUnified.filter(u => (u.date||'') > today && !['done','cancelled','departed'].includes(u.status)).length > 8) {
       html += '<div onclick="switchOwnerNav(\'prestations\')" style="text-align:center;padding:8px;font-size:11px;color:var(--accent2);cursor:pointer;font-weight:600;">Voir tout &#8250;</div>';
     }
-    html += '</div>';
+    html += '</details>';
   }
 
   // Monthly cost history
@@ -5831,15 +5832,15 @@ async function showOwnerMode() {
   if (isOwnerPro) {
     const { data: recentMsgs } = await sb.from('messages').select('*').eq('org_id', org.id).eq('sender_role', 'provider').order('created_at', { ascending: false }).limit(10);
     if (recentMsgs && recentMsgs.length) {
-      activityHtml += `<div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:12px;">
-        <div style="font-weight:700;font-size:14px;margin-bottom:10px;">&#128276; Activite recente</div>`;
+      activityHtml += `<details open style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:12px;">
+        <summary style="list-style:none;cursor:pointer;display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;"><div style="font-weight:700;font-size:14px;">&#128276; Activite recente</div><span class="collapseArrow">&#9662;</span></summary>`;
       recentMsgs.forEach(m => {
         const time = new Date(m.created_at).toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
         activityHtml += `<div onclick="switchOwnerNav('prestations')" style="padding:6px 0;border-top:1px solid var(--border);font-size:12px;cursor:pointer;line-height:1.5;" onmouseover="this.style.background='rgba(255,255,255,0.03)'" onmouseout="this.style.background=''">
           <span style="color:var(--text3);">${time}</span> — ${esc(m.body)}
         </div>`;
       });
-      activityHtml += '</div>';
+      activityHtml += '</details>';
     }
   } else {
     // Free: show locked activity section
@@ -11966,8 +11967,8 @@ function renderDashboardContent() {
   // Upcoming section
   const div2 = document.getElementById('dashPendingRequests');
   if (div2 && upcomingItems.length > 0) {
-    let html = '<div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;">';
-    html += '<div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:10px;">&#128203; Prochaines prestations</div>';
+    let html = '<details open style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;">';
+    html += '<summary style="list-style:none;cursor:pointer;display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;"><div style="font-size:14px;font-weight:700;color:var(--text);">&#128203; Prochaines prestations</div><span class="collapseArrow">&#9662;</span></summary>';
     upcomingItems.forEach(u => {
       html += '<div onclick="goToPrestation(\'' + u.date + '\',\'' + (u.type||'') + '\',\'' + esc(u.provider||'').replace(/'/g,"\\'") + '\')" style="display:flex;align-items:center;gap:8px;padding:8px 0;border-top:1px solid var(--border);cursor:pointer;" onmouseover="this.style.background=\'rgba(255,255,255,0.03)\'" onmouseout="this.style.background=\'\'">';
       html += '<div style="min-width:45px;font-size:11px;color:var(--text3);">' + fmtDate(u.date).substring(0, 5) + '</div>';
@@ -11980,7 +11981,7 @@ function renderDashboardContent() {
     if (allUpcoming.filter(u => u.date > todayStr).length > 5) {
       html += '<div onclick="switchMainTab(\'prestations\')" style="text-align:center;padding:8px;font-size:11px;color:var(--accent2);cursor:pointer;font-weight:600;">Voir tout &#8250;</div>';
     }
-    html += '</div>';
+    html += '</details>';
     div2.innerHTML = html;
   }
 
