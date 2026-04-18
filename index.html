@@ -1139,7 +1139,7 @@ async function loadPDF() {
 </script>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v8.09</div>
+<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v8.10</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -1149,7 +1149,7 @@ async function loadPDF() {
     <!-- Broom that sweeps -->
     <div id="splashBroom" style="position:absolute;top:50%;left:-60px;font-size:48px;transform:translateY(-50%) rotate(-30deg);opacity:0;transition:all 0.8s cubic-bezier(0.25,0.46,0.45,0.94);">✨</div>
   </div>
-  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v8.09</span></div>
+  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v8.10</span></div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie pour locations</div>
   <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou</div>
   <!-- Loading bar -->
@@ -2451,6 +2451,7 @@ function getStatusLabel(s) { return (STATUS_CONFIG[s] || {}).label || s || ''; }
 // ── Splash Changelog (update this with each significant version) ──
 // Full versioned changelog — add new entries at TOP
 const VERSION_CHANGELOG = [
+  { v: '8.10', changes: ['Tooltips detailles au survol sur chaque info du profil annuaire (note, prestations, anciennete, disponibilite)', 'Texte explicatif: provenance, dates, contexte'] },
   { v: '8.09', changes: ['Annuaire: affichage "☆☆☆☆☆ Pas encore note" si profil sans notes', 'Tooltip avec nombre d\'avis au survol'] },
   { v: '8.08', changes: ['Bouton "Annuler" a cote du badge "En attente" pour retirer une demande de connexion'] },
   { v: '8.07', changes: ['Annuaire: refresh apres envoi d\'une demande (bouton devient En attente)', 'Rating moyen calcule depuis service_requests.rating_owner/concierge et sauve dans marketplace_profiles.rating', 'cleanings_done incremente automatiquement a chaque validation (admin)', 'SQL: add-rating-stats-columns.sql + RPC increment_cleanings_done'] },
@@ -13947,13 +13948,17 @@ async function renderAnnuaireResults(profiles) {
     const ratingCount = parseInt(p.rating_count) || 0;
     if (rating > 0) {
       const stars = '&#11088;'.repeat(Math.round(rating));
-      html += '<span style="font-size:11px;color:#f59e0b;" title="' + ratingCount + ' avis">' + stars + ' ' + rating.toFixed(1) + '/5</span>';
+      const rtip = 'Note moyenne de ' + rating.toFixed(1) + '/5 sur ' + ratingCount + ' avis verifie' + (ratingCount > 1 ? 's' : '') + '. Donnee par les conciergeries et proprietaires apres validation de chaque prestation.';
+      html += '<span style="font-size:11px;color:#f59e0b;cursor:help;" title="' + _escHtml(rtip) + '">' + stars + ' ' + rating.toFixed(1) + '/5</span>';
     } else {
-      html += '<span style="font-size:11px;color:var(--text3);">&#9734;&#9734;&#9734;&#9734;&#9734; Pas encore note</span>';
+      html += '<span style="font-size:11px;color:var(--text3);cursor:help;" title="Aucun avis pour le moment. Les notes sont donnees par les clients apres validation d\'une prestation.">&#9734;&#9734;&#9734;&#9734;&#9734; Pas encore note</span>';
     }
     // Prestations faites
     const cleanings = parseInt(p.cleanings_done) || 0;
-    html += '<span style="font-size:11px;color:var(--text2);">&#128700; ' + cleanings + ' prestation' + (cleanings > 1 ? 's' : '') + '</span>';
+    const cleanTip = cleanings === 0
+      ? 'Aucune prestation validee a ce jour via Lokizio.'
+      : cleanings + ' prestation' + (cleanings > 1 ? 's' : '') + ' realisee' + (cleanings > 1 ? 's' : '') + ' et validee' + (cleanings > 1 ? 's' : '') + ' via Lokizio.';
+    html += '<span style="font-size:11px;color:var(--text2);cursor:help;" title="' + _escHtml(cleanTip) + '">&#128700; ' + cleanings + ' prestation' + (cleanings > 1 ? 's' : '') + '</span>';
     // Anciennete dans l'annuaire
     if (p.created_at) {
       const daysSince = Math.floor((Date.now() - new Date(p.created_at).getTime()) / 86400000);
@@ -13961,11 +13966,17 @@ async function renderAnnuaireResults(profiles) {
       if (daysSince < 30) memberSince = daysSince + ' jour' + (daysSince > 1 ? 's' : '');
       else if (daysSince < 365) memberSince = Math.round(daysSince / 30) + ' mois';
       else memberSince = Math.floor(daysSince / 365) + ' an' + (daysSince >= 730 ? 's' : '');
-      html += '<span style="font-size:11px;color:var(--text3);" title="Membre depuis ' + new Date(p.created_at).toLocaleDateString('fr-FR') + '">&#128197; ' + memberSince + '</span>';
+      const joinedDate = new Date(p.created_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
+      html += '<span style="font-size:11px;color:var(--text3);cursor:help;" title="Inscrit sur Lokizio depuis le ' + _escHtml(joinedDate) + '">&#128197; ' + memberSince + '</span>';
     }
-    if (p.experience_years) html += '<span style="font-size:11px;color:var(--text2);">&#128188; ' + p.experience_years + ' ans d\'exp.</span>';
-    if (p.tarif) html += '<span style="font-size:11px;color:var(--text2);">&#128176; ' + _escHtml(p.tarif) + '</span>';
-    if (availHtml) html += '<span style="font-size:11px;">' + availHtml + '</span>';
+    if (p.experience_years) html += '<span style="font-size:11px;color:var(--text2);cursor:help;" title="Experience professionnelle declaree par l\'utilisateur">&#128188; ' + p.experience_years + ' ans d\'exp.</span>';
+    if (p.tarif) html += '<span style="font-size:11px;color:var(--text2);" title="Tarif indicatif">&#128176; ' + _escHtml(p.tarif) + '</span>';
+    if (availHtml) {
+      const availTip = isProfileOnVacation(p)
+        ? 'Cette personne est actuellement en conges et ne prendra pas de nouvelles prestations.'
+        : 'Cette personne est disponible pour de nouvelles prestations.';
+      html += '<span style="font-size:11px;cursor:help;" title="' + _escHtml(availTip) + '">' + availHtml + '</span>';
+    }
     html += '</div>';
     if (p.city) html += '<div style="font-size:11px;color:var(--text3);margin-bottom:4px;">&#128205; ' + _escHtml(p.city) + (p.postal_code ? ' (' + _escHtml(p.postal_code) + ')' : '') + '</div>';
     if (p.description) html += '<div style="font-size:12px;color:var(--text3);margin-bottom:6px;line-height:1.4;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;">' + _escHtml(p.description) + '</div>';
