@@ -235,6 +235,11 @@ async function loadPDF() {
     backdrop-filter: blur(20px);
     border-bottom: 1px solid var(--border2);
   }
+  /* ── Collapsible sections (details/summary) ── */
+  details > summary { list-style: none; }
+  details > summary::-webkit-details-marker { display: none; }
+  details > summary .collapseArrow { transition: transform 0.2s ease; display: inline-block; }
+  details[open] > summary .collapseArrow { transform: rotate(180deg); }
   /* ── Bottom Navigation Bar ── */
   .bottomNav {
     position: fixed; bottom: 50px; left: 0; right: 0; z-index: 100;
@@ -1060,7 +1065,7 @@ async function loadPDF() {
 </script>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v7.45</div>
+<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v7.46</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -1070,7 +1075,7 @@ async function loadPDF() {
     <!-- Broom that sweeps -->
     <div id="splashBroom" style="position:absolute;top:50%;left:-60px;font-size:48px;transform:translateY(-50%) rotate(-30deg);opacity:0;transition:all 0.8s cubic-bezier(0.25,0.46,0.45,0.94);">✨</div>
   </div>
-  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v7.45</span></div>
+  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v7.46</span></div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie pour locations</div>
   <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou</div>
   <!-- Loading bar -->
@@ -2280,6 +2285,7 @@ function getStatusLabel(s) { return (STATUS_CONFIG[s] || {}).label || s || ''; }
 // ── Splash Changelog (update this with each significant version) ──
 // Full versioned changelog — add new entries at TOP
 const VERSION_CHANGELOG = [
+  { v: '7.46', changes: ['Sections Bien repliables (concierge + proprietaire)', 'Mode proprietaire: photo a gauche comme concierge', 'Notes integrees dans Horaires & Acces', 'Fleche de repli animee'] },
   { v: '7.45', changes: ['Popup details au clic sur une carte prestation', 'Texte explicatif pour la section iCal (fin/debut de location vs recurrents)'] },
   { v: '7.44', changes: ['Barre de completion: chaque item manquant est cliquable', 'Scroll + highlight vers le champ a completer', 'Ouverture auto section iCal si besoin'] },
   { v: '7.43', changes: ['Dashboard: limite "Prochaines prestations" a 5 entrees'] },
@@ -2850,9 +2856,9 @@ async function renderPropertyDetailsInline() {
   }
 
   // SECTION: Photo + General Info (photo left, fields right, stacks on mobile)
-  html += `<div style="${sectionStyle}">`;
-  html += `<div style="${sectionTitleStyle}">&#127968; Informations generales</div>`;
-  html += `<div style="display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start;">`;
+  html += `<details open style="${sectionStyle}">`;
+  html += `<summary style="list-style:none;cursor:pointer;"><div style="${sectionTitleStyle}margin-bottom:0;display:flex;justify-content:space-between;"><span>&#127968; Informations generales</span><span class="collapseArrow">&#9662;</span></div></summary>`;
+  html += `<div style="margin-top:12px;"><div style="display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start;">`;
   // Photo (left)
   html += `<div style="flex:0 0 200px;min-width:180px;">
     <div id="inlinePropPhotoPreview" style="width:100%;aspect-ratio:1/1;border-radius:12px;overflow:hidden;background:var(--surface2);display:flex;align-items:center;justify-content:center;cursor:pointer;" onclick="document.getElementById('inlinePropPhotoInput').click()">
@@ -2887,25 +2893,29 @@ async function renderPropertyDetailsInline() {
   html += `</div>`;
   html += `</div>`; // end right column
   html += `</div>`; // end flex row
-  html += `</div>`; // end general info section
+  html += `</div>`; // end details body
+  html += `</details>`; // end general info section
 
   // Hidden inputs (kept for backward compat / saveInlinePropDetail)
   const svcSum = Object.values(prop.serviceConfig || {}).filter(c => c && c.enabled).reduce((s, c) => s + (parseFloat(c.price)||0), 0);
   html += `<input id="inlinePropPrice" type="hidden" value="${svcSum}">`;
 
   // SECTION: Services requis (avec total integre)
-  html += `<div style="${sectionStyle}">`;
-  html += `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px;">`;
+  html += `<details open style="${sectionStyle}">`;
+  html += `<summary style="list-style:none;cursor:pointer;">`;
+  html += `<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">`;
   html += `<div style="${sectionTitleStyle}margin-bottom:0;">&#128736; Services requis</div>`;
-  html += `<div style="display:flex;align-items:center;gap:8px;font-size:13px;"><span style="color:var(--text3);">Total:</span><span id="inlinePropPriceDisplay" style="color:#34d399;font-weight:700;font-size:15px;">${svcSum.toFixed(2)} €</span></div>`;
+  html += `<div style="display:flex;align-items:center;gap:8px;font-size:13px;"><span style="color:var(--text3);">Total:</span><span id="inlinePropPriceDisplay" style="color:#34d399;font-weight:700;font-size:15px;">${svcSum.toFixed(2)} €</span><span class="collapseArrow">&#9662;</span></div>`;
   html += `</div>`;
-  html += `<div id="inlinePropServicesChecks"></div>`;
-  html += `</div>`;
+  html += `</summary>`;
+  html += `<div style="margin-top:12px;"><div id="inlinePropServicesChecks"></div></div>`;
+  html += `</details>`;
 
 
   // SECTION: Horaires & Acces
-  html += `<div style="${sectionStyle}">`;
-  html += `<div style="${sectionTitleStyle}">&#128272; Horaires & Acces</div>`;
+  html += `<details open style="${sectionStyle}">`;
+  html += `<summary style="list-style:none;cursor:pointer;"><div style="${sectionTitleStyle}margin-bottom:0;display:flex;justify-content:space-between;"><span>&#128272; Horaires & Acces</span><span class="collapseArrow">&#9662;</span></div></summary>`;
+  html += `<div style="margin-top:12px;">`;
   html += `<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">`;
   html += `<div><label style="${labelStyle}">Check-in</label>
     <input type="time" id="inlinePropCheckin" value="${prop.checkinTime || '15:00'}" style="${inputStyle}font-family:'Inter',sans-serif;"></div>`;
@@ -2919,6 +2929,7 @@ async function renderPropertyDetailsInline() {
   html += `<div style="margin-bottom:4px;"><label style="${labelStyle}">Notes</label>
     <textarea id="inlinePropNotes" rows="3" placeholder="Notes sur la propriete..." style="${inputStyle}resize:vertical;font-family:'Inter',sans-serif;">${esc(prop.notes || '')}</textarea></div>`;
   html += `</div>`;
+  html += `</details>`;
 
   // SECTION: Calendriers iCal (collapsible, advanced)
   const icals = prop.icals || [];
@@ -4935,49 +4946,56 @@ async function renderOwnerPropertyDetails() {
     html += '<div style="margin-bottom:12px;"><button onclick="showMarketplace(\'' + ownerAddr + '\').then(()=>{document.getElementById(\'mkRoleFilter\').value=\'admin\';filterMarketplace();})" style="width:100%;padding:12px 20px;background:linear-gradient(135deg,#6c63ff,#5a54e0);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;">&#127970; Trouver une conciergerie</button></div>';
   }
 
-  // Photo
-  html += '<div style="' + sectionStyle + '">';
-  html += '<div style="font-size:13px;font-weight:700;text-transform:uppercase;color:var(--text);margin-bottom:8px;">🏠 Informations</div>';
-  if (prop.photo) html += '<img src="' + esc(prop.photo) + '" style="width:100%;max-height:200px;object-fit:cover;border-radius:10px;margin-bottom:12px;">';
-  html += '<div style="text-align:center;margin-bottom:12px;cursor:pointer;" onclick="document.getElementById(\'ownerPropPhotoInput\').click()"><div style="padding:10px 16px;background:var(--surface2);border:1px dashed var(--border2);border-radius:8px;color:var(--text3);font-size:12px;">📷 Cliquez pour ' + (prop.photo ? 'changer' : 'ajouter') + ' la photo</div><input type="file" id="ownerPropPhotoInput" accept="image/*" style="display:none;" onchange="handleOwnerPropPhoto(this)"></div>';
-
-  // Name + Address
-  html += '<label style="' + labelStyle + '">Nom</label>';
-  html += '<input id="ownerPropName" type="text" value="' + esc(prop.name || '') + '" style="' + inputStyle + '">';
-  html += '<label style="' + labelStyle + '">Adresse</label>';
-  html += '<div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;">';
-  html += '<input id="ownerPropAddress" type="text" value="' + esc(prop.address || '') + '" placeholder="12 rue de France, Nice" style="' + inputStyle + 'flex:1;margin-bottom:0;">';
-  html += '</div>';
-
-  // Type + Rooms + Surface
+  const sectionTitleStyle = 'font-size:12px;color:var(--text3);text-transform:uppercase;letter-spacing:1px;font-weight:700;display:flex;align-items:center;gap:6px;';
   const typeOptions = [{ v:'apartment',l:'Appartement'},{v:'house',l:'Maison'},{v:'studio',l:'Studio'},{v:'villa',l:'Villa'},{v:'chalet',l:'Chalet'},{v:'other',l:'Autre'}];
+
+  // SECTION: Photo + General Info (photo left, fields right, stacks on mobile)
+  html += '<details open style="' + sectionStyle + '">';
+  html += '<summary style="list-style:none;cursor:pointer;"><div style="' + sectionTitleStyle + 'margin-bottom:0;display:flex;justify-content:space-between;"><span>&#127968; Informations generales</span><span class="collapseArrow">&#9662;</span></div></summary>';
+  html += '<div style="margin-top:12px;"><div style="display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start;">';
+  // Photo (left)
+  html += '<div style="flex:0 0 200px;min-width:180px;">';
+  html += '<div style="width:100%;aspect-ratio:1/1;border-radius:12px;overflow:hidden;background:var(--surface2);display:flex;align-items:center;justify-content:center;cursor:pointer;" onclick="document.getElementById(\'ownerPropPhotoInput\').click()">';
+  if (prop.photo) html += '<img src="' + esc(prop.photo) + '" style="width:100%;height:100%;object-fit:cover;">';
+  else html += '<span style="color:var(--text3);font-size:12px;text-align:center;padding:8px;">&#128247; Cliquez pour ajouter la photo</span>';
+  html += '</div>';
+  html += '<input type="file" id="ownerPropPhotoInput" accept="image/*" style="display:none;" onchange="handleOwnerPropPhoto(this)">';
+  html += '</div>';
+  // Fields (right)
+  html += '<div style="flex:1;min-width:240px;">';
+  html += '<div style="margin-bottom:12px;"><label style="' + labelStyle + '">Nom</label>';
+  html += '<input id="ownerPropName" type="text" value="' + esc(prop.name || '') + '" style="' + inputStyle + '"></div>';
+  html += '<div style="margin-bottom:12px;"><label style="' + labelStyle + '">Adresse</label>';
+  html += '<input id="ownerPropAddress" type="text" value="' + esc(prop.address || '') + '" placeholder="12 rue de France, Nice" style="' + inputStyle + '"></div>';
   html += '<div style="display:flex;gap:10px;flex-wrap:wrap;">';
   html += '<div style="flex:1;min-width:100px;"><label style="' + labelStyle + '">Type</label><select id="ownerPropType" style="' + inputStyle + '">';
   typeOptions.forEach(o => { html += '<option value="' + o.v + '" ' + (prop.type === o.v ? 'selected' : '') + '>' + o.l + '</option>'; });
   html += '</select></div>';
   html += '<div style="flex:0.5;min-width:70px;"><label style="' + labelStyle + '">Pieces</label><input id="ownerPropRooms" type="number" min="1" max="20" value="' + (prop.rooms || '') + '" style="' + inputStyle + '"></div>';
-  html += '<div style="flex:0.7;min-width:100px;"><label style="' + labelStyle + '">Salle de bain</label><input id="ownerPropBathrooms" type="number" min="0" max="10" value="' + (prop.bathrooms || 1) + '" style="' + inputStyle + '"></div>';
+  html += '<div style="flex:0.7;min-width:90px;"><label style="' + labelStyle + '">Salle de bain</label><input id="ownerPropBathrooms" type="number" min="0" max="10" value="' + (prop.bathrooms || 1) + '" style="' + inputStyle + '"></div>';
   html += '<div style="flex:0.5;min-width:70px;"><label style="' + labelStyle + '">m²</label><input id="ownerPropSurface" type="number" min="1" max="1000" value="' + (prop.surface || '') + '" style="' + inputStyle + '"></div>';
-  html += '</div></div>';
+  html += '</div>';
+  html += '</div>'; // end right col
+  html += '</div>'; // end flex row
+  html += '</div>'; // end details body
+  html += '</details>';
 
-  // Hours + Access
-  html += '<div style="' + sectionStyle + '">';
-  html += '<div style="font-size:13px;font-weight:700;text-transform:uppercase;color:var(--text);margin-bottom:8px;">🕐 Horaires & Acces</div>';
-  html += '<div style="display:flex;gap:10px;flex-wrap:wrap;">';
+  // SECTION: Hours + Access
+  html += '<details open style="' + sectionStyle + '">';
+  html += '<summary style="list-style:none;cursor:pointer;"><div style="' + sectionTitleStyle + 'margin-bottom:0;display:flex;justify-content:space-between;"><span>&#128272; Horaires & Acces</span><span class="collapseArrow">&#9662;</span></div></summary>';
+  html += '<div style="margin-top:12px;">';
+  html += '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px;">';
   html += '<div style="flex:1;min-width:100px;"><label style="' + labelStyle + '">Check-in</label><input id="ownerPropCheckin" type="time" value="' + (prop.checkinTime || '15:00') + '" style="' + inputStyle + '"></div>';
   html += '<div style="flex:1;min-width:100px;"><label style="' + labelStyle + '">Check-out</label><input id="ownerPropCheckout" type="time" value="' + (prop.checkoutTime || '11:00') + '" style="' + inputStyle + '"></div>';
   html += '</div>';
-  html += '<label style="' + labelStyle + '">Code d\'acces</label>';
-  html += '<input id="ownerPropAccessCode" type="text" value="' + esc(prop.accessCode || '') + '" placeholder="Ex: 1234" style="' + inputStyle + '">';
-  html += '<label style="' + labelStyle + '">Instructions d\'arrivee</label>';
-  html += '<textarea id="ownerPropArrival" rows="2" placeholder="Indications pour arriver..." style="' + inputStyle + 'resize:vertical;font-family:\'Inter\',sans-serif;">' + esc(prop.arrivalInstructions || '') + '</textarea>';
+  html += '<div style="margin-bottom:12px;"><label style="' + labelStyle + '">Code d\'acces</label>';
+  html += '<input id="ownerPropAccessCode" type="text" value="' + esc(prop.accessCode || '') + '" placeholder="Ex: 1234" style="' + inputStyle + '"></div>';
+  html += '<div style="margin-bottom:12px;"><label style="' + labelStyle + '">Instructions d\'arrivee</label>';
+  html += '<textarea id="ownerPropArrival" rows="2" placeholder="Indications pour arriver..." style="' + inputStyle + 'resize:vertical;font-family:\'Inter\',sans-serif;">' + esc(prop.arrivalInstructions || '') + '</textarea></div>';
+  html += '<div style="margin-bottom:4px;"><label style="' + labelStyle + '">Notes</label>';
+  html += '<textarea id="ownerPropNotes" rows="3" placeholder="Notes..." style="' + inputStyle + 'resize:vertical;font-family:\'Inter\',sans-serif;">' + esc(prop.notes || '') + '</textarea></div>';
   html += '</div>';
-
-  // Notes
-  html += '<div style="' + sectionStyle + '">';
-  html += '<div style="font-size:13px;font-weight:700;text-transform:uppercase;color:var(--text);margin-bottom:8px;">📝 Notes</div>';
-  html += '<textarea id="ownerPropNotes" rows="3" placeholder="Notes..." style="' + inputStyle + 'resize:vertical;font-family:\'Inter\',sans-serif;">' + esc(prop.notes || '') + '</textarea>';
-  html += '</div>';
+  html += '</details>';
 
   // Save button
   // Auto-save: add onchange to all inputs/selects/textareas after render
