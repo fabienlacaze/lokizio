@@ -1140,7 +1140,7 @@ async function loadPDF() {
 </script>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v8.38</div>
+<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v8.39</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -1150,7 +1150,7 @@ async function loadPDF() {
     <!-- Broom that sweeps -->
     <div id="splashBroom" style="position:absolute;top:50%;left:-60px;font-size:48px;transform:translateY(-50%) rotate(-30deg);opacity:0;transition:all 0.8s cubic-bezier(0.25,0.46,0.45,0.94);">✨</div>
   </div>
-  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v8.38</span></div>
+  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v8.39</span></div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie pour locations</div>
   <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou</div>
   <!-- Loading bar -->
@@ -2488,6 +2488,7 @@ function getStatusLabel(s) { return (STATUS_CONFIG[s] || {}).label || s || ''; }
 // ── Splash Changelog (update this with each significant version) ──
 // Full versioned changelog — add new entries at TOP
 const VERSION_CHANGELOG = [
+  { v: '8.39', changes: ['Stats: scope par bien selectionne ("Tous" agrege tous les biens, sinon filtre sur le bien)', 'Stats re-render automatique au changement de bien'] },
   { v: '8.38', changes: ['Prestations: bouton "Masquer passees" active par defaut (les prestations passees sont cachees au chargement)'] },
   { v: '8.37', changes: ['Factures: KPIs en haut (En attente / Encaisse / En retard / Nb factures) cliquables comme filtres', 'Recherche (numero/client/propriete)', 'Chips periode (Tout / Ce mois / Mois dernier / Cette annee)', 'Chips statut avec compteurs', 'Cartes redessinees (prestation + client, montant a droite, badge echeance)', 'Groupement par mois avec sous-totaux', 'Bouton Relancer pour factures en retard'] },
   { v: '8.36', changes: ['Popup Facture: carte Prestation toujours affichee (fallback si items vide)', 'Fix "Invalid Date" sur Paiement recu'] },
@@ -3818,6 +3819,7 @@ function switchTabProperty(propId) {
   loadAdminPrestations();
   // Re-render calendar/stats/revenue if visible
   if (document.getElementById('calView')) { try { renderCalendar(); } catch(e){} }
+  if (document.getElementById('statsDiv')) { try { renderStats(); } catch(e){} }
   if (typeof renderRevenueContent === 'function') { try { renderRevenueContent(); } catch(e){} }
   if (typeof renderDashboardContent === 'function') { try { renderDashboardContent(); } catch(e){} }
   // If switching to a specific property, also update team/planning in background
@@ -13315,14 +13317,44 @@ function toggleStats(el) {
 
 async function renderStats() {
   await loadChart();
-  const hasPlanning = cleanings.length > 0;
+  // Build scoped cleanings based on _filterPropertyId
+  const filterProp = _filterPropertyId;
+  let scopedCleanings = [];
+  let scopedProviders = [];
+  if (filterProp) {
+    // Single property → use the active-property globals if it matches, else look up cache
+    if (_adminPrestCache && _adminPrestCache.plannings) {
+      const plan = _adminPrestCache.plannings.find(p => p.property_id === filterProp);
+      if (plan && plan.cleanings) scopedCleanings = plan.cleanings.map(c => ({ ...c }));
+    } else {
+      scopedCleanings = cleanings.slice();
+    }
+    scopedProviders = config.providers || [];
+  } else {
+    // All properties
+    if (_adminPrestCache && _adminPrestCache.plannings) {
+      _adminPrestCache.plannings.forEach(plan => {
+        if (plan.cleanings) plan.cleanings.forEach(c => scopedCleanings.push({ ...c }));
+      });
+    } else {
+      scopedCleanings = cleanings.slice();
+    }
+    // Merge providers from all properties (name-unique)
+    const provMap = new Map();
+    (_adminPrestCache?.props || []).forEach(p => {
+      (p.providers || []).forEach(pr => { if (pr && pr.name && !provMap.has(pr.name)) provMap.set(pr.name, pr); });
+    });
+    if (provMap.size === 0) (config.providers || []).forEach(pr => { if (pr.name && !provMap.has(pr.name)) provMap.set(pr.name, pr); });
+    scopedProviders = Array.from(provMap.values());
+  }
+  const hasPlanning = scopedCleanings.length > 0;
   const monthly = buildMonthlyData();
   if(!hasPlanning && !monthly.hasData){document.getElementById('statsDiv').innerHTML='<div class="emptyState">Generez un planning pour voir les statistiques.</div>';return;}
-  const provNames=(config.providers||[]).map(p=>p.name);
-  const counts=provNames.map(name=>cleanings.filter(c=>c.provider===name).length);
-  const targets=provNames.map(name=>{const p=config.providers.find(pr=>pr.name===name);return parseInt(p.percentage)||0;});
-  const actuals=provNames.map((_,i)=>cleanings.length>0?Math.round((counts[i]/cleanings.length)*1000)/10:0);
-  const colors=(config.providers||[]).map((_,i)=>COLORS[i]||'#888');
+  const provNames=scopedProviders.map(p=>p.name);
+  const counts=provNames.map(name=>scopedCleanings.filter(c=>c.provider===name).length);
+  const targets=provNames.map(name=>{const p=scopedProviders.find(pr=>pr.name===name);return parseInt(p.percentage)||0;});
+  const actuals=provNames.map((_,i)=>scopedCleanings.length>0?Math.round((counts[i]/scopedCleanings.length)*1000)/10:0);
+  const colors=scopedProviders.map((_,i)=>COLORS[i]||'#888');
   const isPrem = API.isPremium();
   const premLock = `<div style="position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(15,15,26,0.7);display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:var(--radius-sm);z-index:2;cursor:pointer;" onclick="showPremiumModal('Les graphiques et couts sont reserves aux utilisateurs Premium')"><span style="font-size:32px;">&#128274;</span><span style="color:#fff;font-size:13px;font-weight:600;margin-top:8px;">Premium</span></div>`;
   const blurStyle = isPrem ? '' : 'filter:blur(4px);pointer-events:none;';
