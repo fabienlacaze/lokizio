@@ -1134,7 +1134,7 @@ async function loadPDF() {
 </script>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v7.84</div>
+<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v7.85</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -1144,7 +1144,7 @@ async function loadPDF() {
     <!-- Broom that sweeps -->
     <div id="splashBroom" style="position:absolute;top:50%;left:-60px;font-size:48px;transform:translateY(-50%) rotate(-30deg);opacity:0;transition:all 0.8s cubic-bezier(0.25,0.46,0.45,0.94);">✨</div>
   </div>
-  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v7.84</span></div>
+  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v7.85</span></div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie pour locations</div>
   <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou</div>
   <!-- Loading bar -->
@@ -2420,6 +2420,7 @@ function getStatusLabel(s) { return (STATUS_CONFIG[s] || {}).label || s || ''; }
 // ── Splash Changelog (update this with each significant version) ──
 // Full versioned changelog — add new entries at TOP
 const VERSION_CHANGELOG = [
+  { v: '7.85', changes: ['Service "Ponctuel": champ date obligatoire ajoute', 'Affichage de la date dans la liste compacte', 'Stockage dans scheduled_date'] },
   { v: '7.84', changes: ['Profil facturation: bouton Enregistrer visible uniquement si changement', 'Profil annuaire: bouton retire car sauvegarde automatique'] },
   { v: '7.83', changes: ['Fix: popups Modifier email / Role / Confirm s\'affichent au-dessus de la popup profil', 'changeEmail ne ferme plus Mon compte, promptModal gere le z-index stacke'] },
   { v: '7.82', changes: ['Bouton Enregistrer explicite ajoute dans Mon profil annuaire', 'Auto-save conserve en complement'] },
@@ -3349,7 +3350,10 @@ function renderInlineServicesList(prop) {
   } else {
     active.forEach(([svcId, cfg]) => {
       const label = getServiceLabel(svcId);
-      const freqLabel = getFreqLabel(cfg.frequency || 'booking_end');
+      let freqLabel = getFreqLabel(cfg.frequency || 'booking_end');
+      if (cfg.frequency === 'one_time' && cfg.scheduled_date) {
+        try { freqLabel = 'Ponctuel · ' + new Date(cfg.scheduled_date + 'T12:00:00').toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' }); } catch(e) {}
+      }
       const formula = SERVICE_PRICING[svcId];
       const summary = formula && cfg.params ? formula.summary(cfg.params) : '';
       const price = parseFloat(cfg.price) || 0;
@@ -3443,10 +3447,17 @@ function renderServiceEditorBody(selectedSvc, current, editing) {
   // Step 2: Details if service is selected
   if (selectedSvc) {
     const freqVal = current ? current.frequency : 'booking_end';
+    const scheduledDate = current && current.scheduled_date ? current.scheduled_date : '';
     html += `<label style="display:block;font-size:12px;color:var(--text3);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.5px;">Declencheur</label>`;
-    html += `<select id="svcEditorFreq" style="width:100%;padding:10px 12px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;margin-bottom:16px;">`;
+    html += `<select id="svcEditorFreq" onchange="onSvcEditorFreqChange()" style="width:100%;padding:10px 12px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;margin-bottom:16px;">`;
     SERVICE_FREQ_OPTIONS.forEach(o => { html += `<option value="${o.v}" ${freqVal === o.v ? 'selected' : ''}>${esc(o.l)}</option>`; });
     html += `</select>`;
+
+    // Date picker (visible only when freq = one_time)
+    html += `<div id="svcEditorDateRow" style="display:${freqVal === 'one_time' ? 'block' : 'none'};margin-bottom:16px;">`;
+    html += `<label style="display:block;font-size:12px;color:var(--text3);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.5px;">Date du service</label>`;
+    html += `<input type="date" id="svcEditorDate" value="${esc(scheduledDate)}" style="width:100%;padding:10px 12px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;box-sizing:border-box;">`;
+    html += `</div>`;
 
     const formula = SERVICE_PRICING[selectedSvc];
     const currentParams = (current && current.params) || {};
@@ -3513,6 +3524,13 @@ function renderServiceEditorBody(selectedSvc, current, editing) {
   body.innerHTML = html;
 }
 
+function onSvcEditorFreqChange() {
+  const sel = document.getElementById('svcEditorFreq');
+  const row = document.getElementById('svcEditorDateRow');
+  if (!sel || !row) return;
+  row.style.display = sel.value === 'one_time' ? 'block' : 'none';
+}
+
 function onServiceTypeChange(svcId) {
   if (!svcId) return;
   renderServiceEditorBody(svcId, null, false);
@@ -3568,6 +3586,8 @@ function saveServiceEditor(svcId) {
   const finalSvcId = (sel && sel.value) ? sel.value : svcId;
   if (!finalSvcId) { showToast('Choisissez un service'); return; }
   const freq = document.getElementById('svcEditorFreq')?.value || 'booking_end';
+  const scheduledDate = document.getElementById('svcEditorDate')?.value || '';
+  if (freq === 'one_time' && !scheduledDate) { showToast('Choisissez une date pour ce service ponctuel'); return; }
   const price = parseFloat(document.getElementById('svcEditorPrice')?.value) || 0;
   const autoFlag = document.getElementById('svcEditorPriceAuto');
   const priceAuto = autoFlag ? autoFlag.value === '1' : true;
@@ -3580,6 +3600,7 @@ function saveServiceEditor(svcId) {
   prop.serviceConfig[finalSvcId] = {
     enabled: true,
     frequency: freq,
+    scheduled_date: freq === 'one_time' ? scheduledDate : '',
     price: price,
     priceAuto: priceAuto,
     params: params,
