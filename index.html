@@ -1140,7 +1140,7 @@ async function loadPDF() {
 </script>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v8.22</div>
+<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v8.23</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -1150,7 +1150,7 @@ async function loadPDF() {
     <!-- Broom that sweeps -->
     <div id="splashBroom" style="position:absolute;top:50%;left:-60px;font-size:48px;transform:translateY(-50%) rotate(-30deg);opacity:0;transition:all 0.8s cubic-bezier(0.25,0.46,0.45,0.94);">✨</div>
   </div>
-  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v8.22</span></div>
+  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v8.23</span></div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie pour locations</div>
   <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou</div>
   <!-- Loading bar -->
@@ -2484,6 +2484,7 @@ function getStatusLabel(s) { return (STATUS_CONFIG[s] || {}).label || s || ''; }
 // ── Splash Changelog (update this with each significant version) ──
 // Full versioned changelog — add new entries at TOP
 const VERSION_CHANGELOG = [
+  { v: '8.23', changes: ['Dashboard "Analytique du mois": tuiles cliquables qui filtrent la liste des prestations (Terminees/En attente/Litiges) ou ouvrent Revenus'] },
   { v: '8.22', changes: ['Liste prestations: les prestations passees sont affichees grisees (cliquables)', 'Calendrier: prestations passees grisees', 'Calendrier: services utilisent la couleur du prestataire assignee'] },
   { v: '8.21', changes: ['Graph revenus: courbe Benefice cumule ajoutee (orange)', 'Popup detail mensuel: lignes cliquables qui ouvrent la prestation correspondante et la highlight'] },
   { v: '8.20', changes: ['Calendrier: clic sur un evenement ouvre la liste, scrolle et highlight la carte correspondante (orange 1.5s)'] },
@@ -12883,13 +12884,15 @@ function renderDashboardContent() {
 
     let html = '<details style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-top:12px;">';
     html += '<summary style="list-style:none;cursor:pointer;display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;"><div style="font-size:14px;font-weight:700;color:var(--text);">&#128202; Analytique du mois</div><span class="collapseArrow">&#9662;</span></summary>';
+    const tileStyle = 'background:var(--surface2);border-radius:10px;padding:12px;text-align:center;cursor:pointer;transition:transform 0.15s,background 0.15s;';
+    const tileHover = 'onmouseover="this.style.background=\'rgba(108,99,255,0.1)\';this.style.transform=\'translateY(-2px)\'" onmouseout="this.style.background=\'var(--surface2)\';this.style.transform=\'\'"';
     html += '<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;">';
-    html += '<div style="background:var(--surface2);border-radius:10px;padding:12px;text-align:center;"><div style="font-size:22px;font-weight:800;color:var(--text);">' + thisMonthCount + '</div><div style="font-size:10px;color:var(--text3);">Prestations terminees</div>';
+    html += '<div ' + tileHover + ' onclick="goToAnalyticTile(\'done\')" style="' + tileStyle + '"><div style="font-size:22px;font-weight:800;color:var(--text);">' + thisMonthCount + '</div><div style="font-size:10px;color:var(--text3);">Prestations terminees</div>';
     if (trend !== 0) html += '<div style="font-size:10px;color:' + trendColor + ';margin-top:4px;">' + trendIcon + ' ' + Math.abs(trend) + '% vs mois dernier</div>';
     html += '</div>';
-    html += '<div style="background:var(--surface2);border-radius:10px;padding:12px;text-align:center;"><div style="font-size:22px;font-weight:800;color:#f59e0b;">' + thisMonthRevenue + '&euro;</div><div style="font-size:10px;color:var(--text3);">CA du mois</div></div>';
-    html += '<div style="background:var(--surface2);border-radius:10px;padding:12px;text-align:center;"><div style="font-size:22px;font-weight:800;color:#f59e0b;">' + pending + '</div><div style="font-size:10px;color:var(--text3);">En attente</div></div>';
-    html += '<div style="background:var(--surface2);border-radius:10px;padding:12px;text-align:center;"><div style="font-size:22px;font-weight:800;color:' + (disputed > 0 ? '#ef4444' : 'var(--text)') + ';">' + disputed + '</div><div style="font-size:10px;color:var(--text3);">Litiges</div></div>';
+    html += '<div ' + tileHover + ' onclick="goToAnalyticTile(\'revenue\')" style="' + tileStyle + '"><div style="font-size:22px;font-weight:800;color:#f59e0b;">' + thisMonthRevenue + '&euro;</div><div style="font-size:10px;color:var(--text3);">CA du mois</div></div>';
+    html += '<div ' + tileHover + ' onclick="goToAnalyticTile(\'pending\')" style="' + tileStyle + '"><div style="font-size:22px;font-weight:800;color:#f59e0b;">' + pending + '</div><div style="font-size:10px;color:var(--text3);">En attente</div></div>';
+    html += '<div ' + tileHover + ' onclick="goToAnalyticTile(\'disputed\')" style="' + tileStyle + '"><div style="font-size:22px;font-weight:800;color:' + (disputed > 0 ? '#ef4444' : 'var(--text)') + ';">' + disputed + '</div><div style="font-size:10px;color:var(--text3);">Litiges</div></div>';
     html += '</div></details>';
     div3.innerHTML = html;
   }
@@ -15586,6 +15589,35 @@ function applyAdminPrestFilters() {
     const statusMatch = _adminPrestFilterStatus === 'all' || card.dataset.status === _adminPrestFilterStatus;
     card.style.display = (catMatch && statusMatch) ? '' : 'none';
   });
+}
+
+function goToAnalyticTile(kind) {
+  if (kind === 'revenue') {
+    if (typeof switchMainTab === 'function') switchMainTab('revenus');
+    else if (typeof switchOwnerNav === 'function') switchOwnerNav('revenus');
+    setTimeout(() => { const el = document.getElementById('revenueContent'); if (el) el.scrollIntoView({ behavior:'smooth', block:'start' }); }, 300);
+    return;
+  }
+  // done / pending / disputed → prestations list with status filter
+  const statusMap = { done: 'done', pending: 'pending', disputed: 'refused' };
+  const status = statusMap[kind] || 'all';
+  if (typeof switchMainTab === 'function') switchMainTab('prestations');
+  else if (typeof switchOwnerNav === 'function') switchOwnerNav('prestations');
+  if (typeof switchPrestSubTab === 'function') switchPrestSubTab('list');
+  setTimeout(() => {
+    // Find matching status button and click it to keep UI in sync
+    const btns = document.querySelectorAll('#adminPrestFilters .prestFilter[data-filter-type="status"]');
+    let matched = false;
+    btns.forEach(b => {
+      if ((b.getAttribute('onclick') || '').includes("'" + status + "'")) { b.click(); matched = true; }
+    });
+    if (!matched) {
+      _adminPrestFilterStatus = status;
+      applyAdminPrestFilters();
+    }
+    const listEl = document.getElementById('adminPrestList');
+    if (listEl) listEl.scrollIntoView({ behavior:'smooth', block:'start' });
+  }, 350);
 }
 
 /* ── Full Page Chat Functions ── */
