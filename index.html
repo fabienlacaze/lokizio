@@ -632,6 +632,9 @@ async function loadPDF() {
     align-items: center; justify-content: center;
     padding: 20px;
   }
+  /* When a stacked overlay is open, msgModal should render above it */
+  body.hasStackedOverlay #msgModal { z-index: 5800 !important; }
+  body.hasStackedOverlay #overlay { z-index: 5700 !important; }
   .stackedOverlay.visible { display: flex; }
   .stackedOverlayBox {
     background: var(--surface); border: 1px solid var(--border2);
@@ -1119,7 +1122,7 @@ async function loadPDF() {
 </script>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v7.65</div>
+<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v7.66</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -1129,7 +1132,7 @@ async function loadPDF() {
     <!-- Broom that sweeps -->
     <div id="splashBroom" style="position:absolute;top:50%;left:-60px;font-size:48px;transform:translateY(-50%) rotate(-30deg);opacity:0;transition:all 0.8s cubic-bezier(0.25,0.46,0.45,0.94);">✨</div>
   </div>
-  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v7.65</span></div>
+  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v7.66</span></div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie pour locations</div>
   <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou</div>
   <!-- Loading bar -->
@@ -2373,6 +2376,7 @@ function getStatusLabel(s) { return (STATUS_CONFIG[s] || {}).label || s || ''; }
 // ── Splash Changelog (update this with each significant version) ──
 // Full versioned changelog — add new entries at TOP
 const VERSION_CHANGELOG = [
+  { v: '7.66', changes: ['Fix z-index: "Changer email" et "Changer role" s\'affichent au-dessus de la popup profil (plus en arriere-plan)'] },
   { v: '7.65', changes: ['Popups superposees: clic sur un profil ouvre une popup par-dessus Mon compte', 'Mon compte reste visible derriere, fermer la popup revient dessus'] },
   { v: '7.64', changes: ['Raccourcis: section repliable dans un <details> comme les autres sections du dashboard'] },
   { v: '7.63', changes: ['Modales: hauteur max fixee a 85vh pour eviter le saut vertical quand on deplie une section', 'Le scroll se fait dans le body, pas par redimensionnement de la modale'] },
@@ -8557,11 +8561,15 @@ async function openOverlayPopup(id) {
     }
   } catch(e) { console.error('openOverlayPopup load error:', e); }
   el.classList.add('visible');
+  document.body.classList.add('hasStackedOverlay');
 }
 
 function closeOverlayPopup(id) {
   const el = document.getElementById(id);
   if (el) el.classList.remove('visible');
+  // Remove body class only if no other stackedOverlay is still visible
+  const anyVisible = document.querySelectorAll('.stackedOverlay.visible').length;
+  if (!anyVisible) document.body.classList.remove('hasStackedOverlay');
 }
 
 async function showPersonalProfileModal() {
