@@ -1140,7 +1140,7 @@ async function loadPDF() {
 </script>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v8.30</div>
+<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v8.31</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -1150,7 +1150,7 @@ async function loadPDF() {
     <!-- Broom that sweeps -->
     <div id="splashBroom" style="position:absolute;top:50%;left:-60px;font-size:48px;transform:translateY(-50%) rotate(-30deg);opacity:0;transition:all 0.8s cubic-bezier(0.25,0.46,0.45,0.94);">✨</div>
   </div>
-  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v8.30</span></div>
+  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v8.31</span></div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie pour locations</div>
   <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou</div>
   <!-- Loading bar -->
@@ -2484,6 +2484,7 @@ function getStatusLabel(s) { return (STATUS_CONFIG[s] || {}).label || s || ''; }
 // ── Splash Changelog (update this with each significant version) ──
 // Full versioned changelog — add new entries at TOP
 const VERSION_CHANGELOG = [
+  { v: '8.31', changes: ['Liste prestations: mois passes ne sont plus auto-replies (le bouton Masquer passees fait le job)', 'Filtres: statuts en 1ere ligne, categories en 2eme'] },
   { v: '8.30', changes: ['Popup detail mensuel: colonne Benef. cumule (running) ajoutee'] },
   { v: '8.29', changes: ['Filtres statut recalcules dynamiquement selon la categorie selectionnee', '"Masquer passees" sur sa propre ligne'] },
   { v: '8.28', changes: ['Graph revenus: clic sur un point ouvre la popup detail du mois'] },
@@ -6079,10 +6080,9 @@ async function showOwnerMode() {
     const _omonthsFull = ['Janvier','Fevrier','Mars','Avril','Mai','Juin','Juillet','Aout','Septembre','Octobre','Novembre','Decembre'];
     const _odays = ['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'];
     let ownerLastMonth = '';
-    const _ownerTodayMonth = today.substring(0, 7);
     ownerUnified.forEach(u => {
       const dateStr = u.date || '';
-      // Month group (collapsible — past months collapsed)
+      // Month group (collapsible)
       if (dateStr) {
         const monthKey = dateStr.substring(0, 7);
         if (monthKey !== ownerLastMonth) {
@@ -6090,8 +6090,7 @@ async function showOwnerMode() {
           ownerLastMonth = monthKey;
           const gd = new Date(dateStr + 'T12:00:00');
           const monthLabel = _omonthsFull[gd.getMonth()] + ' ' + gd.getFullYear();
-          const isPastMonth = monthKey < _ownerTodayMonth;
-          html += '<details ' + (isPastMonth ? '' : 'open ') + 'style="margin-bottom:8px;' + (isPastMonth ? 'opacity:0.7;' : '') + '"><summary style="list-style:none;cursor:pointer;display:flex;align-items:center;gap:8px;padding:10px 4px;font-size:13px;font-weight:700;color:var(--text2);text-transform:capitalize;border-bottom:1px solid var(--border);"><span class="collapseArrow">&#9662;</span>' + monthLabel + '</summary>';
+          html += '<details open style="margin-bottom:8px;"><summary style="list-style:none;cursor:pointer;display:flex;align-items:center;gap:8px;padding:10px 4px;font-size:13px;font-weight:700;color:var(--text2);text-transform:capitalize;border-bottom:1px solid var(--border);"><span class="collapseArrow">&#9662;</span>' + monthLabel + '</summary>';
         }
       }
       const catObj = SERVICE_CATALOG.find(c => c.services.some(s => s.id === u.type));
@@ -15418,8 +15417,10 @@ async function loadAdminPrestations(forceReload) {
 
   // Render filters
   if (filtersEl) {
-    // Line 1: categories
-    let fHtml = '<div style="display:flex;gap:6px;overflow-x:auto;padding-bottom:6px;margin-bottom:4px;-webkit-overflow-scrolling:touch;align-items:center;">';
+    // Line 1: status row (container only, populated by renderStatusFilterRow)
+    let fHtml = '<div id="adminPrestStatusRow" style="display:flex;gap:6px;overflow-x:auto;padding-bottom:6px;margin-bottom:4px;-webkit-overflow-scrolling:touch;align-items:center;"></div>';
+    // Line 2: categories
+    fHtml += '<div style="display:flex;gap:6px;overflow-x:auto;padding-bottom:6px;margin-bottom:4px;-webkit-overflow-scrolling:touch;align-items:center;">';
     fHtml += '<button class="prestFilter' + (_adminPrestFilterCat === 'all' ? ' active' : '') + '" data-filter-type="cat" onclick="filterAdminPrest(\'all\',this)">Tout ' + counts.all + '</button>';
     SERVICE_CATALOG.forEach(cat => {
       if (counts[cat.cat]) {
@@ -15428,8 +15429,6 @@ async function loadAdminPrestations(forceReload) {
       }
     });
     fHtml += '</div>';
-    // Line 2: status row (container only, populated by renderStatusFilterRow)
-    fHtml += '<div id="adminPrestStatusRow" style="display:flex;gap:6px;overflow-x:auto;padding-bottom:6px;margin-bottom:4px;-webkit-overflow-scrolling:touch;align-items:center;"></div>';
     // Line 3: Hide past toggle
     const hidePastActive = !!window._adminHidePast;
     fHtml += '<div style="display:flex;padding-bottom:8px;margin-bottom:8px;">';
@@ -15460,7 +15459,7 @@ async function loadAdminPrestations(forceReload) {
   const days = ['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'];
   let lastMonthGroup = '';
   unified.forEach(u => {
-    // Month group separator (collapsible — past months collapsed by default)
+    // Month group separator (collapsible)
     if (u.date) {
       const monthKey = u.date.substring(0, 7); // YYYY-MM
       if (monthKey !== lastMonthGroup) {
@@ -15468,9 +15467,7 @@ async function loadAdminPrestations(forceReload) {
         lastMonthGroup = monthKey;
         const gd = new Date(u.date + 'T12:00:00');
         const monthLabel = monthsFull[gd.getMonth()] + ' ' + gd.getFullYear();
-        const currentMonthKey = today.substring(0, 7);
-        const isPastMonth = monthKey < currentMonthKey;
-        html += '<details ' + (isPastMonth ? '' : 'open ') + 'style="margin-bottom:8px;' + (isPastMonth ? 'opacity:0.7;' : '') + '"><summary style="list-style:none;cursor:pointer;display:flex;align-items:center;gap:8px;padding:10px 4px;font-size:13px;font-weight:700;color:var(--text2);text-transform:capitalize;border-bottom:1px solid var(--border);"><span class="collapseArrow">&#9662;</span>' + monthLabel + '</summary>';
+        html += '<details open style="margin-bottom:8px;"><summary style="list-style:none;cursor:pointer;display:flex;align-items:center;gap:8px;padding:10px 4px;font-size:13px;font-weight:700;color:var(--text2);text-transform:capitalize;border-bottom:1px solid var(--border);"><span class="collapseArrow">&#9662;</span>' + monthLabel + '</summary>';
       }
     }
     const catObj = SERVICE_CATALOG.find(c => c.services.some(s => s.id === u.type));
