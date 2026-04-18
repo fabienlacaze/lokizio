@@ -1065,7 +1065,7 @@ async function loadPDF() {
 </script>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v7.49</div>
+<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v7.50</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -1075,7 +1075,7 @@ async function loadPDF() {
     <!-- Broom that sweeps -->
     <div id="splashBroom" style="position:absolute;top:50%;left:-60px;font-size:48px;transform:translateY(-50%) rotate(-30deg);opacity:0;transition:all 0.8s cubic-bezier(0.25,0.46,0.45,0.94);">✨</div>
   </div>
-  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v7.49</span></div>
+  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v7.50</span></div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie pour locations</div>
   <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou</div>
   <!-- Loading bar -->
@@ -2295,6 +2295,7 @@ function getStatusLabel(s) { return (STATUS_CONFIG[s] || {}).label || s || ''; }
 // ── Splash Changelog (update this with each significant version) ──
 // Full versioned changelog — add new entries at TOP
 const VERSION_CHANGELOG = [
+  { v: '7.50', changes: ['Barres de completion: items manquants en chips/boutons avec icones', 'Style pill-shaped avec hover', 'Meme UI pour concierge, proprietaire, prestataire'] },
   { v: '7.49', changes: ['KPI: suppression "Prestations a venir" (doublon avec "Cette semaine")', 'Barre de completion ajoutee en modes proprietaire et prestataire', 'Liens cliquables sur items manquants'] },
   { v: '7.48', changes: ['Bouton cloche 🔔 masque s\'il n\'y a aucune demande de connexion', 'Apparait automatiquement quand une demande arrive'] },
   { v: '7.47', changes: ['Popup Mon profil dediee (annuaire/marketplace)', 'Separation claire: Mon profil (public) vs Mon compte (prive)', 'Nouveau bouton 👤 dans le header'] },
@@ -2802,28 +2803,29 @@ async function renderPropertyDetailsInline() {
     let score = 0; let total = 7;
     const missing = [];
     // Each item: { label, target } — target is element id to focus
-    if (prop.name && prop.name !== 'Mon logement' && prop.name !== 'Nouvelle propriete') score++; else missing.push({ label: 'nom', target: 'inlinePropName' });
-    if (prop.address) score++; else missing.push({ label: 'adresse', target: 'inlinePropAddress' });
-    if (prop.type && prop.rooms) score++; else missing.push({ label: 'type/pieces', target: 'inlinePropType' });
-    if (prop.photo) score++; else missing.push({ label: 'photo', target: 'inlinePropPhotoPreview' });
-    if (prop.icals && prop.icals.length && prop.icals.some(ic => ic.url)) score++; else missing.push({ label: 'calendrier iCal', target: 'inlineIcal_0', action: 'openIcalSection' });
-    if (prop.providers && prop.providers.length) score++; else missing.push({ label: 'prestataire', target: 'inlinePropServicesChecks' });
+    if (prop.name && prop.name !== 'Mon logement' && prop.name !== 'Nouvelle propriete') score++; else missing.push({ label: 'Nom', icon: '&#128221;', target: 'inlinePropName' });
+    if (prop.address) score++; else missing.push({ label: 'Adresse', icon: '&#128205;', target: 'inlinePropAddress' });
+    if (prop.type && prop.rooms) score++; else missing.push({ label: 'Type/pieces', icon: '&#127968;', target: 'inlinePropType' });
+    if (prop.photo) score++; else missing.push({ label: 'Photo', icon: '&#128247;', target: 'inlinePropPhotoPreview' });
+    if (prop.icals && prop.icals.length && prop.icals.some(ic => ic.url)) score++; else missing.push({ label: 'Calendrier iCal', icon: '&#128197;', target: 'inlineIcal_0', action: 'openIcalSection' });
+    if (prop.providers && prop.providers.length) score++; else missing.push({ label: 'Prestataire', icon: '&#128100;', target: 'inlinePropServicesChecks' });
     const svcCount = Object.values(prop.serviceConfig || {}).filter(c => c && c.enabled).length;
-    if (svcCount > 0) score++; else missing.push({ label: 'services/tarif', target: 'inlinePropServicesChecks' });
+    if (svcCount > 0) score++; else missing.push({ label: 'Services/tarif', icon: '&#128736;', target: 'inlinePropServicesChecks' });
     const pct = Math.round((score / total) * 100);
     if (pct < 100) {
-      html += `<div style="${sectionStyle}padding:12px;border-left:3px solid ${pct >= 80 ? '#34d399' : pct >= 50 ? '#f59e0b' : '#e94560'};">`;
-      html += `<div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">`;
+      const barColor = pct >= 80 ? '#34d399' : pct >= 50 ? '#f59e0b' : '#e94560';
+      html += `<div style="${sectionStyle}padding:14px;border-left:3px solid ${barColor};">`;
+      html += `<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">`;
       html += `<div style="flex:1;font-size:13px;font-weight:600;color:var(--text);">Configuration du bien</div>`;
-      html += `<span style="font-size:12px;font-weight:700;color:${pct >= 80 ? '#34d399' : pct >= 50 ? '#f59e0b' : '#e94560'};">${pct}%</span>`;
+      html += `<span style="font-size:12px;font-weight:700;color:${barColor};">${pct}%</span>`;
       html += `</div>`;
-      html += `<div style="height:6px;background:var(--surface2);border-radius:3px;overflow:hidden;margin-bottom:6px;">`;
+      html += `<div style="height:6px;background:var(--surface2);border-radius:3px;overflow:hidden;margin-bottom:12px;">`;
       html += `<div style="height:100%;width:${pct}%;background:linear-gradient(90deg,#6c63ff,#34d399);border-radius:3px;transition:width 0.3s;"></div>`;
       html += `</div>`;
-      html += `<div style="font-size:11px;color:var(--text3);">Completez : `;
-      missing.forEach((m, i) => {
-        if (i > 0) html += ', ';
-        html += `<a href="#" onclick="scrollToPropField('${m.target}', '${m.action||''}');return false;" style="color:var(--accent2);text-decoration:underline;cursor:pointer;">${esc(m.label)}</a>`;
+      html += `<div style="font-size:11px;color:var(--text3);margin-bottom:8px;">A completer :</div>`;
+      html += `<div style="display:flex;flex-wrap:wrap;gap:8px;">`;
+      missing.forEach(m => {
+        html += `<button onclick="scrollToPropField('${m.target}', '${m.action||''}')" style="display:inline-flex;align-items:center;gap:6px;padding:7px 12px;background:rgba(108,99,255,0.12);color:var(--accent2);border:1px solid rgba(108,99,255,0.35);border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;transition:all 0.15s;" onmouseover="this.style.background='rgba(108,99,255,0.22)'" onmouseout="this.style.background='rgba(108,99,255,0.12)'">${m.icon} ${esc(m.label)}</button>`;
       });
       html += `</div>`;
       html += `</div>`;
@@ -4452,23 +4454,28 @@ async function showProviderMode() {
       const { data: _mk } = await sb.from('marketplace_profiles').select('*').eq('user_id', _pu.id).maybeSingle();
       let score = 0; let total = 5;
       const missing = [];
-      if (_mk && _mk.display_name) score++; else missing.push('nom affiche');
-      if (_mk && _mk.city) score++; else missing.push('ville');
-      if (_mk && _mk.phone) score++; else missing.push('telephone');
-      if (_mk && _mk.services && _mk.services.length) score++; else missing.push('services');
-      if (_mk && _mk.description) score++; else missing.push('description');
+      if (_mk && _mk.display_name) score++; else missing.push({ label: 'Nom affiche', icon: '&#128221;' });
+      if (_mk && _mk.city) score++; else missing.push({ label: 'Ville', icon: '&#127961;' });
+      if (_mk && _mk.phone) score++; else missing.push({ label: 'Telephone', icon: '&#128222;' });
+      if (_mk && _mk.services && _mk.services.length) score++; else missing.push({ label: 'Services', icon: '&#128736;' });
+      if (_mk && _mk.description) score++; else missing.push({ label: 'Description', icon: '&#128172;' });
       const pct = Math.round((score / total) * 100);
       if (pct < 100) {
         const barColor = pct >= 80 ? '#34d399' : pct >= 50 ? '#f59e0b' : '#e94560';
-        html += '<div style="background:var(--surface);border:1px solid var(--border2);border-radius:12px;padding:12px;margin-bottom:12px;border-left:3px solid ' + barColor + ';">';
-        html += '<div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">';
+        html += '<div style="background:var(--surface);border:1px solid var(--border2);border-radius:12px;padding:14px;margin-bottom:12px;border-left:3px solid ' + barColor + ';">';
+        html += '<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">';
         html += '<div style="flex:1;font-size:13px;font-weight:600;color:var(--text);">Completez votre profil annuaire</div>';
         html += '<span style="font-size:12px;font-weight:700;color:' + barColor + ';">' + pct + '%</span>';
         html += '</div>';
-        html += '<div style="height:6px;background:var(--surface2);border-radius:3px;overflow:hidden;margin-bottom:6px;">';
+        html += '<div style="height:6px;background:var(--surface2);border-radius:3px;overflow:hidden;margin-bottom:12px;">';
         html += '<div style="height:100%;width:' + pct + '%;background:linear-gradient(90deg,#6c63ff,#34d399);border-radius:3px;transition:width 0.3s;"></div>';
         html += '</div>';
-        html += '<div style="font-size:11px;color:var(--text3);">Completez : <a href="#" onclick="showProfileModal();return false;" style="color:var(--accent2);text-decoration:underline;cursor:pointer;">' + missing.join(', ') + '</a></div>';
+        html += '<div style="font-size:11px;color:var(--text3);margin-bottom:8px;">A completer :</div>';
+        html += '<div style="display:flex;flex-wrap:wrap;gap:8px;">';
+        missing.forEach(m => {
+          html += '<button onclick="showProfileModal()" style="display:inline-flex;align-items:center;gap:6px;padding:7px 12px;background:rgba(108,99,255,0.12);color:var(--accent2);border:1px solid rgba(108,99,255,0.35);border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;transition:all 0.15s;" onmouseover="this.style.background=\'rgba(108,99,255,0.22)\'" onmouseout="this.style.background=\'rgba(108,99,255,0.12)\'">' + m.icon + ' ' + esc(m.label) + '</button>';
+        });
+        html += '</div>';
         html += '</div>';
       }
     }
@@ -4963,31 +4970,31 @@ async function renderOwnerPropertyDetails() {
 
   let html = '';
 
-  // ── Property completeness bar (clickable items) ──
+  // ── Property completeness bar (clickable items as chips) ──
   {
     let score = 0; let total = 6;
     const missing = [];
-    if (prop.name && prop.name !== 'Mon logement' && prop.name !== 'Nouveau bien') score++; else missing.push({ label: 'nom', target: 'ownerPropName' });
-    if (prop.address) score++; else missing.push({ label: 'adresse', target: 'ownerPropAddress' });
-    if (prop.type && prop.rooms) score++; else missing.push({ label: 'type/pieces', target: 'ownerPropType' });
-    if (prop.photo) score++; else missing.push({ label: 'photo', target: 'ownerPropPhotoInput' });
-    if (prop.checkinTime && prop.checkoutTime) score++; else missing.push({ label: 'horaires', target: 'ownerPropCheckin' });
-    if (prop.accessCode) score++; else missing.push({ label: 'code d\'acces', target: 'ownerPropAccessCode' });
+    if (prop.name && prop.name !== 'Mon logement' && prop.name !== 'Nouveau bien') score++; else missing.push({ label: 'Nom', icon: '&#128221;', target: 'ownerPropName' });
+    if (prop.address) score++; else missing.push({ label: 'Adresse', icon: '&#128205;', target: 'ownerPropAddress' });
+    if (prop.type && prop.rooms) score++; else missing.push({ label: 'Type/pieces', icon: '&#127968;', target: 'ownerPropType' });
+    if (prop.photo) score++; else missing.push({ label: 'Photo', icon: '&#128247;', target: 'ownerPropPhotoInput' });
+    if (prop.checkinTime && prop.checkoutTime) score++; else missing.push({ label: 'Horaires', icon: '&#128336;', target: 'ownerPropCheckin' });
+    if (prop.accessCode) score++; else missing.push({ label: 'Code d\'acces', icon: '&#128274;', target: 'ownerPropAccessCode' });
     const pct = Math.round((score / total) * 100);
     if (pct < 100) {
       const barColor = pct >= 80 ? '#34d399' : pct >= 50 ? '#f59e0b' : '#e94560';
-      html += '<div style="' + sectionStyle + 'padding:12px;border-left:3px solid ' + barColor + ';">';
-      html += '<div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">';
+      html += '<div style="' + sectionStyle + 'padding:14px;border-left:3px solid ' + barColor + ';">';
+      html += '<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">';
       html += '<div style="flex:1;font-size:13px;font-weight:600;color:var(--text);">Configuration du bien</div>';
       html += '<span style="font-size:12px;font-weight:700;color:' + barColor + ';">' + pct + '%</span>';
       html += '</div>';
-      html += '<div style="height:6px;background:var(--surface2);border-radius:3px;overflow:hidden;margin-bottom:6px;">';
+      html += '<div style="height:6px;background:var(--surface2);border-radius:3px;overflow:hidden;margin-bottom:12px;">';
       html += '<div style="height:100%;width:' + pct + '%;background:linear-gradient(90deg,#6c63ff,#34d399);border-radius:3px;transition:width 0.3s;"></div>';
       html += '</div>';
-      html += '<div style="font-size:11px;color:var(--text3);">Completez : ';
-      missing.forEach((m, i) => {
-        if (i > 0) html += ', ';
-        html += '<a href="#" onclick="scrollToPropField(\'' + m.target + '\');return false;" style="color:var(--accent2);text-decoration:underline;cursor:pointer;">' + esc(m.label) + '</a>';
+      html += '<div style="font-size:11px;color:var(--text3);margin-bottom:8px;">A completer :</div>';
+      html += '<div style="display:flex;flex-wrap:wrap;gap:8px;">';
+      missing.forEach(m => {
+        html += '<button onclick="scrollToPropField(\'' + m.target + '\')" style="display:inline-flex;align-items:center;gap:6px;padding:7px 12px;background:rgba(108,99,255,0.12);color:var(--accent2);border:1px solid rgba(108,99,255,0.35);border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;transition:all 0.15s;" onmouseover="this.style.background=\'rgba(108,99,255,0.22)\'" onmouseout="this.style.background=\'rgba(108,99,255,0.12)\'">' + m.icon + ' ' + esc(m.label) + '</button>';
       });
       html += '</div></div>';
     }
