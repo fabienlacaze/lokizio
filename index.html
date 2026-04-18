@@ -8632,6 +8632,10 @@ function closeProfileModal() {
   document.getElementById('profileModal').style.display = 'none';
 }
 
+// Toggle helpers for "save only if changed"
+function showSaveBtn(id) { const b = document.getElementById(id); if (b) b.style.display = ''; }
+function hideSaveBtn(id) { const b = document.getElementById(id); if (b) b.style.display = 'none'; }
+
 // Stacked popup overlays (stay on top of account modal, don't close it)
 function _stackedOverlayClickHandler(e) {
   // Click on backdrop (not on the box itself) closes the overlay
