@@ -1122,7 +1122,7 @@ async function loadPDF() {
 </script>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v7.67</div>
+<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v7.68</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -1132,7 +1132,7 @@ async function loadPDF() {
     <!-- Broom that sweeps -->
     <div id="splashBroom" style="position:absolute;top:50%;left:-60px;font-size:48px;transform:translateY(-50%) rotate(-30deg);opacity:0;transition:all 0.8s cubic-bezier(0.25,0.46,0.45,0.94);">✨</div>
   </div>
-  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v7.67</span></div>
+  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v7.68</span></div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie pour locations</div>
   <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou</div>
   <!-- Loading bar -->
@@ -2403,6 +2403,7 @@ function getStatusLabel(s) { return (STATUS_CONFIG[s] || {}).label || s || ''; }
 // ── Splash Changelog (update this with each significant version) ──
 // Full versioned changelog — add new entries at TOP
 const VERSION_CHANGELOG = [
+  { v: '7.68', changes: ['Section "Aujourd\'hui" rendue repliable dans les dashboards admin et proprio'] },
   { v: '7.67', changes: ['Mon profil personnel simplifie: infos editables + carte Securite compacte', 'Email/Mot de passe/Role en lignes avec bouton Modifier (plus de gros boutons en bas)'] },
   { v: '7.66', changes: ['Fix z-index: "Changer email" et "Changer role" s\'affichent au-dessus de la popup profil (plus en arriere-plan)'] },
   { v: '7.65', changes: ['Popups superposees: clic sur un profil ouvre une popup par-dessus Mon compte', 'Mon compte reste visible derriere, fermer la popup revient dessus'] },
@@ -5777,26 +5778,25 @@ async function showOwnerMode() {
   // Today's cleanings summary in overview
   const todayCleaningsOwner = allCleanings.filter(c => (c.cleaningDate || c.date) === today);
   if (todayCleaningsOwner.length > 0) {
-    html += `<div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:12px;">
-      <div style="font-weight:700;font-size:14px;margin-bottom:10px;">&#128197; Aujourd'hui — ${todayCleaningsOwner.length} prestation(s)</div>`;
+    html += `<details open style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:12px;">
+      <summary style="list-style:none;cursor:pointer;display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;"><div style="font-weight:700;font-size:14px;">&#128197; Aujourd'hui — ${todayCleaningsOwner.length} prestation(s)</div><span class="collapseArrow">&#9662;</span></summary>`;
     todayCleaningsOwner.forEach(c => {
       const key = c.propertyId + '_' + (c.cleaningDate || c.date) + '_' + (c.provider || '');
       const v = validations[key];
       const status = v ? v.status : 'pending';
       const statusIcons = { done: '&#9989;', departed: '&#128682;', in_progress: '&#129529;', arrived: '&#127968;', assigned: '&#128228;', accepted: '&#10003;&#10003;', seen: '&#128065;', sent: '&#9993;', refused: '&#10060;', pending: '&#9203;' };
-      // Use centralized STATUS_CONFIG via getStatusLabel/getStatusColor
       html += `<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px solid var(--border);font-size:13px;">
         <div style="flex:1;font-weight:600;">${esc(c.propertyName)}</div>
         <div style="color:var(--text2);">${esc(c.provider || '?')}</div>
         <span style="font-size:11px;color:${getStatusColor(status)};white-space:nowrap;">${statusIcons[status] || '&#9203;'} ${getStatusLabel(status)}</span>
       </div>`;
     });
-    html += '</div>';
+    html += '</details>';
   } else {
-    html += `<div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:12px;">
-      <div style="font-weight:700;font-size:14px;margin-bottom:6px;">&#128197; Aujourd'hui</div>
-      <div style="color:var(--text3);font-size:13px;">Aucune prestation prevue aujourd'hui</div>
-    </div>`;
+    html += `<details open style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:12px;">
+      <summary style="list-style:none;cursor:pointer;display:flex;justify-content:space-between;align-items:center;"><div style="font-weight:700;font-size:14px;">&#128197; Aujourd'hui</div><span class="collapseArrow">&#9662;</span></summary>
+      <div style="color:var(--text3);font-size:13px;margin-top:8px;">Aucune prestation prevue aujourd'hui</div>
+    </details>`;
   }
 
   // Upcoming prestations for owner
@@ -12145,8 +12145,8 @@ function renderDashboardContent() {
   // Today section
   const div1 = document.getElementById('dashTodayCleanings');
   if (div1) {
-    let html = '<div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:12px;">';
-    html += '<div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:10px;">&#128197; Aujourd\'hui — ' + todayItems.length + ' prestation(s)</div>';
+    let html = '<details open style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:12px;">';
+    html += '<summary style="list-style:none;cursor:pointer;display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;"><div style="font-size:14px;font-weight:700;color:var(--text);">&#128197; Aujourd\'hui — ' + todayItems.length + ' prestation(s)</div><span class="collapseArrow">&#9662;</span></summary>';
     if (todayItems.length === 0) {
       html += '<div style="color:var(--text3);font-size:13px;">Aucune prestation aujourd\'hui</div>';
     } else {
@@ -12159,7 +12159,7 @@ function renderDashboardContent() {
         html += '</div>';
       });
     }
-    html += '</div>';
+    html += '</details>';
     div1.innerHTML = html;
   }
 
