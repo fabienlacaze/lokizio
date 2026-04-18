@@ -1139,7 +1139,7 @@ async function loadPDF() {
 </script>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v7.99</div>
+<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v8.00</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -1149,7 +1149,7 @@ async function loadPDF() {
     <!-- Broom that sweeps -->
     <div id="splashBroom" style="position:absolute;top:50%;left:-60px;font-size:48px;transform:translateY(-50%) rotate(-30deg);opacity:0;transition:all 0.8s cubic-bezier(0.25,0.46,0.45,0.94);">✨</div>
   </div>
-  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v7.99</span></div>
+  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v8.00</span></div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie pour locations</div>
   <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou</div>
   <!-- Loading bar -->
@@ -2083,7 +2083,7 @@ async function loadPDF() {
   </div>
   <div class="modalBody" style="padding:16px;overflow-x:auto;">
     <div id="premiumReason" style="display:none;background:rgba(233,69,96,0.15);border:1px solid rgba(233,69,96,0.3);border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:13px;color:var(--accent);text-align:center;font-weight:600;"></div>
-    <div id="premiumStatusBanner" style="display:none;position:sticky;top:0;z-index:2;padding:12px 14px;margin-bottom:14px;border-radius:10px;font-size:13px;text-align:center;line-height:1.5;box-shadow:0 2px 8px rgba(0,0,0,0.3);"></div>
+    <div id="premiumStatusBanner" style="display:none;position:sticky;top:-1px;z-index:10;padding:12px 14px;margin-bottom:14px;border-radius:10px;font-size:13px;text-align:center;line-height:1.5;box-shadow:0 4px 16px rgba(0,0,0,0.6);backdrop-filter:blur(8px);"></div>
     <table id="pricingTable" style="width:100%;border-collapse:collapse;font-size:13px;" translate="no">
       <thead>
         <tr>
@@ -2437,6 +2437,7 @@ function getStatusLabel(s) { return (STATUS_CONFIG[s] || {}).label || s || ''; }
 // ── Splash Changelog (update this with each significant version) ──
 // Full versioned changelog — add new entries at TOP
 const VERSION_CHANGELOG = [
+  { v: '8.00', changes: ['Badge BUSINESS / PRO cliquable dans le header: ouvre la popup Premium pour gerer l\'abonnement', 'Bandeau sticky Premium: fond opaque (plus de texte qui passe a travers)'] },
   { v: '7.99', changes: ['Proprietaire: cartes prestations cliquables (popup detail)', 'Prestataire: section Aujourd\'hui repliable', 'Bandeau Premium sticky en haut de la popup'] },
   { v: '7.98', changes: ['Popup Premium: bandeau de statut clair en haut (abonnement actif / essai X jours / gratuit)', 'Boutons adaptes: Actuel (essai) / Gerer / Passer en Premium'] },
   { v: '7.97', changes: ['Changement role proprio->concierge: si deja abonne Premium, bypass du choix gratuit/premium', 'Affiche directement l\'ecran de confirmation (passage 3.99 -> 19.99 prorate)'] },
@@ -9129,9 +9130,9 @@ function updatePlanUI() {
     if (isPremium) {
       const badgeText = plan === 'business' ? 'BUSINESS' : 'PRO';
       const badgeColor = plan === 'business' ? 'background:#6c63ff;' : 'background:var(--accent);';
-      hCenter.innerHTML = '<span class="premiumBadge" style="' + badgeColor + '">' + badgeText + '</span>';
+      hCenter.innerHTML = '<span class="premiumBadge" style="' + badgeColor + 'cursor:pointer;" onclick="showPremiumModal()" title="Gerer mon abonnement">' + badgeText + '</span>';
     } else {
-      hCenter.innerHTML = '<span class="premiumBadge" style="background:var(--surface2);color:var(--text3);cursor:pointer;" onclick="showPremiumModal()">FREE</span>';
+      hCenter.innerHTML = '<span class="premiumBadge" style="background:var(--surface2);color:var(--text3);cursor:pointer;" onclick="showPremiumModal()" title="Decouvrir Premium">FREE</span>';
     }
   }
   // Trial banner
@@ -9205,20 +9206,20 @@ function showPremiumModal(reason) {
     if (statusBanner) {
       if (hasStripe) {
         statusBanner.style.display = 'block';
-        statusBanner.style.background = 'rgba(52,211,153,0.12)';
-        statusBanner.style.border = '1px solid rgba(52,211,153,0.4)';
+        statusBanner.style.background = 'linear-gradient(135deg,#0f3d2e,#0a2a22)';
+        statusBanner.style.border = '1px solid rgba(52,211,153,0.5)';
         statusBanner.style.color = '#34d399';
-        statusBanner.innerHTML = '<b>&#10003; Vous etes abonne Premium</b><br><span style="font-size:11px;opacity:0.8;">Cliquez "Gerer / Annuler" pour modifier votre abonnement.</span>';
+        statusBanner.innerHTML = '<b>&#10003; Vous etes abonne Premium</b><br><span style="font-size:11px;opacity:0.9;color:#a7e9cf;">Cliquez "Gerer / Annuler" pour modifier votre abonnement.</span>';
       } else if (isTrial) {
         statusBanner.style.display = 'block';
-        statusBanner.style.background = 'rgba(108,99,255,0.12)';
-        statusBanner.style.border = '1px solid rgba(108,99,255,0.4)';
-        statusBanner.style.color = '#a78bfa';
-        statusBanner.innerHTML = `<b>&#127881; Essai Premium gratuit — ${trialDays} jour${trialDays>1?'s':''} restant${trialDays>1?'s':''}</b><br><span style="font-size:11px;opacity:0.9;color:var(--text2);">Vous profitez de toutes les fonctionnalites. A la fin de l'essai, vous devrez activer un abonnement pour les conserver.</span>`;
+        statusBanner.style.background = 'linear-gradient(135deg,#2a1f4d,#1e1538)';
+        statusBanner.style.border = '1px solid rgba(108,99,255,0.5)';
+        statusBanner.style.color = '#c4b5fd';
+        statusBanner.innerHTML = `<b>&#127881; Essai Premium gratuit — ${trialDays} jour${trialDays>1?'s':''} restant${trialDays>1?'s':''}</b><br><span style="font-size:11px;opacity:0.9;color:#c4b5fd;">Vous profitez de toutes les fonctionnalites. A la fin de l'essai, vous devrez activer un abonnement pour les conserver.</span>`;
       } else {
         statusBanner.style.display = 'block';
-        statusBanner.style.background = 'rgba(52,211,153,0.12)';
-        statusBanner.style.border = '1px solid rgba(52,211,153,0.4)';
+        statusBanner.style.background = 'linear-gradient(135deg,#0f3d2e,#0a2a22)';
+        statusBanner.style.border = '1px solid rgba(52,211,153,0.5)';
         statusBanner.style.color = '#34d399';
         statusBanner.innerHTML = '<b>&#10003; Premium actif</b>';
       }
