@@ -1135,7 +1135,7 @@ async function loadPDF() {
 </script>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v7.90</div>
+<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v7.91</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -1145,7 +1145,7 @@ async function loadPDF() {
     <!-- Broom that sweeps -->
     <div id="splashBroom" style="position:absolute;top:50%;left:-60px;font-size:48px;transform:translateY(-50%) rotate(-30deg);opacity:0;transition:all 0.8s cubic-bezier(0.25,0.46,0.45,0.94);">✨</div>
   </div>
-  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v7.90</span></div>
+  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v7.91</span></div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie pour locations</div>
   <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou</div>
   <!-- Loading bar -->
@@ -1919,15 +1919,15 @@ async function loadPDF() {
       <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:16px;">
         <div>
           <label style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:4px;">Nom complet</label>
-          <input id="profileName" type="text" placeholder="Nom complet" onchange="saveProfile()" style="width:100%;padding:10px 12px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;box-sizing:border-box;">
+          <input id="profileName" type="text" placeholder="Nom complet" oninput="saveProfile()" onchange="saveProfile()" style="width:100%;padding:10px 12px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;box-sizing:border-box;">
         </div>
         <div>
           <label style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:4px;">Telephone</label>
-          <input id="profilePhone" type="tel" placeholder="06 12 34 56 78" onchange="saveProfile()" style="width:100%;padding:10px 12px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;box-sizing:border-box;">
+          <input id="profilePhone" type="tel" placeholder="06 12 34 56 78" oninput="saveProfile()" onchange="saveProfile()" style="width:100%;padding:10px 12px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;box-sizing:border-box;">
         </div>
         <div>
           <label style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:4px;">Adresse / Ville</label>
-          <input id="profileAddress" type="text" placeholder="Adresse / Ville" onchange="saveProfile()" style="width:100%;padding:10px 12px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;box-sizing:border-box;">
+          <input id="profileAddress" type="text" placeholder="Adresse / Ville" oninput="saveProfile()" onchange="saveProfile()" style="width:100%;padding:10px 12px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;box-sizing:border-box;">
         </div>
         <div style="font-size:10px;color:var(--text3);text-align:center;">&#10003; Sauvegarde automatique a chaque modification</div>
       </div>
@@ -1972,15 +1972,15 @@ async function loadPDF() {
     <div class="stackedOverlayBody">
       <div style="display:flex;flex-direction:column;gap:10px;">
         <label style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;">Raison sociale</label>
-        <input id="billingCompany" type="text" placeholder="Raison sociale / Nom commercial" onchange="saveBillingProfile()" style="padding:10px 12px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;">
+        <input id="billingCompany" type="text" placeholder="Raison sociale / Nom commercial" oninput="saveBillingProfile()" onchange="saveBillingProfile()" style="padding:10px 12px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;">
         <label style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;">SIRET</label>
-        <input id="billingSiret" type="text" inputmode="numeric" pattern="[0-9]{14}" placeholder="14 chiffres" maxlength="14" oninput="this.value=this.value.replace(/[^0-9]/g,'')" onchange="saveBillingProfile()" style="padding:10px 12px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;">
+        <input id="billingSiret" type="text" inputmode="numeric" pattern="[0-9]{14}" placeholder="14 chiffres" maxlength="14" oninput="this.value=this.value.replace(/[^0-9]/g,'')" oninput="saveBillingProfile()" onchange="saveBillingProfile()" style="padding:10px 12px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;">
         <label style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;">N° TVA intracommunautaire</label>
-        <input id="billingVat" type="text" placeholder="FR12345678901" onchange="saveBillingProfile()" style="padding:10px 12px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;">
+        <input id="billingVat" type="text" placeholder="FR12345678901" oninput="saveBillingProfile()" onchange="saveBillingProfile()" style="padding:10px 12px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;">
         <label style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;">Adresse de facturation</label>
-        <input id="billingAddress" type="text" placeholder="Adresse complete" onchange="saveBillingProfile()" style="padding:10px 12px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;">
+        <input id="billingAddress" type="text" placeholder="Adresse complete" oninput="saveBillingProfile()" onchange="saveBillingProfile()" style="padding:10px 12px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;">
         <label style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;">Regime TVA</label>
-        <select id="billingVatRegime" onchange="saveBillingProfile()" style="padding:10px 12px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;">
+        <select id="billingVatRegime" oninput="saveBillingProfile()" onchange="saveBillingProfile()" style="padding:10px 12px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;">
           <option value="micro">Micro-entreprise (TVA non applicable, art. 293B du CGI)</option>
           <option value="normal">Regime normal (TVA 20%)</option>
           <option value="reduced">TVA reduite (10%)</option>
@@ -2010,17 +2010,17 @@ async function loadPDF() {
         </label>
       </div>
       <div id="mkProfileFields" style="display:none;flex-direction:column;gap:10px;">
-        <input type="text" id="mkName" placeholder="Nom affiche" onchange="autoSaveMarketplaceField()" style="padding:10px 12px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;">
+        <input type="text" id="mkName" placeholder="Nom affiche" oninput="autoSaveMarketplaceField()" style="padding:10px 12px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;">
         <div style="display:flex;gap:8px;">
-          <input type="text" id="mkCity" placeholder="Ville" onchange="autoSaveMarketplaceField()" style="flex:1;padding:10px 12px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;">
-          <input type="tel" id="mkPhone" placeholder="Telephone" onchange="autoSaveMarketplaceField()" style="flex:1;padding:10px 12px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;">
+          <input type="text" id="mkCity" placeholder="Ville" oninput="autoSaveMarketplaceField()" style="flex:1;padding:10px 12px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;">
+          <input type="tel" id="mkPhone" placeholder="Telephone" oninput="autoSaveMarketplaceField()" style="flex:1;padding:10px 12px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;">
         </div>
-        <textarea id="mkDescription" placeholder="Description" rows="3" onchange="autoSaveMarketplaceField()" style="padding:10px 12px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;font-family:'Inter',sans-serif;resize:vertical;"></textarea>
+        <textarea id="mkDescription" placeholder="Description" rows="3" oninput="autoSaveMarketplaceField()" style="padding:10px 12px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;font-family:'Inter',sans-serif;resize:vertical;"></textarea>
         <div style="font-size:11px;color:var(--text3);text-transform:uppercase;">Services proposes</div>
         <div style="display:flex;flex-wrap:wrap;gap:6px;" id="mkServicesCheckboxes"></div>
         <div style="display:flex;gap:8px;">
-          <input type="number" id="mkExperienceYears" min="0" max="50" placeholder="Annees d'experience" onchange="autoSaveMarketplaceField()" style="flex:1;padding:10px 12px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;">
-          <select id="mkAvailability" onchange="autoSaveMarketplaceField()" style="flex:1;padding:10px 12px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;">
+          <input type="number" id="mkExperienceYears" min="0" max="50" placeholder="Annees d'experience" oninput="autoSaveMarketplaceField()" style="flex:1;padding:10px 12px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;">
+          <select id="mkAvailability" oninput="autoSaveMarketplaceField()" style="flex:1;padding:10px 12px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;">
             <option value="available">Disponible</option>
             <option value="full">Complet</option>
             <option value="vacation">En vacances</option>
@@ -2420,6 +2420,7 @@ function getStatusLabel(s) { return (STATUS_CONFIG[s] || {}).label || s || ''; }
 // ── Splash Changelog (update this with each significant version) ──
 // Full versioned changelog — add new entries at TOP
 const VERSION_CHANGELOG = [
+  { v: '7.91', changes: ['Auto-save profils: declenche aussi sur oninput (en temps reel debounce)', 'Flush des saves en attente a la fermeture de la popup (plus de perte de donnees)'] },
   { v: '7.90', changes: ['Auto-save profils: debounce 500ms, upsert atomique marketplace', 'Toast visible avec ✓ ou erreur claire', 'Ouverture Mon compte: refetch des donnees a jour depuis Supabase (plus de cache stale)', 'Messages erreur clairs (plus de silent fail)'] },
   { v: '7.89', changes: ['SECURITE: CSP ajoutee, XSS corriges (owner, factures, photos QC/dispute, planning)', 'safePhotoUrl: whitelist https + data:image', 'Validation SIRET/TVA/telephone', 'Edge Function create-portal: auth JWT obligatoire', 'safeErr: messages erreur DB masques en prod', 'Requete properties .or() remplacee par 2 requetes sures'] },
   { v: '7.88', changes: ['Bouton "Mettre a jour" mot de passe desactive tant que criteres non remplis', 'Fix popup "Changer de role" qui s\'ouvrait derriere la popup profil'] },
@@ -8742,9 +8743,12 @@ async function openOverlayPopup(id) {
 }
 
 function closeOverlayPopup(id) {
+  // Force flush pending auto-saves before closing
+  if (id === 'personalProfileOverlay' && _saveProfileTimer) { clearTimeout(_saveProfileTimer); _doSaveProfile(); }
+  if (id === 'billingProfileOverlay' && _saveBillingTimer) { clearTimeout(_saveBillingTimer); _doSaveBilling(); }
+  if (id === 'marketplaceProfileOverlay' && _autoSaveMkTimer) { clearTimeout(_autoSaveMkTimer); _doSaveMarketplace(); }
   const el = document.getElementById(id);
   if (el) el.classList.remove('visible');
-  // Remove body class only if no other stackedOverlay is still visible
   const anyVisible = document.querySelectorAll('.stackedOverlay.visible').length;
   if (!anyVisible) document.body.classList.remove('hasStackedOverlay');
 }
@@ -13923,7 +13927,7 @@ function renderMkServiceCheckboxes(checkedServices) {
   SERVICE_CATALOG.forEach(cat => {
     cat.services.forEach(s => {
       const isChecked = checked.includes(s.id) ? 'checked' : '';
-      html += `<label style="display:flex;align-items:center;gap:4px;padding:6px 10px;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;font-size:12px;color:var(--text);cursor:pointer;"><input type="checkbox" value="${s.id}" class="mkServiceCb" onchange="autoSaveMarketplaceField()" style="accent-color:#6c63ff;" ${isChecked}> ${s.icon} ${s.label}</label>`;
+      html += `<label style="display:flex;align-items:center;gap:4px;padding:6px 10px;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;font-size:12px;color:var(--text);cursor:pointer;"><input type="checkbox" value="${s.id}" class="mkServiceCb" oninput="autoSaveMarketplaceField()" style="accent-color:#6c63ff;" ${isChecked}> ${s.icon} ${s.label}</label>`;
     });
   });
   container.innerHTML = html;
