@@ -1140,7 +1140,7 @@ async function loadPDF() {
 </script>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v8.40</div>
+<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v8.41</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -1150,7 +1150,7 @@ async function loadPDF() {
     <!-- Broom that sweeps -->
     <div id="splashBroom" style="position:absolute;top:50%;left:-60px;font-size:48px;transform:translateY(-50%) rotate(-30deg);opacity:0;transition:all 0.8s cubic-bezier(0.25,0.46,0.45,0.94);">✨</div>
   </div>
-  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v8.40</span></div>
+  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v8.41</span></div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie pour locations</div>
   <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou</div>
   <!-- Loading bar -->
@@ -2488,6 +2488,7 @@ function getStatusLabel(s) { return (STATUS_CONFIG[s] || {}).label || s || ''; }
 // ── Splash Changelog (update this with each significant version) ──
 // Full versioned changelog — add new entries at TOP
 const VERSION_CHANGELOG = [
+  { v: '8.41', changes: ['Filtres Acteur: recalcules dynamiquement selon categorie + statut (avec compteurs, ceux a 0 caches)', 'Fix: noms avec apostrophes filtrent correctement (JSON-encoded onclick)'] },
   { v: '8.40', changes: ['Prestations: filtre Acteur (prestataire / bien) ajoute', 'Stats: clic sur une ligne du tableau ou sur la legende/part du donut -> filtre la liste sur ce prestataire'] },
   { v: '8.39', changes: ['Stats: scope par bien selectionne ("Tous" agrege tous les biens, sinon filtre sur le bien)', 'Stats re-render automatique au changement de bien'] },
   { v: '8.38', changes: ['Prestations: bouton "Masquer passees" active par defaut (les prestations passees sont cachees au chargement)'] },
@@ -15740,19 +15741,25 @@ async function loadAdminPrestations(forceReload) {
     });
     fHtml += '</div>';
     // Line 3: Actor filter (provider + owner via property)
-    if (providersList.length || ownersList.length) {
-      fHtml += '<div style="display:flex;gap:6px;overflow-x:auto;padding-bottom:6px;margin-bottom:4px;-webkit-overflow-scrolling:touch;align-items:center;">';
-      const actAll = (_adminPrestFilterActor && _adminPrestFilterActor.type === 'all') || !_adminPrestFilterActor ? ' active' : '';
-      fHtml += '<button class="prestFilter' + actAll + '" onclick="filterAdminPrestActor(\'all\',\'\')" title="Tous les acteurs">&#128101; Tous</button>';
-      providersList.forEach(name => {
-        const a = (_adminPrestFilterActor && _adminPrestFilterActor.type === 'provider' && _adminPrestFilterActor.value === name) ? ' active' : '';
-        fHtml += '<button class="prestFilter' + a + '" onclick="filterAdminPrestActor(\'provider\',\'' + esc(name).replace(/'/g,"\\'") + '\')" title="Prestataire" style="border-color:#34d39960;color:#34d399;">&#129529; ' + esc(name) + '</button>';
-      });
-      ownersList.forEach(name => {
-        const a = (_adminPrestFilterActor && _adminPrestFilterActor.type === 'owner' && _adminPrestFilterActor.value === name) ? ' active' : '';
-        fHtml += '<button class="prestFilter' + a + '" onclick="filterAdminPrestActor(\'owner\',\'' + esc(name).replace(/'/g,"\\'") + '\')" title="Bien / proprietaire" style="border-color:#f59e0b60;color:#f59e0b;">&#127968; ' + esc(name) + '</button>';
-      });
-      fHtml += '</div>';
+    // Apply category + status filters to determine which actors remain + their counts
+    const scopeForActor = unified.filter(u => {
+      if (_adminPrestFilterCat !== 'all') {
+        const co = SERVICE_CATALOG.find(c => c.services.some(s => s.id === u.type));
+        if ((co ? co.cat : 'autre') !== _adminPrestFilterCat) return false;
+      }
+      if (_adminPrestFilterStatus !== 'all' && u.status !== _adminPrestFilterStatus) return false;
+      return true;
+    });
+    const provCounts = {};
+    const ownerCounts = {};
+    scopeForActor.forEach(u => {
+      if (u.provider) provCounts[u.provider] = (provCounts[u.provider] || 0) + 1;
+      if (u.propertyName) ownerCounts[u.propertyName] = (ownerCounts[u.propertyName] || 0) + 1;
+    });
+    const visibleProviders = providersList.filter(n => provCounts[n]);
+    const visibleOwners = ownersList.filter(n => ownerCounts[n]);
+    if (visibleProviders.length || visibleOwners.length) {
+      fHtml += '<div id="adminPrestActorRow" style="display:flex;gap:6px;overflow-x:auto;padding-bottom:6px;margin-bottom:4px;-webkit-overflow-scrolling:touch;align-items:center;"></div>';
     }
     // Line 4: Hide past toggle (on by default)
     if (window._adminHidePast === undefined) window._adminHidePast = true;
@@ -15762,6 +15769,7 @@ async function loadAdminPrestations(forceReload) {
     fHtml += '</div>';
     filtersEl.innerHTML = fHtml;
     renderStatusFilterRow();
+    renderActorFilterRow();
   }
 
   // Update nav badge
@@ -15926,8 +15934,9 @@ let _adminPrestFilterStatus = 'all';
 let _adminPrestFilterActor = { type: 'all', value: '' };
 
 function filterAdminPrestActor(type, value) {
-  _adminPrestFilterActor = { type, value };
-  loadAdminPrestations(); // re-render filter buttons to update active state
+  _adminPrestFilterActor = { type, value: value || '' };
+  renderActorFilterRow();
+  applyAdminPrestFilters();
 }
 
 function goToProviderPrestations(providerName) {
@@ -15945,8 +15954,47 @@ function filterAdminPrest(cat, btn) {
   if (btn) btn.classList.add('active');
   // Status filter may no longer match after cat change — reset to "all"
   _adminPrestFilterStatus = 'all';
+  _adminPrestFilterActor = { type: 'all', value: '' };
   renderStatusFilterRow();
+  renderActorFilterRow();
   applyAdminPrestFilters();
+}
+
+function renderActorFilterRow() {
+  const row = document.getElementById('adminPrestActorRow');
+  if (!row) return;
+  const unified = window._adminUnified || [];
+  const scope = unified.filter(u => {
+    if (_adminPrestFilterCat !== 'all') {
+      const co = SERVICE_CATALOG.find(c => c.services.some(s => s.id === u.type));
+      if ((co ? co.cat : 'autre') !== _adminPrestFilterCat) return false;
+    }
+    if (_adminPrestFilterStatus !== 'all' && u.status !== _adminPrestFilterStatus) return false;
+    return true;
+  });
+  const provCounts = {};
+  const ownerCounts = {};
+  scope.forEach(u => {
+    if (u.provider) provCounts[u.provider] = (provCounts[u.provider] || 0) + 1;
+    if (u.propertyName) ownerCounts[u.propertyName] = (ownerCounts[u.propertyName] || 0) + 1;
+  });
+  const provs = Object.keys(provCounts).sort();
+  const owners = Object.keys(ownerCounts).sort();
+  const actor = _adminPrestFilterActor || { type: 'all', value: '' };
+  let h = '';
+  const actAll = (actor.type === 'all') ? ' active' : '';
+  h += '<button class="prestFilter' + actAll + '" onclick="filterAdminPrestActor(\'all\',\'\')">&#128101; Tous</button>';
+  provs.forEach(name => {
+    const a = (actor.type === 'provider' && actor.value === name) ? ' active' : '';
+    const safeName = JSON.stringify(name);
+    h += '<button class="prestFilter' + a + '" onclick=\'filterAdminPrestActor("provider",' + safeName + ')\' title="Prestataire" style="border-color:#34d39960;color:#34d399;">&#129529; ' + esc(name) + ' (' + provCounts[name] + ')</button>';
+  });
+  owners.forEach(name => {
+    const a = (actor.type === 'owner' && actor.value === name) ? ' active' : '';
+    const safeName = JSON.stringify(name);
+    h += '<button class="prestFilter' + a + '" onclick=\'filterAdminPrestActor("owner",' + safeName + ')\' title="Bien / proprietaire" style="border-color:#f59e0b60;color:#f59e0b;">&#127968; ' + esc(name) + ' (' + ownerCounts[name] + ')</button>';
+  });
+  row.innerHTML = h;
 }
 
 function renderStatusFilterRow() {
@@ -15987,8 +16035,10 @@ function renderStatusFilterRow() {
 
 function filterAdminPrestStatus(status, btn) {
   _adminPrestFilterStatus = status;
+  _adminPrestFilterActor = { type: 'all', value: '' };
   document.querySelectorAll('#adminPrestFilters .prestFilter[data-filter-type="status"]').forEach(b => b.classList.remove('active'));
   if (btn) btn.classList.add('active');
+  renderActorFilterRow();
   applyAdminPrestFilters();
 }
 
