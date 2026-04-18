@@ -1140,7 +1140,7 @@ async function loadPDF() {
 </script>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v8.45</div>
+<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v8.46</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -1150,7 +1150,7 @@ async function loadPDF() {
     <!-- Broom that sweeps -->
     <div id="splashBroom" style="position:absolute;top:50%;left:-60px;font-size:48px;transform:translateY(-50%) rotate(-30deg);opacity:0;transition:all 0.8s cubic-bezier(0.25,0.46,0.45,0.94);">✨</div>
   </div>
-  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v8.45</span></div>
+  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v8.46</span></div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie pour locations</div>
   <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou</div>
   <!-- Loading bar -->
@@ -2504,6 +2504,7 @@ function getStatusLabel(s) { return (STATUS_CONFIG[s] || {}).label || s || ''; }
 // ── Splash Changelog (update this with each significant version) ──
 // Full versioned changelog — add new entries at TOP
 const VERSION_CHANGELOG = [
+  { v: '8.46', changes: ['Popup creer facture: refonte complete (header colore, dropdown client, periode + echeance, tableau lignes avec totaux ligne, totaux HT/TVA/TTC, auto-remplissage)', 'Fix: insert facture resilient aux colonnes manquantes (client_address, total_ht, etc.) - le bouton Brouillon/Envoyer fonctionne maintenant meme sur anciens schemas'] },
   { v: '8.45', changes: ['Finance: segments "Consulter / Creer" pour admin, owner, prestataire (meme logique que l\'annuaire)', 'Popup Modifier ma reponse: avertissement sur les penalites si refus apres acceptation (politique CANCEL_POLICY)', 'Wording "menage" remplace par "prestation" dans les popups'] },
   { v: '8.44', changes: ['Prestations a venir (proprietaire + prestataire): meme mise en page que la liste admin (bloc date, icone service, groupement par mois + totaux, badge statut)'] },
   { v: '8.43', changes: ['Factures proprietaire: refonte (KPIs A payer / Paye / En retard / Nb, recherche, chips periode + statut, groupement mensuel, cartes detaillees avec echeance)', 'Factures prestataire: meme refonte adaptee (En attente / Encaisse / En retard / Nb factures)', 'Deux: prestations a venir dans un volet repliable separe'] },
@@ -7445,61 +7446,135 @@ async function _doSaveBilling() {
 }
 
 /* ── Invoicing ── */
-function showCreateInvoiceModal(type) {
+async function showCreateInvoiceModal(type) {
   const member = API.getMember();
+  const org = API.getOrg();
   const prop = API.getActiveProperty(fullConfig);
-  const providers = (prop && prop.providers) || [];
+  window._invoiceType = type;
+  window._invoiceItems = [];
 
-  let html = '<div style="padding:10px;">';
-  html += '<div style="font-size:16px;font-weight:700;color:#f59e0b;margin-bottom:12px;text-align:center;">Creer une facture</div>';
+  // Build client list based on type
+  const clients = [];
+  try {
+    if (type === 'concierge_to_owner') {
+      // Owners: from properties (owner_name / owner_email) + members with role owner
+      const { data: props } = await sb.from('properties').select('id,name,owner_name,owner_email,owner_member_id').eq('org_id', org?.id || '');
+      (props || []).forEach(p => {
+        if (p.owner_name || p.owner_email) {
+          clients.push({ id: p.id, label: (p.owner_name || p.owner_email) + (p.name ? ' (' + p.name + ')' : ''), name: p.owner_name || p.owner_email, email: p.owner_email, propertyId: p.id, propertyName: p.name });
+        }
+      });
+      const { data: owners } = await sb.from('members').select('id,user_id,display_name,invited_email').eq('org_id', org?.id || '').eq('role', 'owner');
+      (owners || []).forEach(o => {
+        const label = (o.display_name || o.invited_email);
+        if (label && !clients.some(c => c.name === label)) clients.push({ id: o.user_id, label, name: label, email: o.invited_email });
+      });
+    } else if (type === 'provider_to_concierge' || type === 'owner_to_concierge') {
+      // Client = the concierge (org owner)
+      const { data: admins } = await sb.from('members').select('id,user_id,display_name,invited_email,company_name').eq('org_id', org?.id || '').in('role', ['admin','manager']);
+      (admins || []).forEach(a => {
+        const label = (a.company_name || a.display_name || a.invited_email);
+        if (label) clients.push({ id: a.user_id, label, name: label, email: a.invited_email });
+      });
+    }
+  } catch(e) { console.error('load clients:', e); }
 
-  const typeLabel = type === 'concierge_to_owner' ? 'Facture pour le proprietaire' : 'Facture pour la conciergerie';
-  html += '<div style="font-size:12px;color:var(--text3);text-align:center;margin-bottom:14px;">' + typeLabel + '</div>';
+  const typeLabel = type === 'concierge_to_owner' ? 'Pour le proprietaire' : (type === 'owner_to_concierge' ? 'Pour la conciergerie' : 'Pour la conciergerie');
+  const typeColor = type === 'concierge_to_owner' ? '#e94560' : (type === 'owner_to_concierge' ? '#f59e0b' : '#34d399');
+  const typeIcon = type === 'concierge_to_owner' ? '&#127968;' : (type === 'owner_to_concierge' ? '&#127968;' : '&#129529;');
 
-  html += '<label style="font-size:11px;color:var(--text3);text-transform:uppercase;">Client</label>';
-  if (type === 'concierge_to_owner') {
-    const ownerName = prop?.owner_name || prop?.owner_email || '';
-    html += '<input id="invClient" type="text" value="' + esc(ownerName) + '" placeholder="Nom du proprietaire" style="width:100%;padding:10px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:13px;margin-bottom:10px;box-sizing:border-box;">';
-  } else {
-    html += '<input id="invClient" type="text" value="' + (member?.company_name || member?.display_name || '') + '" readonly style="width:100%;padding:10px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:13px;margin-bottom:10px;box-sizing:border-box;opacity:0.7;">';
-  }
-
-  html += '<div style="display:flex;gap:8px;margin-bottom:10px;">';
-  html += '<div style="flex:1;"><label style="font-size:11px;color:var(--text3);text-transform:uppercase;">Periode du</label>';
-  html += '<input id="invPeriodStart" type="date" style="width:100%;padding:8px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:12px;box-sizing:border-box;"></div>';
-  html += '<div style="flex:1;"><label style="font-size:11px;color:var(--text3);text-transform:uppercase;">au</label>';
-  html += '<input id="invPeriodEnd" type="date" style="width:100%;padding:8px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:12px;box-sizing:border-box;"></div>';
+  let html = '<div style="padding:4px;max-height:78vh;overflow-y:auto;">';
+  // Header banner
+  html += '<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:linear-gradient(135deg,' + typeColor + '22,' + typeColor + '11);border:1px solid ' + typeColor + '40;border-radius:10px;margin-bottom:14px;">';
+  html += '<span style="font-size:24px;">' + typeIcon + '</span>';
+  html += '<div style="flex:1;"><div style="font-size:14px;font-weight:700;color:' + typeColor + ';">Creer une facture</div>';
+  html += '<div style="font-size:11px;color:var(--text3);">' + typeLabel + ' · Numero genere automatiquement</div></div>';
   html += '</div>';
 
-  html += '<button class="btn btnSmall btnOutline" style="width:100%;padding:8px;font-size:12px;margin-bottom:10px;" onclick="autoFillInvoiceItems(\'' + type + '\')">&#9889; Auto-remplir depuis le planning</button>';
+  // Client selector
+  html += '<div style="margin-bottom:12px;"><label style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:4px;">Client</label>';
+  if (clients.length > 0) {
+    html += '<select id="invClientSelect" onchange="onInvoiceClientChange()" style="width:100%;padding:10px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:13px;box-sizing:border-box;">';
+    html += '<option value="">-- Choisir un client --</option>';
+    clients.forEach((c, i) => {
+      html += '<option value="' + i + '">' + esc(c.label) + '</option>';
+    });
+    html += '<option value="__custom__">+ Autre (saisie libre)</option>';
+    html += '</select>';
+    html += '<div id="invClientCustomWrap" style="display:none;margin-top:6px;"><input id="invClient" type="text" placeholder="Nom du client" style="width:100%;padding:10px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:13px;box-sizing:border-box;"></div>';
+  } else {
+    html += '<input id="invClient" type="text" placeholder="Nom du client" style="width:100%;padding:10px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:13px;box-sizing:border-box;">';
+  }
+  window._invoiceClients = clients;
+  html += '</div>';
 
-  html += '<label style="font-size:11px;color:var(--text3);text-transform:uppercase;">Lignes de facture</label>';
-  html += '<div id="invItems" style="margin-bottom:10px;"></div>';
-  html += '<button class="btn btnSmall btnOutline" style="font-size:11px;padding:4px 10px;margin-bottom:10px;" onclick="addInvoiceItem()">+ Ajouter une ligne</button>';
+  // Period + due date
+  html += '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px;">';
+  html += '<div><label style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:4px;">Periode du</label>';
+  html += '<input id="invPeriodStart" type="date" style="width:100%;padding:8px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:12px;box-sizing:border-box;"></div>';
+  html += '<div><label style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:4px;">Au</label>';
+  html += '<input id="invPeriodEnd" type="date" style="width:100%;padding:8px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:12px;box-sizing:border-box;"></div>';
+  html += '<div><label style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:4px;">Echeance</label>';
+  html += '<input id="invDueDate" type="date" style="width:100%;padding:8px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:12px;box-sizing:border-box;"></div>';
+  html += '</div>';
 
-  html += '<label style="font-size:11px;color:var(--text3);text-transform:uppercase;">Notes (optionnel)</label>';
-  html += '<textarea id="invNotes" rows="2" placeholder="Conditions particulieres..." style="width:100%;padding:8px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:12px;margin-bottom:10px;resize:vertical;box-sizing:border-box;font-family:inherit;"></textarea>';
+  // Auto-fill
+  html += '<button class="btn btnSmall btnOutline" style="width:100%;padding:9px;font-size:12px;margin-bottom:12px;" onclick="autoFillInvoiceItems(\'' + type + '\')">&#9889; Auto-remplir depuis les prestations de la periode</button>';
 
-  html += '<div id="invTotals" style="background:var(--surface2);border-radius:8px;padding:10px;margin-bottom:14px;"></div>';
+  // Items table
+  html += '<div style="margin-bottom:10px;"><label style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:4px;">Lignes de facture</label>';
+  html += '<div style="background:var(--surface2);border-radius:10px;padding:10px;border:1px solid var(--border);">';
+  html += '<div style="display:grid;grid-template-columns:1fr 60px 80px 70px 26px;gap:6px;padding:0 2px 6px;border-bottom:1px solid var(--border);font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;">';
+  html += '<div>Description</div><div style="text-align:center;">Qte</div><div style="text-align:right;">PU HT</div><div style="text-align:right;">Total</div><div></div>';
+  html += '</div>';
+  html += '<div id="invItems" style="padding-top:6px;"></div>';
+  html += '<button class="btn btnSmall btnOutline" style="font-size:11px;padding:5px 10px;margin-top:6px;" onclick="addInvoiceItem()">+ Ajouter une ligne</button>';
+  html += '</div></div>';
 
+  // Notes
+  html += '<div style="margin-bottom:12px;"><label style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:4px;">Notes (optionnel)</label>';
+  html += '<textarea id="invNotes" rows="2" placeholder="Conditions particulieres, modalites de paiement..." style="width:100%;padding:8px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:12px;resize:vertical;box-sizing:border-box;font-family:inherit;"></textarea></div>';
+
+  // Totals (sticky bottom-ish)
+  html += '<div id="invTotals" style="background:linear-gradient(135deg,rgba(108,99,255,0.1),rgba(108,99,255,0.05));border:1px solid rgba(108,99,255,0.3);border-radius:10px;padding:12px;margin-bottom:14px;"></div>';
+
+  // Actions
   html += '<div style="display:flex;gap:8px;">';
   html += '<button class="btn btnOutline" style="flex:1;padding:12px;" onclick="closeMsg()">Annuler</button>';
-  html += '<button class="btn btnSmall" style="flex:1;padding:12px;background:var(--surface2);color:var(--text);" onclick="saveInvoice(\'draft\',\'' + type + '\')">Brouillon</button>';
-  html += '<button class="btn btnPrimary" style="flex:1;padding:12px;" onclick="saveInvoice(\'sent\',\'' + type + '\')">Envoyer</button>';
+  html += '<button class="btn btnSmall" style="flex:1;padding:12px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);" onclick="saveInvoice(\'draft\',\'' + type + '\')">Brouillon</button>';
+  html += '<button class="btn" style="flex:1;padding:12px;background:linear-gradient(135deg,' + typeColor + ',' + typeColor + 'cc);color:#fff;border:none;font-weight:700;" onclick="saveInvoice(\'sent\',\'' + type + '\')">&#128228; Envoyer</button>';
   html += '</div></div>';
 
   showMsg(html, true);
+  const titleEl = document.getElementById('msgTitle');
+  if (titleEl) titleEl.textContent = 'Nouvelle facture';
 
+  // Defaults
   const now = new Date();
   const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
   const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
   document.getElementById('invPeriodStart').value = firstDay.toISOString().split('T')[0];
   document.getElementById('invPeriodEnd').value = lastDay.toISOString().split('T')[0];
+  document.getElementById('invDueDate').value = new Date(Date.now() + 30 * 86400000).toISOString().split('T')[0];
 
-  window._invoiceType = type;
-  window._invoiceItems = [];
-  // Auto-fill from planning immediately
+  // Pre-select first client + auto-fill
+  if (clients.length === 1) {
+    const sel = document.getElementById('invClientSelect');
+    if (sel) { sel.value = '0'; onInvoiceClientChange(); }
+  }
   autoFillInvoiceItems(type);
+  updateInvoiceTotals();
+}
+
+function onInvoiceClientChange() {
+  const sel = document.getElementById('invClientSelect');
+  if (!sel) return;
+  const custom = document.getElementById('invClientCustomWrap');
+  if (sel.value === '__custom__') {
+    if (custom) custom.style.display = '';
+  } else if (custom) {
+    custom.style.display = 'none';
+  }
 }
 
 function addInvoiceItem() {
@@ -7513,14 +7588,19 @@ function renderInvoiceItems() {
   const div = document.getElementById('invItems');
   if (!div) return;
   const items = window._invoiceItems || [];
+  if (!items.length) {
+    div.innerHTML = '<div style="text-align:center;color:var(--text3);font-size:11px;padding:14px 0;">Aucune ligne. Ajoutez-en une ou auto-remplissez.</div>';
+    return;
+  }
   let html = '';
   items.forEach((item, i) => {
-    html += '<div style="display:flex;gap:6px;margin-bottom:6px;align-items:center;">';
-    html += '<input type="text" value="' + (item.description || '') + '" placeholder="Description" onchange="window._invoiceItems[' + i + '].description=this.value" style="flex:2;padding:8px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:6px;font-size:12px;">';
-    html += '<input type="number" value="' + (item.quantity || 1) + '" min="1" placeholder="Qte" onchange="window._invoiceItems[' + i + '].quantity=parseFloat(this.value)||1;updateInvoiceTotals()" style="flex:0.4;padding:8px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:6px;font-size:12px;text-align:center;">';
-    html += '<input type="number" value="' + (item.unit_price || 0) + '" min="0" step="0.01" placeholder="Prix" onchange="window._invoiceItems[' + i + '].unit_price=parseFloat(this.value)||0;updateInvoiceTotals()" style="flex:0.5;padding:8px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:6px;font-size:12px;text-align:right;">';
-    html += '<span style="font-size:12px;color:var(--text3);min-width:50px;text-align:right;">' + ((item.quantity || 1) * (item.unit_price || 0)).toFixed(2) + '\u20ac</span>';
-    if (items.length > 1) html += '<button onclick="window._invoiceItems.splice(' + i + ',1);renderInvoiceItems();updateInvoiceTotals()" style="background:none;border:none;color:var(--accent);cursor:pointer;font-size:14px;">\u2715</button>';
+    const lineTotal = (parseFloat(item.quantity) || 0) * (parseFloat(item.unit_price) || 0);
+    html += '<div style="display:grid;grid-template-columns:1fr 60px 80px 70px 26px;gap:6px;margin-bottom:5px;align-items:center;">';
+    html += '<input type="text" value="' + esc(item.description || '') + '" placeholder="Description" onchange="window._invoiceItems[' + i + '].description=this.value" style="padding:7px 9px;background:var(--surface);color:var(--text);border:1px solid var(--border2);border-radius:6px;font-size:12px;min-width:0;">';
+    html += '<input type="number" value="' + (item.quantity || 1) + '" min="0.5" step="0.5" onchange="window._invoiceItems[' + i + '].quantity=parseFloat(this.value)||1;updateInvoiceTotals();renderInvoiceItems()" style="padding:7px 6px;background:var(--surface);color:var(--text);border:1px solid var(--border2);border-radius:6px;font-size:12px;text-align:center;min-width:0;">';
+    html += '<input type="number" value="' + (item.unit_price || 0) + '" min="0" step="0.01" onchange="window._invoiceItems[' + i + '].unit_price=parseFloat(this.value)||0;updateInvoiceTotals();renderInvoiceItems()" style="padding:7px 6px;background:var(--surface);color:var(--text);border:1px solid var(--border2);border-radius:6px;font-size:12px;text-align:right;min-width:0;">';
+    html += '<div style="font-size:12px;font-weight:700;color:var(--text);text-align:right;">' + lineTotal.toFixed(2) + '€</div>';
+    html += '<button onclick="window._invoiceItems.splice(' + i + ',1);renderInvoiceItems();updateInvoiceTotals()" title="Supprimer" style="background:none;border:none;color:#ef4444;cursor:pointer;font-size:14px;padding:2px;">&#128465;</button>';
     html += '</div>';
   });
   div.innerHTML = html;
@@ -7628,10 +7708,24 @@ async function saveInvoice(status, type) {
   if (!org) return;
 
   const items = window._invoiceItems || [];
-  const validItems = items.filter(i => i.description && i.unit_price > 0);
-  if (!validItems.length) return showToast('Ajoutez au moins une ligne');
+  const validItems = items.filter(i => i.description && (parseFloat(i.unit_price) || 0) > 0);
+  if (!validItems.length) return showToast('Ajoutez au moins une ligne avec description et prix');
 
-  const subtotal = validItems.reduce((s, i) => s + (i.quantity || 1) * (i.unit_price || 0), 0);
+  // Resolve client from select or custom input
+  const sel = document.getElementById('invClientSelect');
+  const clients = window._invoiceClients || [];
+  let clientName = '', clientEmail = '', propertyName = prop?.name || '';
+  if (sel && sel.value && sel.value !== '__custom__' && clients[parseInt(sel.value)]) {
+    const c = clients[parseInt(sel.value)];
+    clientName = c.name || c.label || '';
+    clientEmail = c.email || '';
+    if (c.propertyName) propertyName = c.propertyName;
+  } else {
+    clientName = document.getElementById('invClient')?.value?.trim() || '';
+  }
+  if (!clientName) return showToast('Selectionnez un client');
+
+  const subtotal = validItems.reduce((s, i) => s + (parseFloat(i.quantity) || 1) * (parseFloat(i.unit_price) || 0), 0);
   const regime = member?.vat_regime || 'micro';
   const vatRate = regime === 'normal' ? 20 : regime === 'reduced' ? 10 : 0;
   const vatAmount = subtotal * vatRate / 100;
@@ -7652,22 +7746,40 @@ async function saveInvoice(status, type) {
     issuer_address: member?.billing_address || member?.address || '',
     issuer_vat_number: member?.vat_number || '',
     issuer_email: member?.invited_email || '',
-    client_name: document.getElementById('invClient')?.value?.trim() || '',
+    client_name: clientName,
+    client_email: clientEmail,
     client_address: '',
-    property_name: prop?.name || '',
+    property_name: propertyName,
     items: validItems,
     subtotal_ht: subtotal,
+    total_ht: subtotal,
     vat_rate: vatRate,
     vat_amount: vatAmount,
+    total_tva: vatAmount,
     total_ttc: total,
     payment_terms: 'A reception',
     period_start: document.getElementById('invPeriodStart')?.value || null,
     period_end: document.getElementById('invPeriodEnd')?.value || null,
     notes: document.getElementById('invNotes')?.value?.trim() || '',
-    due_date: new Date(Date.now() + 30 * 86400000).toISOString().split('T')[0]
+    due_date: document.getElementById('invDueDate')?.value || new Date(Date.now() + 30 * 86400000).toISOString().split('T')[0]
   };
 
-  const { error } = await sb.from('invoices').insert(invoice);
+  // Try insert — retry by dropping unknown columns if schema doesn't have them
+  const OPTIONAL_COLS = ['client_email','client_address','total_ht','total_tva','subtotal_ht','vat_rate','vat_amount','issuer_vat_number','issuer_email','issuer_siret','issuer_address','property_name','payment_terms','period_start','period_end','notes','due_date'];
+  let payload = { ...invoice };
+  let error = null;
+  for (let attempt = 0; attempt < 8; attempt++) {
+    const res = await sb.from('invoices').insert(payload);
+    error = res.error;
+    if (!error) break;
+    // Schema mismatch: "Could not find the 'X' column of 'invoices'"
+    const m = (error.message || '').match(/find the '([^']+)' column/i);
+    if (m && OPTIONAL_COLS.includes(m[1]) && (m[1] in payload)) {
+      delete payload[m[1]];
+      continue;
+    }
+    break;
+  }
   if (error) { console.error('Invoice error:', error); return showToast('Erreur: ' + safeErr(error, 'Creation impossible')); }
 
   closeMsg();
