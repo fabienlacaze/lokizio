@@ -1139,7 +1139,7 @@ async function loadPDF() {
 </script>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v8.05</div>
+<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v8.06</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -1149,7 +1149,7 @@ async function loadPDF() {
     <!-- Broom that sweeps -->
     <div id="splashBroom" style="position:absolute;top:50%;left:-60px;font-size:48px;transform:translateY(-50%) rotate(-30deg);opacity:0;transition:all 0.8s cubic-bezier(0.25,0.46,0.45,0.94);">✨</div>
   </div>
-  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v8.05</span></div>
+  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v8.06</span></div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie pour locations</div>
   <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou</div>
   <!-- Loading bar -->
@@ -2451,6 +2451,7 @@ function getStatusLabel(s) { return (STATUS_CONFIG[s] || {}).label || s || ''; }
 // ── Splash Changelog (update this with each significant version) ──
 // Full versioned changelog — add new entries at TOP
 const VERSION_CHANGELOG = [
+  { v: '8.06', changes: ['Annuaire: note globale (etoiles + /5), anciennete dans l\'annuaire, nombre de prestations visibles sur chaque profil', 'Message "Aucun contact pour l\'instant" avec bouton vers recherche'] },
   { v: '8.05', changes: ['Dropdown Disponibilite retire du profil annuaire (gere par Mes conges)', 'Lien vers Mes conges dans la popup annuaire', 'Annuaire affiche automatiquement "En vacances" si periode active'] },
   { v: '8.04', changes: ['Planning conges: jours passes desactives (grises)', 'Navigation mois precedent bloquee dans le passe', 'Exclusion de son propre profil dans l\'annuaire'] },
   { v: '8.02', changes: ['Planning de conges: bouton "Gerer mes conges" dans Mon profil personnel', 'Calendrier visuel: clic debut + clic fin pour ajouter une periode', 'Liste des periodes avec suppression', 'Stocke dans marketplace_profiles.vacation_periods (JSONB)'] },
@@ -13714,8 +13715,10 @@ async function renderAnnuaireTab() {
   if (teamContainer) {
     const org = API.getOrg();
     let tHtml = '';
+    let memberCount = 0;
     if (org) {
       const { data: members } = await sb.from('members').select('*').eq('org_id', org.id);
+      if (members) memberCount = members.length;
       if (members && members.length > 1) {
         tHtml += '<div style="margin-bottom:12px;">';
         tHtml += '<div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:8px;">&#128101; Mon equipe (' + members.length + ')</div>';
@@ -13729,6 +13732,15 @@ async function renderAnnuaireTab() {
         });
         tHtml += '</div></div>';
       }
+    }
+    // Empty state if no contacts
+    if (memberCount <= 1) {
+      tHtml += '<div style="text-align:center;padding:40px 20px;background:var(--surface2);border-radius:12px;border:1px dashed var(--border2);">';
+      tHtml += '<div style="font-size:48px;margin-bottom:12px;opacity:0.6;">&#128101;</div>';
+      tHtml += '<div style="font-size:15px;font-weight:700;color:var(--text);margin-bottom:6px;">Aucun contact pour l\'instant</div>';
+      tHtml += '<div style="font-size:12px;color:var(--text3);line-height:1.5;margin-bottom:14px;">Recherchez des prestataires, proprietaires ou conciergeries dans l\'onglet <b>Rechercher</b> pour les ajouter a votre reseau.</div>';
+      tHtml += '<button onclick="switchAnnuaireSubTab(\'search\')" style="padding:10px 20px;background:linear-gradient(135deg,#6c63ff,#5a54e0);color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;">&#128269; Rechercher des contacts</button>';
+      tHtml += '</div>';
     }
     teamContainer.innerHTML = tHtml;
   }
@@ -13899,8 +13911,25 @@ async function renderAnnuaireResults(profiles) {
     html += '</div>';
     // Info line
     html += '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:4px;">';
-    if (p.cleanings_done) html += '<span style="font-size:11px;color:var(--text2);">&#128700; ' + p.cleanings_done + ' menages</span>';
-    if (p.experience_years) html += '<span style="font-size:11px;color:var(--text2);">&#128188; ' + p.experience_years + ' ans</span>';
+    // Rating
+    const rating = parseFloat(p.rating) || 0;
+    if (rating > 0) {
+      const stars = '&#11088;'.repeat(Math.round(rating));
+      html += '<span style="font-size:11px;color:#f59e0b;">' + stars + ' ' + rating.toFixed(1) + '/5</span>';
+    }
+    // Prestations faites
+    const cleanings = parseInt(p.cleanings_done) || 0;
+    html += '<span style="font-size:11px;color:var(--text2);">&#128700; ' + cleanings + ' prestation' + (cleanings > 1 ? 's' : '') + '</span>';
+    // Anciennete dans l'annuaire
+    if (p.created_at) {
+      const daysSince = Math.floor((Date.now() - new Date(p.created_at).getTime()) / 86400000);
+      let memberSince;
+      if (daysSince < 30) memberSince = daysSince + ' jour' + (daysSince > 1 ? 's' : '');
+      else if (daysSince < 365) memberSince = Math.round(daysSince / 30) + ' mois';
+      else memberSince = Math.floor(daysSince / 365) + ' an' + (daysSince >= 730 ? 's' : '');
+      html += '<span style="font-size:11px;color:var(--text3);" title="Membre depuis ' + new Date(p.created_at).toLocaleDateString('fr-FR') + '">&#128197; ' + memberSince + '</span>';
+    }
+    if (p.experience_years) html += '<span style="font-size:11px;color:var(--text2);">&#128188; ' + p.experience_years + ' ans d\'exp.</span>';
     if (p.tarif) html += '<span style="font-size:11px;color:var(--text2);">&#128176; ' + _escHtml(p.tarif) + '</span>';
     if (availHtml) html += '<span style="font-size:11px;">' + availHtml + '</span>';
     html += '</div>';
