@@ -627,14 +627,16 @@ async function loadPDF() {
   /* Stacked popup overlay (shown on top of existing modal) */
   .stackedOverlay {
     display: none; position: fixed; inset: 0;
-    background: rgba(0,0,0,0.55);
+    background: rgba(0,0,0,0.45);
+    backdrop-filter: none;
     z-index: 5500;
     align-items: center; justify-content: center;
     padding: 20px;
   }
+  /* Dim the account modal's own overlay when a stacked popup is open */
+  body.hasStackedOverlay #overlay { backdrop-filter: none !important; background: rgba(0,0,0,0.25) !important; z-index: 4900 !important; }
   /* When a stacked overlay is open, msgModal should render above it */
   body.hasStackedOverlay #msgModal { z-index: 5800 !important; }
-  body.hasStackedOverlay #overlay { z-index: 5700 !important; }
   .stackedOverlay.visible { display: flex; }
   .stackedOverlayBox {
     background: var(--surface); border: 1px solid var(--border2);
@@ -1122,7 +1124,7 @@ async function loadPDF() {
 </script>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v7.70</div>
+<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v7.71</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -1132,7 +1134,7 @@ async function loadPDF() {
     <!-- Broom that sweeps -->
     <div id="splashBroom" style="position:absolute;top:50%;left:-60px;font-size:48px;transform:translateY(-50%) rotate(-30deg);opacity:0;transition:all 0.8s cubic-bezier(0.25,0.46,0.45,0.94);">✨</div>
   </div>
-  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v7.70</span></div>
+  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v7.71</span></div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie pour locations</div>
   <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou</div>
   <!-- Loading bar -->
@@ -2406,6 +2408,7 @@ function getStatusLabel(s) { return (STATUS_CONFIG[s] || {}).label || s || ''; }
 // ── Splash Changelog (update this with each significant version) ──
 // Full versioned changelog — add new entries at TOP
 const VERSION_CHANGELOG = [
+  { v: '7.71', changes: ['Fix popup overlay: suppression du double flou/assombrissement qui rendait la popup invisible', 'Backdrop-filter desactive sur stacked overlays'] },
   { v: '7.70', changes: ['Sections dashboard fermees par defaut au lancement de l\'appli', 'Raccourcis, Aujourd\'hui, Prochaines, Activite, Analytique: tous collapses'] },
   { v: '7.69', changes: ['Fix centrage des popups (animation overrait le translate(-50%,-50%))', 'Croix de fermeture ajoutee dans msgModal (popup Inviter, changelog, etc.)'] },
   { v: '7.68', changes: ['Section "Aujourd\'hui" rendue repliable dans les dashboards admin et proprio'] },
