@@ -10,6 +10,8 @@ const STRIPE_PRICE_BUSINESS = 'price_1TEwgr3uvj2cFz0kQ29jzCbR';  // 19.99€/moi
 const STRIPE_PRICE_ID = STRIPE_PRICE_PRO; // Default
 
 var sb;
+// Capture recovery flag BEFORE Supabase consumes the URL hash
+window.__isPasswordRecovery = !!(window.location.hash && window.location.hash.includes('type=recovery'));
 function initSupabase() {
   if (window.supabase && window.supabase.createClient) {
     // Use URL param ?session=X to isolate auth sessions per tab
@@ -17,6 +19,13 @@ function initSupabase() {
     const storageKey = sessionId === 'default' ? undefined : 'sb-' + sessionId + '-auth-token';
     const opts = storageKey ? { auth: { storageKey } } : {};
     sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, opts);
+    // Also listen for PASSWORD_RECOVERY event (fires when Supabase detects recovery token)
+    sb.auth.onAuthStateChange((event) => {
+      if (event === 'PASSWORD_RECOVERY') {
+        window.__isPasswordRecovery = true;
+        if (typeof showPasswordRecoveryForm === 'function') showPasswordRecoveryForm();
+      }
+    });
     return true;
   }
   return false;
