@@ -1060,7 +1060,7 @@ async function loadPDF() {
 </script>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v7.40</div>
+<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v7.41</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -1070,7 +1070,7 @@ async function loadPDF() {
     <!-- Broom that sweeps -->
     <div id="splashBroom" style="position:absolute;top:50%;left:-60px;font-size:48px;transform:translateY(-50%) rotate(-30deg);opacity:0;transition:all 0.8s cubic-bezier(0.25,0.46,0.45,0.94);">✨</div>
   </div>
-  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v7.40</span></div>
+  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v7.41</span></div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie pour locations</div>
   <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou</div>
   <!-- Loading bar -->
@@ -2280,6 +2280,7 @@ function getStatusLabel(s) { return (STATUS_CONFIG[s] || {}).label || s || ''; }
 // ── Splash Changelog (update this with each significant version) ──
 // Full versioned changelog — add new entries at TOP
 const VERSION_CHANGELOG = [
+  { v: '7.41', changes: ['Informations generales: photo a gauche, champs a droite', 'Responsive: stacke verticalement sur mobile'] },
   { v: '7.40', changes: ['Fix prix initial popup service: prend en compte les donnees du bien', 'Pas besoin de cliquer sur recalcul pour voir le vrai prix'] },
   { v: '7.39', changes: ['Popup service: donnees du bien (pieces/sdb/surface) affichees en lecture seule', 'Plus de duplication avec Informations generales'] },
   { v: '7.38', changes: ['Suppression section Instructions de menage (redondant avec Horaires & Acces)'] },
@@ -2838,17 +2839,20 @@ async function renderPropertyDetailsInline() {
     html += '</div></div>';
   }
 
-  // SECTION: Photo + General Info
+  // SECTION: Photo + General Info (photo left, fields right, stacks on mobile)
   html += `<div style="${sectionStyle}">`;
   html += `<div style="${sectionTitleStyle}">&#127968; Informations generales</div>`;
-  // Photo
-  html += `<div style="text-align:center;margin-bottom:16px;">
-    <div id="inlinePropPhotoPreview" style="width:100%;max-height:200px;border-radius:12px;overflow:hidden;background:var(--surface2);display:flex;align-items:center;justify-content:center;margin-bottom:8px;min-height:100px;cursor:pointer;" onclick="document.getElementById('inlinePropPhotoInput').click()">
-      <span id="inlinePropPhotoPlaceholder" style="color:var(--text3);font-size:13px;${prop.photo ? 'display:none;' : ''}">&#128247; Cliquez pour ajouter une photo</span>
-      <img id="inlinePropPhotoImg" src="${prop.photo ? esc(prop.photo) : ''}" style="width:100%;object-fit:cover;${prop.photo ? '' : 'display:none;'}">
+  html += `<div style="display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start;">`;
+  // Photo (left)
+  html += `<div style="flex:0 0 200px;min-width:180px;">
+    <div id="inlinePropPhotoPreview" style="width:100%;aspect-ratio:1/1;border-radius:12px;overflow:hidden;background:var(--surface2);display:flex;align-items:center;justify-content:center;cursor:pointer;" onclick="document.getElementById('inlinePropPhotoInput').click()">
+      <span id="inlinePropPhotoPlaceholder" style="color:var(--text3);font-size:12px;text-align:center;padding:8px;${prop.photo ? 'display:none;' : ''}">&#128247; Cliquez pour ajouter une photo</span>
+      <img id="inlinePropPhotoImg" src="${prop.photo ? esc(prop.photo) : ''}" style="width:100%;height:100%;object-fit:cover;${prop.photo ? '' : 'display:none;'}">
     </div>
     <input type="file" id="inlinePropPhotoInput" accept="image/*" style="display:none;" onchange="handleInlinePropPhoto(this)">
   </div>`;
+  // Fields (right)
+  html += `<div style="flex:1;min-width:240px;">`;
   // Name
   html += `<div style="margin-bottom:12px;"><label style="${labelStyle}">Nom</label>
     <input id="inlinePropName" type="text" value="${esc(prop.name || '')}" ${hasOwner ? 'readonly disabled' : ''} style="${inputStyle}${hasOwner ? 'opacity:0.6;' : ''}"></div>`;
@@ -2859,18 +2863,20 @@ async function renderPropertyDetailsInline() {
       <button class="btn btnSmall" onclick="selectPropFromDropdown('${prop.id}');setTimeout(openMapForProperty,100)" style="padding:8px 12px;font-size:12px;white-space:nowrap;">📍 Carte</button>
     </div></div>`;
   // Type + Rooms + Surface
-  html += `<div style="display:flex;gap:10px;margin-bottom:12px;flex-wrap:wrap;">`;
-  html += `<div style="flex:1;min-width:120px;"><label style="${labelStyle}">Type</label>
+  html += `<div style="display:flex;gap:10px;margin-bottom:0;flex-wrap:wrap;">`;
+  html += `<div style="flex:1;min-width:100px;"><label style="${labelStyle}">Type</label>
     <select id="inlinePropType" onchange="recalcEstimate()" ${hasOwner ? 'disabled' : ''} style="${inputStyle}${hasOwner ? 'opacity:0.6;' : ''}">`;
   typeOptions.forEach(o => { html += `<option value="${o.v}" ${prop.type === o.v ? 'selected' : ''}>${o.l}</option>`; });
   html += `</select></div>`;
   html += `<div style="flex:0.5;min-width:70px;"><label style="${labelStyle}">Pieces</label>
     <input id="inlinePropRooms" type="number" min="1" max="20" value="${prop.rooms || ''}" oninput="recalcEstimate()" ${hasOwner ? 'readonly disabled' : ''} style="${inputStyle}${hasOwner ? 'opacity:0.6;' : ''}"></div>`;
-  html += `<div style="flex:0.7;min-width:100px;"><label style="${labelStyle}">Salle de bain</label>
+  html += `<div style="flex:0.7;min-width:90px;"><label style="${labelStyle}">Salle de bain</label>
     <input id="inlinePropBathrooms" type="number" min="0" max="10" value="${prop.bathrooms || 1}" oninput="recalcEstimate()" ${hasOwner ? 'readonly disabled' : ''} style="${inputStyle}${hasOwner ? 'opacity:0.6;' : ''}"></div>`;
   html += `<div style="flex:0.5;min-width:70px;"><label style="${labelStyle}">m&sup2;</label>
     <input id="inlinePropSurface" type="number" min="1" max="1000" value="${prop.surface || ''}" oninput="recalcEstimate()" ${hasOwner ? 'readonly disabled' : ''} style="${inputStyle}${hasOwner ? 'opacity:0.6;' : ''}"></div>`;
   html += `</div>`;
+  html += `</div>`; // end right column
+  html += `</div>`; // end flex row
   html += `</div>`; // end general info section
 
   // SECTION: Tarification (total lecture seule + tarif proprio)
