@@ -1134,7 +1134,7 @@ async function loadPDF() {
 </script>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v7.85</div>
+<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v7.87</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -1144,7 +1144,7 @@ async function loadPDF() {
     <!-- Broom that sweeps -->
     <div id="splashBroom" style="position:absolute;top:50%;left:-60px;font-size:48px;transform:translateY(-50%) rotate(-30deg);opacity:0;transition:all 0.8s cubic-bezier(0.25,0.46,0.45,0.94);">✨</div>
   </div>
-  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v7.85</span></div>
+  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v7.87</span></div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie pour locations</div>
   <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou</div>
   <!-- Loading bar -->
@@ -1914,20 +1914,21 @@ async function loadPDF() {
       <button class="modalClose" onclick="closeOverlayPopup('personalProfileOverlay')">&times;</button>
     </div>
     <div class="stackedOverlayBody">
-      <!-- Infos editables -->
+      <!-- Infos editables (auto-save) -->
       <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:16px;">
         <div>
           <label style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:4px;">Nom complet</label>
-          <input id="profileName" type="text" placeholder="Nom complet" oninput="showSaveBtn('saveProfileBtn')" style="width:100%;padding:10px 12px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;box-sizing:border-box;">
+          <input id="profileName" type="text" placeholder="Nom complet" onchange="saveProfile()" style="width:100%;padding:10px 12px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;box-sizing:border-box;">
         </div>
         <div>
           <label style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:4px;">Telephone</label>
-          <input id="profilePhone" type="tel" placeholder="06 12 34 56 78" oninput="showSaveBtn('saveProfileBtn')" style="width:100%;padding:10px 12px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;box-sizing:border-box;">
+          <input id="profilePhone" type="tel" placeholder="06 12 34 56 78" onchange="saveProfile()" style="width:100%;padding:10px 12px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;box-sizing:border-box;">
         </div>
         <div>
           <label style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:4px;">Adresse / Ville</label>
-          <input id="profileAddress" type="text" placeholder="Adresse / Ville" oninput="showSaveBtn('saveProfileBtn')" style="width:100%;padding:10px 12px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;box-sizing:border-box;">
+          <input id="profileAddress" type="text" placeholder="Adresse / Ville" onchange="saveProfile()" style="width:100%;padding:10px 12px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;box-sizing:border-box;">
         </div>
+        <div style="font-size:10px;color:var(--text3);text-align:center;">&#10003; Sauvegarde automatique a chaque modification</div>
       </div>
 
       <!-- Securite (compact rows) -->
@@ -1957,8 +1958,6 @@ async function loadPDF() {
         </div>
       </div>
 
-      <!-- Save button at bottom, hidden until changed -->
-      <button id="saveProfileBtn" class="btn btnPrimary" style="padding:12px;font-size:13px;width:100%;display:none;" onclick="saveProfile();hideSaveBtn('saveProfileBtn')">Enregistrer les modifications</button>
     </div>
   </div>
 </div>
@@ -1972,20 +1971,20 @@ async function loadPDF() {
     <div class="stackedOverlayBody">
       <div style="display:flex;flex-direction:column;gap:10px;">
         <label style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;">Raison sociale</label>
-        <input id="billingCompany" type="text" placeholder="Raison sociale / Nom commercial" oninput="showSaveBtn('saveBillingBtn')" style="padding:10px 12px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;">
+        <input id="billingCompany" type="text" placeholder="Raison sociale / Nom commercial" onchange="saveBillingProfile()" style="padding:10px 12px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;">
         <label style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;">SIRET</label>
-        <input id="billingSiret" type="text" placeholder="14 chiffres" maxlength="14" oninput="showSaveBtn('saveBillingBtn')" style="padding:10px 12px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;">
+        <input id="billingSiret" type="text" placeholder="14 chiffres" maxlength="14" onchange="saveBillingProfile()" style="padding:10px 12px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;">
         <label style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;">N° TVA intracommunautaire</label>
-        <input id="billingVat" type="text" placeholder="FR12345678901" oninput="showSaveBtn('saveBillingBtn')" style="padding:10px 12px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;">
+        <input id="billingVat" type="text" placeholder="FR12345678901" onchange="saveBillingProfile()" style="padding:10px 12px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;">
         <label style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;">Adresse de facturation</label>
-        <input id="billingAddress" type="text" placeholder="Adresse complete" oninput="showSaveBtn('saveBillingBtn')" style="padding:10px 12px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;">
+        <input id="billingAddress" type="text" placeholder="Adresse complete" onchange="saveBillingProfile()" style="padding:10px 12px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;">
         <label style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;">Regime TVA</label>
-        <select id="billingVatRegime" onchange="showSaveBtn('saveBillingBtn')" style="padding:10px 12px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;">
+        <select id="billingVatRegime" onchange="saveBillingProfile()" style="padding:10px 12px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;">
           <option value="micro">Micro-entreprise (TVA non applicable, art. 293B du CGI)</option>
           <option value="normal">Regime normal (TVA 20%)</option>
           <option value="reduced">TVA reduite (10%)</option>
         </select>
-        <button id="saveBillingBtn" class="btn btnPrimary" style="padding:12px;font-size:13px;margin-top:8px;display:none;" onclick="saveBillingProfile();hideSaveBtn('saveBillingBtn')">Enregistrer les modifications</button>
+        <div style="font-size:10px;color:var(--text3);text-align:center;margin-top:4px;">&#10003; Sauvegarde automatique a chaque modification</div>
       </div>
     </div>
   </div>
@@ -2026,7 +2025,7 @@ async function loadPDF() {
             <option value="vacation">En vacances</option>
           </select>
         </div>
-        <div style="font-size:10px;color:var(--text3);text-align:center;margin-top:8px;">&#10003; Sauvegarde automatique a chaque modification</div>
+        <div style="font-size:10px;color:var(--text3);text-align:center;margin-top:4px;">&#10003; Sauvegarde automatique a chaque modification</div>
       </div>
     </div>
   </div>
@@ -2420,6 +2419,8 @@ function getStatusLabel(s) { return (STATUS_CONFIG[s] || {}).label || s || ''; }
 // ── Splash Changelog (update this with each significant version) ──
 // Full versioned changelog — add new entries at TOP
 const VERSION_CHANGELOG = [
+  { v: '7.87', changes: ['Auto-save uniforme sur les 3 popups profil (personnel, facturation, annuaire)', 'Suppression des boutons Enregistrer, indicateur "✓ Sauvegarde auto"'] },
+  { v: '7.86', changes: ['Profil annuaire: bouton Enregistrer visible pendant la saisie, disparait apres save', 'Fix saveProfile / saveBillingProfile: gestion erreur + update local', 'SQL migration ajoutee pour colonnes billing (add-profile-columns.sql)'] },
   { v: '7.85', changes: ['Service "Ponctuel": champ date obligatoire ajoute', 'Affichage de la date dans la liste compacte', 'Stockage dans scheduled_date'] },
   { v: '7.84', changes: ['Profil facturation: bouton Enregistrer visible uniquement si changement', 'Profil annuaire: bouton retire car sauvegarde automatique'] },
   { v: '7.83', changes: ['Fix: popups Modifier email / Role / Confirm s\'affichent au-dessus de la popup profil', 'changeEmail ne ferme plus Mon compte, promptModal gere le z-index stacke'] },
@@ -6775,7 +6776,10 @@ async function saveProfile() {
   const name = document.getElementById('profileName').value.trim();
   const phone = document.getElementById('profilePhone').value.trim();
   const address = document.getElementById('profileAddress').value.trim();
-  await sb.from('members').update({ display_name: name, phone, address }).eq('id', member.id);
+  const { error } = await sb.from('members').update({ display_name: name, phone, address }).eq('id', member.id);
+  if (error) { showToast('Erreur: ' + error.message); console.error('saveProfile error:', error); return; }
+  // Update local copy so next open shows latest
+  member.display_name = name; member.phone = phone; member.address = address;
   showToast('Profil mis a jour !');
 }
 /* ── Billing Profile ── */
@@ -6789,7 +6793,10 @@ async function saveBillingProfile() {
     billing_address: document.getElementById('billingAddress').value.trim(),
     vat_regime: document.getElementById('billingVatRegime').value
   };
-  await sb.from('members').update(data).eq('id', member.id);
+  const { error } = await sb.from('members').update(data).eq('id', member.id);
+  if (error) { showToast('Erreur: ' + error.message); console.error('saveBillingProfile error:', error); return; }
+  // Update local copy
+  Object.assign(member, data);
   showToast('Profil facturation sauvegarde !');
 }
 
