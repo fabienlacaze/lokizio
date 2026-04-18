@@ -1139,7 +1139,7 @@ async function loadPDF() {
 </script>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v7.96</div>
+<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v7.97</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -1149,7 +1149,7 @@ async function loadPDF() {
     <!-- Broom that sweeps -->
     <div id="splashBroom" style="position:absolute;top:50%;left:-60px;font-size:48px;transform:translateY(-50%) rotate(-30deg);opacity:0;transition:all 0.8s cubic-bezier(0.25,0.46,0.45,0.94);">✨</div>
   </div>
-  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v7.96</span></div>
+  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v7.97</span></div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie pour locations</div>
   <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou</div>
   <!-- Loading bar -->
@@ -2436,6 +2436,7 @@ function getStatusLabel(s) { return (STATUS_CONFIG[s] || {}).label || s || ''; }
 // ── Splash Changelog (update this with each significant version) ──
 // Full versioned changelog — add new entries at TOP
 const VERSION_CHANGELOG = [
+  { v: '7.97', changes: ['Changement role proprio->concierge: si deja abonne Premium, bypass du choix gratuit/premium', 'Affiche directement l\'ecran de confirmation (passage 3.99 -> 19.99 prorate)'] },
   { v: '7.96', changes: ['Footer Contact: email mis a jour lokizio.service@outlook.com', 'privacy.html: Cleaning Manager -> Lokizio, date maj 18 avril 2026', 'CSP: autorise connexion a cdn.jsdelivr.net (source maps)'] },
   { v: '7.95', changes: ['Popup Premium essai: "Activer Premium" demarre Stripe checkout, "Passer en gratuit" confirme', 'Annuaire: 2 sous-onglets Mes contacts / Rechercher'] },
   { v: '7.93', changes: ['Popup Premium: bouton "Actuel" devient "Gerer / Annuler" (Stripe Portal) si abonnement Stripe actif', 'Bouton Gratuit devient "Retrograder" permettant aussi d\'ouvrir Stripe Portal', 'Affiche "Actuel (essai)" si en periode d\'essai sans Stripe'] },
@@ -8531,8 +8532,22 @@ async function changeRole(newRole) {
       return;
     }
 
-    // Proprio (3.99€) → Concierge: must upgrade
+    // Proprio → Concierge
     if (toOwner === false && toConcierge) {
+      // Si l'utilisateur a deja un abonnement Premium actif, on garde le prix (prorating Stripe)
+      if (isPremium && !isTrial) {
+        closeMsg();
+        let html = '<div style="padding:10px;text-align:center;">';
+        html += '<div style="font-size:16px;font-weight:700;color:var(--accent);margin-bottom:12px;">Passer en Conciergerie</div>';
+        html += '<div style="font-size:13px;color:var(--text2);margin-bottom:20px;">Votre abonnement Premium reste actif.<br>Le prix passera de 3.99€ a 19.99€/mois (proratise par Stripe).</div>';
+        html += '<div style="display:flex;flex-direction:column;gap:10px;">';
+        html += '<button class="btn btnPrimary" style="padding:14px;font-size:14px;" onclick="doChangeRole(\'admin\',\'upgrade\')">Confirmer</button>';
+        html += '<button class="btn btnOutline" style="padding:14px;font-size:14px;" onclick="closeMsg()">Annuler</button>';
+        html += '</div></div>';
+        showMsg(html,true);
+        return;
+      }
+      // Sinon (plan gratuit ou essai): laisser le choix
       closeMsg();
       let html = '<div style="padding:10px;text-align:center;">';
       html += '<div style="font-size:16px;font-weight:700;color:#6c63ff;margin-bottom:12px;">Passer en mode Conciergerie</div>';
