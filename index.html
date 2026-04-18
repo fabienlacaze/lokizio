@@ -1140,7 +1140,7 @@ async function loadPDF() {
 </script>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v8.43</div>
+<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v8.44</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -1150,7 +1150,7 @@ async function loadPDF() {
     <!-- Broom that sweeps -->
     <div id="splashBroom" style="position:absolute;top:50%;left:-60px;font-size:48px;transform:translateY(-50%) rotate(-30deg);opacity:0;transition:all 0.8s cubic-bezier(0.25,0.46,0.45,0.94);">✨</div>
   </div>
-  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v8.43</span></div>
+  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v8.44</span></div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie pour locations</div>
   <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou</div>
   <!-- Loading bar -->
@@ -2488,6 +2488,7 @@ function getStatusLabel(s) { return (STATUS_CONFIG[s] || {}).label || s || ''; }
 // ── Splash Changelog (update this with each significant version) ──
 // Full versioned changelog — add new entries at TOP
 const VERSION_CHANGELOG = [
+  { v: '8.44', changes: ['Prestations a venir (proprietaire + prestataire): meme mise en page que la liste admin (bloc date, icone service, groupement par mois + totaux, badge statut)'] },
   { v: '8.43', changes: ['Factures proprietaire: refonte (KPIs A payer / Paye / En retard / Nb, recherche, chips periode + statut, groupement mensuel, cartes detaillees avec echeance)', 'Factures prestataire: meme refonte adaptee (En attente / Encaisse / En retard / Nb factures)', 'Deux: prestations a venir dans un volet repliable separe'] },
   { v: '8.42', changes: ['Factures: backfill automatique des numeros manquants (FAC-AAAA-NNN)', 'Fix PDF: librairie jspdf chargee depuis jsdelivr (CSP)'] },
   { v: '8.41', changes: ['Filtres Acteur: recalcules dynamiquement selon categorie + statut (avec compteurs, ceux a 0 caches)', 'Fix: noms avec apostrophes filtrent correctement (JSON-encoded onclick)'] },
@@ -5127,19 +5128,58 @@ async function showProviderMode() {
   html += '</div>';
   html += '<div id="provInvoiceStatusChips" style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:10px;"></div>';
   html += '<div id="provInvoicesList"></div>';
-  // Upcoming / in-progress prestations (work-in-progress earnings)
+  // Upcoming / in-progress prestations — admin-style cards grouped by month
   const upcomingList = unified.filter(u => u.status === 'accepted' || u.status === 'assigned' || u.status === 'in_progress' || u.status === 'arrived');
   html += '<details style="margin-top:16px;"><summary style="cursor:pointer;font-size:13px;font-weight:700;color:var(--text);padding:8px 0;list-style:none;display:flex;align-items:center;gap:6px;"><span class="collapseArrow">&#9662;</span> Prestations a venir (' + upcomingList.length + ' · ' + upcomingEarnings + '€)</summary>';
   html += '<div style="padding-top:8px;">';
   if (!upcomingList.length) {
     html += '<div style="text-align:center;padding:16px;color:var(--text3);font-size:12px;">Aucune prestation en cours</div>';
   } else {
+    const _monthsFull = ['Janvier','Fevrier','Mars','Avril','Mai','Juin','Juillet','Aout','Septembre','Octobre','Novembre','Decembre'];
+    const _days = ['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'];
+    const _monthsShort = ['Jan','Fev','Mar','Avr','Mai','Jun','Jul','Aou','Sep','Oct','Nov','Dec'];
+    const statusColors = { accepted: '#34d399', assigned: '#8b5cf6', in_progress: '#3b82f6', arrived: '#3b82f6' };
+    const statusLabels = { accepted: 'Accepte', assigned: 'En attente reponse', in_progress: 'En cours', arrived: 'Sur place' };
+    const groups = {};
     upcomingList.forEach(u => {
-      const svcLabel = getServiceLabel(u.type);
-      html += '<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;background:var(--surface);border:1px solid var(--border);border-radius:8px;margin-bottom:6px;">';
-      html += '<div><div style="font-weight:600;font-size:13px;">' + svcLabel + '</div><div style="font-size:11px;color:var(--text3);">' + (u.date ? fmtDate(u.date) : '') + ' — ' + esc(u.propertyName || '') + '</div></div>';
-      html += '<div style="font-weight:700;color:#6c63ff;">' + providerPrice + '€</div>';
-      html += '</div>';
+      const key = (u.date || '').substring(0, 7);
+      if (!groups[key]) groups[key] = [];
+      groups[key].push(u);
+    });
+    const keys = Object.keys(groups).sort();
+    keys.forEach(mk => {
+      const list = groups[mk];
+      const [yy, mm] = mk.split('-');
+      const monthLabel = _monthsFull[parseInt(mm)-1] + ' ' + yy;
+      const monthTotal = list.length * (parseFloat(providerPrice) || 0);
+      html += '<details open style="margin-bottom:8px;">';
+      html += '<summary style="list-style:none;cursor:pointer;display:flex;align-items:center;justify-content:space-between;padding:8px 4px;font-size:12px;font-weight:700;color:var(--text2);border-bottom:1px solid var(--border);">';
+      html += '<span style="display:flex;align-items:center;gap:6px;"><span class="collapseArrow">&#9662;</span>' + monthLabel + ' <span style="color:var(--text3);font-weight:400;font-size:11px;">(' + list.length + ')</span></span>';
+      html += '<span style="font-size:11px;color:var(--text3);font-weight:400;">A venir <b style="color:#6c63ff;">' + monthTotal.toFixed(0) + '€</b></span>';
+      html += '</summary><div style="padding-top:6px;">';
+      list.forEach(u => {
+        const dt = u.date ? new Date(u.date + 'T12:00:00') : null;
+        const dayNum = dt ? dt.getDate() : '';
+        const dowStr = dt ? _days[dt.getDay()] : '';
+        const monthStr = dt ? _monthsShort[dt.getMonth()] : '';
+        const svcIcon = (typeof getServiceIcon === 'function') ? getServiceIcon(u.type) : '🧹';
+        const svcLabel = getServiceLabel(u.type);
+        const color = statusColors[u.status] || '#6c63ff';
+        const sLabel = statusLabels[u.status] || u.status;
+        html += '<div class="adminPrestCard" style="border-left:4px solid ' + color + ';cursor:default;">';
+        html += '<div style="display:flex;align-items:stretch;gap:0;padding:0;">';
+        html += '<div class="card-date-block"><div class="card-dow">' + dowStr + '</div><div class="card-day">' + dayNum + '</div><div class="card-month">' + monthStr + '</div></div>';
+        html += '<div style="display:flex;align-items:center;padding:0 8px;font-size:26px;flex-shrink:0;">' + svcIcon + '</div>';
+        html += '<div style="flex:1;min-width:0;padding:8px 4px;">';
+        html += '<div style="font-size:14px;font-weight:700;color:var(--text);">' + esc(svcLabel) + '</div>';
+        html += '<div style="font-size:11px;color:var(--text3);margin-top:2px;">&#127968; ' + esc(u.propertyName || '') + '</div>';
+        html += '</div>';
+        html += '<div style="display:flex;flex-direction:column;justify-content:center;align-items:flex-end;padding:8px 12px;flex-shrink:0;">';
+        html += '<div style="font-weight:800;font-size:16px;color:#6c63ff;">' + providerPrice + '€</div>';
+        html += '<span style="font-size:10px;padding:2px 8px;background:' + color + '20;color:' + color + ';border-radius:4px;font-weight:600;margin-top:4px;">' + sLabel + '</span>';
+        html += '</div></div></div>';
+      });
+      html += '</div></details>';
     });
   }
   html += '</div></details>';
@@ -6391,18 +6431,58 @@ async function showOwnerMode() {
   html += '</div>';
   html += '<div id="ownerInvoiceStatusChips" style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:10px;"></div>';
   html += '<div id="ownerInvoicesList"></div>';
-  // Upcoming prestations section (forecast)
+  // Upcoming prestations section (forecast) — same layout as admin prestation list
   html += '<details style="margin-top:16px;"><summary style="cursor:pointer;font-size:13px;font-weight:700;color:var(--text);padding:8px 0;list-style:none;display:flex;align-items:center;gap:6px;"><span class="collapseArrow">&#9662;</span> Prestations a venir (' + futureCleanings.length + ')</summary>';
   html += '<div style="padding-top:8px;">';
   if (futureCleanings.length === 0) {
     html += '<div style="text-align:center;padding:20px;color:var(--text3);font-size:13px;">Aucune prestation prevue</div>';
   } else {
-    futureCleanings.slice(0, 30).forEach(c => {
-      const price = getServicePriceForDate(c.propertyId || '', 'cleaning_standard', 'price_owner', c.cleaningDate || c.date || '');
-      html += '<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;background:var(--surface);border:1px solid var(--border);border-radius:8px;margin-bottom:6px;">';
-      html += '<div><div style="font-weight:600;font-size:13px;">' + esc(c.propertyName || '') + '</div><div style="font-size:11px;color:var(--text3);">' + fmtDate(c.cleaningDate || c.date) + ' — ' + esc(c.provider || 'Non assigne') + '</div></div>';
-      html += '<div style="font-weight:700;color:#f59e0b;">' + (price > 0 ? price + '€' : '-') + '</div>';
-      html += '</div>';
+    // Group by month like admin list
+    const _monthsFull = ['Janvier','Fevrier','Mars','Avril','Mai','Juin','Juillet','Aout','Septembre','Octobre','Novembre','Decembre'];
+    const _days = ['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'];
+    const _monthsShort = ['Jan','Fev','Mar','Avr','Mai','Jun','Jul','Aou','Sep','Oct','Nov','Dec'];
+    const groups = {};
+    futureCleanings.forEach(c => {
+      const d = c.cleaningDate || c.date || '';
+      const key = d.substring(0, 7);
+      if (!groups[key]) groups[key] = [];
+      groups[key].push(c);
+    });
+    const keys = Object.keys(groups).sort();
+    keys.forEach(mk => {
+      const list = groups[mk];
+      const [yy, mm] = mk.split('-');
+      const monthLabel = _monthsFull[parseInt(mm)-1] + ' ' + yy;
+      const monthTotal = list.reduce((s, c) => s + (getServicePriceForDate(c.propertyId || '', 'cleaning_standard', 'price_owner', c.cleaningDate || c.date || '') || 0), 0);
+      html += '<details open style="margin-bottom:8px;">';
+      html += '<summary style="list-style:none;cursor:pointer;display:flex;align-items:center;justify-content:space-between;padding:8px 4px;font-size:12px;font-weight:700;color:var(--text2);border-bottom:1px solid var(--border);">';
+      html += '<span style="display:flex;align-items:center;gap:6px;"><span class="collapseArrow">&#9662;</span>' + monthLabel + ' <span style="color:var(--text3);font-weight:400;font-size:11px;">(' + list.length + ')</span></span>';
+      html += '<span style="font-size:11px;color:var(--text3);font-weight:400;">Total <b style="color:#f59e0b;">' + monthTotal.toFixed(0) + '€</b></span>';
+      html += '</summary><div style="padding-top:6px;">';
+      list.forEach(c => {
+        const dateStr = c.cleaningDate || c.date || '';
+        const dt = dateStr ? new Date(dateStr + 'T12:00:00') : null;
+        const dayNum = dt ? dt.getDate() : '';
+        const dowStr = dt ? _days[dt.getDay()] : '';
+        const monthStr = dt ? _monthsShort[dt.getMonth()] : '';
+        const price = getServicePriceForDate(c.propertyId || '', 'cleaning_standard', 'price_owner', dateStr);
+        const svcIcon = (typeof getServiceIcon === 'function') ? getServiceIcon('cleaning_standard') : '🧹';
+        const svcLabel = (typeof getServiceLabel === 'function') ? getServiceLabel('cleaning_standard') : 'Menage';
+        const provColor = c.provider ? (typeof getProvColor === 'function' ? getProvColor(c.provider) : '#6c63ff') : '#888';
+        html += '<div class="adminPrestCard" style="border-left:4px solid #f59e0b;cursor:default;">';
+        html += '<div style="display:flex;align-items:stretch;gap:0;padding:0;">';
+        html += '<div class="card-date-block"><div class="card-dow">' + dowStr + '</div><div class="card-day">' + dayNum + '</div><div class="card-month">' + monthStr + '</div></div>';
+        html += '<div style="display:flex;align-items:center;padding:0 8px;font-size:26px;flex-shrink:0;">' + svcIcon + '</div>';
+        html += '<div style="flex:1;min-width:0;padding:8px 4px;">';
+        html += '<div style="font-size:14px;font-weight:700;color:var(--text);">' + esc(svcLabel) + '</div>';
+        html += '<div style="font-size:11px;color:var(--text3);margin-top:2px;">&#127968; ' + esc(c.propertyName || '') + (c.provider ? ' · <span style="color:' + provColor + ';">&#129529; ' + esc(c.provider) + '</span>' : ' · <span style="color:var(--text3);">Non assigne</span>') + '</div>';
+        html += '</div>';
+        html += '<div style="display:flex;flex-direction:column;justify-content:center;align-items:flex-end;padding:8px 12px;flex-shrink:0;">';
+        html += '<div style="font-weight:800;font-size:16px;color:#f59e0b;">' + (price > 0 ? price + '€' : '-') + '</div>';
+        html += '<span style="font-size:10px;padding:2px 8px;background:rgba(245,158,11,0.15);color:#f59e0b;border-radius:4px;font-weight:600;margin-top:4px;">A facturer</span>';
+        html += '</div></div></div>';
+      });
+      html += '</div></details>';
     });
   }
   html += '</div></details>';
@@ -16045,50 +16125,21 @@ async function loadAdminPrestations(forceReload) {
   const providersList = Array.from(provSet).sort();
   const ownersList = Array.from(ownerSet).sort();
 
-  // Render filters
+  // Render filters (order: Categories → Actors → Status → Hide past)
   if (filtersEl) {
-    // Line 1: status row (container only, populated by renderStatusFilterRow)
-    let fHtml = '<div id="adminPrestStatusRow" style="display:flex;gap:6px;overflow-x:auto;padding-bottom:6px;margin-bottom:4px;-webkit-overflow-scrolling:touch;align-items:center;"></div>';
-    // Line 2: categories
-    fHtml += '<div style="display:flex;gap:6px;overflow-x:auto;padding-bottom:6px;margin-bottom:4px;-webkit-overflow-scrolling:touch;align-items:center;">';
-    fHtml += '<button class="prestFilter' + (_adminPrestFilterCat === 'all' ? ' active' : '') + '" data-filter-type="cat" onclick="filterAdminPrest(\'all\',this)">Tout ' + counts.all + '</button>';
-    SERVICE_CATALOG.forEach(cat => {
-      if (counts[cat.cat]) {
-        const act = (_adminPrestFilterCat === cat.cat) ? ' active' : '';
-        fHtml += '<button class="prestFilter' + act + '" data-filter-type="cat" onclick="filterAdminPrest(\'' + cat.cat + '\',this)">' + cat.services[0].icon + ' ' + counts[cat.cat] + '</button>';
-      }
-    });
-    fHtml += '</div>';
-    // Line 3: Actor filter (provider + owner via property)
-    // Apply category + status filters to determine which actors remain + their counts
-    const scopeForActor = unified.filter(u => {
-      if (_adminPrestFilterCat !== 'all') {
-        const co = SERVICE_CATALOG.find(c => c.services.some(s => s.id === u.type));
-        if ((co ? co.cat : 'autre') !== _adminPrestFilterCat) return false;
-      }
-      if (_adminPrestFilterStatus !== 'all' && u.status !== _adminPrestFilterStatus) return false;
-      return true;
-    });
-    const provCounts = {};
-    const ownerCounts = {};
-    scopeForActor.forEach(u => {
-      if (u.provider) provCounts[u.provider] = (provCounts[u.provider] || 0) + 1;
-      if (u.propertyName) ownerCounts[u.propertyName] = (ownerCounts[u.propertyName] || 0) + 1;
-    });
-    const visibleProviders = providersList.filter(n => provCounts[n]);
-    const visibleOwners = ownersList.filter(n => ownerCounts[n]);
-    if (visibleProviders.length || visibleOwners.length) {
-      fHtml += '<div id="adminPrestActorRow" style="display:flex;gap:6px;overflow-x:auto;padding-bottom:6px;margin-bottom:4px;-webkit-overflow-scrolling:touch;align-items:center;"></div>';
-    }
-    // Line 4: Hide past toggle (on by default)
+    let fHtml = '';
+    fHtml += '<div id="adminPrestCatRow" style="display:flex;gap:6px;overflow-x:auto;padding-bottom:6px;margin-bottom:4px;-webkit-overflow-scrolling:touch;align-items:center;"></div>';
+    fHtml += '<div id="adminPrestActorRow" style="display:flex;gap:6px;overflow-x:auto;padding-bottom:6px;margin-bottom:4px;-webkit-overflow-scrolling:touch;align-items:center;"></div>';
+    fHtml += '<div id="adminPrestStatusRow" style="display:flex;gap:6px;overflow-x:auto;padding-bottom:6px;margin-bottom:4px;-webkit-overflow-scrolling:touch;align-items:center;"></div>';
     if (window._adminHidePast === undefined) window._adminHidePast = true;
     const hidePastActive = !!window._adminHidePast;
     fHtml += '<div style="display:flex;padding-bottom:8px;margin-bottom:8px;">';
     fHtml += '<button id="togglePastBtn" class="prestFilter' + (hidePastActive ? ' active' : '') + '" onclick="toggleAdminHidePast(this)" title="Masquer/afficher les prestations passees" style="white-space:nowrap;">' + (hidePastActive ? '&#128065; Afficher passees' : '&#128065;&#65039; Masquer passees') + '</button>';
     fHtml += '</div>';
     filtersEl.innerHTML = fHtml;
-    renderStatusFilterRow();
+    renderCatFilterRow();
     renderActorFilterRow();
+    renderStatusFilterRow();
   }
 
   // Update nav badge
@@ -16269,25 +16320,52 @@ function goToProviderPrestations(providerName) {
 
 function filterAdminPrest(cat, btn) {
   _adminPrestFilterCat = cat;
-  document.querySelectorAll('#adminPrestFilters .prestFilter[data-filter-type="cat"]').forEach(b => b.classList.remove('active'));
-  if (btn) btn.classList.add('active');
-  // Status filter may no longer match after cat change — reset to "all"
-  _adminPrestFilterStatus = 'all';
-  _adminPrestFilterActor = { type: 'all', value: '' };
-  renderStatusFilterRow();
+  // Don't reset others — recompute will hide incompatible ones
+  renderCatFilterRow();
   renderActorFilterRow();
+  renderStatusFilterRow();
   applyAdminPrestFilters();
+}
+
+function _catOf(u) { const co = SERVICE_CATALOG.find(c => c.services.some(s => s.id === u.type)); return co ? co.cat : 'autre'; }
+
+function _matchActor(u, actor) {
+  if (!actor || actor.type === 'all') return true;
+  if (actor.type === 'provider') return (u.provider || '') === actor.value;
+  if (actor.type === 'owner') return (u.propertyName || '') === actor.value;
+  return true;
+}
+
+function renderCatFilterRow() {
+  const row = document.getElementById('adminPrestCatRow');
+  if (!row) return;
+  const unified = window._adminUnified || [];
+  // Scope: apply active actor + status (upstream filters not relevant for category = top)
+  const scope = unified.filter(u => {
+    if (!_matchActor(u, _adminPrestFilterActor)) return false;
+    if (_adminPrestFilterStatus !== 'all' && u.status !== _adminPrestFilterStatus) return false;
+    return true;
+  });
+  const counts = { all: scope.length };
+  scope.forEach(u => { const c = _catOf(u); counts[c] = (counts[c] || 0) + 1; });
+  let h = '';
+  h += '<button class="prestFilter' + (_adminPrestFilterCat === 'all' ? ' active' : '') + '" onclick="filterAdminPrest(\'all\')">Tout ' + counts.all + '</button>';
+  SERVICE_CATALOG.forEach(cat => {
+    const n = counts[cat.cat] || 0;
+    if (n === 0 && _adminPrestFilterCat !== cat.cat) return;
+    const act = (_adminPrestFilterCat === cat.cat) ? ' active' : '';
+    h += '<button class="prestFilter' + act + '" onclick="filterAdminPrest(\'' + cat.cat + '\')">' + cat.services[0].icon + ' ' + n + '</button>';
+  });
+  row.innerHTML = h;
 }
 
 function renderActorFilterRow() {
   const row = document.getElementById('adminPrestActorRow');
   if (!row) return;
   const unified = window._adminUnified || [];
+  // Scope: apply active category + status (not the actor itself, so user can switch)
   const scope = unified.filter(u => {
-    if (_adminPrestFilterCat !== 'all') {
-      const co = SERVICE_CATALOG.find(c => c.services.some(s => s.id === u.type));
-      if ((co ? co.cat : 'autre') !== _adminPrestFilterCat) return false;
-    }
+    if (_adminPrestFilterCat !== 'all' && _catOf(u) !== _adminPrestFilterCat) return false;
     if (_adminPrestFilterStatus !== 'all' && u.status !== _adminPrestFilterStatus) return false;
     return true;
   });
