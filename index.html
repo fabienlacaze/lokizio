@@ -1065,7 +1065,7 @@ async function loadPDF() {
 </script>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v7.50</div>
+<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v7.51</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -1075,7 +1075,7 @@ async function loadPDF() {
     <!-- Broom that sweeps -->
     <div id="splashBroom" style="position:absolute;top:50%;left:-60px;font-size:48px;transform:translateY(-50%) rotate(-30deg);opacity:0;transition:all 0.8s cubic-bezier(0.25,0.46,0.45,0.94);">✨</div>
   </div>
-  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v7.50</span></div>
+  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v7.51</span></div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie pour locations</div>
   <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou</div>
   <!-- Loading bar -->
@@ -2295,6 +2295,7 @@ function getStatusLabel(s) { return (STATUS_CONFIG[s] || {}).label || s || ''; }
 // ── Splash Changelog (update this with each significant version) ──
 // Full versioned changelog — add new entries at TOP
 const VERSION_CHANGELOG = [
+  { v: '7.51', changes: ['Changelog: version courante mise en evidence (badge DERNIERE)', 'Scroll auto en haut pour voir la derniere version', 'Fix banner mise a jour: suppression du gate lokizio_seen_version bloquant'] },
   { v: '7.50', changes: ['Barres de completion: items manquants en chips/boutons avec icones', 'Style pill-shaped avec hover', 'Meme UI pour concierge, proprietaire, prestataire'] },
   { v: '7.49', changes: ['KPI: suppression "Prestations a venir" (doublon avec "Cette semaine")', 'Barre de completion ajoutee en modes proprietaire et prestataire', 'Liens cliquables sur items manquants'] },
   { v: '7.48', changes: ['Bouton cloche 🔔 masque s\'il n\'y a aucune demande de connexion', 'Apparait automatiquement quand une demande arrive'] },
@@ -2389,14 +2390,16 @@ const VERSION_CHANGELOG = [
 })();
 
 function showFullChangelog() {
-  let html = '<div style="padding:6px;max-height:70vh;overflow-y:auto;">';
+  let html = '<div id="changelogScroll" style="padding:4px;">';
   html += '<div style="font-size:16px;font-weight:800;color:var(--text);margin-bottom:14px;text-align:center;">&#128203; Historique des mises a jour</div>';
-  VERSION_CHANGELOG.forEach(entry => {
-    html += '<div style="margin-bottom:14px;">';
+  VERSION_CHANGELOG.forEach((entry, idx) => {
+    const isLatest = idx === 0;
+    html += '<div style="margin-bottom:14px;' + (isLatest ? 'padding:10px;background:rgba(108,99,255,0.08);border:1px solid rgba(108,99,255,0.25);border-radius:10px;' : '') + '">';
     html += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">';
     html += '<span style="font-size:12px;font-weight:700;color:#6c63ff;background:rgba(108,99,255,0.15);padding:2px 8px;border-radius:4px;">v' + entry.v + '</span>';
+    if (isLatest) html += '<span style="font-size:10px;font-weight:700;color:#34d399;background:rgba(52,211,153,0.15);padding:2px 8px;border-radius:4px;">DERNIERE</span>';
     html += '</div>';
-    html += '<div style="font-size:12px;color:var(--text2);line-height:1.7;padding-left:8px;border-left:2px solid var(--border2);">';
+    html += '<div style="font-size:12px;color:var(--text2);line-height:1.7;padding-left:8px;border-left:2px solid ' + (isLatest ? '#6c63ff' : 'var(--border2)') + ';">';
     entry.changes.forEach(c => {
       html += '&#x2022; ' + c + '<br>';
     });
@@ -2405,6 +2408,13 @@ function showFullChangelog() {
   html += '<button class="btn btnOutline" style="width:100%;padding:12px;margin-top:8px;" onclick="closeMsg()">Fermer</button>';
   html += '</div>';
   showMsg(html, true);
+  // Scroll to top so latest version is visible first
+  setTimeout(() => {
+    const body = document.querySelector('#msgModal .modalBody');
+    if (body) body.scrollTop = 0;
+    const scroll = document.getElementById('changelogScroll');
+    if (scroll && scroll.parentElement) scroll.parentElement.scrollTop = 0;
+  }, 50);
 }
 
 const SERVICE_CATALOG = [
@@ -14854,17 +14864,15 @@ async function _checkUpdate() {
     const remoteVersion = match[1];
     const currentVersion = (document.querySelector('#versionBadge')?.textContent || '').trim().replace(/^v/,'');
     if (remoteVersion === currentVersion) {
-      localStorage.setItem('lokizio_seen_version', remoteVersion);
       // Hide any stale banner still showing
       const staleBanners = document.querySelectorAll('[data-update-banner]');
       staleBanners.forEach(b => b.remove());
       _updateBannerShown = false;
       return;
     }
-    const seen = localStorage.getItem('lokizio_seen_version');
-    if (seen === remoteVersion) return;
     const toNum = v => { const p = v.split('.'); return (parseInt(p[0])||0) * 1000 + (parseInt(p[1])||0); };
-    if (toNum(remoteVersion) <= toNum(currentVersion)) { localStorage.setItem('lokizio_seen_version', remoteVersion); return; }
+    if (toNum(remoteVersion) <= toNum(currentVersion)) return;
+    // Always show banner when remote is newer (no "seen" gate)
     showUpdateBanner(remoteVersion);
   } catch(e) {}
 }
