@@ -1140,7 +1140,7 @@ async function loadPDF() {
 </script>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v8.50</div>
+<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v8.51</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -1150,7 +1150,7 @@ async function loadPDF() {
     <!-- Broom that sweeps -->
     <div id="splashBroom" style="position:absolute;top:50%;left:-60px;font-size:48px;transform:translateY(-50%) rotate(-30deg);opacity:0;transition:all 0.8s cubic-bezier(0.25,0.46,0.45,0.94);">✨</div>
   </div>
-  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v8.50</span></div>
+  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v8.51</span></div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie pour locations</div>
   <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou</div>
   <!-- Loading bar -->
@@ -2509,6 +2509,7 @@ function getStatusLabel(s) { return (STATUS_CONFIG[s] || {}).label || s || ''; }
 // ── Splash Changelog (update this with each significant version) ──
 // Full versioned changelog — add new entries at TOP
 const VERSION_CHANGELOG = [
+  { v: '8.51', changes: ['Auto-billing: dropdown Frequence simplifie (Mensuelle uniquement, biweekly retire car incoherent avec jour fixe)', 'Popup de confirmation "Tester maintenant" utilise customConfirm (plus de popup native moche)'] },
   { v: '8.50', changes: ['Finance: 3eme onglet "Auto" - Facturation automatique parametrable (toggle, frequence, jour, periode, statut, echeance, types)', 'Bouton "Tester maintenant" pour declencher une generation manuelle', 'Edge Function auto-bill + pg_cron quotidien (setup-auto-bill-cron.sql)', 'SQL: add-billing-settings.sql (billing_settings + billing_runs pour eviter doublons)'] },
   { v: '8.49', changes: ['Popup facture: boutons Brouillon/Envoyer desactives tant que les infos minimales manquent (client + 1 ligne valide), message d\'erreur live'] },
   { v: '8.48', changes: ['Popup facture: dropdown Client toujours affiche (filtre par role) + option "Saisir un autre nom..." qui revele un champ texte libre'] },
@@ -4974,14 +4975,18 @@ async function showProviderMode() {
   // Header
   html += '<div style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:12px;">📋 Mes prestations</div>';
 
-  // Filter buttons
-  html += '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;">';
-  html += '<button class="prestFilter active" onclick="filterPrestations(\'all\')">Tout (' + catCounts.all + ')</button>';
-  SERVICE_CATALOG.forEach(cat => {
-    if (catCounts[cat.cat]) {
-      html += '<button class="prestFilter" onclick="filterPrestations(\'' + cat.cat + '\')">' + (cat.services[0] ? cat.services[0].icon : '') + ' ' + cat.label + ' (' + catCounts[cat.cat] + ')</button>';
-    }
-  });
+  // Cache unified for cascading filters
+  window._provUnified = unified;
+  if (window._provHidePast === undefined) window._provHidePast = true;
+  if (!window._provFilter) window._provFilter = { cat: 'all', status: 'all', actor: { type: 'all', value: '' } };
+
+  // Filter rows: Categories | Actors | Status | Hide past
+  html += '<div id="provPrestCatRow" style="display:flex;gap:6px;overflow-x:auto;padding-bottom:6px;margin-bottom:4px;-webkit-overflow-scrolling:touch;align-items:center;"></div>';
+  html += '<div id="provPrestActorRow" style="display:flex;gap:6px;overflow-x:auto;padding-bottom:6px;margin-bottom:4px;-webkit-overflow-scrolling:touch;align-items:center;"></div>';
+  html += '<div id="provPrestStatusRow" style="display:flex;gap:6px;overflow-x:auto;padding-bottom:6px;margin-bottom:4px;-webkit-overflow-scrolling:touch;align-items:center;"></div>';
+  const hidePastActive = !!window._provHidePast;
+  html += '<div style="display:flex;padding-bottom:8px;margin-bottom:12px;">';
+  html += '<button id="provTogglePastBtn" class="prestFilter' + (hidePastActive ? ' active' : '') + '" onclick="toggleProvHidePast(this)" style="white-space:nowrap;">' + (hidePastActive ? '&#128065; Afficher passees' : '&#128065;&#65039; Masquer passees') + '</button>';
   html += '</div>';
 
   if (unified.length === 0) {
@@ -5017,7 +5022,7 @@ async function showProviderMode() {
         const statusLabel = getStatusLabel(status) || 'A faire';
         const statusColor = getStatusColor(status);
 
-        html += `<div class="prestCard" data-category="${catKey}" data-date="${dateStr}" data-type="${u.type||''}" data-provider="${esc(u.provider||'')}" style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:10px;${isToday ? 'border-left:3px solid #e94560;' : ''}">
+        html += `<div class="prestCard" data-category="${catKey}" data-date="${dateStr}" data-type="${u.type||''}" data-provider="${esc(u.provider||'')}" data-status="${status || ''}" data-owner="${esc(u.propertyName||'')}" style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:10px;${isToday ? 'border-left:3px solid #e94560;' : ''}">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
             <div>
               <div style="font-size:11px;color:var(--accent2);font-weight:600;margin-bottom:2px;">${getServiceLabel('cleaning_standard')}</div>
@@ -5105,7 +5110,7 @@ async function showProviderMode() {
         // Service request card
         const r = u;
         const svcLabel = getServiceLabel(r.type);
-        html += '<div class="prestCard" data-category="' + catKey + '" style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:8px;">';
+        html += '<div class="prestCard" data-category="' + catKey + '" data-status="' + (r.status || '') + '" data-date="' + (r.date || '') + '" data-owner="' + esc(r.propertyName || '') + '" data-type="' + (r.type || '') + '" style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:8px;">';
         html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">';
         html += '<div style="font-weight:700;font-size:14px;color:var(--text);">' + svcLabel + '</div>';
         html += '<span style="font-size:11px;padding:3px 8px;border-radius:6px;background:' + getStatusColor(r.status) + '22;color:' + getStatusColor(r.status) + ';font-weight:600;">' + getStatusLabel(r.status) + '</span>';
@@ -7919,8 +7924,7 @@ async function renderAutoBillingPanel() {
   h += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">';
   h += '<div><label style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:4px;">Frequence</label>';
   h += '<select id="ab_frequency" style="width:100%;padding:9px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:13px;box-sizing:border-box;">';
-  h += '<option value="monthly"' + (s.frequency === 'monthly' ? ' selected' : '') + '>Mensuelle</option>';
-  h += '<option value="biweekly"' + (s.frequency === 'biweekly' ? ' selected' : '') + '>Tous les 15 jours</option>';
+  h += '<option value="monthly" selected>Mensuelle</option>';
   h += '</select></div>';
   h += '<div><label style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:4px;">Jour de generation</label>';
   h += '<select id="ab_billing_day" style="width:100%;padding:9px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:13px;box-sizing:border-box;">';
@@ -7991,7 +7995,8 @@ async function saveBillingSettings() {
 async function triggerAutoBillNow() {
   const org = API.getOrg();
   if (!org) return;
-  if (!confirm('Declencher la facturation automatique maintenant pour votre organisation ? Les factures en double seront evitees.')) return;
+  const ok = await customConfirm('Declencher la facturation automatique maintenant pour votre organisation ? Les factures en double seront evitees.', 'Lancer');
+  if (!ok) return;
   try {
     const session = (await sb.auth.getSession()).data.session;
     const resp = await fetch(SUPABASE_URL + '/functions/v1/auto-bill?force=1&org_id=' + org.id, {
