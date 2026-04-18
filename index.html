@@ -1140,7 +1140,7 @@ async function loadPDF() {
 </script>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v8.18</div>
+<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v8.19</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -1150,7 +1150,7 @@ async function loadPDF() {
     <!-- Broom that sweeps -->
     <div id="splashBroom" style="position:absolute;top:50%;left:-60px;font-size:48px;transform:translateY(-50%) rotate(-30deg);opacity:0;transition:all 0.8s cubic-bezier(0.25,0.46,0.45,0.94);">✨</div>
   </div>
-  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v8.18</span></div>
+  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v8.19</span></div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie pour locations</div>
   <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou</div>
   <!-- Loading bar -->
@@ -2484,6 +2484,7 @@ function getStatusLabel(s) { return (STATUS_CONFIG[s] || {}).label || s || ''; }
 // ── Splash Changelog (update this with each significant version) ──
 // Full versioned changelog — add new entries at TOP
 const VERSION_CHANGELOG = [
+  { v: '8.19', changes: ['Calendrier: legende corrigee (couleur par prestataire + Service + Reservation)'] },
   { v: '8.18', changes: ['Revenus: sections "Detail mensuel" et "Evolution mensuelle" repliables', 'Graph: courbe Marge ajoutee (CA - Couts)', 'Graph: legende cliquable pour masquer/afficher chaque courbe'] },
   { v: '8.17', changes: ['Calendrier: filtrage par bien selectionne', 'Revenus: lignes du detail mensuel cliquables (popup detail par mois)', 'Revenus: graph courbes CA vs Couts sous le tableau'] },
   { v: '8.16', changes: ['Popup Se connecter: liste cochable des services proposes (pre-cochee depuis le profil annuaire)', 'Services inclus dans le message envoye'] },
@@ -13142,7 +13143,14 @@ function renderCalendar() {
   }
   while(col>0&&col<7){html+='<td class="calEmpty"></td>';col++;}
   html+='</tr></table>';
-  html+='<div style="margin-top:12px;font-size:11px;color:var(--text3);display:flex;gap:14px;align-items:center;flex-wrap:wrap;"><span class="calEvent calCleaning" style="display:inline-block;padding:3px 10px;">Menage</span><span class="calEvent" style="display:inline-block;padding:3px 10px;background:#6c63ff;color:#fff;border-radius:4px;">Service</span><span class="calEvent calReserv" style="display:inline-block;padding:3px 10px;">Reservation</span><span style="color:var(--accent);font-weight:600;cursor:pointer;" onclick="calToday()">&#9658; Aujourd\'hui</span></div>';
+  // Legend: providers (with their real colors) + service + reservation
+  let legend='<div style="margin-top:12px;font-size:11px;color:var(--text3);display:flex;gap:10px;align-items:center;flex-wrap:wrap;">';
+  const provNames=(config.providers||[]).map(p=>p.name).filter(Boolean);
+  provNames.forEach(n=>{const c=getProvColor(n);legend+='<span style="display:inline-flex;align-items:center;gap:5px;"><span style="width:12px;height:12px;background:'+c+';border-radius:3px;display:inline-block;"></span>'+esc(n)+'</span>';});
+  legend+='<span style="display:inline-flex;align-items:center;gap:5px;"><span style="width:12px;height:12px;background:#6c63ff;border-radius:3px;display:inline-block;"></span>Service</span>';
+  legend+='<span style="display:inline-flex;align-items:center;gap:5px;"><span style="width:12px;height:12px;background:var(--surface2);border:1px solid var(--border2);border-radius:3px;display:inline-block;"></span>Reservation</span>';
+  legend+='<span style="color:var(--accent);font-weight:600;cursor:pointer;margin-left:auto;" onclick="calToday()">&#9658; Aujourd\'hui</span></div>';
+  html+=legend;
   document.getElementById('calView').innerHTML=html;
 }
 function goToListDate(dateStr) {
