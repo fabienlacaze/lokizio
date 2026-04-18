@@ -1084,7 +1084,7 @@ async function loadPDF() {
 </script>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v7.56</div>
+<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v7.57</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -1094,7 +1094,7 @@ async function loadPDF() {
     <!-- Broom that sweeps -->
     <div id="splashBroom" style="position:absolute;top:50%;left:-60px;font-size:48px;transform:translateY(-50%) rotate(-30deg);opacity:0;transition:all 0.8s cubic-bezier(0.25,0.46,0.45,0.94);">✨</div>
   </div>
-  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v7.56</span></div>
+  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v7.57</span></div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie pour locations</div>
   <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou</div>
   <!-- Loading bar -->
@@ -1812,9 +1812,69 @@ async function loadPDF() {
       <label style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:1px;">PLAN</label>
       <div id="accountPlan" style="padding:10px 14px;background:var(--surface2);border-radius:8px;color:var(--text);font-size:14px;margin-top:4px;"></div>
     </div>
-    <!-- Profile sections hidden fallback (kept for field IDs referenced elsewhere) -->
-    <div id="profileSection" style="display:none;"></div>
-    <div id="billingSection" style="display:none;"></div>
+    <!-- Personal profile (collapsible) -->
+    <details id="profileSection" style="padding:12px;background:var(--surface2);border-radius:10px;margin-bottom:8px;">
+      <summary style="list-style:none;cursor:pointer;display:flex;justify-content:space-between;align-items:center;font-size:13px;font-weight:600;color:var(--text);"><span>&#128100; Mon profil personnel</span><span class="collapseArrow">&#9662;</span></summary>
+      <div style="display:flex;flex-direction:column;gap:8px;margin-top:10px;padding-top:10px;border-top:1px solid var(--border2);">
+        <input id="profileName" type="text" placeholder="Nom complet" style="padding:8px 12px;background:rgba(255,255,255,0.04);color:var(--text);border:1px solid var(--border2);border-radius:6px;font-size:13px;">
+        <input id="profileEmail" type="email" readonly style="padding:8px 12px;background:rgba(255,255,255,0.02);color:var(--text3);border:1px solid var(--border2);border-radius:6px;font-size:13px;opacity:0.7;cursor:default;">
+        <input id="profilePhone" type="tel" placeholder="Telephone" style="padding:8px 12px;background:rgba(255,255,255,0.04);color:var(--text);border:1px solid var(--border2);border-radius:6px;font-size:13px;">
+        <input id="profileAddress" type="text" placeholder="Adresse / Ville" style="padding:8px 12px;background:rgba(255,255,255,0.04);color:var(--text);border:1px solid var(--border2);border-radius:6px;font-size:13px;">
+        <button class="btn btnSmall btnSuccess" style="padding:8px;font-size:12px;align-self:flex-end;" onclick="saveProfile()">Enregistrer</button>
+      </div>
+    </details>
+    <!-- Billing profile (collapsible) -->
+    <details id="billingSection" style="padding:12px;background:var(--surface2);border-radius:10px;margin-bottom:8px;">
+      <summary style="list-style:none;cursor:pointer;display:flex;justify-content:space-between;align-items:center;font-size:13px;font-weight:600;color:var(--text);"><span>&#128179; Profil facturation</span><span class="collapseArrow">&#9662;</span></summary>
+      <div style="display:flex;flex-direction:column;gap:8px;margin-top:10px;padding-top:10px;border-top:1px solid var(--border2);">
+        <input id="billingCompany" type="text" placeholder="Raison sociale / Nom commercial" style="padding:8px 12px;background:rgba(255,255,255,0.04);color:var(--text);border:1px solid var(--border2);border-radius:6px;font-size:13px;">
+        <input id="billingSiret" type="text" placeholder="SIRET (14 chiffres)" maxlength="14" style="padding:8px 12px;background:rgba(255,255,255,0.04);color:var(--text);border:1px solid var(--border2);border-radius:6px;font-size:13px;">
+        <input id="billingVat" type="text" placeholder="N° TVA intracommunautaire (optionnel)" style="padding:8px 12px;background:rgba(255,255,255,0.04);color:var(--text);border:1px solid var(--border2);border-radius:6px;font-size:13px;">
+        <input id="billingAddress" type="text" placeholder="Adresse de facturation" style="padding:8px 12px;background:rgba(255,255,255,0.04);color:var(--text);border:1px solid var(--border2);border-radius:6px;font-size:13px;">
+        <select id="billingVatRegime" style="padding:8px 12px;background:rgba(255,255,255,0.04);color:var(--text);border:1px solid var(--border2);border-radius:6px;font-size:13px;">
+          <option value="micro">Micro-entreprise (TVA non applicable, art. 293B du CGI)</option>
+          <option value="normal">Regime normal (TVA 20%)</option>
+          <option value="reduced">TVA reduite (10%)</option>
+        </select>
+        <button class="btn btnSmall btnSuccess" style="padding:8px;font-size:12px;align-self:flex-end;" onclick="saveBillingProfile()">Enregistrer</button>
+      </div>
+    </details>
+    <!-- Marketplace profile (collapsible) -->
+    <details style="padding:12px;background:var(--surface2);border-radius:10px;margin-bottom:8px;">
+      <summary style="list-style:none;cursor:pointer;display:flex;justify-content:space-between;align-items:center;font-size:13px;font-weight:600;color:var(--text);"><span>&#127758; Mon profil annuaire</span><span class="collapseArrow">&#9662;</span></summary>
+      <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border2);">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+          <div>
+            <div style="font-size:12px;font-weight:600;">Visible dans l'annuaire</div>
+            <div style="font-size:11px;color:var(--text3);">Les autres utilisateurs peuvent vous trouver</div>
+          </div>
+          <label style="position:relative;width:44px;height:24px;cursor:pointer;">
+            <input type="checkbox" id="mkVisibleToggle" onchange="toggleMarketplaceVisibility(this.checked)" style="opacity:0;width:0;height:0;">
+            <span style="position:absolute;inset:0;background:var(--border2);border-radius:12px;transition:0.3s;"></span>
+            <span style="position:absolute;top:2px;left:2px;width:20px;height:20px;background:#fff;border-radius:50%;transition:0.3s;"></span>
+          </label>
+        </div>
+        <div id="mkProfileFields" style="display:none;flex-direction:column;gap:8px;">
+          <input type="text" id="mkName" placeholder="Nom affiche" onchange="autoSaveMarketplaceField()" style="padding:8px 12px;background:rgba(255,255,255,0.04);color:var(--text);border:1px solid var(--border2);border-radius:6px;font-size:13px;">
+          <div style="display:flex;gap:8px;">
+            <input type="text" id="mkCity" placeholder="Ville" onchange="autoSaveMarketplaceField()" style="flex:1;padding:8px 12px;background:rgba(255,255,255,0.04);color:var(--text);border:1px solid var(--border2);border-radius:6px;font-size:13px;">
+            <input type="tel" id="mkPhone" placeholder="Telephone" onchange="autoSaveMarketplaceField()" style="flex:1;padding:8px 12px;background:rgba(255,255,255,0.04);color:var(--text);border:1px solid var(--border2);border-radius:6px;font-size:13px;">
+          </div>
+          <textarea id="mkDescription" placeholder="Description" rows="3" onchange="autoSaveMarketplaceField()" style="padding:8px 12px;background:rgba(255,255,255,0.04);color:var(--text);border:1px solid var(--border2);border-radius:6px;font-size:13px;font-family:'Inter',sans-serif;resize:vertical;"></textarea>
+          <div style="font-size:11px;color:var(--text3);text-transform:uppercase;">Services proposes</div>
+          <div style="display:flex;flex-wrap:wrap;gap:6px;" id="mkServicesCheckboxes"></div>
+          <div style="display:flex;gap:8px;">
+            <input type="number" id="mkExperienceYears" min="0" max="50" placeholder="Annees d'experience" onchange="autoSaveMarketplaceField()" style="flex:1;padding:8px 12px;background:rgba(255,255,255,0.04);color:var(--text);border:1px solid var(--border2);border-radius:6px;font-size:13px;">
+            <select id="mkAvailability" onchange="autoSaveMarketplaceField()" style="flex:1;padding:8px 12px;background:rgba(255,255,255,0.04);color:var(--text);border:1px solid var(--border2);border-radius:6px;font-size:13px;">
+              <option value="available">Disponible</option>
+              <option value="full">Complet</option>
+              <option value="vacation">En vacances</option>
+            </select>
+          </div>
+          <div style="font-size:10px;color:var(--text3);text-align:center;">Sauvegarde automatique</div>
+        </div>
+      </div>
+    </details>
     <!-- Theme + Language -->
     <div style="padding:14px;background:var(--surface2);border-radius:10px;margin-bottom:8px;">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
@@ -1837,115 +1897,10 @@ async function loadPDF() {
       </div>
     </div>
     <div style="display:flex;flex-direction:column;gap:10px;">
-      <button class="btn btnOutline" style="padding:12px;font-size:13px;" onclick="closeAccountModal();showPersonalProfileModal()">&#128100; Mon profil personnel</button>
-      <button class="btn btnOutline" style="padding:12px;font-size:13px;" onclick="closeAccountModal();showBillingProfileModal()">&#128179; Profil facturation</button>
-      <button class="btn btnOutline" style="padding:12px;font-size:13px;" onclick="closeAccountModal();showProfileModal()">&#127758; Mon profil annuaire</button>
       <button class="btn btnOutline" style="padding:12px;font-size:13px;" onclick="changePassword()">&#128274; Changer le mot de passe</button>
       <button class="btn btnOutline" style="padding:12px;font-size:13px;" onclick="changeEmail()">&#9993; Changer l'email</button>
       <button class="btn btnOutline" style="padding:12px;font-size:13px;" onclick="closeAccountModal();showRoleChangeModal()">&#128101; Changer de role</button>
       <button class="btn btnDanger" style="padding:12px;font-size:13px;margin-top:10px;" onclick="deleteAccount()">&#128465; Supprimer mon compte</button>
-    </div>
-  </div>
-</div>
-<div class="modal" id="profileModal" style="max-width:520px;">
-  <div class="modalHeader" style="display:flex;justify-content:space-between;align-items:center;">
-    <span>&#128100; Mon profil</span>
-    <button class="modalClose" onclick="closeProfileModal()">&times;</button>
-  </div>
-  <div class="modalBody">
-    <div style="padding:14px;background:var(--surface2);border-radius:10px;margin-bottom:12px;">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
-        <div>
-          <div style="font-size:13px;font-weight:600;">&#127758; Visible dans l'annuaire</div>
-          <div style="font-size:11px;color:var(--text3);">Les autres utilisateurs peuvent vous trouver</div>
-        </div>
-        <label style="position:relative;width:44px;height:24px;cursor:pointer;">
-          <input type="checkbox" id="mkVisibleToggle" onchange="toggleMarketplaceVisibility(this.checked)" style="opacity:0;width:0;height:0;">
-          <span style="position:absolute;inset:0;background:var(--border2);border-radius:12px;transition:0.3s;"></span>
-          <span style="position:absolute;top:2px;left:2px;width:20px;height:20px;background:#fff;border-radius:50%;transition:0.3s;"></span>
-        </label>
-      </div>
-      <div id="mkProfileFields" style="display:none;flex-direction:column;gap:10px;border-top:1px solid var(--border2);padding-top:12px;">
-        <label style="font-size:11px;color:var(--text3);text-transform:uppercase;">Nom affiche</label>
-        <input type="text" id="mkName" placeholder="Votre nom ou nom d'entreprise" onchange="autoSaveMarketplaceField()" style="width:100%;padding:8px 12px;background:#1a1a2e;color:#f0f0f5;border:1px solid var(--border2);border-radius:8px;font-size:13px;box-sizing:border-box;">
-        <div style="display:flex;gap:10px;">
-          <div style="flex:1;">
-            <label style="font-size:11px;color:var(--text3);text-transform:uppercase;display:block;margin-bottom:4px;">Ville</label>
-            <input type="text" id="mkCity" placeholder="Votre ville" onchange="autoSaveMarketplaceField()" style="width:100%;padding:8px 12px;background:#1a1a2e;color:#f0f0f5;border:1px solid var(--border2);border-radius:8px;font-size:13px;box-sizing:border-box;">
-          </div>
-          <div style="flex:1;">
-            <label style="font-size:11px;color:var(--text3);text-transform:uppercase;display:block;margin-bottom:4px;">Telephone</label>
-            <input type="tel" id="mkPhone" placeholder="06 12 34 56 78" onchange="autoSaveMarketplaceField()" style="width:100%;padding:8px 12px;background:#1a1a2e;color:#f0f0f5;border:1px solid var(--border2);border-radius:8px;font-size:13px;box-sizing:border-box;">
-          </div>
-        </div>
-        <label style="font-size:11px;color:var(--text3);text-transform:uppercase;">Description</label>
-        <textarea id="mkDescription" placeholder="Decrivez votre activite, vos specialites..." rows="3" onchange="autoSaveMarketplaceField()" style="width:100%;padding:10px;background:#1a1a2e;color:#f0f0f5;border:1px solid var(--border2);border-radius:8px;font-size:13px;font-family:'Inter',sans-serif;resize:vertical;box-sizing:border-box;"></textarea>
-        <label style="font-size:11px;color:var(--text3);text-transform:uppercase;">Services proposes</label>
-        <div style="display:flex;flex-wrap:wrap;gap:6px;" id="mkServicesCheckboxes">
-          <!-- Populated dynamically from SERVICE_CATALOG by renderMkServiceCheckboxes() -->
-        </div>
-        <div style="display:flex;gap:10px;">
-          <div style="flex:1;">
-            <label style="font-size:11px;color:var(--text3);text-transform:uppercase;display:block;margin-bottom:4px;">Annees d'experience</label>
-            <input type="number" id="mkExperienceYears" min="0" max="50" placeholder="0" onchange="autoSaveMarketplaceField()" style="width:100%;padding:8px 12px;background:#1a1a2e;color:#f0f0f5;border:1px solid var(--border2);border-radius:8px;font-size:13px;box-sizing:border-box;">
-          </div>
-          <div style="flex:1;">
-            <label style="font-size:11px;color:var(--text3);text-transform:uppercase;display:block;margin-bottom:4px;">Disponibilite</label>
-            <select id="mkAvailability" onchange="autoSaveMarketplaceField()" style="width:100%;padding:8px 12px;background:#1a1a2e;color:#f0f0f5;border:1px solid var(--border2);border-radius:8px;font-size:13px;box-sizing:border-box;">
-              <option value="available" style="background:#1a1a2e;color:#f0f0f5;">Disponible</option>
-              <option value="full" style="background:#1a1a2e;color:#f0f0f5;">Complet</option>
-              <option value="vacation" style="background:#1a1a2e;color:#f0f0f5;">En vacances</option>
-            </select>
-          </div>
-        </div>
-        <div style="font-size:10px;color:var(--text3);margin-top:4px;text-align:center;">Sauvegarde automatique</div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<div class="modal" id="personalProfileModal" style="max-width:460px;">
-  <div class="modalHeader" style="display:flex;justify-content:space-between;align-items:center;">
-    <span>&#128100; Mon profil personnel</span>
-    <button class="modalClose" onclick="closePersonalProfileModal()">&times;</button>
-  </div>
-  <div class="modalBody">
-    <div style="display:flex;flex-direction:column;gap:10px;">
-      <label style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;">Nom complet</label>
-      <input id="profileName" type="text" placeholder="Nom complet" style="padding:10px 12px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;">
-      <label style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;">Email (non modifiable)</label>
-      <input id="profileEmail" type="email" readonly style="padding:10px 12px;background:var(--surface2);color:var(--text3);border:1px solid var(--border2);border-radius:8px;font-size:14px;opacity:0.7;cursor:default;">
-      <label style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;">Telephone</label>
-      <input id="profilePhone" type="tel" placeholder="06 12 34 56 78" style="padding:10px 12px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;">
-      <label style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;">Adresse / Ville</label>
-      <input id="profileAddress" type="text" placeholder="Adresse / Ville" style="padding:10px 12px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;">
-      <button class="btn btnPrimary" style="padding:12px;font-size:13px;margin-top:8px;" onclick="saveProfile()">Enregistrer</button>
-    </div>
-  </div>
-</div>
-
-<div class="modal" id="billingProfileModal" style="max-width:460px;">
-  <div class="modalHeader" style="display:flex;justify-content:space-between;align-items:center;">
-    <span>&#128179; Profil facturation</span>
-    <button class="modalClose" onclick="closeBillingProfileModal()">&times;</button>
-  </div>
-  <div class="modalBody">
-    <div style="display:flex;flex-direction:column;gap:10px;">
-      <label style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;">Raison sociale</label>
-      <input id="billingCompany" type="text" placeholder="Raison sociale / Nom commercial" style="padding:10px 12px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;">
-      <label style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;">SIRET</label>
-      <input id="billingSiret" type="text" placeholder="14 chiffres" maxlength="14" style="padding:10px 12px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;">
-      <label style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;">N° TVA intracommunautaire (optionnel)</label>
-      <input id="billingVat" type="text" placeholder="FR12345678901" style="padding:10px 12px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;">
-      <label style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;">Adresse de facturation</label>
-      <input id="billingAddress" type="text" placeholder="Adresse complete" style="padding:10px 12px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;">
-      <label style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;">Regime TVA</label>
-      <select id="billingVatRegime" style="padding:10px 12px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;">
-        <option value="micro">Micro-entreprise (TVA non applicable, art. 293B du CGI)</option>
-        <option value="normal">Regime normal (TVA 20%)</option>
-        <option value="reduced">TVA reduite (10%)</option>
-      </select>
-      <button class="btn btnPrimary" style="padding:12px;font-size:13px;margin-top:8px;" onclick="saveBillingProfile()">Enregistrer</button>
     </div>
   </div>
 </div>
@@ -2338,6 +2293,7 @@ function getStatusLabel(s) { return (STATUS_CONFIG[s] || {}).label || s || ''; }
 // ── Splash Changelog (update this with each significant version) ──
 // Full versioned changelog — add new entries at TOP
 const VERSION_CHANGELOG = [
+  { v: '7.57', changes: ['Mon compte: 3 sections repliables integrees (personnel / facturation / annuaire)', 'Suppression des popups separees redondantes', 'Tout accessible depuis Mon compte'] },
   { v: '7.56', changes: ['Popups dediees: Mon profil personnel + Profil facturation', 'Boutons dans Mon compte a la place des formulaires inline', 'Style uniforme des croix de fermeture (transparent avec hover rouge)'] },
   { v: '7.55', changes: ['Bouton 👤 Profil retire du header', 'Deplace dans Mon compte (settings) comme premier bouton', 'Header epure'] },
   { v: '7.54', changes: ['Sections dashboard repliables: Prochaines prestations, Activite recente', 'Fleche animee au repli', 'Applique aux 3 modes (admin, proprio, prestataire)'] },
@@ -8215,9 +8171,7 @@ async function showAccountModal() {
   }
   // Load profile info
   const member = API.getMember();
-  const profileSection = document.getElementById('profileSection');
-  if (member && profileSection) {
-    profileSection.style.display = 'block';
+  if (member) {
     document.getElementById('profileName').value = member.display_name || '';
     document.getElementById('profileEmail').value = user.email || member.invited_email || '';
     document.getElementById('profilePhone').value = member.phone || '';
@@ -13684,7 +13638,12 @@ async function loadMarketplaceProfile() {
   }
 }
 
-// Marketplace profile is now loaded by showProfileModal() directly
+// Hook into showAccountModal to load marketplace profile
+const _origShowAccountModal = showAccountModal;
+showAccountModal = async function() {
+  await _origShowAccountModal();
+  loadMarketplaceProfile();
+};
 
 // ─── Service Requests ───
 async function showServiceRequestModal() {
