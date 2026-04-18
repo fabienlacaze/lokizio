@@ -1084,7 +1084,7 @@ async function loadPDF() {
 </script>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v7.57</div>
+<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v7.58</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -1094,7 +1094,7 @@ async function loadPDF() {
     <!-- Broom that sweeps -->
     <div id="splashBroom" style="position:absolute;top:50%;left:-60px;font-size:48px;transform:translateY(-50%) rotate(-30deg);opacity:0;transition:all 0.8s cubic-bezier(0.25,0.46,0.45,0.94);">✨</div>
   </div>
-  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v7.57</span></div>
+  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v7.58</span></div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie pour locations</div>
   <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou</div>
   <!-- Loading bar -->
@@ -2293,6 +2293,7 @@ function getStatusLabel(s) { return (STATUS_CONFIG[s] || {}).label || s || ''; }
 // ── Splash Changelog (update this with each significant version) ──
 // Full versioned changelog — add new entries at TOP
 const VERSION_CHANGELOG = [
+  { v: '7.58', changes: ['Prestations regroupees par mois avec groupe repliable', 'Clic sur Avril/Mai/etc. pour masquer/afficher le mois', 'Fleche animee par groupe'] },
   { v: '7.57', changes: ['Mon compte: 3 sections repliables integrees (personnel / facturation / annuaire)', 'Suppression des popups separees redondantes', 'Tout accessible depuis Mon compte'] },
   { v: '7.56', changes: ['Popups dediees: Mon profil personnel + Profil facturation', 'Boutons dans Mon compte a la place des formulaires inline', 'Style uniforme des croix de fermeture (transparent avec hover rouge)'] },
   { v: '7.55', changes: ['Bouton 👤 Profil retire du header', 'Deplace dans Mon compte (settings) comme premier bouton', 'Header epure'] },
@@ -14340,16 +14341,20 @@ async function loadAdminPrestations(forceReload) {
   const providers = props.length ? (props[0].providers || []) : [];
   let html = '';
   const months = ['Jan','Fev','Mar','Avr','Mai','Jun','Jul','Aou','Sep','Oct','Nov','Dec'];
+  const monthsFull = ['Janvier','Fevrier','Mars','Avril','Mai','Juin','Juillet','Aout','Septembre','Octobre','Novembre','Decembre'];
   const days = ['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'];
-  let lastDateGroup = '';
+  let lastMonthGroup = '';
   unified.forEach(u => {
-    // Date separator
-    if (u.date && u.date !== lastDateGroup) {
-      lastDateGroup = u.date;
-      const gd = new Date(u.date + 'T12:00:00');
-      const isGdToday = u.date === today;
-      const gdLabel = isGdToday ? 'Aujourd\'hui' : gd.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
-      html += '<div style="font-size:12px;font-weight:700;color:' + (isGdToday ? 'var(--accent)' : 'var(--text3)') + ';margin:12px 0 4px 4px;text-transform:capitalize;">' + gdLabel + '</div>';
+    // Month group separator (collapsible)
+    if (u.date) {
+      const monthKey = u.date.substring(0, 7); // YYYY-MM
+      if (monthKey !== lastMonthGroup) {
+        if (lastMonthGroup !== '') html += '</details>';
+        lastMonthGroup = monthKey;
+        const gd = new Date(u.date + 'T12:00:00');
+        const monthLabel = monthsFull[gd.getMonth()] + ' ' + gd.getFullYear();
+        html += '<details open style="margin-bottom:8px;"><summary style="list-style:none;cursor:pointer;display:flex;align-items:center;gap:8px;padding:10px 4px;font-size:13px;font-weight:700;color:var(--text2);text-transform:capitalize;border-bottom:1px solid var(--border);"><span class="collapseArrow">&#9662;</span>' + monthLabel + '</summary>';
+      }
     }
     const catObj = SERVICE_CATALOG.find(c => c.services.some(s => s.id === u.type));
     const cat = catObj ? catObj.cat : 'autre';
@@ -14468,6 +14473,7 @@ async function loadAdminPrestations(forceReload) {
     }
     html += '</div>'; // adminPrestCard
   });
+  if (lastMonthGroup !== '') html += '</details>'; // close last month group
   listEl.innerHTML = html;
   } catch(err) { console.error('loadAdminPrestations error:', err); showToast('Erreur chargement prestations: ' + (err.message || 'Probleme de connexion')); }
 }
