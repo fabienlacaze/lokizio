@@ -1130,7 +1130,7 @@ async function loadPDF() {
 </script>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v7.78</div>
+<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v7.79</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -1140,7 +1140,7 @@ async function loadPDF() {
     <!-- Broom that sweeps -->
     <div id="splashBroom" style="position:absolute;top:50%;left:-60px;font-size:48px;transform:translateY(-50%) rotate(-30deg);opacity:0;transition:all 0.8s cubic-bezier(0.25,0.46,0.45,0.94);">✨</div>
   </div>
-  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v7.78</span></div>
+  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v7.79</span></div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie pour locations</div>
   <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou</div>
   <!-- Loading bar -->
@@ -2414,6 +2414,7 @@ function getStatusLabel(s) { return (STATUS_CONFIG[s] || {}).label || s || ''; }
 // ── Splash Changelog (update this with each significant version) ──
 // Full versioned changelog — add new entries at TOP
 const VERSION_CHANGELOG = [
+  { v: '7.79', changes: ['Barre "Mon profil annuaire" (annuaire): items manquants en chips cliquables', 'Chaque chip ouvre Mon compte puis la popup annuaire'] },
   { v: '7.78', changes: ['Fix popups profil sombres: backdrop unique + background solide opaque sur la box'] },
   { v: '7.77', changes: ['Mode proprietaire: liste des prestations au meme style que le mode conciergerie', 'Bloc date a gauche, badge source (Airbnb/Booking), groupes par mois repliables'] },
   { v: '7.76', changes: ['Fix filtre annuaire "Conciergeries": inclut aussi les roles admin et manager'] },
@@ -13298,21 +13299,28 @@ async function renderAnnuaireTab() {
       if (myProf.experience_years) score++;
       const pct = Math.round((score / total) * 100);
       if (pct < 100) {
-        pHtml += '<div class="panel" style="margin-bottom:12px;padding:12px;">';
+        const barColor = pct >= 80 ? '#34d399' : pct >= 50 ? '#f59e0b' : '#e94560';
+        const missing = [];
+        if (!myProf.display_name) missing.push({ label: 'Nom affiche', icon: '&#128221;' });
+        if (!myProf.city) missing.push({ label: 'Ville', icon: '&#127961;' });
+        if (!myProf.phone) missing.push({ label: 'Telephone', icon: '&#128222;' });
+        if (!myProf.description) missing.push({ label: 'Description', icon: '&#128172;' });
+        if (!myProf.services || !myProf.services.length) missing.push({ label: 'Services', icon: '&#128736;' });
+        if (!myProf.experience_years) missing.push({ label: 'Experience', icon: '&#11088;' });
+        pHtml += '<div class="panel" style="margin-bottom:12px;padding:14px;border-left:3px solid ' + barColor + ';">';
         pHtml += '<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">';
         pHtml += '<div style="flex:1;font-size:13px;font-weight:600;color:var(--text);">Mon profil annuaire</div>';
-        pHtml += '<span style="font-size:12px;font-weight:700;color:' + (pct >= 80 ? '#34d399' : pct >= 50 ? '#f59e0b' : '#e94560') + ';">' + pct + '%</span>';
+        pHtml += '<span style="font-size:12px;font-weight:700;color:' + barColor + ';">' + pct + '%</span>';
         pHtml += '</div>';
-        pHtml += '<div style="height:6px;background:var(--surface2);border-radius:3px;overflow:hidden;margin-bottom:8px;">';
+        pHtml += '<div style="height:6px;background:var(--surface2);border-radius:3px;overflow:hidden;margin-bottom:12px;">';
         pHtml += '<div style="height:100%;width:' + pct + '%;background:linear-gradient(90deg,#6c63ff,#34d399);border-radius:3px;transition:width 0.3s;"></div>';
         pHtml += '</div>';
-        let missing = [];
-        if (!myProf.city) missing.push('ville');
-        if (!myProf.description) missing.push('description');
-        if (!myProf.phone) missing.push('telephone');
-        if (!myProf.services || !myProf.services.length) missing.push('services');
-        if (!myProf.experience_years) missing.push('experience');
-        pHtml += '<div style="font-size:11px;color:var(--text3);">Completez : ' + missing.join(', ') + ' <a href="#" onclick="event.preventDefault();showAccountModal()" style="color:var(--accent);text-decoration:underline;">Modifier</a></div>';
+        pHtml += '<div style="font-size:11px;color:var(--text3);margin-bottom:8px;">A completer :</div>';
+        pHtml += '<div style="display:flex;flex-wrap:wrap;gap:8px;">';
+        missing.forEach(m => {
+          pHtml += '<button onclick="showAccountModal();setTimeout(()=>openOverlayPopup(\'marketplaceProfileOverlay\'),150)" style="display:inline-flex;align-items:center;gap:6px;padding:7px 12px;background:rgba(108,99,255,0.12);color:var(--accent2);border:1px solid rgba(108,99,255,0.35);border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;transition:all 0.15s;" onmouseover="this.style.background=\'rgba(108,99,255,0.22)\'" onmouseout="this.style.background=\'rgba(108,99,255,0.12)\'">' + m.icon + ' ' + esc(m.label) + '</button>';
+        });
+        pHtml += '</div>';
         pHtml += '</div>';
       }
     }
