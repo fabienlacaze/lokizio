@@ -1122,7 +1122,7 @@ async function loadPDF() {
 </script>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v7.66</div>
+<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v7.67</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -1132,7 +1132,7 @@ async function loadPDF() {
     <!-- Broom that sweeps -->
     <div id="splashBroom" style="position:absolute;top:50%;left:-60px;font-size:48px;transform:translateY(-50%) rotate(-30deg);opacity:0;transition:all 0.8s cubic-bezier(0.25,0.46,0.45,0.94);">✨</div>
   </div>
-  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v7.66</span></div>
+  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v7.67</span></div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie pour locations</div>
   <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou</div>
   <!-- Loading bar -->
@@ -1899,20 +1899,47 @@ async function loadPDF() {
       <button class="modalClose" onclick="closeOverlayPopup('personalProfileOverlay')">&times;</button>
     </div>
     <div class="stackedOverlayBody">
-      <div style="display:flex;flex-direction:column;gap:10px;">
-        <label style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;">Nom complet</label>
-        <input id="profileName" type="text" placeholder="Nom complet" style="padding:10px 12px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;">
-        <label style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;">Email</label>
-        <input id="profileEmail" type="email" readonly style="padding:10px 12px;background:var(--surface2);color:var(--text3);border:1px solid var(--border2);border-radius:8px;font-size:14px;opacity:0.7;cursor:default;">
-        <label style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;">Telephone</label>
-        <input id="profilePhone" type="tel" placeholder="06 12 34 56 78" style="padding:10px 12px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;">
-        <label style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;">Adresse / Ville</label>
-        <input id="profileAddress" type="text" placeholder="Adresse / Ville" style="padding:10px 12px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;">
-        <button class="btn btnPrimary" style="padding:12px;font-size:13px;margin-top:8px;" onclick="saveProfile()">Enregistrer</button>
-        <div style="display:flex;flex-direction:column;gap:6px;margin-top:14px;padding-top:14px;border-top:1px solid var(--border2);">
-          <button class="btn btnOutline" style="padding:10px;font-size:12px;" onclick="changePassword()">&#128274; Changer le mot de passe</button>
-          <button class="btn btnOutline" style="padding:10px;font-size:12px;" onclick="changeEmail()">&#9993; Changer l'email</button>
-          <button class="btn btnOutline" style="padding:10px;font-size:12px;" onclick="showRoleChangeModal()">&#128101; Changer de role</button>
+      <!-- Infos editables -->
+      <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:16px;">
+        <div>
+          <label style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:4px;">Nom complet</label>
+          <input id="profileName" type="text" placeholder="Nom complet" style="width:100%;padding:10px 12px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;box-sizing:border-box;">
+        </div>
+        <div>
+          <label style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:4px;">Telephone</label>
+          <input id="profilePhone" type="tel" placeholder="06 12 34 56 78" style="width:100%;padding:10px 12px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;box-sizing:border-box;">
+        </div>
+        <div>
+          <label style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:4px;">Adresse / Ville</label>
+          <input id="profileAddress" type="text" placeholder="Adresse / Ville" style="width:100%;padding:10px 12px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;box-sizing:border-box;">
+        </div>
+        <button class="btn btnPrimary" style="padding:12px;font-size:13px;" onclick="saveProfile()">Enregistrer</button>
+      </div>
+
+      <!-- Securite (compact rows) -->
+      <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">Securite & compte</div>
+      <div style="background:var(--surface2);border-radius:10px;overflow:hidden;">
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 14px;border-bottom:1px solid var(--border);">
+          <div style="min-width:0;flex:1;">
+            <div style="font-size:12px;color:var(--text3);margin-bottom:2px;">Email</div>
+            <div id="profileEmailDisplay" style="font-size:13px;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></div>
+          </div>
+          <button class="btn btnSmall btnOutline" style="padding:5px 12px;font-size:11px;flex-shrink:0;" onclick="changeEmail()">Modifier</button>
+        </div>
+        <input id="profileEmail" type="email" readonly style="display:none;">
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 14px;border-bottom:1px solid var(--border);">
+          <div>
+            <div style="font-size:12px;color:var(--text3);margin-bottom:2px;">Mot de passe</div>
+            <div style="font-size:13px;color:var(--text);">&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;</div>
+          </div>
+          <button class="btn btnSmall btnOutline" style="padding:5px 12px;font-size:11px;" onclick="changePassword()">Modifier</button>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 14px;">
+          <div>
+            <div style="font-size:12px;color:var(--text3);margin-bottom:2px;">Role</div>
+            <div id="profileRoleDisplay" style="font-size:13px;color:var(--text);"></div>
+          </div>
+          <button class="btn btnSmall btnOutline" style="padding:5px 12px;font-size:11px;" onclick="showRoleChangeModal()">Changer</button>
         </div>
       </div>
     </div>
@@ -2376,6 +2403,7 @@ function getStatusLabel(s) { return (STATUS_CONFIG[s] || {}).label || s || ''; }
 // ── Splash Changelog (update this with each significant version) ──
 // Full versioned changelog — add new entries at TOP
 const VERSION_CHANGELOG = [
+  { v: '7.67', changes: ['Mon profil personnel simplifie: infos editables + carte Securite compacte', 'Email/Mot de passe/Role en lignes avec bouton Modifier (plus de gros boutons en bas)'] },
   { v: '7.66', changes: ['Fix z-index: "Changer email" et "Changer role" s\'affichent au-dessus de la popup profil (plus en arriere-plan)'] },
   { v: '7.65', changes: ['Popups superposees: clic sur un profil ouvre une popup par-dessus Mon compte', 'Mon compte reste visible derriere, fermer la popup revient dessus'] },
   { v: '7.64', changes: ['Raccourcis: section repliable dans un <details> comme les autres sections du dashboard'] },
@@ -8547,9 +8575,17 @@ async function openOverlayPopup(id) {
     const member = API.getMember();
     if (id === 'personalProfileOverlay' && member) {
       document.getElementById('profileName').value = member.display_name || '';
-      document.getElementById('profileEmail').value = (user && user.email) || member.invited_email || '';
+      const userEmail = (user && user.email) || member.invited_email || '';
+      document.getElementById('profileEmail').value = userEmail;
+      const emailDisp = document.getElementById('profileEmailDisplay');
+      if (emailDisp) emailDisp.textContent = userEmail || '—';
       document.getElementById('profilePhone').value = member.phone || '';
       document.getElementById('profileAddress').value = member.address || '';
+      const roleDisp = document.getElementById('profileRoleDisplay');
+      if (roleDisp) {
+        const roleLabels = { admin: 'Administrateur', manager: 'Conciergerie', owner: 'Proprietaire', provider: 'Prestataire' };
+        roleDisp.textContent = roleLabels[API.getRole()] || API.getRole() || '—';
+      }
     } else if (id === 'billingProfileOverlay' && member) {
       document.getElementById('billingCompany').value = member.company_name || '';
       document.getElementById('billingSiret').value = member.siret || '';
