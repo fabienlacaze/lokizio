@@ -1132,7 +1132,7 @@ async function loadPDF() {
 </script>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v7.80</div>
+<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v7.81</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -1142,7 +1142,7 @@ async function loadPDF() {
     <!-- Broom that sweeps -->
     <div id="splashBroom" style="position:absolute;top:50%;left:-60px;font-size:48px;transform:translateY(-50%) rotate(-30deg);opacity:0;transition:all 0.8s cubic-bezier(0.25,0.46,0.45,0.94);">✨</div>
   </div>
-  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v7.80</span></div>
+  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v7.81</span></div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie pour locations</div>
   <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou</div>
   <!-- Loading bar -->
@@ -2416,6 +2416,7 @@ function getStatusLabel(s) { return (STATUS_CONFIG[s] || {}).label || s || ''; }
 // ── Splash Changelog (update this with each significant version) ──
 // Full versioned changelog — add new entries at TOP
 const VERSION_CHANGELOG = [
+  { v: '7.81', changes: ['Chips de completion: ouvrent automatiquement le <details> parent', 'Scroll + highlight 1s sur le champ cible', 'Focus auto si input/textarea/select'] },
   { v: '7.80', changes: ['Fix popup profil sombre: overlay du backdrop reste derriere (z-index logique)', 'Nouvelle classe .msgAboveStacked quand msgModal s\'ouvre par-dessus une popup profil'] },
   { v: '7.79', changes: ['Barre "Mon profil annuaire" (annuaire): items manquants en chips cliquables', 'Chaque chip ouvre Mon compte puis la popup annuaire'] },
   { v: '7.78', changes: ['Fix popups profil sombres: backdrop unique + background solide opaque sur la box'] },
@@ -3293,34 +3294,40 @@ function recalcEstimate() {
 
 // Scroll to a property field and focus/highlight it
 function scrollToPropField(targetId, action) {
-  // If we need to open a collapsed section first
+  const el = document.getElementById(targetId);
+  if (!el) return;
+  // Open any ancestor <details> that is collapsed
+  let parent = el.parentElement;
+  while (parent) {
+    if (parent.tagName && parent.tagName.toLowerCase() === 'details' && !parent.open) {
+      parent.open = true;
+    }
+    parent = parent.parentElement;
+  }
+  // Legacy action hook (iCal section) - still supported
   if (action === 'openIcalSection') {
-    // Find the details element containing iCal section and open it
     document.querySelectorAll('details').forEach(d => {
       const s = d.querySelector('summary');
-      if (s && s.textContent.includes('calendriers')) d.open = true;
+      if (s && s.textContent.toLowerCase().includes('calendriers')) d.open = true;
     });
   }
   setTimeout(() => {
-    const el = document.getElementById(targetId);
-    if (!el) return;
     el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    // Highlight effect
+    // Highlight effect (1s)
     const prevOutline = el.style.outline;
     const prevTransition = el.style.transition;
     el.style.transition = 'outline 0.3s ease, box-shadow 0.3s ease';
     el.style.outline = '2px solid #6c63ff';
-    el.style.boxShadow = '0 0 0 4px rgba(108,99,255,0.2)';
+    el.style.boxShadow = '0 0 0 4px rgba(108,99,255,0.25)';
     setTimeout(() => {
       el.style.outline = prevOutline || '';
       el.style.boxShadow = '';
       el.style.transition = prevTransition || '';
-    }, 2000);
-    // Focus input if applicable
+    }, 1000);
     if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.tagName === 'SELECT') {
       try { el.focus(); } catch(e) {}
     }
-  }, 150);
+  }, 200);
 }
 
 // Render compact active services list + Add button
