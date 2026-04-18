@@ -1139,7 +1139,7 @@ async function loadPDF() {
 </script>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v8.07</div>
+<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v8.08</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -1149,7 +1149,7 @@ async function loadPDF() {
     <!-- Broom that sweeps -->
     <div id="splashBroom" style="position:absolute;top:50%;left:-60px;font-size:48px;transform:translateY(-50%) rotate(-30deg);opacity:0;transition:all 0.8s cubic-bezier(0.25,0.46,0.45,0.94);">✨</div>
   </div>
-  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v8.07</span></div>
+  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v8.08</span></div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie pour locations</div>
   <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou</div>
   <!-- Loading bar -->
@@ -2451,6 +2451,7 @@ function getStatusLabel(s) { return (STATUS_CONFIG[s] || {}).label || s || ''; }
 // ── Splash Changelog (update this with each significant version) ──
 // Full versioned changelog — add new entries at TOP
 const VERSION_CHANGELOG = [
+  { v: '8.08', changes: ['Bouton "Annuler" a cote du badge "En attente" pour retirer une demande de connexion'] },
   { v: '8.07', changes: ['Annuaire: refresh apres envoi d\'une demande (bouton devient En attente)', 'Rating moyen calcule depuis service_requests.rating_owner/concierge et sauve dans marketplace_profiles.rating', 'cleanings_done incremente automatiquement a chaque validation (admin)', 'SQL: add-rating-stats-columns.sql + RPC increment_cleanings_done'] },
   { v: '8.06', changes: ['Annuaire: note globale (etoiles + /5), anciennete dans l\'annuaire, nombre de prestations visibles sur chaque profil', 'Message "Aucun contact pour l\'instant" avec bouton vers recherche'] },
   { v: '8.05', changes: ['Dropdown Disponibilite retire du profil annuaire (gere par Mes conges)', 'Lien vers Mes conges dans la popup annuaire', 'Annuaire affiche automatiquement "En vacances" si periode active'] },
@@ -13522,6 +13523,22 @@ async function sendConnectionRequest(targetUserId, targetName, targetRole) {
   }
 }
 
+async function cancelConnectionRequest(targetUserId, targetName) {
+  try {
+    const ok = await customConfirm('Annuler votre demande de connexion' + (targetName ? ' a ' + targetName : '') + ' ?', 'Confirmation');
+    if (!ok) return;
+    const { data: { user } } = await sb.auth.getUser();
+    if (!user) return;
+    const { error } = await sb.from('connection_requests').delete()
+      .eq('sender_id', user.id)
+      .eq('receiver_id', targetUserId)
+      .eq('status', 'pending');
+    if (error) { showToast('Erreur: ' + safeErr(error, 'suppression impossible')); return; }
+    showToast('Demande annulee');
+    if (typeof renderAnnuaireTab === 'function') setTimeout(() => renderAnnuaireTab(), 200);
+  } catch(e) { console.error('cancelConnectionRequest:', e); showToast('Erreur'); }
+}
+
 async function loadConnectionRequests() {
   try {
     const { data: { user } } = await sb.auth.getUser();
@@ -13966,6 +13983,7 @@ async function renderAnnuaireResults(profiles) {
         html += '<button onclick="disconnectUser(\'' + _escHtml(p.user_id) + '\',\'' + _escHtml(p.display_name || '') + '\')" style="padding:6px 10px;background:none;color:var(--text3);border:1px solid var(--border2);border-radius:8px;font-size:10px;cursor:pointer;" title="Se deconnecter">Retirer</button>';
       } else if (isPending) {
         html += '<span style="margin-left:auto;padding:6px 14px;background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.3);border-radius:8px;font-size:11px;color:#f59e0b;font-weight:600;">&#9203; En attente</span>';
+        html += '<button onclick="cancelConnectionRequest(\'' + _escHtml(p.user_id) + '\',\'' + _escHtml(p.display_name || '') + '\')" style="padding:6px 10px;background:none;color:var(--text3);border:1px solid var(--border2);border-radius:8px;font-size:10px;cursor:pointer;" title="Annuler la demande">Annuler</button>';
       } else if (isPrem) {
         html += '<button onclick="sendConnectionRequest(\'' + _escHtml(p.user_id) + '\',\'' + _escHtml(p.display_name || '') + '\',\'' + _escHtml(p.role) + '\')" style="margin-left:auto;padding:6px 14px;background:linear-gradient(135deg,#6c63ff,#5a54e0);color:#fff;border:none;border-radius:8px;font-size:11px;font-weight:600;cursor:pointer;">&#128279; Se connecter</button>';
       } else {
