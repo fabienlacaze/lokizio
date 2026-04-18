@@ -637,10 +637,12 @@ async function loadPDF() {
     box-sizing: border-box;
   }
   /* Dim background via account overlay instead */
-  body.hasStackedOverlay #overlay { background: rgba(0,0,0,0.65) !important; }
-  /* When a stacked overlay is open, msgModal + overlay render above it */
-  body.hasStackedOverlay #msgModal { z-index: 6000 !important; }
-  body.hasStackedOverlay #overlay { backdrop-filter: none !important; background: rgba(0,0,0,0.5) !important; z-index: 5900 !important; pointer-events: none; }
+  /* When a stacked overlay is open:
+     - overlay (account backdrop) stays BEHIND the stacked popup (z-index 5000, popup 5500)
+     - When msgModal opens on top of stacked popup (via .msgAboveStacked), everything bumps up */
+  body.hasStackedOverlay #overlay { backdrop-filter: none !important; background: rgba(0,0,0,0.6) !important; pointer-events: none; }
+  body.msgAboveStacked #overlay { z-index: 5900 !important; pointer-events: auto !important; }
+  body.msgAboveStacked #msgModal { z-index: 6000 !important; }
   .stackedOverlay.visible { display: flex; }
   .stackedOverlayBox {
     background: #1a1a2e;
@@ -1130,7 +1132,7 @@ async function loadPDF() {
 </script>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v7.79</div>
+<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v7.80</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -1140,7 +1142,7 @@ async function loadPDF() {
     <!-- Broom that sweeps -->
     <div id="splashBroom" style="position:absolute;top:50%;left:-60px;font-size:48px;transform:translateY(-50%) rotate(-30deg);opacity:0;transition:all 0.8s cubic-bezier(0.25,0.46,0.45,0.94);">✨</div>
   </div>
-  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v7.79</span></div>
+  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v7.80</span></div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie pour locations</div>
   <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou</div>
   <!-- Loading bar -->
@@ -2414,6 +2416,7 @@ function getStatusLabel(s) { return (STATUS_CONFIG[s] || {}).label || s || ''; }
 // ── Splash Changelog (update this with each significant version) ──
 // Full versioned changelog — add new entries at TOP
 const VERSION_CHANGELOG = [
+  { v: '7.80', changes: ['Fix popup profil sombre: overlay du backdrop reste derriere (z-index logique)', 'Nouvelle classe .msgAboveStacked quand msgModal s\'ouvre par-dessus une popup profil'] },
   { v: '7.79', changes: ['Barre "Mon profil annuaire" (annuaire): items manquants en chips cliquables', 'Chaque chip ouvre Mon compte puis la popup annuaire'] },
   { v: '7.78', changes: ['Fix popups profil sombres: backdrop unique + background solide opaque sur la box'] },
   { v: '7.77', changes: ['Mode proprietaire: liste des prestations au meme style que le mode conciergerie', 'Bloc date a gauche, badge source (Airbnb/Booking), groupes par mois repliables'] },
@@ -12748,8 +12751,8 @@ function showToast(msg){
   setTimeout(()=>{t.style.transition='opacity 0.5s';t.style.opacity='0';},4200);
   setTimeout(()=>{t.style.display='none';t.style.opacity='1';t.style.transition='';},4800);
 }
-function showMsg(msg,hideOk){document.getElementById('msgBody').innerHTML=msg;document.getElementById('overlay').style.display='block';document.getElementById('msgModal').style.display='block';document.getElementById('msgModalBtns').style.display=hideOk?'none':'';}
-function closeMsg(){document.getElementById('overlay').style.display='none';document.getElementById('msgModal').style.display='none';document.getElementById('msgModalBtns').style.display='';}
+function showMsg(msg,hideOk){document.getElementById('msgBody').innerHTML=msg;document.getElementById('overlay').style.display='block';document.getElementById('msgModal').style.display='block';document.getElementById('msgModalBtns').style.display=hideOk?'none':'';if(document.body.classList.contains('hasStackedOverlay'))document.body.classList.add('msgAboveStacked');}
+function closeMsg(){document.getElementById('overlay').style.display='none';document.getElementById('msgModal').style.display='none';document.getElementById('msgModalBtns').style.display='';document.body.classList.remove('msgAboveStacked');}
 function showHelp(){document.getElementById('overlay').style.display='block';document.getElementById('helpModal').style.display='block';}
 
 async function requestJoinOrg(orgId, orgName) {
