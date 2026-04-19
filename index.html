@@ -1143,7 +1143,7 @@ async function loadPDF() {
 </script>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v8.72</div>
+<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v8.73</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -1153,7 +1153,7 @@ async function loadPDF() {
     <!-- Broom that sweeps -->
     <div id="splashBroom" style="position:absolute;top:50%;left:-60px;font-size:48px;transform:translateY(-50%) rotate(-30deg);opacity:0;transition:all 0.8s cubic-bezier(0.25,0.46,0.45,0.94);">✨</div>
   </div>
-  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v8.72</span></div>
+  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v8.73</span></div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie pour locations</div>
   <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou</div>
   <!-- Loading bar -->
@@ -2532,6 +2532,7 @@ function getStatusLabel(s) { return (STATUS_CONFIG[s] || {}).label || s || ''; }
 // ── Splash Changelog (update this with each significant version) ──
 // Full versioned changelog — add new entries at TOP
 const VERSION_CHANGELOG = [
+  { v: '8.73', changes: ['Fix critique: colonnes legacy month et total_amount rendues nullable (les factures ne bloquent plus)', 'Popup devis: wording adapte (ex "Creer un devis", "Lignes du devis", "Valide jusqu\'au" au lieu de "Echeance")', 'Audit complet projet: 4 Edge Functions Stripe manquantes, push notifs orpheline, devis 70%, roadmap mise a jour'] },
   { v: '8.72', changes: ['Fix critique: table invoices incomplete en DB - ajout des colonnes manquantes (client_name, invoice_number, type, issuer_*, items, totaux HT/TVA/TTC, periods, due_date, etc.)', 'Les creations de factures ne plantent plus avec "Could not find column"', 'ROADMAP.md cree avec idee role Locataire prioritaire'] },
   { v: '8.71', changes: ['Devis: nouvelle fonctionnalite dans Creer (toggle Facture/Devis pour les 3 roles)', 'Numerotation separee: DEV-AAAA-NNN pour devis, FAC-AAAA-NNN pour factures', 'Bouton "Convertir en facture" sur les devis (clone + marque devis accepte)', 'Badge violet "DEVIS" sur les cartes correspondantes', 'Clarification: concierge -> "Facture recue prestataire" (plus clair que "Facture prestataire")', 'DB: billing_settings etendu avec is_quote, quote_valid_until, quote_accepted_at, converted_from_quote_id'] },
   { v: '8.70', changes: ['Envoi facture email branche sur send-email existante (Resend)', 'Bouton Email sur chaque facture: popup destinataire + message, genere le HTML complet cote client', 'Facture auto-marquee "Envoyee" apres succes', 'Suppression de send-invoice-email (fonction redondante)'] },
@@ -7745,7 +7746,7 @@ async function showCreateInvoiceModal(type, isQuote) {
   // Header banner
   html += '<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:linear-gradient(135deg,' + typeColor + '22,' + typeColor + '11);border:1px solid ' + typeColor + '40;border-radius:10px;margin-bottom:14px;">';
   html += '<span style="font-size:24px;">' + typeIcon + '</span>';
-  html += '<div style="flex:1;"><div style="font-size:14px;font-weight:700;color:' + typeColor + ';">Creer une facture</div>';
+  html += '<div style="flex:1;"><div style="font-size:14px;font-weight:700;color:' + typeColor + ';">' + (isQuote ? 'Creer un devis' : 'Creer une facture') + '</div>';
   html += '<div style="font-size:11px;color:var(--text3);">' + typeLabel + ' · Numero genere automatiquement</div></div>';
   html += '</div>';
 
@@ -7775,7 +7776,7 @@ async function showCreateInvoiceModal(type, isQuote) {
   html += '<input id="invPeriodStart" type="date" style="width:100%;padding:8px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:12px;box-sizing:border-box;"></div>';
   html += '<div><label style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:4px;">Au</label>';
   html += '<input id="invPeriodEnd" type="date" style="width:100%;padding:8px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:12px;box-sizing:border-box;"></div>';
-  html += '<div><label style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:4px;">Echeance</label>';
+  html += '<div><label style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:4px;">' + (isQuote ? 'Valide jusqu\'au' : 'Echeance') + '</label>';
   html += '<input id="invDueDate" type="date" style="width:100%;padding:8px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:12px;box-sizing:border-box;"></div>';
   html += '</div>';
 
@@ -7783,7 +7784,7 @@ async function showCreateInvoiceModal(type, isQuote) {
   html += '<button class="btn btnSmall btnOutline" style="width:100%;padding:9px;font-size:12px;margin-bottom:12px;" onclick="autoFillInvoiceItems(\'' + type + '\')">&#9889; Auto-remplir depuis les prestations de la periode</button>';
 
   // Items table
-  html += '<div style="margin-bottom:10px;"><label style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:4px;">Lignes de facture</label>';
+  html += '<div style="margin-bottom:10px;"><label style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:4px;">' + (isQuote ? 'Lignes du devis' : 'Lignes de facture') + '</label>';
   html += '<div style="background:var(--surface2);border-radius:10px;padding:10px;border:1px solid var(--border);">';
   html += '<div style="display:grid;grid-template-columns:1fr 60px 80px 70px 26px;gap:6px;padding:0 2px 6px;border-bottom:1px solid var(--border);font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;">';
   html += '<div>Description</div><div style="text-align:center;">Qte</div><div style="text-align:right;">PU HT</div><div style="text-align:right;">Total</div><div></div>';
