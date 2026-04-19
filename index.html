@@ -1143,7 +1143,7 @@ async function loadPDF() {
 </script>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v8.73</div>
+<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v8.74</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -1153,7 +1153,7 @@ async function loadPDF() {
     <!-- Broom that sweeps -->
     <div id="splashBroom" style="position:absolute;top:50%;left:-60px;font-size:48px;transform:translateY(-50%) rotate(-30deg);opacity:0;transition:all 0.8s cubic-bezier(0.25,0.46,0.45,0.94);">✨</div>
   </div>
-  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v8.73</span></div>
+  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v8.74</span></div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie pour locations</div>
   <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou</div>
   <!-- Loading bar -->
@@ -2532,6 +2532,7 @@ function getStatusLabel(s) { return (STATUS_CONFIG[s] || {}).label || s || ''; }
 // ── Splash Changelog (update this with each significant version) ──
 // Full versioned changelog — add new entries at TOP
 const VERSION_CHANGELOG = [
+  { v: '8.74', changes: ['Edge Function ical-proxy creee (fix import Airbnb/Booking)', 'view.html: 3 alert() natifs remplaces par toast custom', 'Devis: champ "Valide jusqu\'au" sauvegarde dans quote_valid_until', 'Devis: boutons Accepter/Refuser sur les cartes (avec statuts accepted/refused + horodatage)', 'Statuts accepted (vert) et refused (rouge) ajoutes au mapping de couleurs'] },
   { v: '8.73', changes: ['Fix critique: colonnes legacy month et total_amount rendues nullable (les factures ne bloquent plus)', 'Popup devis: wording adapte (ex "Creer un devis", "Lignes du devis", "Valide jusqu\'au" au lieu de "Echeance")', 'Audit complet projet: 4 Edge Functions Stripe manquantes, push notifs orpheline, devis 70%, roadmap mise a jour'] },
   { v: '8.72', changes: ['Fix critique: table invoices incomplete en DB - ajout des colonnes manquantes (client_name, invoice_number, type, issuer_*, items, totaux HT/TVA/TTC, periods, due_date, etc.)', 'Les creations de factures ne plantent plus avec "Could not find column"', 'ROADMAP.md cree avec idee role Locataire prioritaire'] },
   { v: '8.71', changes: ['Devis: nouvelle fonctionnalite dans Creer (toggle Facture/Devis pour les 3 roles)', 'Numerotation separee: DEV-AAAA-NNN pour devis, FAC-AAAA-NNN pour factures', 'Bouton "Convertir en facture" sur les devis (clone + marque devis accepte)', 'Badge violet "DEVIS" sur les cartes correspondantes', 'Clarification: concierge -> "Facture recue prestataire" (plus clair que "Facture prestataire")', 'DB: billing_settings etendu avec is_quote, quote_valid_until, quote_accepted_at, converted_from_quote_id'] },
@@ -8058,7 +8059,6 @@ async function saveInvoice(status, type, isQuote) {
     type: type,
     status: status,
     is_quote: isQuote,
-    quote_valid_until: isQuote ? new Date(Date.now() + 30 * 86400000).toISOString().split('T')[0] : null,
     issuer_name: member?.company_name || member?.display_name || '',
     issuer_siret: member?.siret || '',
     issuer_address: member?.billing_address || member?.address || '',
@@ -8079,7 +8079,8 @@ async function saveInvoice(status, type, isQuote) {
     period_start: document.getElementById('invPeriodStart')?.value || null,
     period_end: document.getElementById('invPeriodEnd')?.value || null,
     notes: document.getElementById('invNotes')?.value?.trim() || '',
-    due_date: document.getElementById('invDueDate')?.value || new Date(Date.now() + 30 * 86400000).toISOString().split('T')[0]
+    due_date: isQuote ? null : (document.getElementById('invDueDate')?.value || new Date(Date.now() + 30 * 86400000).toISOString().split('T')[0]),
+    quote_valid_until: isQuote ? (document.getElementById('invDueDate')?.value || new Date(Date.now() + 30 * 86400000).toISOString().split('T')[0]) : null,
   };
 
   // Try insert — retry by dropping unknown columns if schema doesn't have them
@@ -8103,6 +8104,24 @@ async function saveInvoice(status, type, isQuote) {
   closeMsg();
   const label = isQuote ? 'Devis' : 'Facture';
   showToast(status === 'draft' ? 'Brouillon sauvegarde' : label + ' ' + invoiceNumber + ' cree !');
+  loadInvoices();
+}
+
+async function acceptQuote(id) {
+  const ok = await customConfirm('Marquer ce devis comme accepte par le client ?', 'Accepter');
+  if (!ok) return;
+  const { error } = await sb.from('invoices').update({ status: 'accepted', quote_accepted_at: new Date().toISOString() }).eq('id', id);
+  if (error) { showToast('Erreur: ' + error.message); return; }
+  showToast('Devis marque accepte');
+  loadInvoices();
+}
+
+async function refuseQuote(id) {
+  const ok = await customConfirm('Marquer ce devis comme refuse par le client ?', 'Refuser');
+  if (!ok) return;
+  const { error } = await sb.from('invoices').update({ status: 'refused', quote_refused_at: new Date().toISOString() }).eq('id', id);
+  if (error) { showToast('Erreur: ' + error.message); return; }
+  showToast('Devis marque refuse');
   loadInvoices();
 }
 
@@ -9720,8 +9739,8 @@ function renderInvoicesView() {
 }
 
 function _renderInvoiceCard(inv, today) {
-  const statusColors = { draft: '#888', sent: '#6c63ff', paid: '#34d399', overdue: '#e94560' };
-  const statusLabels = { draft: 'Brouillon', sent: 'Envoyee', paid: 'Payee' };
+  const statusColors = { draft: '#888', sent: '#6c63ff', paid: '#34d399', overdue: '#e94560', accepted: '#34d399', refused: '#ef4444' };
+  const statusLabels = { draft: 'Brouillon', sent: 'Envoyee', paid: 'Payee', accepted: 'Accepte', refused: 'Refuse' };
   const isOverdue = inv.status === 'sent' && inv.due_date && inv.due_date < today;
   const displayStatus = isOverdue ? 'overdue' : inv.status;
   const color = statusColors[displayStatus] || '#888';
@@ -9789,7 +9808,15 @@ function _renderInvoiceCard(inv, today) {
   html += '<button class="btn btnSmall btnOutline" style="padding:4px 8px;font-size:11px;" onclick="downloadInvoicePDF(\'' + inv.id + '\')">&#128196; PDF</button>';
   html += '<button class="btn btnSmall btnOutline" style="padding:4px 8px;font-size:11px;" onclick="sendInvoiceByEmail(\'' + inv.id + '\')" title="Envoyer par email">&#128231; Email</button>';
   html += '<button class="btn btnSmall btnOutline" style="padding:4px 8px;font-size:11px;" onclick="duplicateInvoice(\'' + inv.id + '\')" title="Dupliquer">&#128203; Dupliquer</button>';
-  if (inv.is_quote) html += '<button class="btn btnSmall" style="padding:4px 8px;font-size:11px;background:#34d399;color:#fff;" onclick="convertQuoteToInvoice(\'' + inv.id + '\')" title="Convertir ce devis en facture">&#10132; Convertir en facture</button>';
+  if (inv.is_quote) {
+    if (inv.status !== 'accepted' && inv.status !== 'refused') {
+      html += '<button class="btn btnSmall" style="padding:4px 8px;font-size:11px;background:#34d399;color:#fff;" onclick="acceptQuote(\'' + inv.id + '\')" title="Marquer comme accepte">&#10003; Accepter</button>';
+      html += '<button class="btn btnSmall" style="padding:4px 8px;font-size:11px;background:#ef4444;color:#fff;" onclick="refuseQuote(\'' + inv.id + '\')" title="Marquer comme refuse">&#10007; Refuser</button>';
+    }
+    if (inv.status !== 'refused') {
+      html += '<button class="btn btnSmall" style="padding:4px 8px;font-size:11px;background:#6c63ff;color:#fff;" onclick="convertQuoteToInvoice(\'' + inv.id + '\')" title="Convertir ce devis en facture">&#10132; Convertir en facture</button>';
+    }
+  }
   if (inv.status === 'draft') html += '<button class="btn btnSmall" style="padding:4px 8px;font-size:11px;background:#6c63ff;color:#fff;" onclick="updateInvoiceStatus(\'' + inv.id + '\',\'sent\')">Envoyer</button>';
   if (inv.status === 'sent') html += '<button class="btn btnSmall btnSuccess" style="padding:4px 8px;font-size:11px;" onclick="updateInvoiceStatus(\'' + inv.id + '\',\'paid\')">&#9989; Marquer payee</button>';
   if (isOverdue) html += '<button class="btn btnSmall" style="padding:4px 8px;font-size:11px;background:#f59e0b;color:#fff;" onclick="sendInvoiceReminder(\'' + inv.id + '\')">&#128276; Relancer</button>';
@@ -9927,8 +9954,8 @@ async function showInvoiceFullView(id) {
   try {
     const { data: inv } = await sb.from('invoices').select('*').eq('id', id).single();
     if (!inv) { showToast('Facture introuvable'); return; }
-    const statusColors = { draft: '#888', sent: '#6c63ff', paid: '#34d399', overdue: '#e94560' };
-    const statusLabels = { draft: 'Brouillon', sent: 'Envoyee', paid: 'Payee' };
+    const statusColors = { draft: '#888', sent: '#6c63ff', paid: '#34d399', overdue: '#e94560', accepted: '#34d399', refused: '#ef4444' };
+    const statusLabels = { draft: 'Brouillon', sent: 'Envoyee', paid: 'Payee', accepted: 'Accepte', refused: 'Refuse' };
     const isOverdue = inv.status === 'sent' && inv.due_date && inv.due_date < new Date().toISOString().split('T')[0];
     const color = statusColors[isOverdue ? 'overdue' : inv.status] || '#888';
     const label = isOverdue ? 'En retard' : (statusLabels[inv.status] || inv.status);
@@ -10012,8 +10039,8 @@ async function showInvoiceDetail(id) {
     const { data: inv } = await sb.from('invoices').select('*').eq('id', id).single();
     if (!inv) { showToast('Facture introuvable'); return; }
 
-    const statusColors = { draft: '#888', sent: '#6c63ff', paid: '#34d399', overdue: '#e94560' };
-    const statusLabels = { draft: 'Brouillon', sent: 'Envoyee', paid: 'Payee' };
+    const statusColors = { draft: '#888', sent: '#6c63ff', paid: '#34d399', overdue: '#e94560', accepted: '#34d399', refused: '#ef4444' };
+    const statusLabels = { draft: 'Brouillon', sent: 'Envoyee', paid: 'Payee', accepted: 'Accepte', refused: 'Refuse' };
     const isOverdue = inv.status === 'sent' && inv.due_date && inv.due_date < new Date().toISOString().split('T')[0];
     const color = statusColors[isOverdue ? 'overdue' : inv.status] || '#888';
     const label = isOverdue ? 'En retard' : (statusLabels[inv.status] || inv.status);
