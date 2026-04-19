@@ -4,77 +4,73 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Politique de confidentialité - Lokizio</title>
-<style>
-  body { font-family: 'Inter', Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 40px 20px; color: #333; line-height: 1.8; background: #fafafa; }
-  h1 { color: #1a1a2e; border-bottom: 3px solid #e94560; padding-bottom: 12px; }
-  h2 { color: #1a1a2e; margin-top: 32px; }
-  .date { color: #666; font-size: 14px; }
-  a { color: #6c63ff; }
-</style>
+<link rel="stylesheet" href="legal.css">
 </head>
 <body>
+<div class="legalPage">
+<nav class="legalNav"><a href="index.html">&larr; Retour à l'app</a> &middot; <a href="mentions.html">Mentions légales</a> &middot; <a href="cgu.html">CGU</a> &middot; <a href="cgv.html">CGV</a></nav>
 <h1>Politique de confidentialité</h1>
-<p class="date">Dernière mise à jour : 18 avril 2026</p>
+<p class="date">Dernière mise à jour : 19 avril 2026 &middot; Version 2.0</p>
 
-<h2>1. Introduction</h2>
-<p>Lokizio ("l'Application") est éditée par Fabidou. Cette politique de confidentialité décrit comment nous collectons, utilisons et protégeons vos données personnelles.</p>
+<h2>1. Qui sommes-nous ?</h2>
+<p><strong>Lokizio</strong> (ci-après "l'Application") est édité par <strong>[À COMPLÉTER — Nom complet ou raison sociale]</strong>, <strong>[À COMPLÉTER — statut juridique]</strong>, immatriculé au <strong>[À COMPLÉTER — RCS/SIRET]</strong>, dont le siège social est situé <strong>[À COMPLÉTER — adresse]</strong>.</p>
+<p>Contact RGPD : <strong>[À COMPLÉTER — email, ex. rgpd@lokizio.com]</strong></p>
 
-<h2>2. Données collectées</h2>
-<p>Nous collectons uniquement les données nécessaires au fonctionnement de l'Application :</p>
+<h2>2. Responsable du traitement</h2>
+<p>Le responsable du traitement des données personnelles est l'éditeur ci-dessus.</p>
+
+<h2>3. Données collectées et finalités</h2>
+<table>
+  <thead><tr><th>Donnée</th><th>Finalité</th><th>Base légale</th><th>Durée</th></tr></thead>
+  <tbody>
+    <tr><td>Email, mot de passe (chiffré)</td><td>Authentification, création du compte</td><td>Exécution du contrat (art. 6.1.b RGPD)</td><td>Durée du compte + 1 an</td></tr>
+    <tr><td>Nom, téléphone, adresse</td><td>Facturation, identification</td><td>Exécution du contrat</td><td>Durée du compte + 10 ans (obligation comptable)</td></tr>
+    <tr><td>SIRET, TVA</td><td>Facturation professionnelle</td><td>Obligation légale (art. 6.1.c RGPD)</td><td>10 ans</td></tr>
+    <tr><td>Données de prestations, factures, devis</td><td>Gestion de la conciergerie</td><td>Exécution du contrat</td><td>10 ans (obligation comptable)</td></tr>
+    <tr><td>Géolocalisation (optionnelle)</td><td>Affichage sur l'annuaire</td><td>Consentement (art. 6.1.a RGPD)</td><td>Jusqu'au retrait du consentement</td></tr>
+    <tr><td>Photos, documents</td><td>Preuve de prestation, QC</td><td>Exécution du contrat</td><td>Durée du compte + 3 ans</td></tr>
+    <tr><td>Cookies techniques</td><td>Fonctionnement de l'app (session)</td><td>Intérêt légitime</td><td>Session uniquement</td></tr>
+  </tbody>
+</table>
+
+<h2>4. Hébergement et sous-traitants</h2>
 <ul>
-  <li><strong>Email</strong> : pour la création de compte et l'authentification</li>
-  <li><strong>Données de planning</strong> : URLs de calendriers iCal (Airbnb, Booking), noms et numéros de téléphone des prestataires de ménage, plannings générés</li>
-  <li><strong>Données de paiement</strong> : gérées exclusivement par Stripe. Nous ne stockons aucune information bancaire.</li>
+  <li><strong>Hébergement données</strong> : Supabase (Frankfurt, Allemagne – UE) – conforme RGPD</li>
+  <li><strong>Hébergement app</strong> : GitHub Pages (Microsoft, US – certifié Data Privacy Framework)</li>
+  <li><strong>Envoi d'emails</strong> : Resend (US – certifié Data Privacy Framework)</li>
+  <li><strong>Paiements</strong> : Stripe (IE – conforme RGPD, PCI-DSS) — activé uniquement pour le plan Premium</li>
 </ul>
 
-<h2>3. Utilisation des données</h2>
-<p>Vos données sont utilisées exclusivement pour :</p>
+<h2>5. Vos droits (RGPD)</h2>
+<p>Conformément aux articles 15 à 22 du RGPD, vous disposez des droits suivants :</p>
 <ul>
-  <li>Gérer votre compte et vous authentifier</li>
-  <li>Générer et sauvegarder vos plannings de ménage</li>
-  <li>Permettre la communication avec vos prestataires via WhatsApp</li>
-  <li>Traiter les paiements d'abonnement Premium via Stripe</li>
+  <li><strong>Accès</strong> : consulter les données vous concernant</li>
+  <li><strong>Rectification</strong> : corriger vos données directement dans l'app ou par email</li>
+  <li><strong>Effacement</strong> ("droit à l'oubli") : supprimer votre compte via <em>Mon compte → Supprimer mon compte</em></li>
+  <li><strong>Portabilité</strong> : exporter vos données au format JSON via <em>Mon compte → Exporter mes données</em></li>
+  <li><strong>Limitation</strong> : demander la limitation du traitement</li>
+  <li><strong>Opposition</strong> : vous opposer au traitement pour motif légitime</li>
+  <li><strong>Retrait du consentement</strong> : à tout moment, sans affecter la licéité du traitement antérieur</li>
+</ul>
+<p>Pour exercer ces droits : <strong>[À COMPLÉTER — email RGPD]</strong>. Réponse sous 1 mois maximum.</p>
+<p>Recours CNIL : <a href="https://www.cnil.fr/fr/plaintes" target="_blank">cnil.fr/fr/plaintes</a></p>
+
+<h2>6. Sécurité</h2>
+<ul>
+  <li>Mot de passe : hashage <code>bcrypt</code> par Supabase Auth</li>
+  <li>Transit : chiffrement TLS 1.3</li>
+  <li>Accès restreint : RLS (Row Level Security) au niveau base de données</li>
+  <li>CSP (Content Security Policy) pour prévenir les attaques XSS</li>
 </ul>
 
-<h2>4. Stockage et sécurité</h2>
-<p>Vos données sont stockées sur les serveurs de Supabase (hébergé par AWS, région EU Frankfurt). L'authentification utilise le chiffrement bcrypt. Toutes les communications sont chiffrées via HTTPS/TLS.</p>
+<h2>7. Cookies</h2>
+<p>L'Application utilise uniquement des <strong>cookies techniques</strong> indispensables au fonctionnement (session d'authentification). Aucun cookie publicitaire ou de tracking tiers n'est déposé. Aucun consentement préalable requis (CNIL 2020).</p>
 
-<h2>5. Partage des données</h2>
-<p><strong>Nous ne vendons, ne louons et ne partageons jamais vos données personnelles avec des tiers.</strong></p>
-<p>Les services techniques suivants sont utilisés uniquement pour le fonctionnement de l'Application. Ils n'ont pas accès à vos données personnelles en dehors de leur rôle technique :</p>
-<ul>
-  <li><strong>Supabase</strong> : hébergement technique de la base de données (vos données restent chiffrées et ne sont pas exploitées par Supabase)</li>
-  <li><strong>Stripe</strong> : traitement sécurisé des paiements (nous ne stockons aucune donnée bancaire)</li>
-  <li><strong>Google AdSense</strong> : affichage de publicités anonymes dans la version gratuite (aucune donnée personnelle n'est transmise à Google par notre Application)</li>
-</ul>
+<h2>8. Transferts hors UE</h2>
+<p>Certains prestataires (GitHub, Resend, Stripe) sont situés aux États-Unis. Ils sont certifiés au <em>EU-US Data Privacy Framework</em>, garantissant un niveau de protection équivalent à l'UE.</p>
 
-<h2>6. Publicités</h2>
-<p>La version gratuite de l'Application affiche des publicités fournies par Google AdSense. Google peut collecter des données anonymisées pour personnaliser les annonces. Les utilisateurs Premium ne voient aucune publicité.</p>
-
-<h2>7. Vos droits (RGPD)</h2>
-<p>Conformément au Règlement Général sur la Protection des Données (RGPD), vous disposez des droits suivants :</p>
-<ul>
-  <li><strong>Accès</strong> : consulter vos données personnelles</li>
-  <li><strong>Rectification</strong> : modifier vos données inexactes</li>
-  <li><strong>Suppression</strong> : demander l'effacement de vos données</li>
-  <li><strong>Portabilité</strong> : exporter vos données (format CSV disponible dans l'app)</li>
-  <li><strong>Opposition</strong> : vous opposer au traitement de vos données</li>
-</ul>
-<p>Pour exercer ces droits, contactez-nous à : <a href="mailto:lokizio.service@outlook.com">lokizio.service@outlook.com</a></p>
-
-<h2>8. Cookies et stockage local</h2>
-<p>L'Application utilise le stockage local (localStorage) du navigateur pour sauvegarder vos préférences (langue, thème) et mettre en cache vos données pour un accès hors-ligne. Aucun cookie de suivi n'est utilisé par l'Application elle-même.</p>
-
-<h2>9. Conservation des données</h2>
-<p>Vos données sont conservées tant que votre compte est actif. En cas de suppression de compte, toutes vos données sont effacées sous 30 jours.</p>
-
-<h2>10. Modifications</h2>
-<p>Nous nous réservons le droit de modifier cette politique. Les utilisateurs seront informés de tout changement significatif.</p>
-
-<h2>11. Contact</h2>
-<p>Pour toute question relative à cette politique :<br>
-Email : <a href="mailto:lokizio.service@outlook.com">lokizio.service@outlook.com</a><br>
-Éditeur : Fabidou<br>
-Pays : France</p>
+<h2>9. Modifications</h2>
+<p>Cette politique peut être modifiée. En cas de modification substantielle, vous serez notifié par email.</p>
+</div>
 </body>
 </html>

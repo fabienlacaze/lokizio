@@ -1143,7 +1143,7 @@ async function loadPDF() {
 </script>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v8.75</div>
+<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v8.76</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -1153,7 +1153,7 @@ async function loadPDF() {
     <!-- Broom that sweeps -->
     <div id="splashBroom" style="position:absolute;top:50%;left:-60px;font-size:48px;transform:translateY(-50%) rotate(-30deg);opacity:0;transition:all 0.8s cubic-bezier(0.25,0.46,0.45,0.94);">✨</div>
   </div>
-  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v8.75</span></div>
+  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v8.76</span></div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie pour locations</div>
   <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou</div>
   <!-- Loading bar -->
@@ -1236,6 +1236,9 @@ async function loadPDF() {
     <div id="rememberMeRow" style="display:flex;align-items:center;gap:8px;margin-top:12px;">
       <input type="checkbox" id="rememberMe" style="width:16px;height:16px;accent-color:var(--accent);" checked>
       <label for="rememberMe" style="font-size:12px;color:var(--text3);cursor:pointer;" data-i18n="auth.remember">Se souvenir de moi</label>
+    </div>
+    <div id="authRgpdCheck" style="display:none;margin-top:10px;font-size:11px;color:var(--text3);line-height:1.5;">
+      <label style="display:flex;align-items:flex-start;gap:8px;cursor:pointer;"><input type="checkbox" id="authRgpdAccept" style="margin-top:2px;flex-shrink:0;"><span>J'accepte les <a href="cgu.html" target="_blank" style="color:var(--accent2);">CGU</a>, les <a href="cgv.html" target="_blank" style="color:var(--accent2);">CGV</a> et la <a href="privacy.html" target="_blank" style="color:var(--accent2);">politique de confidentialité</a>. Mes données sont traitées conformément au RGPD.</span></label>
     </div>
     <button id="authSubmitBtn" onclick="authSubmit()" data-i18n="auth.login.btn" style="width:100%;padding:12px;background:linear-gradient(135deg,#e94560,#c73e54);color:#fff;border:none;font-size:14px;font-weight:600;cursor:pointer;border-radius:8px;margin-top:12px;">Se connecter</button>
     <div id="forgotPassLink" style="text-align:center;margin-top:10px;"><a href="#" onclick="forgotPassword();return false;" style="color:var(--accent2);font-size:12px;text-decoration:none;" data-i18n="auth.forgot">Mot de passe oublie ?</a></div>
@@ -1850,12 +1853,18 @@ async function loadPDF() {
 <div id="appFooter" translate="no" style="position:fixed;bottom:0;left:0;right:0;text-align:center;padding:4px 16px 2px;color:var(--text3);font-size:9px;line-height:1.4;background:linear-gradient(180deg,#0f0f1a 0%,#0a0a14 100%);z-index:101;">
   <div style="font-weight:600;color:var(--text2);margin-bottom:4px;">Lokizio</div>
   <div>Made with ❤️ by <a href="https://github.com/fabienlacaze" target="_blank" style="color:var(--accent2);text-decoration:none;">Fabidou</a></div>
-  <div style="margin-top:4px;">
-    <a href="privacy.html" target="_blank" style="color:var(--text3);text-decoration:none;margin:0 8px;">Confidentialite</a>
+  <div style="margin-top:4px;display:flex;flex-wrap:wrap;justify-content:center;gap:2px 6px;align-items:center;">
+    <a href="mentions.html" target="_blank" style="color:var(--text3);text-decoration:none;padding:0 4px;">Mentions</a>
     <span>•</span>
-    <a href="mailto:lokizio.service@outlook.com" style="color:var(--text3);text-decoration:none;margin:0 8px;">Contact</a>
+    <a href="cgu.html" target="_blank" style="color:var(--text3);text-decoration:none;padding:0 4px;">CGU</a>
     <span>•</span>
-    <a href="#" id="footerPremiumLink" onclick="showPremiumModal();return false;" style="color:var(--accent2);text-decoration:none;margin:0 8px;">Premium</a>
+    <a href="cgv.html" target="_blank" style="color:var(--text3);text-decoration:none;padding:0 4px;">CGV</a>
+    <span>•</span>
+    <a href="privacy.html" target="_blank" style="color:var(--text3);text-decoration:none;padding:0 4px;">Confidentialite</a>
+    <span>•</span>
+    <a href="mailto:lokizio.service@outlook.com" style="color:var(--text3);text-decoration:none;padding:0 4px;">Contact</a>
+    <span>•</span>
+    <a href="#" id="footerPremiumLink" onclick="showPremiumModal();return false;" style="color:var(--accent2);text-decoration:none;padding:0 4px;">Premium</a>
   </div>
 </div>
 
@@ -1981,7 +1990,8 @@ async function loadPDF() {
       </div>
     </div>
     <div style="display:flex;flex-direction:column;gap:10px;">
-      <button class="btn btnDanger" style="padding:12px;font-size:13px;margin-top:10px;" onclick="deleteAccount()">&#128465; Supprimer mon compte</button>
+      <button class="btn btnOutline" style="padding:12px;font-size:13px;margin-top:10px;" onclick="exportMyData()" title="Droit a la portabilite RGPD">&#128229; Exporter mes donnees (RGPD)</button>
+      <button class="btn btnDanger" style="padding:12px;font-size:13px;" onclick="deleteAccount()">&#128465; Supprimer mon compte</button>
     </div>
   </div>
 </div>
@@ -2555,6 +2565,7 @@ function getStatusLabel(s) { return (STATUS_CONFIG[s] || {}).label || s || ''; }
 // ── Splash Changelog (update this with each significant version) ──
 // Full versioned changelog — add new entries at TOP
 const VERSION_CHANGELOG = [
+  { v: '8.76', changes: ['Legal: 4 pages creees (Mentions legales, CGU, CGV, Privacy v2 RGPD complete) avec placeholders a completer', 'CSS partage legal.css (light+dark)', 'Inscription: case de consentement RGPD/CGU obligatoire', 'Mon compte: bouton "Exporter mes donnees" RGPD art.20 (JSON complet)', 'Footer: liens Mentions / CGU / CGV / Confidentialite', 'ROADMAP etendue avec section legale complete'] },
   { v: '8.75', changes: ['Devis: onglet dedie au meme niveau que Revenus/Factures/Tarifs (concierge)', 'Plus de toggle Facture/Devis dans Creer (choix direct via l\'onglet)', 'KPIs devis (Total, En attente, Acceptes, CA potentiel)', 'Factures et devis bien separes dans leurs onglets respectifs'] },
   { v: '8.74', changes: ['Edge Function ical-proxy creee (fix import Airbnb/Booking)', 'view.html: 3 alert() natifs remplaces par toast custom', 'Devis: champ "Valide jusqu\'au" sauvegarde dans quote_valid_until', 'Devis: boutons Accepter/Refuser sur les cartes (avec statuts accepted/refused + horodatage)', 'Statuts accepted (vert) et refused (rouge) ajoutes au mapping de couleurs'] },
   { v: '8.73', changes: ['Fix critique: colonnes legacy month et total_amount rendues nullable (les factures ne bloquent plus)', 'Popup devis: wording adapte (ex "Creer un devis", "Lignes du devis", "Valide jusqu\'au" au lieu de "Echeance")', 'Audit complet projet: 4 Edge Functions Stripe manquantes, push notifs orpheline, devis 70%, roadmap mise a jour'] },
@@ -7506,21 +7517,31 @@ function switchAuthTab(mode) {
   const tabRegister = document.getElementById('tabRegister');
   const confirmWrap = document.getElementById('authConfirmWrap');
   const submitBtn = document.getElementById('authSubmitBtn');
+  const rgpdCheck = document.getElementById('authRgpdCheck');
   if (mode === 'login') {
     tabLogin.style.background = 'linear-gradient(135deg,#e94560,#c73e54)'; tabLogin.style.color = '#fff';
     tabRegister.style.background = 'var(--surface2)'; tabRegister.style.color = 'var(--text3)';
     confirmWrap.style.display = 'none';
+    if (rgpdCheck) rgpdCheck.style.display = 'none';
     submitBtn.textContent = t('auth.login.btn');
   } else {
     tabRegister.style.background = 'linear-gradient(135deg,#6c63ff,#5a52d5)'; tabRegister.style.color = '#fff';
     tabLogin.style.background = 'var(--surface2)'; tabLogin.style.color = 'var(--text3)';
     confirmWrap.style.display = 'block';
+    if (rgpdCheck) rgpdCheck.style.display = 'block';
     submitBtn.textContent = t('auth.register.btn');
   }
 }
 async function authSubmit() {
-  if (authMode === 'login') await authLogin();
-  else await authRegister();
+  if (authMode === 'login') { await authLogin(); return; }
+  // Register: enforce RGPD consent
+  const rgpd = document.getElementById('authRgpdAccept');
+  if (!rgpd || !rgpd.checked) {
+    const errEl = document.getElementById('authError');
+    if (errEl) { errEl.textContent = 'Veuillez accepter les CGU et la politique de confidentialite pour creer un compte.'; errEl.style.color = '#e94560'; }
+    return;
+  }
+  await authRegister();
 }
 async function checkAuth() {
   try {
@@ -10673,6 +10694,39 @@ async function runGlobalSearch(q) {
     h += '</div>';
   }
   out.innerHTML = h;
+}
+
+async function exportMyData() {
+  const ok = await customConfirm('Telecharger toutes vos donnees personnelles (format JSON) ? Cet export respecte le droit a la portabilite RGPD (art. 20).', 'Exporter');
+  if (!ok) return;
+  showToast('Preparation de l\'export...');
+  try {
+    const user = (await sb.auth.getUser()).data.user;
+    if (!user) return;
+    const org = API.getOrg();
+    const orgId = org?.id;
+    const dataset = { exported_at: new Date().toISOString(), user_id: user.id, email: user.email };
+
+    // Fetch across all tables we know the user has data in (RLS handles access)
+    const tables = ['members','marketplace_profiles','provider_profiles','organizations','properties','invoices','billing_settings','billing_runs','service_requests','plannings','cleaning_validations','connection_requests','messages','push_subscriptions','email_log','subscriptions','user_data','profiles','provider_reviews'];
+    for (const t of tables) {
+      try {
+        const { data, error } = await sb.from(t).select('*').limit(2000);
+        dataset[t] = error ? { error: error.message } : (data || []);
+      } catch(e) { dataset[t] = { error: String(e.message || e) }; }
+    }
+
+    const blob = new Blob([JSON.stringify(dataset, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'lokizio-export-' + new Date().toISOString().split('T')[0] + '.json';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+    showToast('Export telecharge');
+  } catch(e) { console.error('exportMyData:', e); showToast('Erreur: ' + (e.message || String(e))); }
 }
 
 async function showAccountModal() {

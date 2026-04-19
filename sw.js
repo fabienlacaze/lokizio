@@ -1,4 +1,4 @@
-const APP_VERSION = '8.75';
+const APP_VERSION = '8.76';
 const CACHE_NAME = 'lokizio-v' + APP_VERSION;
 
 // App shell files to cache for offline support
