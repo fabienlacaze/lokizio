@@ -1,4 +1,4 @@
-const APP_VERSION = '8.79';
+const APP_VERSION = '8.80';
 const CACHE_NAME = 'lokizio-v' + APP_VERSION;
 
 // App shell files to cache for offline support
@@ -81,11 +81,13 @@ self.addEventListener('push', event => {
   const data = event.data ? event.data.json() : {};
   const title = data.title || 'Lokizio';
   const options = {
-    body: data.body || 'Nouveau menage assigne',
+    body: data.body || '',
     icon: '/lokizio/icons/icon-192.png',
     badge: '/lokizio/icons/icon-192.png',
     vibrate: [200, 100, 200],
-    data: { url: data.url || '/lokizio/view.html' },
+    tag: data.tag || 'lokizio',
+    renotify: true,
+    data: { url: data.url || '/lokizio/' },
     actions: [
       { action: 'open', title: data.actionOpen || 'Voir' },
       { action: 'dismiss', title: data.actionDismiss || 'Fermer' }

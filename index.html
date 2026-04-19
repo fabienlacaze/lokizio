@@ -1143,7 +1143,7 @@ async function loadPDF() {
 </script>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v8.79</div>
+<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v8.80</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -1153,7 +1153,7 @@ async function loadPDF() {
     <!-- Broom that sweeps -->
     <div id="splashBroom" style="position:absolute;top:50%;left:-60px;font-size:48px;transform:translateY(-50%) rotate(-30deg);opacity:0;transition:all 0.8s cubic-bezier(0.25,0.46,0.45,0.94);">✨</div>
   </div>
-  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v8.79</span></div>
+  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v8.80</span></div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie pour locations</div>
   <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou</div>
   <!-- Loading bar -->
@@ -2566,6 +2566,7 @@ function getStatusLabel(s) { return (STATUS_CONFIG[s] || {}).label || s || ''; }
 // ── Splash Changelog (update this with each significant version) ──
 // Full versioned changelog — add new entries at TOP
 const VERSION_CHANGELOG = [
+  { v: '8.80', changes: ['Push notifications reparees (signature VAPID correcte via web-push lib)', 'Edge Function send-push redeployee avec nettoyage auto des subscriptions expirees', 'Table push_subscriptions: colonnes p256dh/auth/provider_token ajoutees, index unique sur endpoint', 'Messages entre utilisateurs: envoi automatique d\'une push au destinataire', 'Service Worker: support du tag + renotify'] },
   { v: '8.79', changes: ['Refonte des roles: admin + manager fusionnes en "concierge" (DB + RLS + ~55 remplacements code)', 'Nouveau role "tenant" (locataire) accepte en DB (implementation UI a venir)', 'Table super_admins creee: seul Fabien voit le bouton "Informations legales"', 'Ecriture app_settings restreinte aux super-admins uniquement', 'auto-bill Edge Function mise a jour'] },
   { v: '8.78', changes: ['Fix z-index: showMsg detecte automatiquement si une modal classique (Mon compte, etc.) est ouverte et passe par-dessus'] },
   { v: '8.77', changes: ['Informations legales stockees en DB (table app_settings) au lieu de placeholders en dur', 'Pages Mentions/CGU/CGV/Privacy remplissent automatiquement les placeholders depuis la DB', 'Mon compte: bouton "Informations legales (admin)" pour editer nom/SIRET/adresse/etc. en 1 clic', 'RLS: lecture publique (pour les pages HTML), ecriture admin/manager uniquement'] },
@@ -6052,7 +6053,27 @@ async function sendAutoMessage(orgId, senderName, senderRole, recipientName, bod
     updateUnreadBadge();
     // Also send email notification to recipient (async, non-blocking)
     sendEmailNotification(orgId, recipientName, senderName, body).catch(() => {});
+    // Push notification (async, non-blocking)
+    sendPushToRecipientByRole(orgId, recipientName, senderName, body).catch(() => {});
   } catch(e) { console.error('Auto-message error:', e); }
+}
+
+// Resolve recipient user_id by role name or display_name, then send push
+async function sendPushToRecipientByRole(orgId, recipientName, senderName, body) {
+  try {
+    const { data: members } = await sb.from('members').select('user_id,display_name,role').eq('org_id', orgId);
+    if (!members) return;
+    let target = null;
+    if (recipientName === 'gestionnaire' || recipientName === 'concierge') {
+      target = members.find(m => m.role === 'concierge');
+    } else if (recipientName === 'proprietaire') {
+      target = members.find(m => m.role === 'owner');
+    } else {
+      target = members.find(m => m.display_name === recipientName);
+    }
+    if (!target || !target.user_id) return;
+    await sendPushToUser(target.user_id, 'Lokizio — ' + senderName, body.slice(0, 120), { tag: 'msg', url: '/' });
+  } catch(e) { console.error('sendPushToRecipientByRole:', e); }
 }
 
 async function sendEmailNotification(orgId, recipientName, senderName, messageBody) {
@@ -14627,9 +14648,9 @@ const VAPID_PUBLIC_KEY = 'BMAMPjPS9Hb4yfjMpaku-69Cuwlot-lrBl53uF1JDF3OMzuEUckskF
 
 async function subscribePushNotifications() {
   try {
-    if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
+    if (!('serviceWorker' in navigator) || !('PushManager' in window)) return false;
     const permission = await Notification.requestPermission();
-    if (permission !== 'granted') return;
+    if (permission !== 'granted') return false;
     const reg = await navigator.serviceWorker.ready;
     let sub = await reg.pushManager.getSubscription();
     if (!sub) {
@@ -14638,17 +14659,31 @@ async function subscribePushNotifications() {
         applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
       });
     }
-    // Save subscription to DB
     const { data: { user } } = await sb.auth.getUser();
-    if (user) {
-      await sb.from('push_subscriptions').upsert({
-        user_id: user.id,
-        endpoint: sub.endpoint,
-        keys: JSON.stringify(sub.toJSON().keys),
-        created_at: new Date().toISOString()
-      }, { onConflict: 'user_id' });
-    }
-  } catch(e) { console.error('Push subscribe error:', e); }
+    if (!user) return false;
+    const sj = sub.toJSON();
+    await sb.from('push_subscriptions').upsert({
+      user_id: user.id,
+      endpoint: sub.endpoint,
+      p256dh: sj.keys?.p256dh,
+      auth: sj.keys?.auth,
+      keys: sj.keys,
+    }, { onConflict: 'endpoint' });
+    return true;
+  } catch(e) { console.error('Push subscribe error:', e); return false; }
+}
+
+// Send a push to a user (fire-and-forget, failures are silent)
+async function sendPushToUser(userId, title, body, extra) {
+  if (!userId) return;
+  try {
+    const session = (await sb.auth.getSession()).data.session;
+    await fetch(SUPABASE_URL + '/functions/v1/send-push', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + (session?.access_token || '') },
+      body: JSON.stringify({ user_id: userId, title, body, url: extra?.url || '/', tag: extra?.tag }),
+    });
+  } catch(e) { console.error('sendPushToUser:', e); }
 }
 
 function urlBase64ToUint8Array(base64String) {
