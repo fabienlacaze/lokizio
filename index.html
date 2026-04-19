@@ -1143,7 +1143,7 @@ async function loadPDF() {
 </script>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v8.92</div>
+<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v8.93</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -1153,7 +1153,7 @@ async function loadPDF() {
     <!-- Broom that sweeps -->
     <div id="splashBroom" style="position:absolute;top:50%;left:-60px;font-size:48px;transform:translateY(-50%) rotate(-30deg);opacity:0;transition:all 0.8s cubic-bezier(0.25,0.46,0.45,0.94);">✨</div>
   </div>
-  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v8.92</span></div>
+  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v8.93</span></div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie pour locations</div>
   <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou</div>
   <!-- Loading bar -->
@@ -2590,6 +2590,7 @@ function getStatusLabel(s) { return (STATUS_CONFIG[s] || {}).label || s || ''; }
 // ── Splash Changelog (update this with each significant version) ──
 // Full versioned changelog — add new entries at TOP
 const VERSION_CHANGELOG = [
+  { v: '8.93', changes: ['Mode Locataire sans reservation: les 3 onglets (Logement/Interventions/Messages) affichent un message d\'attente au lieu de rester inertes'] },
   { v: '8.92', changes: ['Nouveau role Administrateur ajoute (reserve au super-admin)', 'Option Administrateur affichee dans le selecteur de role uniquement pour les super-admins', 'Role Admin a tous les droits d\'un concierge + permissions exclusives (informations legales, etc.)'] },
   { v: '8.91', changes: ['Debug change-role: whitelist client + log de la valeur envoyee pour traquer l\'erreur de contrainte'] },
   { v: '8.90', changes: ['Fix: cache busters des fichiers JS (api_bridge.js, i18n.js) mis a jour - l\'ancienne version etait servie par le navigateur et causait l\'erreur lors du changement de role'] },
@@ -6446,7 +6447,13 @@ async function showTenantMode() {
     .eq('tenant_user_id', user.id).eq('status', 'active')
     .order('start_date', { ascending: false }).limit(1);
   if (!rezas || !rezas.length) {
-    content.innerHTML = '<div id="tenantContent" style="padding:24px;"><div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:24px;text-align:center;"><div style="font-size:32px;margin-bottom:10px;">&#128273;</div><div style="font-size:16px;font-weight:700;margin-bottom:8px;">Aucune reservation active</div><div style="font-size:13px;color:var(--text3);line-height:1.6;">Vous n\'avez pas encore de logement associe. Contactez votre concierge ou proprietaire pour qu\'il vous lie a une propriete.</div></div></div>';
+    // No reservation yet: still render the 3 panels (so nav works) but all empty
+    content.innerHTML =
+      '<div id="tenantContent" style="padding:8px 2px 80px;">' +
+      '<div id="tenantPanel_home"><div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:24px;text-align:center;margin:8px;"><div style="font-size:32px;margin-bottom:10px;">&#128273;</div><div style="font-size:16px;font-weight:700;margin-bottom:8px;">Aucune reservation active</div><div style="font-size:13px;color:var(--text3);line-height:1.6;">Vous n\'avez pas encore de logement associe. Contactez votre concierge ou proprietaire pour qu\'il vous lie a une propriete.</div></div></div>' +
+      '<div id="tenantPanel_interventions" style="display:none;"><div style="text-align:center;color:var(--text3);font-size:13px;padding:30px 20px;">Disponible une fois votre logement associe.</div></div>' +
+      '<div id="tenantPanel_chat" style="display:none;"><div style="text-align:center;color:var(--text3);font-size:13px;padding:30px 20px;">Disponible une fois votre logement associe.</div></div>' +
+      '</div>';
     return;
   }
   _tenantReservation = rezas[0];
