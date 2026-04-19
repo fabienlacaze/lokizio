@@ -1143,7 +1143,7 @@ async function loadPDF() {
 </script>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v8.56</div>
+<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v8.57</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -1153,7 +1153,7 @@ async function loadPDF() {
     <!-- Broom that sweeps -->
     <div id="splashBroom" style="position:absolute;top:50%;left:-60px;font-size:48px;transform:translateY(-50%) rotate(-30deg);opacity:0;transition:all 0.8s cubic-bezier(0.25,0.46,0.45,0.94);">✨</div>
   </div>
-  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v8.56</span></div>
+  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v8.57</span></div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie pour locations</div>
   <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou</div>
   <!-- Loading bar -->
@@ -2121,6 +2121,16 @@ async function loadPDF() {
     </div>
     <div class="stackedOverlayBody">
       <div style="font-size:12px;color:var(--text3);margin-bottom:12px;line-height:1.5;">Pendant vos periodes de conges, vous n'apparaitrez pas disponible pour de nouvelles prestations.</div>
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+        <label style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;">Pays</label>
+        <select id="vacationCountrySelect" onchange="changeVacationCountry(this.value)" style="padding:6px 10px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:6px;font-size:12px;">
+          <option value="FR">France</option>
+          <option value="BE">Belgique</option>
+          <option value="CH">Suisse</option>
+          <option value="LU">Luxembourg</option>
+          <option value="CA">Canada (Quebec)</option>
+        </select>
+      </div>
       <div id="vacationPlannerCalendar"></div>
       <div id="vacationPlannerList" style="margin-top:12px;"></div>
     </div>
@@ -2516,6 +2526,7 @@ function getStatusLabel(s) { return (STATUS_CONFIG[s] || {}).label || s || ''; }
 // ── Splash Changelog (update this with each significant version) ──
 // Full versioned changelog — add new entries at TOP
 const VERSION_CHANGELOG = [
+  { v: '8.57', changes: ['Mes conges: selecteur de pays (FR, BE, CH, LU, CA) - jours feries adaptes au pays', 'Pays stocke dans marketplace_profiles.country', 'Fix: colonne vacation_periods manquante ajoutee a marketplace_profiles'] },
   { v: '8.56', changes: ['Calendrier Mes conges: weekends colores en orange, jours feries en violet (avec calcul automatique Paques + feries fixes)', 'Legende ajoutee sous le calendrier'] },
   { v: '8.55', changes: ['Factures: onglet Auto devient sous-mode de Creer (toggle Manuel/Auto en haut du panneau)', 'Concierge et Prestataire: 2 onglets principaux (Creer | Consulter), Creer contient un switch Manuel/Auto'] },
   { v: '8.54', changes: ['Auto-billing: historique des 10 dernieres generations affiche dans l\'onglet Auto (concierge + prestataire)', 'Auto-billing: feedback ameliore - message clair quand 0 facture creee', 'Auto-billing: labels simplifies (ex: "Aux proprietaires" au lieu de "Factures proprietaires (conciergerie → proprietaires)")', 'Popup relance facture utilise customConfirm (plus de popup native)'] },
@@ -10324,14 +10335,14 @@ async function showVacationPlanner() {
   } catch(e) { console.error('load vacations:', e); _vacationPeriods = []; }
   _vacationCurrentMonth = new Date();
   _vacationRangeStart = null;
+  await loadUserCountry();
   renderVacationCalendar();
   renderVacationList();
   openOverlayPopup('vacationPlannerOverlay');
 }
 
-// French public holidays for a given year (returns Set of 'YYYY-MM-DD' strings)
-function getFrenchHolidays(year) {
-  // Easter calculation (Meeus/Jones/Butcher algorithm)
+// Public holidays per country (returns Set of 'YYYY-MM-DD' strings)
+function _computeEaster(year) {
   const a = year % 19;
   const b = Math.floor(year / 100);
   const c = year % 100;
@@ -10346,22 +10357,63 @@ function getFrenchHolidays(year) {
   const m = Math.floor((a + 11 * h + 22 * l) / 451);
   const easterMonth = Math.floor((h + l - 7 * m + 114) / 31);
   const easterDay = ((h + l - 7 * m + 114) % 31) + 1;
-  const easter = new Date(year, easterMonth - 1, easterDay);
-  function iso(dt) { return dt.getFullYear() + '-' + String(dt.getMonth()+1).padStart(2,'0') + '-' + String(dt.getDate()).padStart(2,'0'); }
-  function addDays(dt, n) { const nd = new Date(dt); nd.setDate(nd.getDate()+n); return nd; }
-  return new Set([
-    year + '-01-01', // Jour de l'an
-    iso(addDays(easter, 1)), // Lundi de Paques
-    year + '-05-01', // Fete du Travail
-    year + '-05-08', // Victoire 1945
-    iso(addDays(easter, 39)), // Ascension
-    iso(addDays(easter, 50)), // Lundi de Pentecote
-    year + '-07-14', // Fete nationale
-    year + '-08-15', // Assomption
-    year + '-11-01', // Toussaint
-    year + '-11-11', // Armistice
-    year + '-12-25', // Noel
-  ]);
+  return new Date(year, easterMonth - 1, easterDay);
+}
+function _isoDate(dt) { return dt.getFullYear() + '-' + String(dt.getMonth()+1).padStart(2,'0') + '-' + String(dt.getDate()).padStart(2,'0'); }
+function _addDays(dt, n) { const nd = new Date(dt); nd.setDate(nd.getDate()+n); return nd; }
+
+const COUNTRIES = {
+  FR: 'France', BE: 'Belgique', CH: 'Suisse', LU: 'Luxembourg', CA: 'Canada (Quebec)',
+};
+
+function getHolidaysForCountry(year, country) {
+  const easter = _computeEaster(year);
+  const dates = [];
+  const c = country || 'FR';
+  if (c === 'FR') {
+    dates.push(year+'-01-01', _isoDate(_addDays(easter,1)), year+'-05-01', year+'-05-08',
+      _isoDate(_addDays(easter,39)), _isoDate(_addDays(easter,50)), year+'-07-14',
+      year+'-08-15', year+'-11-01', year+'-11-11', year+'-12-25');
+  } else if (c === 'BE') {
+    dates.push(year+'-01-01', _isoDate(_addDays(easter,1)), year+'-05-01',
+      _isoDate(_addDays(easter,39)), _isoDate(_addDays(easter,50)), year+'-07-21',
+      year+'-08-15', year+'-11-01', year+'-11-11', year+'-12-25');
+  } else if (c === 'CH') {
+    dates.push(year+'-01-01', year+'-01-02', _isoDate(_addDays(easter,-2)), _isoDate(_addDays(easter,1)),
+      year+'-05-01', _isoDate(_addDays(easter,39)), _isoDate(_addDays(easter,50)),
+      year+'-08-01', year+'-12-25', year+'-12-26');
+  } else if (c === 'LU') {
+    dates.push(year+'-01-01', _isoDate(_addDays(easter,1)), year+'-05-01', year+'-05-09',
+      _isoDate(_addDays(easter,39)), _isoDate(_addDays(easter,50)), year+'-06-23',
+      year+'-08-15', year+'-11-01', year+'-12-25', year+'-12-26');
+  } else if (c === 'CA') {
+    dates.push(year+'-01-01', _isoDate(_addDays(easter,-2)), _isoDate(_addDays(easter,1)),
+      year+'-05-20', year+'-06-24', year+'-07-01', year+'-09-02',
+      year+'-10-14', year+'-12-25', year+'-12-26');
+  }
+  return new Set(dates);
+}
+
+let _userCountry = 'FR';
+async function loadUserCountry() {
+  try {
+    const user = (await sb.auth.getUser()).data.user;
+    if (!user) return;
+    const { data } = await sb.from('marketplace_profiles').select('country').eq('user_id', user.id).maybeSingle();
+    if (data && data.country) _userCountry = data.country;
+  } catch(e) { console.error('loadUserCountry:', e); }
+  const sel = document.getElementById('vacationCountrySelect');
+  if (sel) sel.value = _userCountry;
+}
+
+async function changeVacationCountry(code) {
+  _userCountry = code;
+  renderVacationCalendar();
+  try {
+    const user = (await sb.auth.getUser()).data.user;
+    if (!user) return;
+    await sb.from('marketplace_profiles').upsert({ user_id: user.id, country: code }, { onConflict: 'user_id' });
+  } catch(e) { console.error('save country:', e); }
 }
 
 function renderVacationCalendar() {
@@ -10378,7 +10430,7 @@ function renderVacationCalendar() {
   const now = new Date();
   const isCurrentOrFutureMonth = year > now.getFullYear() || (year === now.getFullYear() && month >= now.getMonth());
   const canGoBack = year > now.getFullYear() || (year === now.getFullYear() && month > now.getMonth());
-  const holidays = getFrenchHolidays(year);
+  const holidays = getHolidaysForCountry(year, _userCountry);
   let html = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">';
   html += '<button onclick="vacationChangeMonth(-1)" ' + (canGoBack ? '' : 'disabled') + ' style="background:var(--surface2);border:1px solid var(--border2);color:var(--text);border-radius:8px;width:32px;height:32px;cursor:' + (canGoBack ? 'pointer' : 'not-allowed') + ';font-size:14px;opacity:' + (canGoBack ? '1' : '0.4') + ';">&lsaquo;</button>';
   html += '<div style="font-size:14px;font-weight:700;color:var(--text);text-transform:capitalize;">' + monthNames[month] + ' ' + year + '</div>';
