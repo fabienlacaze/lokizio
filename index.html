@@ -69,6 +69,7 @@
 <script src="ical_parser.js?v=726"></script>
 <script src="api_bridge.js?v=892"></script>
 <script src="vacation.js?v=1"></script>
+<script src="push.js?v=1"></script>
 <!-- Lazy-loaded: Leaflet, Chart.js, jsPDF (loaded on demand to improve startup) -->
 <script>
 function lazyLoad(url, type) {
@@ -1144,7 +1145,7 @@ async function loadPDF() {
 </script>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v8.95</div>
+<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v8.96</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -1154,7 +1155,7 @@ async function loadPDF() {
     <!-- Broom that sweeps -->
     <div id="splashBroom" style="position:absolute;top:50%;left:-60px;font-size:48px;transform:translateY(-50%) rotate(-30deg);opacity:0;transition:all 0.8s cubic-bezier(0.25,0.46,0.45,0.94);">✨</div>
   </div>
-  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v8.95</span></div>
+  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v8.96</span></div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie pour locations</div>
   <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou</div>
   <!-- Loading bar -->
@@ -2591,6 +2592,7 @@ function getStatusLabel(s) { return (STATUS_CONFIG[s] || {}).label || s || ''; }
 // ── Splash Changelog (update this with each significant version) ──
 // Full versioned changelog — add new entries at TOP
 const VERSION_CHANGELOG = [
+  { v: '8.96', changes: ['Refactoring: module notifications push extrait dans push.js (~50 lignes de moins)'] },
   { v: '8.95', changes: ['Refactoring: module conges et jours feries extrait dans vacation.js (~200 lignes en moins dans le fichier principal)'] },
   { v: '8.94', changes: ['Fix: changement de role vers Concierge ne met plus accidentellement en Administrateur (3 boutons legacy qui envoyaient \'admin\' au lieu de \'concierge\')'] },
   { v: '8.93', changes: ['Mode Locataire sans reservation: les 3 onglets (Logement/Interventions/Messages) affichent un message d\'attente au lieu de rester inertes'] },
@@ -14872,55 +14874,6 @@ async function exportProviderPDF() {
   } catch(e) { console.error('exportProviderPDF:', e); showToast('Erreur: ' + e.message); }
 }
 
-/* ── Push Notifications Subscribe ── */
-const VAPID_PUBLIC_KEY = 'BMAMPjPS9Hb4yfjMpaku-69Cuwlot-lrBl53uF1JDF3OMzuEUckskFCS77Y534VT2PSf0S68ZSOJjfjXUqVU8-Q';
-
-async function subscribePushNotifications() {
-  try {
-    if (!('serviceWorker' in navigator) || !('PushManager' in window)) return false;
-    const permission = await Notification.requestPermission();
-    if (permission !== 'granted') return false;
-    const reg = await navigator.serviceWorker.ready;
-    let sub = await reg.pushManager.getSubscription();
-    if (!sub) {
-      sub = await reg.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
-      });
-    }
-    const { data: { user } } = await sb.auth.getUser();
-    if (!user) return false;
-    const sj = sub.toJSON();
-    await sb.from('push_subscriptions').upsert({
-      user_id: user.id,
-      endpoint: sub.endpoint,
-      p256dh: sj.keys?.p256dh,
-      auth: sj.keys?.auth,
-      keys: sj.keys,
-    }, { onConflict: 'endpoint' });
-    return true;
-  } catch(e) { console.error('Push subscribe error:', e); return false; }
-}
-
-// Send a push to a user (fire-and-forget, failures are silent)
-async function sendPushToUser(userId, title, body, extra) {
-  if (!userId) return;
-  try {
-    const session = (await sb.auth.getSession()).data.session;
-    await fetch(SUPABASE_URL + '/functions/v1/send-push', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + (session?.access_token || '') },
-      body: JSON.stringify({ user_id: userId, title, body, url: extra?.url || '/', tag: extra?.tag }),
-    });
-  } catch(e) { console.error('sendPushToUser:', e); }
-}
-
-function urlBase64ToUint8Array(base64String) {
-  const padding = '='.repeat((4 - base64String.length % 4) % 4);
-  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
-  const rawData = atob(base64);
-  return Uint8Array.from([...rawData].map(c => c.charCodeAt(0)));
-}
 
 /* ── Confetti Effect ── */
 /* ═══ KILLER FEATURES ═══ */
