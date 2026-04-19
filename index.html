@@ -1143,7 +1143,7 @@ async function loadPDF() {
 </script>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v8.74</div>
+<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v8.75</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -1153,7 +1153,7 @@ async function loadPDF() {
     <!-- Broom that sweeps -->
     <div id="splashBroom" style="position:absolute;top:50%;left:-60px;font-size:48px;transform:translateY(-50%) rotate(-30deg);opacity:0;transition:all 0.8s cubic-bezier(0.25,0.46,0.45,0.94);">✨</div>
   </div>
-  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v8.74</span></div>
+  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v8.75</span></div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie pour locations</div>
   <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou</div>
   <!-- Loading bar -->
@@ -1688,6 +1688,7 @@ async function loadPDF() {
   <div style="display:flex;gap:4px;margin-bottom:14px;overflow-x:auto;">
     <button class="prestSubTab active" onclick="switchFinanceTab('revenus')">&#128200; Revenus</button>
     <button class="prestSubTab" onclick="switchFinanceTab('factures')">&#128176; Factures <span id="invoiceOverdueBadge" style="display:none;margin-left:4px;background:#e94560;color:#fff;font-size:9px;font-weight:700;padding:1px 5px;border-radius:8px;"></span></button>
+    <button class="prestSubTab" onclick="switchFinanceTab('devis')">&#128203; Devis</button>
     <button class="prestSubTab" onclick="switchFinanceTab('tarifs')">&#128182; Tarifs</button>
   </div>
 
@@ -1770,27 +1771,49 @@ async function loadPDF() {
         <label style="cursor:pointer;"><input type="radio" name="finFactMode" value="auto" onchange="switchFinFactMode('auto')" style="display:none;"><div id="finFactMode_auto_btn" class="finFactModeBtn" style="padding:5px 14px;border-radius:6px;font-size:11px;font-weight:500;">&#9889; Auto</div></label>
       </div>
       <div id="finFactMode_manual_panel">
-        <!-- Doc type toggle: Facture | Devis -->
-        <div style="display:inline-flex;gap:2px;margin-bottom:12px;padding:3px;background:var(--surface2);border-radius:8px;">
-          <div id="concDocType_invoice_btn" onclick="setConciergeDocType('invoice')" class="finFactModeBtn finFactModeActive" style="cursor:pointer;padding:5px 14px;border-radius:6px;font-size:11px;font-weight:500;">&#128196; Facture</div>
-          <div id="concDocType_quote_btn" onclick="setConciergeDocType('quote')" class="finFactModeBtn" style="cursor:pointer;padding:5px 14px;border-radius:6px;font-size:11px;font-weight:500;">&#128203; Devis</div>
-        </div>
-        <div id="concDocTypeHint" style="font-size:13px;color:var(--text2);margin-bottom:10px;">A qui envoyer cette facture ?</div>
+        <div style="font-size:13px;color:var(--text2);margin-bottom:10px;">A qui envoyer cette facture ?</div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-          <button id="concBtnOwner" onclick="openConciergeInvoice('concierge_to_owner')" style="padding:18px 14px;background:linear-gradient(135deg,#e94560,#c73e54);color:#fff;border:none;border-radius:12px;font-weight:700;cursor:pointer;transition:transform 0.15s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''">
+          <button onclick="showCreateInvoiceModal('concierge_to_owner', false)" style="padding:18px 14px;background:linear-gradient(135deg,#e94560,#c73e54);color:#fff;border:none;border-radius:12px;font-weight:700;cursor:pointer;transition:transform 0.15s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''">
             <div style="font-size:28px;margin-bottom:6px;">&#127968;</div>
             <div style="font-size:14px;">Au proprietaire</div>
             <div style="font-size:10px;opacity:0.85;margin-top:4px;font-weight:400;">Services de conciergerie</div>
           </button>
-          <button id="concBtnProvider" onclick="openConciergeInvoice('provider_to_concierge')" style="padding:18px 14px;background:linear-gradient(135deg,#6b7280,#4b5563);color:#fff;border:none;border-radius:12px;font-weight:700;cursor:pointer;transition:transform 0.15s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''">
+          <button onclick="showCreateInvoiceModal('provider_to_concierge', false)" style="padding:18px 14px;background:linear-gradient(135deg,#6b7280,#4b5563);color:#fff;border:none;border-radius:12px;font-weight:700;cursor:pointer;transition:transform 0.15s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''">
             <div style="font-size:28px;margin-bottom:6px;">&#129529;</div>
-            <div style="font-size:14px;" id="concBtnProviderLabel">Facture recue (prestataire)</div>
+            <div style="font-size:14px;">Facture recue (prestataire)</div>
             <div style="font-size:10px;opacity:0.85;margin-top:4px;font-weight:400;">Saisie manuelle d'une facture d'un prestataire</div>
           </button>
         </div>
       </div>
       <div id="finFactMode_auto_panel" style="display:none;">
         <div id="autoBillingPanel"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SUB: Devis -->
+  <div id="finSubDevis" class="finSubContent" style="display:none;">
+    <div style="display:flex;gap:4px;background:var(--surface2);padding:4px;border-radius:10px;margin-bottom:14px;">
+      <button id="finQuoteTab_create" class="annSubTab" onclick="switchFinQuoteTab('create')" style="flex:1;padding:10px 14px;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">&#10133; Creer</button>
+      <button id="finQuoteTab_list" class="annSubTab annSubTabActive" onclick="switchFinQuoteTab('list')" style="flex:1;padding:10px 14px;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">&#128196; Consulter</button>
+    </div>
+    <div id="finQuotePanel_list">
+      <div id="quotesSummary" style="margin-bottom:12px;"></div>
+      <div id="quotesList"></div>
+    </div>
+    <div id="finQuotePanel_create" style="display:none;">
+      <div style="font-size:13px;color:var(--text2);margin-bottom:10px;">Emettre un devis pour validation avant prestation</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        <button onclick="showCreateInvoiceModal('concierge_to_owner', true)" style="padding:18px 14px;background:linear-gradient(135deg,#8b5cf6,#6d28d9);color:#fff;border:none;border-radius:12px;font-weight:700;cursor:pointer;transition:transform 0.15s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''">
+          <div style="font-size:28px;margin-bottom:6px;">&#127968;</div>
+          <div style="font-size:14px;">Devis au proprietaire</div>
+          <div style="font-size:10px;opacity:0.85;margin-top:4px;font-weight:400;">Services de conciergerie</div>
+        </button>
+        <button onclick="showCreateInvoiceModal('provider_to_concierge', true)" style="padding:18px 14px;background:linear-gradient(135deg,#6b7280,#4b5563);color:#fff;border:none;border-radius:12px;font-weight:700;cursor:pointer;transition:transform 0.15s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''">
+          <div style="font-size:28px;margin-bottom:6px;">&#129529;</div>
+          <div style="font-size:14px;">Devis recu (prestataire)</div>
+          <div style="font-size:10px;opacity:0.85;margin-top:4px;font-weight:400;">Saisie d'un devis d'un prestataire</div>
+        </button>
       </div>
     </div>
   </div>
@@ -2532,6 +2555,7 @@ function getStatusLabel(s) { return (STATUS_CONFIG[s] || {}).label || s || ''; }
 // ── Splash Changelog (update this with each significant version) ──
 // Full versioned changelog — add new entries at TOP
 const VERSION_CHANGELOG = [
+  { v: '8.75', changes: ['Devis: onglet dedie au meme niveau que Revenus/Factures/Tarifs (concierge)', 'Plus de toggle Facture/Devis dans Creer (choix direct via l\'onglet)', 'KPIs devis (Total, En attente, Acceptes, CA potentiel)', 'Factures et devis bien separes dans leurs onglets respectifs'] },
   { v: '8.74', changes: ['Edge Function ical-proxy creee (fix import Airbnb/Booking)', 'view.html: 3 alert() natifs remplaces par toast custom', 'Devis: champ "Valide jusqu\'au" sauvegarde dans quote_valid_until', 'Devis: boutons Accepter/Refuser sur les cartes (avec statuts accepted/refused + horodatage)', 'Statuts accepted (vert) et refused (rouge) ajoutes au mapping de couleurs'] },
   { v: '8.73', changes: ['Fix critique: colonnes legacy month et total_amount rendues nullable (les factures ne bloquent plus)', 'Popup devis: wording adapte (ex "Creer un devis", "Lignes du devis", "Valide jusqu\'au" au lieu de "Echeance")', 'Audit complet projet: 4 Edge Functions Stripe manquantes, push notifs orpheline, devis 70%, roadmap mise a jour'] },
   { v: '8.72', changes: ['Fix critique: table invoices incomplete en DB - ajout des colonnes manquantes (client_name, invoice_number, type, issuer_*, items, totaux HT/TVA/TTC, periods, due_date, etc.)', 'Les creations de factures ne plantent plus avec "Could not find column"', 'ROADMAP.md cree avec idee role Locataire prioritaire'] },
@@ -8425,15 +8449,58 @@ async function renderAutoBillingHistory(role) {
 function switchFinanceTab(tab) {
   document.querySelectorAll('.finSubContent').forEach(el => el.style.display = 'none');
   document.querySelectorAll('#tabBilling .prestSubTab').forEach(btn => btn.classList.remove('active'));
-  const idMap = { tarifs: 'finSubTarifs', revenus: 'finSubRevenus', factures: 'finSubFactures' };
+  const idMap = { tarifs: 'finSubTarifs', revenus: 'finSubRevenus', factures: 'finSubFactures', devis: 'finSubDevis' };
   const el = document.getElementById(idMap[tab]);
   if (el) el.style.display = '';
   const btns = document.querySelectorAll('#tabBilling .prestSubTab');
-  const idx = { revenus: 0, factures: 1, tarifs: 2 };
+  const idx = { revenus: 0, factures: 1, devis: 2, tarifs: 3 };
   if (btns[idx[tab]]) btns[idx[tab]].classList.add('active');
   if (tab === 'tarifs') { renderPricingTable(); renderDynamicPricing(); }
   if (tab === 'revenus') renderRevenueContent();
   if (tab === 'factures') loadInvoices();
+  if (tab === 'devis') loadQuotes();
+}
+
+function switchFinQuoteTab(tab) {
+  const btns = { create: document.getElementById('finQuoteTab_create'), list: document.getElementById('finQuoteTab_list') };
+  const panels = { create: document.getElementById('finQuotePanel_create'), list: document.getElementById('finQuotePanel_list') };
+  Object.values(btns).forEach(b => b && b.classList.remove('annSubTabActive'));
+  Object.values(panels).forEach(p => p && (p.style.display = 'none'));
+  if (btns[tab]) btns[tab].classList.add('annSubTabActive');
+  if (panels[tab]) panels[tab].style.display = '';
+  if (tab === 'list') loadQuotes();
+}
+
+async function loadQuotes() {
+  const container = document.getElementById('quotesList');
+  const summary = document.getElementById('quotesSummary');
+  if (!container) return;
+  const org = API.getOrg();
+  if (!org) { container.innerHTML = '<div style="color:var(--text3);text-align:center;padding:20px;">Organisation introuvable.</div>'; return; }
+  container.innerHTML = '<div style="text-align:center;color:var(--text3);padding:20px;">Chargement...</div>';
+  const { data: quotes, error } = await sb.from('invoices').select('*').eq('org_id', org.id).eq('is_quote', true).order('created_at', { ascending: false });
+  if (error) { container.innerHTML = '<div style="color:var(--error);padding:20px;">Erreur: ' + error.message + '</div>'; return; }
+  if (!quotes || !quotes.length) {
+    container.innerHTML = '<div style="text-align:center;color:var(--text3);font-size:13px;padding:30px 20px;"><div style="font-size:32px;opacity:0.4;margin-bottom:8px;">&#128203;</div>Aucun devis encore. Cliquez sur Creer pour en emettre un.</div>';
+    if (summary) summary.innerHTML = '';
+    return;
+  }
+  // KPIs
+  const draft = quotes.filter(q => q.status === 'draft').length;
+  const sent = quotes.filter(q => q.status === 'sent').length;
+  const accepted = quotes.filter(q => q.status === 'accepted').length;
+  const refused = quotes.filter(q => q.status === 'refused').length;
+  const totalAcc = quotes.filter(q => q.status === 'accepted').reduce((s, q) => s + (q.total_ttc || 0), 0);
+  if (summary) {
+    summary.innerHTML = '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;">' +
+      '<div style="background:var(--surface2);border-radius:10px;padding:10px;text-align:center;"><div style="font-size:18px;font-weight:800;color:var(--text);">' + quotes.length + '</div><div style="font-size:10px;color:var(--text3);text-transform:uppercase;">Total</div></div>' +
+      '<div style="background:var(--surface2);border-radius:10px;padding:10px;text-align:center;"><div style="font-size:18px;font-weight:800;color:#6c63ff;">' + sent + '</div><div style="font-size:10px;color:var(--text3);text-transform:uppercase;">En attente</div></div>' +
+      '<div style="background:var(--surface2);border-radius:10px;padding:10px;text-align:center;"><div style="font-size:18px;font-weight:800;color:#34d399;">' + accepted + '</div><div style="font-size:10px;color:var(--text3);text-transform:uppercase;">Acceptes</div></div>' +
+      '<div style="background:var(--surface2);border-radius:10px;padding:10px;text-align:center;"><div style="font-size:16px;font-weight:800;color:#34d399;">' + totalAcc.toFixed(0) + '€</div><div style="font-size:10px;color:var(--text3);text-transform:uppercase;">CA potentiel</div></div>' +
+      '</div>';
+  }
+  const today = new Date().toISOString().split('T')[0];
+  container.innerHTML = quotes.map(q => _renderInvoiceCard(q, today)).join('');
 }
 
 // ── Default base pricing (market rates France, short-term rentals) ──
@@ -9603,7 +9670,8 @@ async function loadInvoices() {
   if (!org) return;
   // Fetch all invoices (client-side filtering)
   const { data } = await sb.from('invoices').select('*').eq('org_id', org.id).order('created_at', { ascending: false }).limit(200);
-  _invoicesCache = data || [];
+  // Exclude quotes from invoice list (they have their own tab)
+  _invoicesCache = (data || []).filter(i => !i.is_quote);
   // Backfill missing invoice_number sequentially (chronological order)
   const missing = _invoicesCache.filter(i => !i.invoice_number).sort((a,b) => (a.created_at||'').localeCompare(b.created_at||''));
   if (missing.length) {
