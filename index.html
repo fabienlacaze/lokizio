@@ -1143,7 +1143,7 @@ async function loadPDF() {
 </script>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v8.80</div>
+<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v8.81</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -1153,7 +1153,7 @@ async function loadPDF() {
     <!-- Broom that sweeps -->
     <div id="splashBroom" style="position:absolute;top:50%;left:-60px;font-size:48px;transform:translateY(-50%) rotate(-30deg);opacity:0;transition:all 0.8s cubic-bezier(0.25,0.46,0.45,0.94);">✨</div>
   </div>
-  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v8.80</span></div>
+  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v8.81</span></div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie pour locations</div>
   <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou</div>
   <!-- Loading bar -->
@@ -2566,41 +2566,42 @@ function getStatusLabel(s) { return (STATUS_CONFIG[s] || {}).label || s || ''; }
 // ── Splash Changelog (update this with each significant version) ──
 // Full versioned changelog — add new entries at TOP
 const VERSION_CHANGELOG = [
-  { v: '8.80', changes: ['Push notifications reparees (signature VAPID correcte via web-push lib)', 'Edge Function send-push redeployee avec nettoyage auto des subscriptions expirees', 'Table push_subscriptions: colonnes p256dh/auth/provider_token ajoutees, index unique sur endpoint', 'Messages entre utilisateurs: envoi automatique d\'une push au destinataire', 'Service Worker: support du tag + renotify'] },
-  { v: '8.79', changes: ['Refonte des roles: admin + manager fusionnes en "concierge" (DB + RLS + ~55 remplacements code)', 'Nouveau role "tenant" (locataire) accepte en DB (implementation UI a venir)', 'Table super_admins creee: seul Fabien voit le bouton "Informations legales"', 'Ecriture app_settings restreinte aux super-admins uniquement', 'auto-bill Edge Function mise a jour'] },
+  { v: '8.81', changes: ['Nouveau role Locataire ajoute au selecteur de role', 'Changelog: entrees sensibles retirees (infos internes)'] },
+  { v: '8.80', changes: ['Notifications push ameliorees - vous recevez une notif quand un membre vous envoie un message', 'Nettoyage automatique des abonnements push expires'] },
+  { v: '8.79', changes: ['Simplification des roles: un seul role Concierge (plus de distinction Admin/Manager)', 'Nouveau role Locataire (pour les occupants de biens)'] },
   { v: '8.78', changes: ['Fix z-index: showMsg detecte automatiquement si une modal classique (Mon compte, etc.) est ouverte et passe par-dessus'] },
-  { v: '8.77', changes: ['Informations legales stockees en DB (table app_settings) au lieu de placeholders en dur', 'Pages Mentions/CGU/CGV/Privacy remplissent automatiquement les placeholders depuis la DB', 'Mon compte: bouton "Informations legales (admin)" pour editer nom/SIRET/adresse/etc. en 1 clic', 'RLS: lecture publique (pour les pages HTML), ecriture admin/manager uniquement'] },
-  { v: '8.76', changes: ['Legal: 4 pages creees (Mentions legales, CGU, CGV, Privacy v2 RGPD complete) avec placeholders a completer', 'CSS partage legal.css (light+dark)', 'Inscription: case de consentement RGPD/CGU obligatoire', 'Mon compte: bouton "Exporter mes donnees" RGPD art.20 (JSON complet)', 'Footer: liens Mentions / CGU / CGV / Confidentialite', 'ROADMAP etendue avec section legale complete'] },
+  { v: '8.77', changes: ['Pages legales (Mentions, CGU, CGV, Confidentialite) remplissent automatiquement les informations de l\'editeur'] },
+  { v: '8.76', changes: ['Nouvelles pages legales: Mentions legales, CGU, CGV, Politique de confidentialite (RGPD complete)', 'Inscription: case de consentement aux CGU et a la politique de confidentialite', 'Mon compte: bouton "Exporter mes donnees" (droit RGPD a la portabilite)', 'Theme clair + sombre pour les pages legales'] },
   { v: '8.75', changes: ['Devis: onglet dedie au meme niveau que Revenus/Factures/Tarifs (concierge)', 'Plus de toggle Facture/Devis dans Creer (choix direct via l\'onglet)', 'KPIs devis (Total, En attente, Acceptes, CA potentiel)', 'Factures et devis bien separes dans leurs onglets respectifs'] },
-  { v: '8.74', changes: ['Edge Function ical-proxy creee (fix import Airbnb/Booking)', 'view.html: 3 alert() natifs remplaces par toast custom', 'Devis: champ "Valide jusqu\'au" sauvegarde dans quote_valid_until', 'Devis: boutons Accepter/Refuser sur les cartes (avec statuts accepted/refused + horodatage)', 'Statuts accepted (vert) et refused (rouge) ajoutes au mapping de couleurs'] },
-  { v: '8.73', changes: ['Fix critique: colonnes legacy month et total_amount rendues nullable (les factures ne bloquent plus)', 'Popup devis: wording adapte (ex "Creer un devis", "Lignes du devis", "Valide jusqu\'au" au lieu de "Echeance")', 'Audit complet projet: 4 Edge Functions Stripe manquantes, push notifs orpheline, devis 70%, roadmap mise a jour'] },
-  { v: '8.72', changes: ['Fix critique: table invoices incomplete en DB - ajout des colonnes manquantes (client_name, invoice_number, type, issuer_*, items, totaux HT/TVA/TTC, periods, due_date, etc.)', 'Les creations de factures ne plantent plus avec "Could not find column"', 'ROADMAP.md cree avec idee role Locataire prioritaire'] },
-  { v: '8.71', changes: ['Devis: nouvelle fonctionnalite dans Creer (toggle Facture/Devis pour les 3 roles)', 'Numerotation separee: DEV-AAAA-NNN pour devis, FAC-AAAA-NNN pour factures', 'Bouton "Convertir en facture" sur les devis (clone + marque devis accepte)', 'Badge violet "DEVIS" sur les cartes correspondantes', 'Clarification: concierge -> "Facture recue prestataire" (plus clair que "Facture prestataire")', 'DB: billing_settings etendu avec is_quote, quote_valid_until, quote_accepted_at, converted_from_quote_id'] },
-  { v: '8.70', changes: ['Envoi facture email branche sur send-email existante (Resend)', 'Bouton Email sur chaque facture: popup destinataire + message, genere le HTML complet cote client', 'Facture auto-marquee "Envoyee" apres succes', 'Suppression de send-invoice-email (fonction redondante)'] },
-  { v: '8.69', changes: ['Envoi de facture par email (Resend) - bouton Email sur chaque facture, popup avec destinataire + message personnalise', 'Edge Function send-invoice-email deployee - necessite la cle RESEND_API_KEY dans Supabase Edge Function secrets', 'Facture auto-marquee "Envoyee" apres email'] },
+  { v: '8.74', changes: ['Import de calendriers externes (Airbnb, Booking) fiabilise', 'Devis: champ "Valide jusqu\'au" + boutons Accepter / Refuser sur les cartes', 'Nouveaux statuts pour les devis: Accepte (vert) et Refuse (rouge)'] },
+  { v: '8.73', changes: ['Fix: les factures ne bloquent plus a la creation', 'Popup devis: terminologie adaptee (Creer un devis, Valide jusqu\'au, etc.)'] },
+  { v: '8.72', changes: ['Fix: les factures ne bloquent plus avec une erreur de colonne manquante'] },
+  { v: '8.71', changes: ['Devis: nouvelle fonctionnalite dans Creer (toggle Facture/Devis pour les 3 roles)', 'Numerotation separee: DEV-AAAA-NNN pour devis, FAC-AAAA-NNN pour factures', 'Bouton "Convertir en facture" sur les devis', 'Badge violet "DEVIS" sur les cartes correspondantes'] },
+  { v: '8.70', changes: ['Envoi de facture par email ameliore (marque automatiquement la facture comme Envoyee)'] },
+  { v: '8.69', changes: ['Envoi de facture par email: bouton Email sur chaque facture avec destinataire et message personnalises'] },
   { v: '8.68', changes: ['Auto-billing: config collapse automatiquement quand desactive (concierge + prestataire)', 'Proprietaire: ordre des onglets Creer | Consulter aligne sur les autres roles', 'Style bordure rouge sur onglet actif applique aux 3 roles'] },
   { v: '8.67', changes: ['Onglets actifs (Creer/Consulter, Manuel/Auto, etc.): fond transparent + bordure rouge, coherent avec le reste de l\'app'] },
   { v: '8.66', changes: ['Toggle Manuel/Auto plus discret (taille reduite, aligne a gauche) pour clarifier la hierarchie avec Creer/Consulter'] },
   { v: '8.65', changes: ['Factures: 6 nouvelles ameliorations en serie', 'Badge retard rouge sur l\'onglet Factures (nb factures en retard)', 'Bouton Dupliquer sur chaque facture (cree un brouillon)', 'Selection multiple + action groupee "Marquer payees"', 'Filtre par client (dropdown)', 'Tri (date, montant, client)', 'Mode compact (1 ligne par facture) / Detaille (carte complete)'] },
-  { v: '8.64', changes: ['Fix recherche globale: fonctionne aussi pour les utilisateurs sans org (prestataires) - RLS filtre automatiquement'] },
+  { v: '8.64', changes: ['Fix: la recherche globale fonctionne aussi pour les prestataires independants'] },
   { v: '8.63', changes: ['Nouvelle popup "Voir la facture" - vraie facture complete avec emetteur (SIRET/TVA/adresse), client, periode, tableau detaille, totaux HT/TVA/TTC, mentions legales', 'Bouton "Voir la facture" ajoute dans la popup historique'] },
   { v: '8.62', changes: ['Recherche globale: chips cliquables pour raccourcis (Toutes les factures, Tous les biens, etc.)'] },
-  { v: '8.61', changes: ['Recherche globale: mots-cles ("facture" liste toutes les factures, "bien" liste les proprietes, etc.)', 'Resultats cliquables dans la recherche', 'Factures: bouton Voir explicite (ouvre la popup de detail)', 'Edge Function auto-bill: headers CORS ajoutes (fix Failed to fetch sur Simuler)'] },
+  { v: '8.61', changes: ['Recherche globale: mots-cles ("facture" liste toutes les factures, "bien" liste les proprietes, etc.)', 'Resultats cliquables dans la recherche', 'Factures: bouton Voir explicite', 'Fix: bouton "Simuler" de la facturation auto'] },
   { v: '8.60', changes: ['Recherche globale: bouton loupe dans le header - cherche dans factures, proprietes, membres, prestations'] },
-  { v: '8.59', changes: ['Auto-billing: bouton Simuler - apercu des factures qui seraient creees, sans ecriture en base', 'Edge Function: mode preview=1 qui retourne les factures simulees'] },
+  { v: '8.59', changes: ['Facturation auto: bouton Simuler - apercu des factures qui seraient creees, sans rien enregistrer'] },
   { v: '8.58', changes: ['Pays deplace dans Mon profil personnel (champ "Pays (jours feries)")', 'Retire de la popup Mes conges - une seule source de verite'] },
-  { v: '8.57', changes: ['Mes conges: selecteur de pays (FR, BE, CH, LU, CA) - jours feries adaptes au pays', 'Pays stocke dans marketplace_profiles.country', 'Fix: colonne vacation_periods manquante ajoutee a marketplace_profiles'] },
+  { v: '8.57', changes: ['Mes conges: selecteur de pays (FR, BE, CH, LU, CA) - jours feries adaptes au pays'] },
   { v: '8.56', changes: ['Calendrier Mes conges: weekends colores en orange, jours feries en violet (avec calcul automatique Paques + feries fixes)', 'Legende ajoutee sous le calendrier'] },
   { v: '8.55', changes: ['Factures: onglet Auto devient sous-mode de Creer (toggle Manuel/Auto en haut du panneau)', 'Concierge et Prestataire: 2 onglets principaux (Creer | Consulter), Creer contient un switch Manuel/Auto'] },
   { v: '8.54', changes: ['Auto-billing: historique des 10 dernieres generations affiche dans l\'onglet Auto (concierge + prestataire)', 'Auto-billing: feedback ameliore - message clair quand 0 facture creee', 'Auto-billing: labels simplifies (ex: "Aux proprietaires" au lieu de "Factures proprietaires (conciergerie → proprietaires)")', 'Popup relance facture utilise customConfirm (plus de popup native)'] },
   { v: '8.53', changes: ['Prestataire: ordre des onglets Factures aligne sur concierge - Creer | Auto | Consulter'] },
-  { v: '8.52', changes: ['Prestataire: nouvel onglet Auto dans Factures - facturation auto aux conciergeries et proprietaires', 'Edge Function auto-bill refactoree pour gerer 2 roles (concierge + provider)', 'Types supportes: provider_to_concierge (groupe par concierge) et provider_to_owner (prestations en direct)', 'DB: billing_settings etendu (user_id + role), RLS elargie au role provider'] },
+  { v: '8.52', changes: ['Prestataire: nouvel onglet Auto dans Factures - facturation auto aux conciergeries et proprietaires'] },
   { v: '8.51', changes: ['Auto-billing: dropdown Frequence simplifie (Mensuelle uniquement, biweekly retire car incoherent avec jour fixe)', 'Popup de confirmation "Tester maintenant" utilise customConfirm (plus de popup native moche)'] },
-  { v: '8.50', changes: ['Finance: 3eme onglet "Auto" - Facturation automatique parametrable (toggle, frequence, jour, periode, statut, echeance, types)', 'Bouton "Tester maintenant" pour declencher une generation manuelle', 'Edge Function auto-bill + pg_cron quotidien (setup-auto-bill-cron.sql)', 'SQL: add-billing-settings.sql (billing_settings + billing_runs pour eviter doublons)'] },
+  { v: '8.50', changes: ['Nouvelle fonctionnalite: Facturation automatique parametrable (toggle, frequence, jour, periode, statut, echeance, types)', 'Bouton "Tester maintenant" pour declencher une generation manuelle', 'Generation quotidienne automatique'] },
   { v: '8.49', changes: ['Popup facture: boutons Brouillon/Envoyer desactives tant que les infos minimales manquent (client + 1 ligne valide), message d\'erreur live'] },
   { v: '8.48', changes: ['Popup facture: dropdown Client toujours affiche (filtre par role) + option "Saisir un autre nom..." qui revele un champ texte libre'] },
   { v: '8.47', changes: ['Prestataire peut maintenant emettre une facture directement a un proprietaire (type provider_to_owner)', 'Owner voit les factures recues des prestataires en plus des factures de la conciergerie'] },
-  { v: '8.46', changes: ['Popup creer facture: refonte complete (header colore, dropdown client, periode + echeance, tableau lignes avec totaux ligne, totaux HT/TVA/TTC, auto-remplissage)', 'Fix: insert facture resilient aux colonnes manquantes (client_address, total_ht, etc.) - le bouton Brouillon/Envoyer fonctionne maintenant meme sur anciens schemas'] },
+  { v: '8.46', changes: ['Popup creer facture: refonte complete (header colore, dropdown client, periode + echeance, tableau lignes avec totaux ligne, totaux HT/TVA/TTC, auto-remplissage)', 'Fix: creation de facture plus robuste'] },
   { v: '8.45', changes: ['Finance: segments "Consulter / Creer" pour admin, owner, prestataire (meme logique que l\'annuaire)', 'Popup Modifier ma reponse: avertissement sur les penalites si refus apres acceptation (politique CANCEL_POLICY)', 'Wording "menage" remplace par "prestation" dans les popups'] },
   { v: '8.44', changes: ['Prestations a venir (proprietaire + prestataire): meme mise en page que la liste admin (bloc date, icone service, groupement par mois + totaux, badge statut)'] },
   { v: '8.43', changes: ['Factures proprietaire: refonte (KPIs A payer / Paye / En retard / Nb, recherche, chips periode + statut, groupement mensuel, cartes detaillees avec echeance)', 'Factures prestataire: meme refonte adaptee (En attente / Encaisse / En retard / Nb factures)', 'Deux: prestations a venir dans un volet repliable separe'] },
@@ -2654,7 +2655,7 @@ const VERSION_CHANGELOG = [
   { v: '7.92', changes: ['Bloc PLAN cliquable: ouvre Stripe Portal si abonne, sinon popup Premium', 'Texte info stockage Supabase (Frankfurt, UE, TLS) dans Mon profil personnel et popup suppression'] },
   { v: '7.91', changes: ['Auto-save profils: declenche aussi sur oninput (en temps reel debounce)', 'Flush des saves en attente a la fermeture de la popup (plus de perte de donnees)'] },
   { v: '7.90', changes: ['Auto-save profils: debounce 500ms, upsert atomique marketplace', 'Toast visible avec ✓ ou erreur claire', 'Ouverture Mon compte: refetch des donnees a jour depuis Supabase (plus de cache stale)', 'Messages erreur clairs (plus de silent fail)'] },
-  { v: '7.89', changes: ['SECURITE: CSP ajoutee, XSS corriges (owner, factures, photos QC/dispute, planning)', 'safePhotoUrl: whitelist https + data:image', 'Validation SIRET/TVA/telephone', 'Edge Function create-portal: auth JWT obligatoire', 'safeErr: messages erreur DB masques en prod', 'Requete properties .or() remplacee par 2 requetes sures'] },
+  { v: '7.89', changes: ['Renforcement de la securite (protection XSS, validation SIRET/TVA/telephone, messages d\'erreur epures en production)'] },
   { v: '7.88', changes: ['Bouton "Mettre a jour" mot de passe desactive tant que criteres non remplis', 'Fix popup "Changer de role" qui s\'ouvrait derriere la popup profil'] },
   { v: '7.87', changes: ['Auto-save uniforme sur les 3 popups profil (personnel, facturation, annuaire)', 'Suppression des boutons Enregistrer, indicateur "✓ Sauvegarde auto"'] },
   { v: '7.86', changes: ['Profil annuaire: bouton Enregistrer visible pendant la saisie, disparait apres save', 'Fix saveProfile / saveBillingProfile: gestion erreur + update local', 'SQL migration ajoutee pour colonnes billing (add-profile-columns.sql)'] },
@@ -2712,18 +2713,18 @@ const VERSION_CHANGELOG = [
   { v: '7.34', changes: ['Toggle visibilite mot de passe (icone oeil)', 'Validation complexite: 8 car + Maj + min + chiffre + special', 'Indicateurs live des regles respectees'] },
   { v: '7.33', changes: ['Fix banner "nouvelle version disponible" qui restait bloque apres mise a jour', 'Suppression auto du banner stale quand versions egales'] },
   { v: '7.32', changes: ['Fix reset password: capture hash dans head avant tous les scripts', 'checkAuth detecte recovery et affiche formulaire', 'Bypass init() pour recovery flow'] },
-  { v: '7.31', changes: ['Fix reset password: capture hash avant consommation Supabase', 'Listener onAuthStateChange PASSWORD_RECOVERY', 'Cache buster supabase_config.js'] },
-  { v: '7.30', changes: ['Fix lien reset password: formulaire nouveau mot de passe affiche', 'Templates emails Supabase rebrandes Lokizio', 'Detection type=recovery dans URL hash'] },
+  { v: '7.31', changes: ['Fix reinitialisation de mot de passe (flow recovery ameliore)'] },
+  { v: '7.30', changes: ['Fix lien de reinitialisation de mot de passe', 'Emails rebrandes Lokizio'] },
   { v: '7.29', changes: ['Fix deconnexion: statut se met a jour immediatement', 'Reload memberships apres retrait', 'Log erreur si suppression echoue'] },
   { v: '7.28', changes: ['Notification quand un membre est retire', 'Notification quand une demande est refusee', 'Rafraichissement immediat apres retrait'] },
   { v: '7.27', changes: ['Reassignation auto apres refus prestataire', 'Validation proprio: verification statut obligatoire', 'finalizeServiceCompletion: gestion erreur complete', 'Catch vides critiques corriges'] },
   { v: '7.26', changes: ['Fix fuites memoire (3 setIntervals nettoyes)', 'Try/catch onboarding creation bien', 'Changelog complet (v7.01, v7.02, v7.09 ajoutes)'] },
   { v: '7.25', changes: ['Fix nav prestataire en mode attente (tous onglets accessibles)', 'Annuaire et Chat disponibles meme sans mission assignee'] },
   { v: '7.24', changes: ['Prestataire multi-conciergerie (switcher d\'org)', 'Badge "X equipes" si multi-org', 'Rechargement memberships apres connexion acceptee'] },
-  { v: '7.23', changes: ['Animations CSS globales (fade, slide, bounce, scale)', 'Particules flottantes en arriere-plan', 'KPI cards en cascade animee', 'Boutons avec effet rebond', 'SQL RLS complet pour toutes les tables'] },
+  { v: '7.23', changes: ['Animations CSS globales (fade, slide, bounce, scale)', 'Particules flottantes en arriere-plan', 'KPI cards en cascade animee', 'Boutons avec effet rebond'] },
   { v: '7.22', changes: ['Fix cache busters synchro scripts', 'Proprio ne voit que SES factures', 'Alerte prix 0 dans auto-facturation'] },
   { v: '7.21', changes: ['Landing page complete (hero, temoignages, FAQ, 3 etapes)', 'Onboarding: barre de progression 3 etapes', 'Onboarding: etapes visuelles avec icones par role', 'CTA "Commencer gratuitement" en bas de page'] },
-  { v: '7.20', changes: ['Notifications email reelles (Edge Function Resend)', 'Notifications push (VAPID subscribe)', 'Dashboard analytics concierge (CA, tendance, litiges)', 'Historique depenses proprio (graphique mensuel)', 'Export PDF releve prestataire'] },
+  { v: '7.20', changes: ['Notifications email reelles', 'Notifications push', 'Dashboard analytics concierge (CA, tendance, litiges)', 'Historique depenses proprio (graphique mensuel)', 'Export PDF releve prestataire'] },
   { v: '7.19', changes: ['Popup envoi factures en debut de mois', 'Alerte factures en retard (>7 jours)', 'Proprio voit ses factures + bouton Payer (Stripe)', 'Envoi groupé des brouillons en 1 clic'] },
   { v: '7.18', changes: ['Facturation automatique a la validation', 'Facture brouillon creee/completee a chaque prestation done', '2 factures auto: proprio + prestataire'] },
   { v: '7.17', changes: ['Factures auto-remplies depuis le planning', 'Nom proprio pre-rempli', 'Fix PDF: gestion erreur + fallback nom', 'Fix "Marquer payee"'] },
@@ -2736,7 +2737,7 @@ const VERSION_CHANGELOG = [
   { v: '7.10', changes: ['Nouveau design des cartes prestations', 'Mini-calendrier avec jour/mois sur chaque carte', 'Bordure coloree par statut', 'Icones plus grandes, meilleure lisibilite'] },
   { v: '7.09', changes: ['Mise a jour changelog splash (v6.99-v7.08)'] },
   { v: '7.08', changes: ['Securite: verification identite prestataire', 'Facturation: exclut prestations non validees', 'Facturation: inclut prestations a la demande', 'Photos: chemins aleatoires anti-enumeration'] },
-  { v: '7.07', changes: ['Photos via Supabase Storage (compression client)', 'Fin du stockage base64 en DB', 'Upload max 10MB avec compression auto'] },
+  { v: '7.07', changes: ['Photos: compression automatique cote client', 'Upload max 10MB'] },
   { v: '7.06', changes: ['Barre de completude sur chaque bien (8 criteres)'] },
   { v: '7.05', changes: ['Systeme de contestation (proprio peut contester)', 'Formulaire litige avec motif + photos', 'Gestion litiges cote concierge', 'Securite: proprio ne voit que ses biens'] },
   { v: '7.04', changes: ['Profil annuaire: ajout nom, ville, telephone', 'Photo propriete auto-sauvegardee', 'Fix checklist entre proprietes'] },
@@ -2744,8 +2745,8 @@ const VERSION_CHANGELOG = [
   { v: '7.02', changes: ['Auto-refresh badge connexion toutes les 30s'] },
   { v: '7.01', changes: ['Onglet Equipe pour provider/owner', 'Fix bouton Se connecter marketplace'] },
   { v: '7.00', changes: ['Demandes de connexion (cloche dans le header)', 'Badge notifications temps reel (30s)', 'Bouton Se connecter sur le marketplace'] },
-  { v: '6.99', changes: ['Systeme de connexion entre utilisateurs', 'Table connection_requests + RLS', 'Auto-refresh marketplace (15s)'] },
-  { v: '6.75', changes: ['Pricing dynamique (saisons, jours, dates speciales)', 'Checklist photos QC pour prestataires', 'Validation QC par le concierge avec galerie', 'Auto-refresh iCal gratuit (Supabase Edge Function)', 'Bouton annuler sur prestations en attente', 'Ma conciergerie dans la vue proprietaire', 'Export CSV comptable'] },
+  { v: '6.99', changes: ['Systeme de connexion entre utilisateurs', 'Auto-refresh marketplace (15s)'] },
+  { v: '6.75', changes: ['Pricing dynamique (saisons, jours, dates speciales)', 'Checklist photos QC pour prestataires', 'Validation QC par le concierge avec galerie', 'Auto-refresh iCal gratuit', 'Bouton annuler sur prestations en attente', 'Ma conciergerie dans la vue proprietaire', 'Export CSV comptable'] },
   { v: '6.68', changes: ['Historique complet des mises a jour (clic sur version)', 'Logique des prix unifiee (property > org > defaut)', 'Prestataire reste sur Prestations apres action'] },
   { v: '6.66', changes: ['Fix suppression de biens', 'Changelog dynamique', 'CA previsionnel annuel'] },
   { v: '6.62', changes: ['Changelog versionne automatique sur le splash'] },
@@ -10876,6 +10877,7 @@ async function showRoleChangeModal() {
     { id: 'concierge', label: 'Concierge', icon: '&#127970;', color: '#e94560', desc: 'Gerez les menages pour plusieurs proprietaires' },
     { id: 'owner', label: 'Proprietaire', icon: '&#127968;', color: '#f59e0b', desc: 'Suivez les menages de vos biens' },
     { id: 'provider', label: 'Prestataire', icon: '&#129529;', color: '#34d399', desc: 'Consultez et validez vos missions' },
+    { id: 'tenant', label: 'Locataire', icon: '&#128273;', color: '#a78bfa', desc: 'Suivez les interventions dans votre logement' },
   ];
   const currentRole = API.getRole();
   let html = '<div style="padding:10px;">';
