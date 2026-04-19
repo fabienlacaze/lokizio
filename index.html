@@ -630,6 +630,9 @@ async function loadPDF() {
   .annSubTab { background: transparent; color: var(--text3); transition: background 0.15s, color 0.15s; }
   .annSubTab:hover { color: var(--text); }
   .annSubTabActive { background: var(--accent); color: #fff !important; }
+  .finFactModeBtn { background: transparent; color: var(--text3); transition: background 0.15s, color 0.15s; }
+  .finFactModeBtn:hover { color: var(--text); }
+  .finFactModeActive { background: var(--surface); color: var(--text) !important; box-shadow: 0 1px 3px rgba(0,0,0,0.3); }
   /* Stacked popup overlay (shown on top of existing modal) */
   .stackedOverlay {
     display: none; position: fixed;
@@ -1140,7 +1143,7 @@ async function loadPDF() {
 </script>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v8.54</div>
+<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v8.55</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -1150,7 +1153,7 @@ async function loadPDF() {
     <!-- Broom that sweeps -->
     <div id="splashBroom" style="position:absolute;top:50%;left:-60px;font-size:48px;transform:translateY(-50%) rotate(-30deg);opacity:0;transition:all 0.8s cubic-bezier(0.25,0.46,0.45,0.94);">✨</div>
   </div>
-  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v8.54</span></div>
+  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v8.55</span></div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie pour locations</div>
   <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou</div>
   <!-- Loading bar -->
@@ -1737,10 +1740,9 @@ async function loadPDF() {
 
   <!-- SUB: Factures -->
   <div id="finSubFactures" class="finSubContent" style="display:none;">
-    <!-- Top segmented tabs: Creer | Auto | Consulter -->
+    <!-- Top segmented tabs: Creer | Consulter -->
     <div style="display:flex;gap:4px;background:var(--surface2);padding:4px;border-radius:10px;margin-bottom:14px;">
       <button id="finFactTab_create" class="annSubTab" onclick="switchFinFactTab('create')" style="flex:1;padding:10px 14px;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">&#10133; Creer</button>
-      <button id="finFactTab_auto" class="annSubTab" onclick="switchFinFactTab('auto')" style="flex:1;padding:10px 14px;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">&#9889; Auto</button>
       <button id="finFactTab_list" class="annSubTab annSubTabActive" onclick="switchFinFactTab('list')" style="flex:1;padding:10px 14px;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">&#128196; Consulter</button>
     </div>
     <!-- Panel: Consulter -->
@@ -1760,25 +1762,30 @@ async function loadPDF() {
       <input type="hidden" id="invoiceFilter" value="all">
       <div id="invoicesList"></div>
     </div>
-    <!-- Panel: Creer -->
+    <!-- Panel: Creer (with Manuel/Auto mode toggle) -->
     <div id="finFactPanel_create" style="display:none;">
-      <div style="font-size:14px;color:var(--text2);margin-bottom:12px;">Quel type de facture voulez-vous emettre ?</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-        <button onclick="showCreateInvoiceModal('concierge_to_owner')" style="padding:18px 14px;background:linear-gradient(135deg,#e94560,#c73e54);color:#fff;border:none;border-radius:12px;font-weight:700;cursor:pointer;transition:transform 0.15s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''">
-          <div style="font-size:28px;margin-bottom:6px;">&#127968;</div>
-          <div style="font-size:14px;">Facture proprietaire</div>
-          <div style="font-size:10px;opacity:0.85;margin-top:4px;font-weight:400;">Emise par la conciergerie</div>
-        </button>
-        <button onclick="showCreateInvoiceModal('provider_to_concierge')" style="padding:18px 14px;background:linear-gradient(135deg,#34d399,#059669);color:#fff;border:none;border-radius:12px;font-weight:700;cursor:pointer;transition:transform 0.15s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''">
-          <div style="font-size:28px;margin-bottom:6px;">&#129529;</div>
-          <div style="font-size:14px;">Facture prestataire</div>
-          <div style="font-size:10px;opacity:0.85;margin-top:4px;font-weight:400;">Emise par un prestataire</div>
-        </button>
+      <div style="display:flex;gap:8px;margin-bottom:12px;padding:4px;background:var(--surface2);border-radius:10px;">
+        <label style="flex:1;cursor:pointer;"><input type="radio" name="finFactMode" value="manual" checked onchange="switchFinFactMode('manual')" style="display:none;"><div id="finFactMode_manual_btn" class="finFactModeBtn finFactModeActive" style="text-align:center;padding:8px;border-radius:8px;font-size:13px;font-weight:600;">&#9997;&#65039; Manuel</div></label>
+        <label style="flex:1;cursor:pointer;"><input type="radio" name="finFactMode" value="auto" onchange="switchFinFactMode('auto')" style="display:none;"><div id="finFactMode_auto_btn" class="finFactModeBtn" style="text-align:center;padding:8px;border-radius:8px;font-size:13px;font-weight:600;">&#9889; Auto</div></label>
       </div>
-    </div>
-    <!-- Panel: Auto -->
-    <div id="finFactPanel_auto" style="display:none;">
-      <div id="autoBillingPanel"></div>
+      <div id="finFactMode_manual_panel">
+        <div style="font-size:14px;color:var(--text2);margin-bottom:12px;">Quel type de facture voulez-vous emettre ?</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+          <button onclick="showCreateInvoiceModal('concierge_to_owner')" style="padding:18px 14px;background:linear-gradient(135deg,#e94560,#c73e54);color:#fff;border:none;border-radius:12px;font-weight:700;cursor:pointer;transition:transform 0.15s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''">
+            <div style="font-size:28px;margin-bottom:6px;">&#127968;</div>
+            <div style="font-size:14px;">Facture proprietaire</div>
+            <div style="font-size:10px;opacity:0.85;margin-top:4px;font-weight:400;">Emise par la conciergerie</div>
+          </button>
+          <button onclick="showCreateInvoiceModal('provider_to_concierge')" style="padding:18px 14px;background:linear-gradient(135deg,#34d399,#059669);color:#fff;border:none;border-radius:12px;font-weight:700;cursor:pointer;transition:transform 0.15s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''">
+            <div style="font-size:28px;margin-bottom:6px;">&#129529;</div>
+            <div style="font-size:14px;">Facture prestataire</div>
+            <div style="font-size:10px;opacity:0.85;margin-top:4px;font-weight:400;">Emise par un prestataire</div>
+          </button>
+        </div>
+      </div>
+      <div id="finFactMode_auto_panel" style="display:none;">
+        <div id="autoBillingPanel"></div>
+      </div>
     </div>
   </div>
 
@@ -2509,6 +2516,7 @@ function getStatusLabel(s) { return (STATUS_CONFIG[s] || {}).label || s || ''; }
 // ── Splash Changelog (update this with each significant version) ──
 // Full versioned changelog — add new entries at TOP
 const VERSION_CHANGELOG = [
+  { v: '8.55', changes: ['Factures: onglet Auto devient sous-mode de Creer (toggle Manuel/Auto en haut du panneau)', 'Concierge et Prestataire: 2 onglets principaux (Creer | Consulter), Creer contient un switch Manuel/Auto'] },
   { v: '8.54', changes: ['Auto-billing: historique des 10 dernieres generations affiche dans l\'onglet Auto (concierge + prestataire)', 'Auto-billing: feedback ameliore - message clair quand 0 facture creee', 'Auto-billing: labels simplifies (ex: "Aux proprietaires" au lieu de "Factures proprietaires (conciergerie → proprietaires)")', 'Popup relance facture utilise customConfirm (plus de popup native)'] },
   { v: '8.53', changes: ['Prestataire: ordre des onglets Factures aligne sur concierge - Creer | Auto | Consulter'] },
   { v: '8.52', changes: ['Prestataire: nouvel onglet Auto dans Factures - facturation auto aux conciergeries et proprietaires', 'Edge Function auto-bill refactoree pour gerer 2 roles (concierge + provider)', 'Types supportes: provider_to_concierge (groupe par concierge) et provider_to_owner (prestations en direct)', 'DB: billing_settings etendu (user_id + role), RLS elargie au role provider'] },
@@ -5158,11 +5166,14 @@ async function showProviderMode() {
   // Tabs
   html += '<div style="display:flex;gap:4px;background:var(--surface2);padding:4px;border-radius:10px;margin-bottom:14px;">';
   html += '<button id="provFinTab_create" class="annSubTab" onclick="switchProvFinTab(\'create\')" style="flex:1;padding:10px 14px;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">&#10133; Creer</button>';
-  html += '<button id="provFinTab_auto" class="annSubTab" onclick="switchProvFinTab(\'auto\')" style="flex:1;padding:10px 14px;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">&#9889; Auto</button>';
   html += '<button id="provFinTab_list" class="annSubTab annSubTabActive" onclick="switchProvFinTab(\'list\')" style="flex:1;padding:10px 14px;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">&#128196; Consulter</button>';
   html += '</div>';
-  html += '<div id="provFinPanel_auto" style="display:none;"><div id="provAutoBillingPanel"></div></div>';
   html += '<div id="provFinPanel_create" style="display:none;">';
+  html += '<div style="display:flex;gap:8px;margin-bottom:12px;padding:4px;background:var(--surface2);border-radius:10px;">';
+  html += '<div id="provFinMode_manual_btn" onclick="switchProvFinMode(\'manual\')" class="finFactModeBtn finFactModeActive" style="flex:1;text-align:center;cursor:pointer;padding:8px;border-radius:8px;font-size:13px;font-weight:600;">&#9997;&#65039; Manuel</div>';
+  html += '<div id="provFinMode_auto_btn" onclick="switchProvFinMode(\'auto\')" class="finFactModeBtn" style="flex:1;text-align:center;cursor:pointer;padding:8px;border-radius:8px;font-size:13px;font-weight:600;">&#9889; Auto</div>';
+  html += '</div>';
+  html += '<div id="provFinMode_manual_panel">';
   html += '<div style="font-size:14px;color:var(--text2);margin-bottom:12px;">Quel type de facture voulez-vous emettre ?</div>';
   html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">';
   html += '<button onclick="showCreateInvoiceModal(\'provider_to_concierge\')" style="padding:18px 14px;background:linear-gradient(135deg,#34d399,#059669);color:#fff;border:none;border-radius:12px;font-weight:700;cursor:pointer;transition:transform 0.15s;" onmouseover="this.style.transform=\'translateY(-2px)\'" onmouseout="this.style.transform=\'\'">';
@@ -5174,6 +5185,8 @@ async function showProviderMode() {
   html += '<div style="font-size:10px;opacity:0.85;margin-top:4px;font-weight:400;">Directement au proprietaire</div>';
   html += '</button>';
   html += '</div></div>';
+  html += '<div id="provFinMode_auto_panel" style="display:none;"><div id="provAutoBillingPanel"></div></div>';
+  html += '</div>';
   html += '<div id="provFinPanel_list">';
   html += '<div id="provInvoiceSummary" style="margin-bottom:12px;"></div>';
   html += '<div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap;align-items:center;">';
@@ -5511,12 +5524,10 @@ function switchProvFinTab(tab) {
   const btns = {
     list: document.getElementById('provFinTab_list'),
     create: document.getElementById('provFinTab_create'),
-    auto: document.getElementById('provFinTab_auto'),
   };
   const panels = {
     list: document.getElementById('provFinPanel_list'),
     create: document.getElementById('provFinPanel_create'),
-    auto: document.getElementById('provFinPanel_auto'),
   };
   if (!btns.list || !btns.create) return;
   Object.values(btns).forEach(b => b && b.classList.remove('annSubTabActive'));
@@ -5524,7 +5535,19 @@ function switchProvFinTab(tab) {
   if (btns[tab]) btns[tab].classList.add('annSubTabActive');
   if (panels[tab]) panels[tab].style.display = '';
   if (tab === 'list') loadProviderInvoices();
-  if (tab === 'auto') renderProviderAutoBillingPanel();
+}
+
+function switchProvFinMode(mode) {
+  const manualBtn = document.getElementById('provFinMode_manual_btn');
+  const autoBtn = document.getElementById('provFinMode_auto_btn');
+  const manualPanel = document.getElementById('provFinMode_manual_panel');
+  const autoPanel = document.getElementById('provFinMode_auto_panel');
+  if (!manualBtn || !autoBtn) return;
+  manualBtn.classList.toggle('finFactModeActive', mode === 'manual');
+  autoBtn.classList.toggle('finFactModeActive', mode === 'auto');
+  if (manualPanel) manualPanel.style.display = mode === 'manual' ? '' : 'none';
+  if (autoPanel) autoPanel.style.display = mode === 'auto' ? '' : 'none';
+  if (mode === 'auto') renderProviderAutoBillingPanel();
 }
 
 async function renderProviderAutoBillingPanel() {
@@ -8001,19 +8024,29 @@ function switchFinFactTab(tab) {
   const btns = {
     list: document.getElementById('finFactTab_list'),
     create: document.getElementById('finFactTab_create'),
-    auto: document.getElementById('finFactTab_auto'),
   };
   const panels = {
     list: document.getElementById('finFactPanel_list'),
     create: document.getElementById('finFactPanel_create'),
-    auto: document.getElementById('finFactPanel_auto'),
   };
   Object.keys(btns).forEach(k => { if (btns[k]) btns[k].classList.remove('annSubTabActive'); });
   Object.keys(panels).forEach(k => { if (panels[k]) panels[k].style.display = 'none'; });
   if (btns[tab]) btns[tab].classList.add('annSubTabActive');
   if (panels[tab]) panels[tab].style.display = '';
   if (tab === 'list') loadInvoices();
-  if (tab === 'auto') renderAutoBillingPanel();
+}
+
+function switchFinFactMode(mode) {
+  const manualBtn = document.getElementById('finFactMode_manual_btn');
+  const autoBtn = document.getElementById('finFactMode_auto_btn');
+  const manualPanel = document.getElementById('finFactMode_manual_panel');
+  const autoPanel = document.getElementById('finFactMode_auto_panel');
+  if (!manualBtn || !autoBtn) return;
+  manualBtn.classList.toggle('finFactModeActive', mode === 'manual');
+  autoBtn.classList.toggle('finFactModeActive', mode === 'auto');
+  if (manualPanel) manualPanel.style.display = mode === 'manual' ? '' : 'none';
+  if (autoPanel) autoPanel.style.display = mode === 'auto' ? '' : 'none';
+  if (mode === 'auto') renderAutoBillingPanel();
 }
 
 async function renderAutoBillingPanel() {
