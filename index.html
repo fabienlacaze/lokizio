@@ -1143,7 +1143,7 @@ async function loadPDF() {
 </script>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v8.59</div>
+<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v8.60</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -1153,7 +1153,7 @@ async function loadPDF() {
     <!-- Broom that sweeps -->
     <div id="splashBroom" style="position:absolute;top:50%;left:-60px;font-size:48px;transform:translateY(-50%) rotate(-30deg);opacity:0;transition:all 0.8s cubic-bezier(0.25,0.46,0.45,0.94);">✨</div>
   </div>
-  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v8.59</span></div>
+  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v8.60</span></div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie pour locations</div>
   <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou</div>
   <!-- Loading bar -->
@@ -1399,6 +1399,7 @@ async function loadPDF() {
     <button class="btnHelp" onclick="showHelp()" title="Aide" style="display:none;">?</button>
     <button class="btnHelp" onclick="toggleTheme()" title="Theme" id="themeBtn" style="display:none;">&#9788;</button>
     <!-- Visible buttons -->
+    <button class="btnHelp" onclick="showGlobalSearch()" title="Recherche globale" aria-label="Recherche" style="font-size:13px;">&#128269;</button>
     <button class="btnHelp" id="btnConnections" onclick="showConnectionRequests()" title="Demandes de connexion" aria-label="Demandes de connexion" style="display:none;font-size:13px;position:relative;">&#128276;<span id="connectionBadge" style="display:none;position:absolute;top:-4px;right:-4px;background:#e94560;color:#fff;font-size:9px;font-weight:700;min-width:16px;height:16px;border-radius:8px;align-items:center;justify-content:center;">0</span></button>
     <button class="btnHelp" onclick="showInviteModal()" title="Inviter" aria-label="Inviter un membre" style="font-size:13px;">&#128279;</button>
     <button class="btnHelp" onclick="showAccountModal()" title="Mon compte" aria-label="Mon compte" style="font-size:13px;">&#9881;</button>
@@ -2526,6 +2527,7 @@ function getStatusLabel(s) { return (STATUS_CONFIG[s] || {}).label || s || ''; }
 // ── Splash Changelog (update this with each significant version) ──
 // Full versioned changelog — add new entries at TOP
 const VERSION_CHANGELOG = [
+  { v: '8.60', changes: ['Recherche globale: bouton loupe dans le header - cherche dans factures, proprietes, membres, prestations'] },
   { v: '8.59', changes: ['Auto-billing: bouton Simuler - apercu des factures qui seraient creees, sans ecriture en base', 'Edge Function: mode preview=1 qui retourne les factures simulees'] },
   { v: '8.58', changes: ['Pays deplace dans Mon profil personnel (champ "Pays (jours feries)")', 'Retire de la popup Mes conges - une seule source de verite'] },
   { v: '8.57', changes: ['Mes conges: selecteur de pays (FR, BE, CH, LU, CA) - jours feries adaptes au pays', 'Pays stocke dans marketplace_profiles.country', 'Fix: colonne vacation_periods manquante ajoutee a marketplace_profiles'] },
@@ -10056,6 +10058,53 @@ async function downloadInvoicePDF(invoiceId) {
 
   doc.save((inv.invoice_number || 'Facture') + '.pdf');
   } catch(e) { console.error('downloadInvoicePDF error:', e); showToast('Erreur generation PDF: ' + (e.message || 'Verifiez votre connexion')); }
+}
+
+async function showGlobalSearch() {
+  let h = '<div style="font-size:15px;font-weight:700;margin-bottom:10px;">&#128269; Recherche globale</div>';
+  h += '<input type="text" id="globalSearchInput" placeholder="Nom, numero, propriete, client..." oninput="runGlobalSearch(this.value)" style="width:100%;padding:10px 12px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;box-sizing:border-box;margin-bottom:10px;" autofocus>';
+  h += '<div id="globalSearchResults" style="max-height:400px;overflow-y:auto;"><div style="color:var(--text3);font-size:12px;text-align:center;padding:20px;">Tapez au moins 2 caracteres</div></div>';
+  showMsg(h);
+  setTimeout(() => { const inp = document.getElementById('globalSearchInput'); if (inp) inp.focus(); }, 100);
+}
+
+async function runGlobalSearch(q) {
+  const out = document.getElementById('globalSearchResults');
+  if (!out) return;
+  q = (q || '').trim();
+  if (q.length < 2) { out.innerHTML = '<div style="color:var(--text3);font-size:12px;text-align:center;padding:20px;">Tapez au moins 2 caracteres</div>'; return; }
+  out.innerHTML = '<div style="color:var(--text3);font-size:12px;text-align:center;padding:12px;">Recherche...</div>';
+  const org = API.getOrg();
+  const orgId = org?.id;
+  const like = '%' + q + '%';
+  const queries = [];
+  queries.push(sb.from('invoices').select('id, invoice_number, client_name, total_ttc, type, status').or('invoice_number.ilike.' + like + ',client_name.ilike.' + like).limit(10));
+  if (orgId) {
+    queries.push(sb.from('properties').select('id, name, owner_name, address').eq('org_id', orgId).or('name.ilike.' + like + ',owner_name.ilike.' + like + ',address.ilike.' + like).limit(10));
+    queries.push(sb.from('members').select('id, display_name, invited_email, role').eq('org_id', orgId).or('display_name.ilike.' + like + ',invited_email.ilike.' + like).limit(10));
+    queries.push(sb.from('service_requests').select('id, service_type, status, requested_date, property_id').eq('org_id', orgId).ilike('service_type', like).limit(10));
+  }
+  const [invRes, propRes, memRes, srRes] = await Promise.allSettled(queries);
+  let h = '';
+  function section(title, items, renderItem) {
+    if (!items || !items.length) return;
+    h += '<div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin:10px 0 4px;">' + title + ' (' + items.length + ')</div>';
+    items.forEach(it => { h += renderItem(it); });
+  }
+  section('Factures', invRes?.value?.data, inv => {
+    return '<div style="background:var(--surface2);border-radius:8px;padding:8px 10px;font-size:12px;margin-bottom:4px;"><strong>' + (inv.invoice_number || '—') + '</strong> · ' + (inv.client_name || '') + ' · ' + (inv.total_ttc || 0) + '€ <span style="color:var(--text3);font-size:10px;">(' + inv.status + ')</span></div>';
+  });
+  section('Proprietes', propRes?.value?.data, p => {
+    return '<div style="background:var(--surface2);border-radius:8px;padding:8px 10px;font-size:12px;margin-bottom:4px;">&#127968; <strong>' + (p.name || '—') + '</strong>' + (p.owner_name ? ' · ' + p.owner_name : '') + (p.address ? '<div style="color:var(--text3);font-size:10px;">' + p.address + '</div>' : '') + '</div>';
+  });
+  section('Membres', memRes?.value?.data, m => {
+    return '<div style="background:var(--surface2);border-radius:8px;padding:8px 10px;font-size:12px;margin-bottom:4px;">&#128100; <strong>' + (m.display_name || m.invited_email || '—') + '</strong> <span style="color:var(--text3);font-size:10px;">(' + m.role + ')</span></div>';
+  });
+  section('Prestations', srRes?.value?.data, r => {
+    return '<div style="background:var(--surface2);border-radius:8px;padding:8px 10px;font-size:12px;margin-bottom:4px;">&#129529; <strong>' + (r.service_type || '—') + '</strong> · ' + (r.requested_date || '') + ' <span style="color:var(--text3);font-size:10px;">(' + r.status + ')</span></div>';
+  });
+  if (!h) h = '<div style="color:var(--text3);font-size:12px;text-align:center;padding:20px;">Aucun resultat pour "' + q + '"</div>';
+  out.innerHTML = h;
 }
 
 async function showAccountModal() {
