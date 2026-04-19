@@ -1143,7 +1143,7 @@ async function loadPDF() {
 </script>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v8.67</div>
+<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v8.68</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -1153,7 +1153,7 @@ async function loadPDF() {
     <!-- Broom that sweeps -->
     <div id="splashBroom" style="position:absolute;top:50%;left:-60px;font-size:48px;transform:translateY(-50%) rotate(-30deg);opacity:0;transition:all 0.8s cubic-bezier(0.25,0.46,0.45,0.94);">✨</div>
   </div>
-  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v8.67</span></div>
+  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v8.68</span></div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie pour locations</div>
   <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou</div>
   <!-- Loading bar -->
@@ -2527,6 +2527,7 @@ function getStatusLabel(s) { return (STATUS_CONFIG[s] || {}).label || s || ''; }
 // ── Splash Changelog (update this with each significant version) ──
 // Full versioned changelog — add new entries at TOP
 const VERSION_CHANGELOG = [
+  { v: '8.68', changes: ['Auto-billing: config collapse automatiquement quand desactive (concierge + prestataire)', 'Proprietaire: ordre des onglets Creer | Consulter aligne sur les autres roles', 'Style bordure rouge sur onglet actif applique aux 3 roles'] },
   { v: '8.67', changes: ['Onglets actifs (Creer/Consulter, Manuel/Auto, etc.): fond transparent + bordure rouge, coherent avec le reste de l\'app'] },
   { v: '8.66', changes: ['Toggle Manuel/Auto plus discret (taille reduite, aligne a gauche) pour clarifier la hierarchie avec Creer/Consulter'] },
   { v: '8.65', changes: ['Factures: 6 nouvelles ameliorations en serie', 'Badge retard rouge sur l\'onglet Factures (nb factures en retard)', 'Bouton Dupliquer sur chaque facture (cree un brouillon)', 'Selection multiple + action groupee "Marquer payees"', 'Filtre par client (dropdown)', 'Tri (date, montant, client)', 'Mode compact (1 ligne par facture) / Detaille (carte complete)'] },
@@ -5605,6 +5606,8 @@ async function renderProviderAutoBillingPanel() {
   h += '<span style="position:absolute;top:3px;left:' + (enabled ? '25px' : '3px') + ';width:20px;height:20px;background:white;border-radius:50%;transition:0.3s;"></span>';
   h += '</label></div>';
 
+  // Collapsible config (hidden when disabled)
+  h += '<div id="provAb_collapsible" style="display:' + (enabled ? 'block' : 'none') + ';">';
   h += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">';
   h += '<div><label style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:4px;">Frequence</label>';
   h += '<select id="provAb_frequency" style="width:100%;padding:9px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:13px;box-sizing:border-box;">';
@@ -5643,10 +5646,18 @@ async function renderProviderAutoBillingPanel() {
   h += '<button onclick="triggerProviderAutoBillNow()" style="min-width:100px;padding:10px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-weight:600;cursor:pointer;">&#9889; Tester</button>';
   h += '</div>';
   h += '<div id="provAutoBillingHistory" style="margin-top:14px;"></div>';
+  h += '</div>'; // close provAb_collapsible
   h += '</div>';
 
   div.innerHTML = h;
   renderAutoBillingHistory('provider');
+  // Collapse reactivity on toggle
+  const provToggle = document.getElementById('provAb_enabled');
+  const provColl = document.getElementById('provAb_collapsible');
+  if (provToggle && provColl) provToggle.addEventListener('change', () => {
+    provColl.style.display = provToggle.checked ? 'block' : 'none';
+    saveProviderAutoBillSettings();
+  });
 }
 
 async function saveProviderAutoBillSettings() {
@@ -6668,8 +6679,8 @@ async function showOwnerMode() {
   html += '<div style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:12px;">💰 Mes factures</div>';
   // Tabs
   html += '<div style="display:flex;gap:4px;background:var(--surface2);padding:4px;border-radius:10px;margin-bottom:14px;">';
-  html += '<button id="ownerFinTab_list" class="annSubTab annSubTabActive" onclick="switchOwnerFinTab(\'list\')" style="flex:1;padding:10px 14px;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">&#128196; Consulter</button>';
   html += '<button id="ownerFinTab_create" class="annSubTab" onclick="switchOwnerFinTab(\'create\')" style="flex:1;padding:10px 14px;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">&#10133; Creer</button>';
+  html += '<button id="ownerFinTab_list" class="annSubTab annSubTabActive" onclick="switchOwnerFinTab(\'list\')" style="flex:1;padding:10px 14px;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">&#128196; Consulter</button>';
   html += '</div>';
   html += '<div id="ownerFinPanel_create" style="display:none;">';
   html += '<div style="font-size:14px;color:var(--text2);margin-bottom:12px;">Creer une facture a la conciergerie (remboursement, frais...)</div>';
@@ -8102,6 +8113,8 @@ async function renderAutoBillingPanel() {
   h += '<span style="font-size:12px;font-weight:600;color:' + (enabled ? '#34d399' : 'var(--text3)') + ';" id="ab_enabled_label">' + (enabled ? 'Active' : 'Desactive') + '</span>';
   h += '</label></div>';
 
+  // Collapsible config (hidden when disabled)
+  h += '<div id="ab_collapsible" style="display:' + (enabled ? 'block' : 'none') + ';">';
   // Config grid
   h += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">';
   h += '<div><label style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:4px;">Frequence</label>';
@@ -8143,16 +8156,21 @@ async function renderAutoBillingPanel() {
   h += '<button class="btn btnOutline" style="padding:11px 14px;" onclick="triggerAutoBillNow()" title="Declencher la generation maintenant">&#9889; Tester maintenant</button>';
   h += '</div>';
   h += '<div id="autoBillingHistory" style="margin-top:14px;"></div>';
+  h += '</div>'; // close ab_collapsible
   h += '</div>';
 
   div.innerHTML = h;
   renderAutoBillingHistory('concierge');
-  // Toggle label reactivity
+  // Toggle label + collapse reactivity
   const toggle = document.getElementById('ab_enabled');
   const lbl = document.getElementById('ab_enabled_label');
+  const coll = document.getElementById('ab_collapsible');
   if (toggle && lbl) toggle.addEventListener('change', () => {
     lbl.textContent = toggle.checked ? 'Active' : 'Desactive';
     lbl.style.color = toggle.checked ? '#34d399' : 'var(--text3)';
+    if (coll) coll.style.display = toggle.checked ? 'block' : 'none';
+    // Auto-save on toggle
+    saveBillingSettings();
   });
 }
 
