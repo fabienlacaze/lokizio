@@ -1143,7 +1143,7 @@ async function loadPDF() {
 </script>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v8.85</div>
+<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v8.86</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -1153,7 +1153,7 @@ async function loadPDF() {
     <!-- Broom that sweeps -->
     <div id="splashBroom" style="position:absolute;top:50%;left:-60px;font-size:48px;transform:translateY(-50%) rotate(-30deg);opacity:0;transition:all 0.8s cubic-bezier(0.25,0.46,0.45,0.94);">✨</div>
   </div>
-  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v8.85</span></div>
+  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v8.86</span></div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie pour locations</div>
   <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou</div>
   <!-- Loading bar -->
@@ -2195,13 +2195,24 @@ async function loadPDF() {
       <label style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:1px;">INVITER UN MEMBRE</label>
       <div style="display:flex;gap:8px;margin-top:8px;">
         <input type="email" id="inviteEmail" placeholder="email@exemple.com" style="flex:1;padding:10px 12px;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;color:var(--text);font-size:13px;">
-        <select id="inviteRole" style="padding:10px;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;color:var(--text);font-size:13px;">
+        <select id="inviteRole" onchange="toggleInviteTenantFields()" style="padding:10px;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;color:var(--text);font-size:13px;">
           <option value="owner">Proprietaire</option>
           <option value="concierge">Concierge</option>
           <option value="provider">Prestataire</option>
+          <option value="tenant">Locataire</option>
         </select>
       </div>
-      <button class="btn btnPrimary" style="width:100%;padding:12px;font-size:13px;margin-top:10px;" onclick="inviteTeamMember()">&#9993; Envoyer l'invitation</button>
+      <div id="inviteTenantFields" style="display:none;margin-top:10px;">
+        <label style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:4px;">Propriete</label>
+        <select id="inviteTenantProperty" style="width:100%;padding:9px;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;color:var(--text);font-size:13px;margin-bottom:8px;"></select>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
+          <div><label style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:4px;">Arrivee</label><input type="date" id="inviteTenantStart" style="width:100%;padding:9px;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;color:var(--text);font-size:13px;box-sizing:border-box;"></div>
+          <div><label style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:4px;">Depart</label><input type="date" id="inviteTenantEnd" style="width:100%;padding:9px;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;color:var(--text);font-size:13px;box-sizing:border-box;"></div>
+        </div>
+        <label style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:4px;">Consignes d'acces (optionnel)</label>
+        <textarea id="inviteTenantAccess" rows="2" placeholder="Code porte, emplacement des cles, wifi..." style="width:100%;padding:9px;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;color:var(--text);font-size:13px;box-sizing:border-box;resize:vertical;font-family:inherit;margin-bottom:8px;"></textarea>
+      </div>
+      <button id="inviteSubmitBtn" class="btn btnPrimary" style="width:100%;padding:12px;font-size:13px;margin-top:10px;" onclick="submitInvite()">&#9993; Envoyer l'invitation</button>
     </div>
   </div>
 </div>
@@ -2566,6 +2577,7 @@ function getStatusLabel(s) { return (STATUS_CONFIG[s] || {}).label || s || ''; }
 // ── Splash Changelog (update this with each significant version) ──
 // Full versioned changelog — add new entries at TOP
 const VERSION_CHANGELOG = [
+  { v: '8.86', changes: ['Invitation: possibilite d\'inviter un Locataire directement depuis le bouton "Inviter"', 'Formulaire locataire: choix du bien, dates arrivee/depart, consignes d\'acces', 'Email d\'invitation automatique avec les infos du sejour'] },
   { v: '8.85', changes: ['Bouton de switch de role retire du header (le badge role existant sert deja au changement)'] },
   { v: '8.84', changes: ['Badge de role Locataire (violet) affiche dans le header pour les utilisateurs locataires'] },
   { v: '8.83', changes: ['Outil super-admin: bouton clef a molette dans le header pour basculer rapidement entre les 4 roles (test des vues)'] },
@@ -11657,6 +11669,118 @@ function closeTeamModal() {
   document.getElementById('overlay').style.display = 'none';
   document.getElementById('teamModal').style.display = 'none';
 }
+async function toggleInviteTenantFields() {
+  const role = document.getElementById('inviteRole').value;
+  const block = document.getElementById('inviteTenantFields');
+  if (!block) return;
+  if (role === 'tenant') {
+    block.style.display = '';
+    // Populate property dropdown
+    const sel = document.getElementById('inviteTenantProperty');
+    if (sel && !sel.options.length) {
+      const org = API.getOrg();
+      if (org) {
+        const { data: props } = await sb.from('properties').select('id,name').eq('org_id', org.id).order('name');
+        sel.innerHTML = '<option value="">-- Choisir un bien --</option>' + (props || []).map(p => '<option value="' + p.id + '">' + esc(p.name || '—') + '</option>').join('');
+      }
+    }
+    // Default dates: today → +7 days
+    const s = document.getElementById('inviteTenantStart');
+    const e = document.getElementById('inviteTenantEnd');
+    if (s && !s.value) s.value = new Date().toISOString().split('T')[0];
+    if (e && !e.value) e.value = new Date(Date.now() + 7 * 86400000).toISOString().split('T')[0];
+  } else {
+    block.style.display = 'none';
+  }
+}
+
+async function submitInvite() {
+  const role = document.getElementById('inviteRole').value;
+  if (role === 'tenant') return inviteTenantMember();
+  return inviteTeamMember();
+}
+
+async function inviteTenantMember() {
+  const email = document.getElementById('inviteEmail').value.trim();
+  const propId = document.getElementById('inviteTenantProperty').value;
+  const start = document.getElementById('inviteTenantStart').value;
+  const end = document.getElementById('inviteTenantEnd').value;
+  const access = document.getElementById('inviteTenantAccess').value.trim();
+
+  if (!email) { showMsg('Entrez un email.'); return; }
+  if (!propId) { showMsg('Selectionnez un bien.'); return; }
+  if (!start || !end) { showMsg('Renseignez les dates d\'arrivee et de depart.'); return; }
+  if (start > end) { showMsg('La date de depart doit etre apres la date d\'arrivee.'); return; }
+  if (!API.isConcierge()) {
+    const role = API.getRole();
+    if (role !== 'owner') { showMsg('Seul un concierge ou proprietaire peut inviter un locataire.'); return; }
+  }
+
+  const org = API.getOrg();
+  if (!org) { showMsg('Organisation introuvable.'); return; }
+
+  try {
+    // 1) Check if user already has an auth account (best-effort, may be blocked by RLS)
+    const { data: existingProfile } = await sb.from('profiles').select('id').eq('email', email).maybeSingle();
+    let tenantUserId = existingProfile?.id || null;
+
+    // 2) Create member row with role=tenant (accepted=false, so they accept via auth)
+    await sb.from('members').insert({
+      org_id: org.id,
+      user_id: tenantUserId,
+      role: 'tenant',
+      invited_email: email,
+      accepted: tenantUserId ? true : false,
+    });
+
+    // 3) Create reservation
+    const { data: reza, error: rezaErr } = await sb.from('reservations').insert({
+      org_id: org.id,
+      property_id: propId,
+      tenant_user_id: tenantUserId,
+      tenant_email: email,
+      start_date: start,
+      end_date: end,
+      access_instructions: access || null,
+      status: 'active',
+    }).select('id').single();
+    if (rezaErr) { showMsg('Erreur: ' + rezaErr.message); return; }
+
+    // 4) Send invitation email (via send-email if configured)
+    const appUrl = window.location.origin + window.location.pathname;
+    const { data: props } = await sb.from('properties').select('name').eq('id', propId).single();
+    const propName = props?.name || 'votre logement';
+    const fmtD = (d) => d ? new Date(d + 'T12:00:00').toLocaleDateString('fr-FR') : '—';
+    try {
+      const session = (await sb.auth.getSession()).data.session;
+      const html = '<div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;padding:20px;color:#222;">' +
+        '<h2 style="color:#6c63ff;">🔑 Bienvenue chez ' + esc(propName) + ' !</h2>' +
+        '<p>Vous avez ete invite(e) comme locataire par <strong>' + esc(org.name) + '</strong>.</p>' +
+        '<p><strong>Dates du sejour :</strong> ' + fmtD(start) + ' → ' + fmtD(end) + '</p>' +
+        (access ? '<div style="background:#f5f7ff;border-left:3px solid #6c63ff;padding:12px;margin:16px 0;border-radius:6px;"><strong>Consignes d\'acces :</strong><br>' + esc(access).replace(/\n/g, '<br>') + '</div>' : '') +
+        '<p style="margin-top:24px;"><strong>Pour acceder a votre espace locataire :</strong><br>' +
+        '1. Creez un compte ou connectez-vous sur : <a href="' + appUrl + '">' + appUrl + '</a><br>' +
+        '2. Utilisez cet email : <strong>' + esc(email) + '</strong></p>' +
+        '<p style="font-size:12px;color:#666;margin-top:24px;border-top:1px solid #eee;padding-top:12px;">Via votre espace, vous recevrez les notifications des interventions programmees dans votre logement et pourrez communiquer avec la conciergerie.</p>' +
+        '</div>';
+      await fetch(SUPABASE_URL + '/functions/v1/send-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + (session?.access_token || '') },
+        body: JSON.stringify({ to: email, subject: 'Invitation Lokizio — ' + propName, html, type: 'invitation' }),
+      });
+    } catch(e) { console.warn('Email send failed:', e); }
+
+    showToast('Locataire invite ! Email envoye a ' + email);
+    document.getElementById('inviteEmail').value = '';
+    document.getElementById('inviteTenantAccess').value = '';
+    // Show copyable invitation message
+    const msg = 'Bonjour,\n\nVous etes invite(e) comme locataire chez ' + propName + ' du ' + fmtD(start) + ' au ' + fmtD(end) + '.\n\nPour acceder a votre espace : ' + appUrl + '\nAvec l\'email : ' + email + '\n\n-- Lokizio';
+    customConfirm('Locataire invite. Email envoye.\n\nVoulez-vous aussi copier le message ?', 'Copier').then(ok => {
+      if (ok) { navigator.clipboard.writeText(msg).catch(() => {}); showToast('Message copie'); }
+    });
+  } catch(e) { console.error('inviteTenantMember:', e); showMsg('Erreur: ' + (e.message || e)); }
+}
+
 async function inviteTeamMember() {
   const email = document.getElementById('inviteEmail').value.trim();
   const role = document.getElementById('inviteRole').value;
