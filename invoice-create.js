@@ -417,6 +417,7 @@ async function saveInvoice(status, type, isQuote) {
   const label = isQuote ? 'Devis' : 'Facture';
   showToast(status === 'draft' ? 'Brouillon sauvegarde' : label + ' ' + invoiceNumber + ' cree !');
   loadInvoices();
+}
 
 window.showCreateInvoiceModal = showCreateInvoiceModal;
 window.validateInvoiceForm = validateInvoiceForm;
