@@ -1143,7 +1143,7 @@ async function loadPDF() {
 </script>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v8.88</div>
+<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v8.89</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -1153,7 +1153,7 @@ async function loadPDF() {
     <!-- Broom that sweeps -->
     <div id="splashBroom" style="position:absolute;top:50%;left:-60px;font-size:48px;transform:translateY(-50%) rotate(-30deg);opacity:0;transition:all 0.8s cubic-bezier(0.25,0.46,0.45,0.94);">✨</div>
   </div>
-  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v8.88</span></div>
+  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v8.89</span></div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie pour locations</div>
   <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou</div>
   <!-- Loading bar -->
@@ -2034,6 +2034,19 @@ async function loadPDF() {
         <div style="font-size:10px;color:var(--text3);text-align:center;">&#10003; Sauvegarde automatique a chaque modification</div>
       </div>
 
+      <!-- Notifications -->
+      <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">&#128276; Notifications</div>
+      <div style="background:var(--surface2);border-radius:10px;overflow:hidden;margin-bottom:16px;">
+        <label style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-bottom:1px solid var(--border);cursor:pointer;">
+          <div><div style="font-size:13px;color:var(--text);">&#128231; Emails</div><div style="font-size:11px;color:var(--text3);margin-top:2px;">Recevoir les notifications par email</div></div>
+          <input type="checkbox" id="profileNotifEmail" onchange="saveNotifPref('notif_email', this.checked)" style="width:42px;height:22px;cursor:pointer;">
+        </label>
+        <label style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;cursor:pointer;">
+          <div><div style="font-size:13px;color:var(--text);">&#128241; Notifications push</div><div style="font-size:11px;color:var(--text3);margin-top:2px;">Alertes dans le navigateur/mobile</div></div>
+          <input type="checkbox" id="profileNotifPush" onchange="saveNotifPref('notif_push', this.checked)" style="width:42px;height:22px;cursor:pointer;">
+        </label>
+      </div>
+
       <!-- Securite (compact rows) -->
       <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">Securite & compte</div>
       <div style="background:var(--surface2);border-radius:10px;overflow:hidden;margin-bottom:16px;">
@@ -2577,6 +2590,7 @@ function getStatusLabel(s) { return (STATUS_CONFIG[s] || {}).label || s || ''; }
 // ── Splash Changelog (update this with each significant version) ──
 // Full versioned changelog — add new entries at TOP
 const VERSION_CHANGELOG = [
+  { v: '8.89', changes: ['Fix: le changement de role plantait silencieusement (variable currentRole non definie dans doChangeRole)', 'Gestion des erreurs de mise a jour role amelioree (message explicite si echec)', 'Mon profil: toggles activer/desactiver les notifications email et push'] },
   { v: '8.88', changes: ['Dashboard enrichi: 3 nouveaux KPIs finance (CA du mois, A encaisser, Factures en retard)', 'Badge rouge pulsant si des factures sont en retard'] },
   { v: '8.87', changes: ['Notifications push ajoutees: factures envoyees / payees, devis acceptes / refuses', 'Facturation auto: email de resume envoye a l\'admin a chaque generation', 'Log de consentement RGPD a l\'inscription (conformite art. 7)', 'Emails: lien de desabonnement en un clic + header List-Unsubscribe (conformite CAN-SPAM)'] },
   { v: '8.86', changes: ['Invitation: possibilite d\'inviter un Locataire directement depuis le bouton "Inviter"', 'Formulaire locataire: choix du bien, dates arrivee/depart, consignes d\'acces', 'Email d\'invitation automatique avec les infos du sejour'] },
@@ -11270,16 +11284,26 @@ async function changeRole(newRole) {
 async function doChangeRole(newRole, subscriptionAction) {
   // Update role in DB
   const member = API.getMember();
+  const prevRole = API.getRole();
+  let updateErr = null;
   if (!member) {
     const { data: { user } } = await sb.auth.getUser();
     if (user) {
       const { data: members } = await sb.from('members').select('id').eq('user_id', user.id).limit(1);
       if (members && members.length) {
-        await sb.from('members').update({ role: newRole }).eq('id', members[0].id);
+        const { error } = await sb.from('members').update({ role: newRole }).eq('id', members[0].id);
+        updateErr = error;
       }
     }
   } else {
-    await sb.from('members').update({ role: newRole }).eq('id', member.id);
+    const { error } = await sb.from('members').update({ role: newRole }).eq('id', member.id);
+    updateErr = error;
+  }
+  if (updateErr) {
+    console.error('changeRole DB error:', updateErr);
+    closeMsg();
+    showToast('Erreur: impossible de changer le role (' + (updateErr.message || 'verifiez les droits') + ')');
+    return;
   }
 
   // Handle subscription change via Stripe
@@ -11303,7 +11327,7 @@ async function doChangeRole(newRole, subscriptionAction) {
   closeMsg();
   localStorage.removeItem('mm_cache_config');
   localStorage.removeItem('mm_panels_revealed');
-  showRoleTransition(currentRole, newRole);
+  showRoleTransition(prevRole, newRole);
   setTimeout(() => location.reload(), 2500);
 }
 
@@ -11498,6 +11522,17 @@ async function loadUserCountry() {
   } catch(e) { console.error('loadUserCountry:', e); }
   const sel = document.getElementById('vacationCountrySelect');
   if (sel) sel.value = _userCountry;
+}
+
+async function saveNotifPref(field, value) {
+  try {
+    const user = (await sb.auth.getUser()).data.user;
+    if (!user) return;
+    const payload = { user_id: user.id };
+    payload[field] = value;
+    await sb.from('marketplace_profiles').upsert(payload, { onConflict: 'user_id' });
+    showToast((field === 'notif_email' ? 'Emails' : 'Push') + (value ? ' actives' : ' desactives'));
+  } catch(e) { console.error('saveNotifPref:', e); showToast('Erreur: ' + e.message); }
 }
 
 async function saveProfileCountry(code) {
