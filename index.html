@@ -1143,7 +1143,7 @@ async function loadPDF() {
 </script>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v8.63</div>
+<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v8.64</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -1153,7 +1153,7 @@ async function loadPDF() {
     <!-- Broom that sweeps -->
     <div id="splashBroom" style="position:absolute;top:50%;left:-60px;font-size:48px;transform:translateY(-50%) rotate(-30deg);opacity:0;transition:all 0.8s cubic-bezier(0.25,0.46,0.45,0.94);">✨</div>
   </div>
-  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v8.63</span></div>
+  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v8.64</span></div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie pour locations</div>
   <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou</div>
   <!-- Loading bar -->
@@ -2527,6 +2527,7 @@ function getStatusLabel(s) { return (STATUS_CONFIG[s] || {}).label || s || ''; }
 // ── Splash Changelog (update this with each significant version) ──
 // Full versioned changelog — add new entries at TOP
 const VERSION_CHANGELOG = [
+  { v: '8.64', changes: ['Fix recherche globale: fonctionne aussi pour les utilisateurs sans org (prestataires) - RLS filtre automatiquement'] },
   { v: '8.63', changes: ['Nouvelle popup "Voir la facture" - vraie facture complete avec emetteur (SIRET/TVA/adresse), client, periode, tableau detaille, totaux HT/TVA/TTC, mentions legales', 'Bouton "Voir la facture" ajoute dans la popup historique'] },
   { v: '8.62', changes: ['Recherche globale: chips cliquables pour raccourcis (Toutes les factures, Tous les biens, etc.)'] },
   { v: '8.61', changes: ['Recherche globale: mots-cles ("facture" liste toutes les factures, "bien" liste les proprietes, etc.)', 'Resultats cliquables dans la recherche', 'Factures: bouton Voir explicite (ouvre la popup de detail)', 'Edge Function auto-bill: headers CORS ajoutes (fix Failed to fetch sur Simuler)'] },
@@ -10192,20 +10193,39 @@ async function runGlobalSearch(q) {
   const kwMembers = ['membre','membres','equipe','team','prestataire','prestataires','proprietaire'].some(k => lcq.includes(k));
   const kwServices = ['prestation','prestations','menage','service','services'].some(k => lcq.includes(k));
 
+  // Invoices (RLS filters access)
   if (kwInvoices) queries.push(sb.from('invoices').select('id, invoice_number, client_name, total_ttc, type, status').order('created_at', { ascending: false }).limit(20));
   else queries.push(sb.from('invoices').select('id, invoice_number, client_name, total_ttc, type, status').or('invoice_number.ilike.' + like + ',client_name.ilike.' + like).limit(10));
 
-  if (orgId) {
-    if (kwProperties) queries.push(sb.from('properties').select('id, name, owner_name, address').eq('org_id', orgId).limit(20));
-    else queries.push(sb.from('properties').select('id, name, owner_name, address').eq('org_id', orgId).or('name.ilike.' + like + ',owner_name.ilike.' + like + ',address.ilike.' + like).limit(10));
+  // Properties: use orgId if available, otherwise let RLS filter
+  const propQ = (filter) => {
+    let q2 = sb.from('properties').select('id, name, owner_name, address');
+    if (orgId) q2 = q2.eq('org_id', orgId);
+    return filter ? filter(q2) : q2;
+  };
+  if (kwProperties) queries.push(propQ(q2 => q2.limit(20)));
+  else queries.push(propQ(q2 => q2.or('name.ilike.' + like + ',owner_name.ilike.' + like + ',address.ilike.' + like).limit(10)));
 
+  // Members: only org members
+  if (orgId) {
     if (kwMembers) queries.push(sb.from('members').select('id, display_name, invited_email, role').eq('org_id', orgId).limit(20));
     else queries.push(sb.from('members').select('id, display_name, invited_email, role').eq('org_id', orgId).or('display_name.ilike.' + like + ',invited_email.ilike.' + like).limit(10));
-
-    if (kwServices) queries.push(sb.from('service_requests').select('id, service_type, status, requested_date, property_id').eq('org_id', orgId).order('requested_date', { ascending: false }).limit(20));
-    else queries.push(sb.from('service_requests').select('id, service_type, status, requested_date, property_id').eq('org_id', orgId).ilike('service_type', like).limit(10));
   }
-  const [invRes, propRes, memRes, srRes] = await Promise.allSettled(queries);
+
+  // Service requests
+  const srQ = (filter) => {
+    let q2 = sb.from('service_requests').select('id, service_type, status, requested_date, property_id');
+    if (orgId) q2 = q2.eq('org_id', orgId);
+    return filter ? filter(q2) : q2;
+  };
+  if (kwServices) queries.push(srQ(q2 => q2.order('requested_date', { ascending: false }).limit(20)));
+  else queries.push(srQ(q2 => q2.ilike('service_type', like).limit(10)));
+  const settled = await Promise.allSettled(queries);
+  // Queries order: 0=invoices, 1=properties, 2=(members if orgId else service_requests), 3=service_requests (if orgId)
+  const invRes = settled[0];
+  const propRes = settled[1];
+  const memRes = orgId ? settled[2] : null;
+  const srRes = orgId ? settled[3] : settled[2];
   let h = '';
   function section(title, items, renderItem) {
     if (!items || !items.length) return;
