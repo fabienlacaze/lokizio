@@ -79,7 +79,7 @@
 <script src="invoice-create.js?v=2"></script>
 <script src="auth.js?v=1"></script>
 <script src="provider.js?v=2"></script>
-<script src="owner.js?v=2"></script>
+<script src="owner.js?v=3"></script>
 <!-- Lazy-loaded: Leaflet, Chart.js, jsPDF (loaded on demand to improve startup) -->
 <script>
 function lazyLoad(url, type) {
@@ -1155,7 +1155,7 @@ async function loadPDF() {
 </script>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v9.10</div>
+<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v9.11</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -1165,7 +1165,7 @@ async function loadPDF() {
     <!-- Broom that sweeps -->
     <div id="splashBroom" style="position:absolute;top:50%;left:-60px;font-size:48px;transform:translateY(-50%) rotate(-30deg);opacity:0;transition:all 0.8s cubic-bezier(0.25,0.46,0.45,0.94);">✨</div>
   </div>
-  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v9.10</span></div>
+  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v9.11</span></div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie pour locations</div>
   <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou</div>
   <!-- Loading bar -->
@@ -2602,6 +2602,7 @@ function getStatusLabel(s) { return (STATUS_CONFIG[s] || {}).label || s || ''; }
 // ── Splash Changelog (update this with each significant version) ──
 // Full versioned changelog — add new entries at TOP
 const VERSION_CHANGELOG = [
+  { v: '9.11', changes: ['Refactoring: factures proprietaire (~240 lignes) deplacees dans owner.js'] },
   { v: '9.10', changes: ['Refactoring: showOwnerMode (~510 lignes) deplacee dans owner.js'] },
   { v: '9.09', changes: ['Refactoring: showProviderMode (~700 lignes) deplacee dans provider.js'] },
   { v: '9.08', changes: ['Refactoring: module mode proprietaire extrait dans owner.js (~250 lignes: biens, details, navigation)'] },
@@ -5141,244 +5142,6 @@ async function confirmProviderWithdraw(id, penaltyPercent) {
 /* ── Owner Mode ── */
 
 
-let _ownerInvoicesCache = [];
-let _ownerInvoicePeriod = 'all';
-let _ownerInvoiceStatus = 'all';
-
-async function loadOwnerInvoices() {
-  try {
-    const org = API.getOrg();
-    if (!org) return;
-    const member = API.getMember();
-    const { data: { user } } = await sb.auth.getUser();
-    const ownerName = member?.display_name || user?.email?.split('@')[0] || '';
-    const { data: allInvoices } = await sb.from('invoices').select('*')
-      .eq('org_id', org.id).in('type', ['concierge_to_owner','provider_to_owner'])
-      .order('created_at', { ascending: false }).limit(200);
-    let myPropNames = [];
-    if (member?.id) {
-      const { data: p1 } = await sb.from('properties').select('name').eq('org_id', org.id).eq('owner_member_id', member.id);
-      (p1 || []).forEach(p => { if (p.name && !myPropNames.includes(p.name)) myPropNames.push(p.name); });
-    }
-    if (user?.email) {
-      const { data: p2 } = await sb.from('properties').select('name').eq('org_id', org.id).eq('owner_email', user.email);
-      (p2 || []).forEach(p => { if (p.name && !myPropNames.includes(p.name)) myPropNames.push(p.name); });
-    }
-    _ownerInvoicesCache = (allInvoices || []).filter(inv => {
-      if (inv.client_name && ownerName && inv.client_name.toLowerCase().includes(ownerName.toLowerCase())) return true;
-      if (inv.property_name && myPropNames.includes(inv.property_name)) return true;
-      return false;
-    });
-    renderOwnerInvoicesView();
-  } catch(e) { console.error('loadOwnerInvoices error:', e); }
-}
-
-function renderOwnerInvoicesView() {
-  const container = document.getElementById('ownerInvoicesList');
-  if (!container) return;
-  const today = new Date().toISOString().split('T')[0];
-  const search = (document.getElementById('ownerInvoiceSearch')?.value || '').trim().toLowerCase();
-  const now = new Date();
-  const thisMonthStart = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0') + '-01';
-  const lastMonth = new Date(now.getFullYear(), now.getMonth()-1, 1);
-  const lastMonthStart = lastMonth.getFullYear() + '-' + String(lastMonth.getMonth()+1).padStart(2,'0') + '-01';
-  const lastMonthEnd = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0') + '-01';
-  const thisYearStart = now.getFullYear() + '-01-01';
-  const inPeriod = (inv) => {
-    const d = (inv.created_at || '').substring(0, 10);
-    if (_ownerInvoicePeriod === 'all') return true;
-    if (_ownerInvoicePeriod === 'thisMonth') return d >= thisMonthStart;
-    if (_ownerInvoicePeriod === 'lastMonth') return d >= lastMonthStart && d < lastMonthEnd;
-    if (_ownerInvoicePeriod === 'thisYear') return d >= thisYearStart;
-    return true;
-  };
-  const isOv = (inv) => inv.status === 'sent' && inv.due_date && inv.due_date < today;
-  const statusOf = (inv) => isOv(inv) ? 'overdue' : inv.status;
-  const matchSearch = (inv) => {
-    if (!search) return true;
-    const hay = [inv.invoice_number, inv.property_name].filter(Boolean).join(' ').toLowerCase();
-    return hay.includes(search);
-  };
-  const periodFiltered = _ownerInvoicesCache.filter(inPeriod);
-  const filtered = periodFiltered.filter(inv => {
-    if (_ownerInvoiceStatus !== 'all' && statusOf(inv) !== _ownerInvoiceStatus) return false;
-    return matchSearch(inv);
-  });
-  renderOwnerInvoiceSummary(periodFiltered);
-  renderOwnerInvoicePeriodChips();
-  renderOwnerInvoiceStatusChips(periodFiltered);
-  if (!filtered.length) {
-    container.innerHTML = '<div style="text-align:center;color:var(--text3);font-size:13px;padding:30px 20px;"><div style="font-size:32px;opacity:0.4;margin-bottom:8px;">&#128196;</div>Aucune facture pour ces filtres</div>';
-    return;
-  }
-  const MONTHS_FULL = ['Janvier','Fevrier','Mars','Avril','Mai','Juin','Juillet','Aout','Septembre','Octobre','Novembre','Decembre'];
-  const groups = {};
-  filtered.forEach(inv => {
-    const key = (inv.created_at || '').substring(0, 7);
-    if (!groups[key]) groups[key] = [];
-    groups[key].push(inv);
-  });
-  const keys = Object.keys(groups).sort().reverse();
-  let html = '';
-  keys.forEach(mk => {
-    const list = groups[mk];
-    const [yy, mm] = mk.split('-');
-    const label = MONTHS_FULL[parseInt(mm)-1] + ' ' + yy;
-    const monthTotal = list.reduce((s,i) => s + (i.total_ttc||0), 0);
-    const monthPaid = list.filter(i => i.status === 'paid').reduce((s,i) => s + (i.total_ttc||0), 0);
-    html += '<details open style="margin-bottom:10px;">';
-    html += '<summary style="list-style:none;cursor:pointer;display:flex;align-items:center;justify-content:space-between;padding:8px 4px;border-bottom:1px solid var(--border);font-size:12px;font-weight:700;color:var(--text2);">';
-    html += '<span style="display:flex;align-items:center;gap:6px;"><span class="collapseArrow">&#9662;</span>' + label + ' <span style="color:var(--text3);font-weight:400;font-size:11px;">(' + list.length + ')</span></span>';
-    html += '<span style="font-size:11px;color:var(--text3);font-weight:400;">Total <b style="color:var(--text);">' + monthTotal.toFixed(0) + '€</b> — Paye <b style="color:#34d399;">' + monthPaid.toFixed(0) + '€</b></span>';
-    html += '</summary><div style="padding-top:6px;">';
-    list.forEach(inv => { html += _renderOwnerInvoiceCard(inv, today); });
-    html += '</div></details>';
-  });
-  container.innerHTML = html;
-}
-
-function _renderOwnerInvoiceCard(inv, today) {
-  const isPaid = inv.status === 'paid';
-  const isOverdue = inv.status === 'sent' && inv.due_date && inv.due_date < today;
-  const color = isPaid ? '#34d399' : (isOverdue ? '#e94560' : '#f59e0b');
-  const label = isPaid ? 'Payee' : (isOverdue ? 'En retard' : 'A payer');
-  const dateStr = new Date(inv.created_at).toLocaleDateString('fr-FR');
-  const firstItem = (inv.items && inv.items.length) ? inv.items[0] : null;
-  const prestLabel = firstItem && firstItem.description ? firstItem.description : (inv.property_name || 'Facture');
-  let dueHint = '';
-  if (inv.due_date && !isPaid) {
-    const d = new Date(inv.due_date + 'T12:00:00');
-    const daysDiff = Math.floor((d - new Date()) / 86400000);
-    if (daysDiff < 0) dueHint = '<span style="font-size:10px;color:#e94560;font-weight:600;">&#9888; Echeance depassee de ' + Math.abs(daysDiff) + 'j</span>';
-    else if (daysDiff <= 7) dueHint = '<span style="font-size:10px;color:#f59e0b;">&#9201; A payer dans ' + daysDiff + 'j</span>';
-    else dueHint = '<span style="font-size:10px;color:var(--text3);">Echeance: ' + fmtDate(inv.due_date) + '</span>';
-  }
-  let html = '';
-  html += '<div onclick="showInvoiceDetail(\'' + inv.id + '\')" style="background:var(--surface2);border:1px solid var(--border2);border-left:3px solid ' + color + ';border-radius:10px;padding:12px;margin-bottom:8px;cursor:pointer;transition:border-color 0.15s;" onmouseover="this.style.borderColor=\'' + color + '\'" onmouseout="this.style.borderColor=\'var(--border2)\'">';
-  html += '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">';
-  html += '<div style="flex:1;min-width:0;">';
-  html += '<div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:2px;">' + esc(prestLabel) + '</div>';
-  if (inv.property_name) html += '<div style="font-size:11px;color:var(--text3);margin-bottom:3px;">&#127968; ' + esc(inv.property_name) + '</div>';
-  html += '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;"><span style="font-size:10px;color:var(--text3);">' + esc(inv.invoice_number || 'Facture') + ' · ' + dateStr + '</span>';
-  if (dueHint) html += dueHint;
-  html += '</div></div>';
-  html += '<div style="text-align:right;flex-shrink:0;">';
-  html += '<div style="font-size:17px;font-weight:800;color:var(--text);">' + (inv.total_ttc || 0).toFixed(2) + ' \u20ac</div>';
-  html += '<span style="display:inline-block;margin-top:4px;font-size:11px;padding:2px 8px;background:' + color + '20;color:' + color + ';border-radius:4px;font-weight:600;">' + label + '</span>';
-  html += '</div></div>';
-  html += '<div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap;" onclick="event.stopPropagation()">';
-  html += '<button class="btn btnSmall btnOutline" style="padding:4px 8px;font-size:11px;" onclick="showInvoiceDetail(\'' + inv.id + '\')">&#128065; Voir</button>';
-  html += '<button class="btn btnSmall btnOutline" style="padding:4px 8px;font-size:11px;" onclick="downloadInvoicePDF(\'' + inv.id + '\')">&#128196; PDF</button>';
-  if (!isPaid) html += '<button class="btn btnSmall" style="padding:4px 8px;font-size:11px;background:linear-gradient(135deg,#6c63ff,#5a54e0);color:#fff;" onclick="ownerPayInvoice(\'' + inv.id + '\',' + (inv.total_ttc || 0) + ')">&#128179; Payer</button>';
-  html += '</div></div>';
-  return html;
-}
-
-function renderOwnerInvoiceSummary(invoices) {
-  const div = document.getElementById('ownerInvoiceSummary');
-  if (!div) return;
-  const today = new Date().toISOString().split('T')[0];
-  const totalToPay = invoices.filter(i => i.status === 'sent' && !(i.due_date && i.due_date < today)).reduce((s, i) => s + (i.total_ttc || 0), 0);
-  const totalPaid = invoices.filter(i => i.status === 'paid').reduce((s, i) => s + (i.total_ttc || 0), 0);
-  const overdue = invoices.filter(i => i.status === 'sent' && i.due_date && i.due_date < today);
-  const overdueTotal = overdue.reduce((s, i) => s + (i.total_ttc || 0), 0);
-  const tileStyle = 'flex:1;min-width:110px;border-radius:12px;padding:12px;text-align:center;cursor:pointer;transition:transform 0.15s;';
-  let html = '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:10px;">';
-  html += '<div onclick="setOwnerInvoiceStatus(\'sent\')" onmouseover="this.style.transform=\'translateY(-2px)\'" onmouseout="this.style.transform=\'\'" style="' + tileStyle + 'background:rgba(245,158,11,0.15);border:1px solid rgba(245,158,11,0.3);"><div style="font-size:18px;font-weight:800;color:#f59e0b;">' + totalToPay.toFixed(0) + ' \u20ac</div><div style="font-size:10px;color:var(--text3);">A payer</div></div>';
-  html += '<div onclick="setOwnerInvoiceStatus(\'paid\')" onmouseover="this.style.transform=\'translateY(-2px)\'" onmouseout="this.style.transform=\'\'" style="' + tileStyle + 'background:rgba(52,211,153,0.15);border:1px solid rgba(52,211,153,0.3);"><div style="font-size:18px;font-weight:800;color:#34d399;">' + totalPaid.toFixed(0) + ' \u20ac</div><div style="font-size:10px;color:var(--text3);">Paye</div></div>';
-  html += '<div onclick="setOwnerInvoiceStatus(\'overdue\')" onmouseover="this.style.transform=\'translateY(-2px)\'" onmouseout="this.style.transform=\'\'" style="' + tileStyle + 'background:rgba(233,69,96,' + (overdue.length > 0 ? '0.15' : '0.05') + ');border:1px solid rgba(233,69,96,0.3);"><div style="font-size:18px;font-weight:800;color:#e94560;">' + overdueTotal.toFixed(0) + ' \u20ac</div><div style="font-size:10px;color:var(--text3);">En retard</div></div>';
-  html += '<div onclick="setOwnerInvoiceStatus(\'all\')" onmouseover="this.style.transform=\'translateY(-2px)\'" onmouseout="this.style.transform=\'\'" style="' + tileStyle + 'background:var(--surface2);border:1px solid var(--border2);"><div style="font-size:18px;font-weight:800;color:var(--text);">' + invoices.length + '</div><div style="font-size:10px;color:var(--text3);">Nb factures</div></div>';
-  html += '</div>';
-  div.innerHTML = html;
-}
-
-function renderOwnerInvoicePeriodChips() {
-  const row = document.getElementById('ownerInvoicePeriodChips');
-  if (!row) return;
-  const chips = [ {id:'all',label:'Tout'}, {id:'thisMonth',label:'Ce mois'}, {id:'lastMonth',label:'Mois dernier'}, {id:'thisYear',label:'Cette annee'} ];
-  row.innerHTML = chips.map(c => {
-    const act = _ownerInvoicePeriod === c.id;
-    return '<button onclick="setOwnerInvoicePeriod(\'' + c.id + '\')" style="padding:5px 10px;border-radius:20px;font-size:11px;border:1px solid ' + (act ? '#6c63ff' : 'var(--border2)') + ';background:' + (act ? 'rgba(108,99,255,0.2)' : 'var(--surface2)') + ';color:' + (act ? '#a78bfa' : 'var(--text3)') + ';cursor:pointer;white-space:nowrap;">' + c.label + '</button>';
-  }).join('');
-}
-
-function renderOwnerInvoiceStatusChips(invoices) {
-  const row = document.getElementById('ownerInvoiceStatusChips');
-  if (!row) return;
-  const today = new Date().toISOString().split('T')[0];
-  const counts = { all: invoices.length, sent: 0, paid: 0, overdue: 0 };
-  invoices.forEach(i => { if (i.status === 'sent' && i.due_date && i.due_date < today) counts.overdue++; else counts[i.status] = (counts[i.status] || 0) + 1; });
-  const chips = [ {id:'all',label:'Toutes',color:'#888'}, {id:'sent',label:'A payer',color:'#f59e0b'}, {id:'paid',label:'Paye',color:'#34d399'}, {id:'overdue',label:'En retard',color:'#e94560'} ];
-  row.innerHTML = chips.map(c => {
-    const act = _ownerInvoiceStatus === c.id;
-    const count = counts[c.id] || 0;
-    if (c.id !== 'all' && count === 0) return '';
-    return '<button onclick="setOwnerInvoiceStatus(\'' + c.id + '\')" style="padding:5px 10px;border-radius:20px;font-size:11px;border:1px solid ' + (act ? c.color : 'var(--border2)') + ';background:' + (act ? c.color + '20' : 'var(--surface2)') + ';color:' + (act ? c.color : 'var(--text3)') + ';cursor:pointer;white-space:nowrap;font-weight:' + (act ? '700' : '500') + ';">' + c.label + ' (' + count + ')</button>';
-  }).join('');
-}
-
-function setOwnerInvoicePeriod(p) { _ownerInvoicePeriod = p; renderOwnerInvoicesView(); }
-function setOwnerInvoiceStatus(s) { _ownerInvoiceStatus = s; renderOwnerInvoicesView(); }
-
-let _ownerDocType = 'invoice';
-function setOwnerDocType(t) {
-  _ownerDocType = t;
-  const invBtn = document.getElementById('ownerDocType_invoice_btn');
-  const qBtn = document.getElementById('ownerDocType_quote_btn');
-  const hint = document.getElementById('ownerDocTypeHint');
-  if (invBtn) invBtn.classList.toggle('finFactModeActive', t === 'invoice');
-  if (qBtn) qBtn.classList.toggle('finFactModeActive', t === 'quote');
-  if (hint) hint.textContent = t === 'quote' ? 'Devis a la conciergerie (validation avant prestation)' : 'A la conciergerie (remboursement, frais...)';
-}
-function openOwnerInvoice(type) { showCreateInvoiceModal(type, _ownerDocType === 'quote'); }
-
-function switchOwnerFinTab(tab) {
-  const listBtn = document.getElementById('ownerFinTab_list');
-  const createBtn = document.getElementById('ownerFinTab_create');
-  const listPanel = document.getElementById('ownerFinPanel_list');
-  const createPanel = document.getElementById('ownerFinPanel_create');
-  if (!listBtn || !createBtn) return;
-  if (tab === 'create') {
-    listBtn.classList.remove('annSubTabActive');
-    createBtn.classList.add('annSubTabActive');
-    if (listPanel) listPanel.style.display = 'none';
-    if (createPanel) createPanel.style.display = '';
-  } else {
-    listBtn.classList.add('annSubTabActive');
-    createBtn.classList.remove('annSubTabActive');
-    if (listPanel) listPanel.style.display = '';
-    if (createPanel) createPanel.style.display = 'none';
-    loadOwnerInvoices();
-  }
-}
-
-async function ownerPayInvoice(invoiceId, amount) {
-  // Create Stripe checkout for invoice payment
-  try {
-    const { data: { user } } = await sb.auth.getUser();
-    if (!user) return;
-    showToast('Redirection vers le paiement...');
-    const resp = await fetch(SUPABASE_URL + '/functions/v1/create-checkout', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + (await sb.auth.getSession()).data.session.access_token },
-      body: JSON.stringify({
-        user_id: user.id,
-        email: user.email,
-        mode: 'payment',
-        amount: Math.round(amount * 100),
-        invoice_id: invoiceId,
-        success_url: window.location.href,
-        cancel_url: window.location.href,
-      })
-    });
-    const data = await resp.json();
-    if (data.url) window.location.href = data.url;
-    else showToast('Erreur: impossible de creer le paiement');
-  } catch(e) {
-    console.error('ownerPayInvoice error:', e);
-    showToast('Erreur paiement. Contactez votre conciergerie.');
-  }
-}
 
 async function openOwnerChat() {
   chatProviderName = 'gestionnaire';
