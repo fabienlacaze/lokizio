@@ -1140,7 +1140,7 @@ async function loadPDF() {
 </script>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v8.53</div>
+<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v8.54</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -1150,7 +1150,7 @@ async function loadPDF() {
     <!-- Broom that sweeps -->
     <div id="splashBroom" style="position:absolute;top:50%;left:-60px;font-size:48px;transform:translateY(-50%) rotate(-30deg);opacity:0;transition:all 0.8s cubic-bezier(0.25,0.46,0.45,0.94);">✨</div>
   </div>
-  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v8.53</span></div>
+  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v8.54</span></div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie pour locations</div>
   <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou</div>
   <!-- Loading bar -->
@@ -2509,6 +2509,7 @@ function getStatusLabel(s) { return (STATUS_CONFIG[s] || {}).label || s || ''; }
 // ── Splash Changelog (update this with each significant version) ──
 // Full versioned changelog — add new entries at TOP
 const VERSION_CHANGELOG = [
+  { v: '8.54', changes: ['Auto-billing: historique des 10 dernieres generations affiche dans l\'onglet Auto (concierge + prestataire)', 'Auto-billing: feedback ameliore - message clair quand 0 facture creee', 'Auto-billing: labels simplifies (ex: "Aux proprietaires" au lieu de "Factures proprietaires (conciergerie → proprietaires)")', 'Popup relance facture utilise customConfirm (plus de popup native)'] },
   { v: '8.53', changes: ['Prestataire: ordre des onglets Factures aligne sur concierge - Creer | Auto | Consulter'] },
   { v: '8.52', changes: ['Prestataire: nouvel onglet Auto dans Factures - facturation auto aux conciergeries et proprietaires', 'Edge Function auto-bill refactoree pour gerer 2 roles (concierge + provider)', 'Types supportes: provider_to_concierge (groupe par concierge) et provider_to_owner (prestations en direct)', 'DB: billing_settings etendu (user_id + role), RLS elargie au role provider'] },
   { v: '8.51', changes: ['Auto-billing: dropdown Frequence simplifie (Mensuelle uniquement, biweekly retire car incoherent avec jour fixe)', 'Popup de confirmation "Tester maintenant" utilise customConfirm (plus de popup native moche)'] },
@@ -5582,10 +5583,10 @@ async function renderProviderAutoBillingPanel() {
   h += '<div style="margin-bottom:12px;"><div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">Types de factures generees</div>';
   h += '<label style="display:flex;align-items:center;gap:8px;padding:8px;background:var(--surface2);border-radius:8px;margin-bottom:4px;cursor:pointer;">';
   h += '<input type="checkbox" id="provAb_type_concierge"' + (te.provider_to_concierge !== false ? ' checked' : '') + ' style="accent-color:#ef4444;">';
-  h += '<span style="font-size:13px;color:var(--text);">&#129529; Factures aux conciergeries (prestations via concierge)</span></label>';
+  h += '<span style="font-size:13px;color:var(--text);">&#129529; Aux conciergeries</span></label>';
   h += '<label style="display:flex;align-items:center;gap:8px;padding:8px;background:var(--surface2);border-radius:8px;cursor:pointer;">';
   h += '<input type="checkbox" id="provAb_type_owner"' + (te.provider_to_owner !== false ? ' checked' : '') + ' style="accent-color:#f59e0b;">';
-  h += '<span style="font-size:13px;color:var(--text);">&#127968; Factures aux proprietaires (prestations en direct)</span></label></div>';
+  h += '<span style="font-size:13px;color:var(--text);">&#127968; Aux proprietaires (en direct)</span></label></div>';
 
   h += '<div style="font-size:11px;color:var(--text3);margin-bottom:8px;">Derniere execution: <strong style="color:var(--text2);">' + (s.last_run_at ? new Date(s.last_run_at).toLocaleString('fr-FR') : 'Jamais') + '</strong></div>';
 
@@ -5593,9 +5594,11 @@ async function renderProviderAutoBillingPanel() {
   h += '<button onclick="saveProviderAutoBillSettings()" style="flex:1;min-width:140px;padding:10px;background:linear-gradient(135deg,#ef4444,#dc2626);color:#fff;border:none;border-radius:8px;font-weight:600;cursor:pointer;">&#128190; Enregistrer</button>';
   h += '<button onclick="triggerProviderAutoBillNow()" style="flex:1;min-width:140px;padding:10px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-weight:600;cursor:pointer;">&#9889; Tester maintenant</button>';
   h += '</div>';
+  h += '<div id="provAutoBillingHistory" style="margin-top:14px;"></div>';
   h += '</div>';
 
   div.innerHTML = h;
+  renderAutoBillingHistory('provider');
 }
 
 async function saveProviderAutoBillSettings() {
@@ -5633,8 +5636,11 @@ async function triggerProviderAutoBillNow() {
       body: '{}'
     });
     const json = await resp.json();
-    if (json.ok) showToast('Facturation lancee: ' + (json.invoices_created || 0) + ' facture(s) creee(s)');
-    else showToast('Erreur: ' + (json.error || 'echec'));
+    if (json.ok) {
+      const n = json.invoices_created || 0;
+      if (n === 0) showToast('Aucune nouvelle facture (rien a facturer ou deja fait)');
+      else showToast(n + ' facture(s) creee(s) - voir l\'historique ci-dessous');
+    } else showToast('Erreur: ' + (json.error || 'echec'));
     renderProviderAutoBillingPanel();
   } catch(e) { console.error(e); showToast('Erreur: ' + e.message); }
 }
@@ -8064,8 +8070,8 @@ async function renderAutoBillingPanel() {
   // Types
   h += '<div style="margin-bottom:14px;"><label style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:6px;">Types de factures generees</label>';
   h += '<div style="display:flex;flex-direction:column;gap:8px;">';
-  h += '<label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:8px 10px;background:var(--surface2);border-radius:8px;"><input type="checkbox" id="ab_type_c2o"' + (typesEnabled.concierge_to_owner ? ' checked' : '') + '> <span style="font-size:13px;">&#127968; Factures proprietaires (conciergerie &rarr; proprietaires)</span></label>';
-  h += '<label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:8px 10px;background:var(--surface2);border-radius:8px;"><input type="checkbox" id="ab_type_p2c"' + (typesEnabled.provider_to_concierge ? ' checked' : '') + '> <span style="font-size:13px;">&#129529; Factures prestataires (prestataires &rarr; conciergerie)</span></label>';
+  h += '<label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:8px 10px;background:var(--surface2);border-radius:8px;" title="Factures que vous envoyez a vos proprietaires pour les prestations realisees"><input type="checkbox" id="ab_type_c2o"' + (typesEnabled.concierge_to_owner ? ' checked' : '') + '> <span style="font-size:13px;">&#127968; A envoyer aux proprietaires</span></label>';
+  h += '<label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:8px 10px;background:var(--surface2);border-radius:8px;" title="Factures recues de vos prestataires pour leurs interventions"><input type="checkbox" id="ab_type_p2c"' + (typesEnabled.provider_to_concierge ? ' checked' : '') + '> <span style="font-size:13px;">&#129529; Recues des prestataires</span></label>';
   h += '</div></div>';
 
   // Status line
@@ -8076,9 +8082,11 @@ async function renderAutoBillingPanel() {
   h += '<button class="btn btnPrimary" style="flex:1;padding:11px;" onclick="saveBillingSettings()">&#128190; Enregistrer</button>';
   h += '<button class="btn btnOutline" style="padding:11px 14px;" onclick="triggerAutoBillNow()" title="Declencher la generation maintenant">&#9889; Tester maintenant</button>';
   h += '</div>';
+  h += '<div id="autoBillingHistory" style="margin-top:14px;"></div>';
   h += '</div>';
 
   div.innerHTML = h;
+  renderAutoBillingHistory('concierge');
   // Toggle label reactivity
   const toggle = document.getElementById('ab_enabled');
   const lbl = document.getElementById('ab_enabled_label');
@@ -8122,10 +8130,49 @@ async function triggerAutoBillNow() {
       body: '{}'
     });
     const json = await resp.json();
-    if (json.ok) showToast('Facturation lancee: ' + (json.invoices_created || 0) + ' facture(s) creee(s)');
-    else showToast('Erreur: ' + (json.error || 'echec'));
+    if (json.ok) {
+      const n = json.invoices_created || 0;
+      if (n === 0) showToast('Aucune nouvelle facture (rien a facturer ou deja fait)');
+      else showToast(n + ' facture(s) creee(s) - voir l\'historique ci-dessous');
+    } else showToast('Erreur: ' + (json.error || 'echec'));
     renderAutoBillingPanel();
   } catch(e) { console.error(e); showToast('Erreur: ' + e.message); }
+}
+
+async function renderAutoBillingHistory(role) {
+  const divId = role === 'provider' ? 'provAutoBillingHistory' : 'autoBillingHistory';
+  const div = document.getElementById(divId);
+  if (!div) return;
+  let query = sb.from('billing_runs').select('*, invoices(invoice_number, client_name, total_ttc, status)').order('created_at', { ascending: false }).limit(10);
+  if (role === 'provider') {
+    const user = (await sb.auth.getUser()).data.user;
+    if (!user) return;
+    query = query.like('client_key', '%' + user.id + '%').or('client_key.like.concierge:%,client_key.like.owner:%');
+  } else {
+    const org = API.getOrg();
+    if (!org) return;
+    query = query.eq('org_id', org.id);
+  }
+  const { data: runs } = await query;
+  if (!runs || !runs.length) {
+    div.innerHTML = '<div style="font-size:11px;color:var(--text3);font-style:italic;">Aucune execution encore.</div>';
+    return;
+  }
+  let h = '<details style="margin-top:8px;"><summary style="cursor:pointer;font-size:12px;font-weight:600;color:var(--text2);padding:6px 0;list-style:none;display:flex;align-items:center;gap:6px;"><span class="collapseArrow">&#9662;</span> Historique des generations (' + runs.length + ')</summary>';
+  h += '<div style="padding:8px 0;display:flex;flex-direction:column;gap:6px;max-height:300px;overflow-y:auto;">';
+  runs.forEach(r => {
+    const inv = r.invoices;
+    const date = new Date(r.created_at).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' });
+    const typeIcon = r.invoice_type.includes('concierge_to_owner') ? '🏠' : (r.invoice_type.includes('provider_to_concierge') ? '🧹' : '🔧');
+    h += '<div style="background:var(--surface2);border-radius:6px;padding:8px 10px;font-size:12px;">';
+    h += '<div style="display:flex;justify-content:space-between;align-items:center;">';
+    h += '<div><span style="font-size:14px;">' + typeIcon + '</span> <strong>' + (inv?.invoice_number || 'Facture') + '</strong> - ' + (inv?.client_name || '—') + '</div>';
+    h += '<div style="color:var(--text3);font-size:11px;">' + date + '</div></div>';
+    h += '<div style="margin-top:4px;color:var(--text3);font-size:11px;">Periode: ' + r.period_start + ' → ' + r.period_end + (inv?.total_ttc ? ' · <strong style="color:var(--text2);">' + inv.total_ttc + '€</strong>' : '') + '</div>';
+    h += '</div>';
+  });
+  h += '</div></details>';
+  div.innerHTML = h;
 }
 
 // ── Finance Sub-Tabs ──
@@ -9521,7 +9568,8 @@ function setInvoicePeriod(p) { _invoicePeriod = p; renderInvoicesView(); }
 function setInvoiceStatus(s) { _invoiceStatus = s; renderInvoicesView(); }
 
 async function sendInvoiceReminder(id) {
-  if (!confirm('Envoyer une relance au client ?')) return;
+  const ok = await customConfirm('Envoyer une relance au client ?', 'Envoyer');
+  if (!ok) return;
   try {
     const { data: inv } = await sb.from('invoices').select('*').eq('id', id).maybeSingle();
     if (!inv) return;
