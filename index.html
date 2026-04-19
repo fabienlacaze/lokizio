@@ -1143,7 +1143,7 @@ async function loadPDF() {
 </script>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v8.78</div>
+<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v8.79</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -1153,7 +1153,7 @@ async function loadPDF() {
     <!-- Broom that sweeps -->
     <div id="splashBroom" style="position:absolute;top:50%;left:-60px;font-size:48px;transform:translateY(-50%) rotate(-30deg);opacity:0;transition:all 0.8s cubic-bezier(0.25,0.46,0.45,0.94);">✨</div>
   </div>
-  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v8.78</span></div>
+  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v8.79</span></div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie pour locations</div>
   <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou</div>
   <!-- Loading bar -->
@@ -1882,7 +1882,7 @@ async function loadPDF() {
         <option value="" style="background:#1a1a2e;color:#f0f0f5;">Tous les profils</option>
         <option value="provider" style="background:#1a1a2e;color:#f0f0f5;">Prestataires</option>
         <option value="owner" style="background:#1a1a2e;color:#f0f0f5;">Proprietaires</option>
-        <option value="admin" style="background:#1a1a2e;color:#f0f0f5;">Conciergeries</option>
+        <option value="concierge" style="background:#1a1a2e;color:#f0f0f5;">Conciergeries</option>
       </select>
       <input type="text" id="mkCityFilter" placeholder="Ville ou code postal..." oninput="filterMarketplace()" style="flex:1;min-width:150px;padding:8px 12px;background:#1a1a2e;color:#f0f0f5;border:1px solid var(--border2);border-radius:8px;font-size:13px;">
       <select id="mkRadiusFilter" onchange="filterMarketplace()" style="padding:8px 12px;background:#1a1a2e;color:#f0f0f5;border:1px solid var(--border2);border-radius:8px;font-size:13px;">
@@ -2197,7 +2197,7 @@ async function loadPDF() {
         <input type="email" id="inviteEmail" placeholder="email@exemple.com" style="flex:1;padding:10px 12px;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;color:var(--text);font-size:13px;">
         <select id="inviteRole" style="padding:10px;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;color:var(--text);font-size:13px;">
           <option value="owner">Proprietaire</option>
-          <option value="manager">Gestionnaire</option>
+          <option value="concierge">Concierge</option>
           <option value="provider">Prestataire</option>
         </select>
       </div>
@@ -2566,6 +2566,7 @@ function getStatusLabel(s) { return (STATUS_CONFIG[s] || {}).label || s || ''; }
 // ── Splash Changelog (update this with each significant version) ──
 // Full versioned changelog — add new entries at TOP
 const VERSION_CHANGELOG = [
+  { v: '8.79', changes: ['Refonte des roles: admin + manager fusionnes en "concierge" (DB + RLS + ~55 remplacements code)', 'Nouveau role "tenant" (locataire) accepte en DB (implementation UI a venir)', 'Table super_admins creee: seul Fabien voit le bouton "Informations legales"', 'Ecriture app_settings restreinte aux super-admins uniquement', 'auto-bill Edge Function mise a jour'] },
   { v: '8.78', changes: ['Fix z-index: showMsg detecte automatiquement si une modal classique (Mon compte, etc.) est ouverte et passe par-dessus'] },
   { v: '8.77', changes: ['Informations legales stockees en DB (table app_settings) au lieu de placeholders en dur', 'Pages Mentions/CGU/CGV/Privacy remplissent automatiquement les placeholders depuis la DB', 'Mon compte: bouton "Informations legales (admin)" pour editer nom/SIRET/adresse/etc. en 1 clic', 'RLS: lecture publique (pour les pages HTML), ecriture admin/manager uniquement'] },
   { v: '8.76', changes: ['Legal: 4 pages creees (Mentions legales, CGU, CGV, Privacy v2 RGPD complete) avec placeholders a completer', 'CSS partage legal.css (light+dark)', 'Inscription: case de consentement RGPD/CGU obligatoire', 'Mon compte: bouton "Exporter mes donnees" RGPD art.20 (JSON complet)', 'Footer: liens Mentions / CGU / CGV / Confidentialite', 'ROADMAP etendue avec section legale complete'] },
@@ -4141,7 +4142,7 @@ async function addNewProperty() {
 }
 
 async function removeCurrentProperty() {
-  if (API.getRole() !== 'admin' && API.getRole() !== 'manager') { showToast('Seuls les gestionnaires peuvent supprimer un bien'); return; }
+  if (API.getRole() !== 'concierge') { showToast('Seuls les gestionnaires peuvent supprimer un bien'); return; }
   if ((fullConfig.properties || []).length <= 1) {
     showToast('Impossible de supprimer le dernier bien');
     return;
@@ -4435,7 +4436,7 @@ async function init() {
   document.getElementById('appMain').style.display = '';
   document.querySelector('.header').style.display = '';
   document.querySelector('.content').style.display = '';
-  setupBottomNav('admin');
+  setupBottomNav('concierge');
 
   fullConfig = await API.load_config();
   renderPropertySelector();
@@ -4454,7 +4455,7 @@ async function init() {
   updateConnectionBadge();
   // Show generate FAB only for admin/manager
   const fabGen = document.getElementById('fabGenerate');
-  if (fabGen) fabGen.style.display = (role === 'admin' || role === 'manager') ? '' : 'none';
+  if (fabGen) fabGen.style.display = (role === 'concierge') ? '' : 'none';
 
   // Auto-refresh iCal planning if last refresh > 2 hours ago
   autoRefreshPlanning();
@@ -4521,8 +4522,8 @@ async function loadKpiCards() {
 
 function appendRoleBadge(h1) {
   const role = API.getRole();
-  const roleLabels = { admin: 'Administrateur', manager: 'Conciergerie', owner: 'Proprietaire', provider: 'Prestataire' };
-  const roleColors = { admin: '#e94560', manager: '#6c63ff', owner: '#f59e0b', provider: '#34d399' };
+  const roleLabels = { concierge: 'Concierge', owner: 'Proprietaire', provider: 'Prestataire' };
+  const roleColors = { concierge: '#6c63ff', owner: '#f59e0b', provider: '#34d399' };
   if (role && roleLabels[role]) {
     // Add role badge as a separate clickable element after the header-left div
     const existing = document.getElementById('roleBadgeBtn');
@@ -5361,7 +5362,7 @@ function setupBottomNav(role) {
   const nav = document.getElementById('bottomNav');
   if (!nav) return;
   const configs = {
-    admin: [
+    concierge: [
       { id: 'dashboard', icon: '📊', label: 'Dashboard' },
       { id: 'properties', icon: '🏠', label: 'Biens' },
       { id: 'annuaire', icon: '🌐', label: 'Annuaire' },
@@ -5385,14 +5386,14 @@ function setupBottomNav(role) {
       { id: 'chat', icon: '💬', label: 'Messages' },
     ],
   };
-  const items = configs[role] || configs.admin;
+  const items = configs[role] || configs.concierge;
   let html = '';
   items.forEach((item, i) => {
     const active = i === 0 ? ' active' : '';
-    const fn = (role === 'admin' || role === 'manager') ? 'switchMainTab' : role === 'provider' ? 'switchProviderNav' : 'switchOwnerNav';
+    const fn = (role === 'concierge') ? 'switchMainTab' : role === 'provider' ? 'switchProviderNav' : 'switchOwnerNav';
     html += '<div class="bottomNav-item' + active + '" onclick="' + fn + '(\'' + item.id + '\')" id="nav_' + item.id + '">';
     html += '<span class="nav-icon">' + item.icon + '</span>';
-    if (item.id === 'prestations' && (role === 'admin' || role === 'manager')) html += '<span class="nav-badge" id="navServicesBadge" style="display:none;"></span>';
+    if (item.id === 'prestations' && role === 'concierge') html += '<span class="nav-badge" id="navServicesBadge" style="display:none;"></span>';
     html += '<span>' + item.label + '</span>';
     html += '</div>';
   });
@@ -5400,7 +5401,7 @@ function setupBottomNav(role) {
   nav.style.display = 'flex';
   // Show chat FAB for admin (Business plan check is in initChatWidget)
   const chatFab = document.getElementById('chatFab');
-  if (chatFab && (role === 'admin' || role === 'manager')) {
+  if (chatFab && role === 'concierge') {
     const plan = API.getPlan();
     if (plan === 'business' || plan === 'pro' || plan === 'premium' || API.isPremium()) chatFab.style.display = '';
   } else if (chatFab) {
@@ -5850,7 +5851,7 @@ async function renderOwnerPropertyDetails() {
   }
 
   // Ma conciergerie section (top of page)
-  const { data: adminsOfOrg } = await sb.from('members').select('*').eq('org_id', org.id).in('role', ['admin','manager']);
+  const { data: adminsOfOrg } = await sb.from('members').select('*').eq('org_id', org.id).eq('role', 'concierge');
   const concierge = adminsOfOrg && adminsOfOrg.find(m => m.user_id !== user.id);
   if (concierge) {
     html += '<div style="' + sectionStyle + 'border-color:#6c63ff;background:rgba(108,99,255,0.08);">';
@@ -6062,7 +6063,7 @@ async function sendEmailNotification(orgId, recipientName, senderName, messageBo
     // Match by name or role
     let recipientEmail = '';
     if (recipientName === 'gestionnaire') {
-      const admin = members.find(m => m.role === 'admin' || m.role === 'manager');
+      const admin = members.find(m => m.role === 'concierge');
       if (admin) recipientEmail = admin.invited_email;
     } else if (recipientName === 'proprietaire') {
       const owner = members.find(m => m.role === 'owner');
@@ -6149,14 +6150,14 @@ async function refuseServiceRequest(id) {
           const nextProvider = providers.find(p => p.name !== provName);
           if (nextProvider) {
             await sb.from('service_requests').update({ status: 'assigned', assigned_provider: nextProvider.name }).eq('id', id);
-            await sendAutoMessage(org.id, 'Lokizio', 'admin', nextProvider.name,
+            await sendAutoMessage(org.id, 'Lokizio', 'concierge', nextProvider.name,
               '&#128260; ' + svcLabel + ' reassignee a vous' + (propName ? ' pour ' + propName : '') + ' — Le prestataire precedent a refuse.');
-            await sendAutoMessage(org.id, 'Lokizio', 'admin', 'gestionnaire',
+            await sendAutoMessage(org.id, 'Lokizio', 'concierge', 'gestionnaire',
               '&#128260; ' + svcLabel + ' auto-reassignee de ' + provName + ' a ' + nextProvider.name);
           } else {
             // No other provider, set back to pending
             await sb.from('service_requests').update({ status: 'pending', assigned_provider: null }).eq('id', id);
-            await sendAutoMessage(org.id, 'Lokizio', 'admin', 'gestionnaire',
+            await sendAutoMessage(org.id, 'Lokizio', 'concierge', 'gestionnaire',
               '&#9888; ' + svcLabel + ' — Aucun prestataire disponible pour reassignation. Action requise.');
           }
         } catch(re) { console.error('Auto-reassign error:', re); }
@@ -6482,7 +6483,7 @@ async function showOwnerMode() {
   </div>`;
 
   // Concierge info card
-  const { data: adminMembers } = await sb.from('members').select('*').eq('org_id', org.id).in('role', ['admin','manager']);
+  const { data: adminMembers } = await sb.from('members').select('*').eq('org_id', org.id).eq('role', 'concierge');
   if (adminMembers && adminMembers.length) {
     const admin = adminMembers[0];
     const adminEmail = admin.invited_email || '';
@@ -7101,7 +7102,7 @@ async function providerValidate(propId, date, provName, status, btn) {
     // Security: verify this provider matches the current user
     const member = API.getMember();
     const myName = member?.display_name || user.email?.split('@')[0] || '';
-    if (provName !== myName && API.getRole() !== 'admin' && API.getRole() !== 'manager') {
+    if (provName !== myName && API.getRole() !== 'concierge') {
       showToast('Vous ne pouvez modifier que vos propres prestations');
       if (btn) { btn.disabled = false; }
       return;
@@ -7203,7 +7204,7 @@ function initChatWidget() {
   // Show FAB for admin/manager with Business plan
   const role = API.getRole();
   const plan = API.getPlan();
-  if ((role === 'admin' || role === 'manager') && (plan === 'business' || plan === 'pro' || plan === 'premium' || API.isPremium())) {
+  if (role === 'concierge' && (plan === 'business' || plan === 'pro' || plan === 'premium' || API.isPremium())) {
     document.getElementById('chatFab').style.display = '';
     // Fill provider select
     const sel = document.getElementById('chatProvSelect');
@@ -7299,7 +7300,7 @@ async function loadChatMessages() {
   container.innerHTML = msgs.map(m => {
     const isMe = m.sender_id === user.id;
     const time = new Date(m.created_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
-    const roleColor = m.sender_role === 'admin' ? '#6c63ff' : m.sender_role === 'provider' ? '#34d399' : '#f59e0b';
+    const roleColor = m.sender_role === 'concierge' ? '#6c63ff' : m.sender_role === 'provider' ? '#34d399' : '#f59e0b';
     // Detect prestation-related system messages and make them clickable
     const bodyRaw = m.body || '';
     const dateMatch = bodyRaw.match(/(\d{2})\/(\d{2})\/(\d{4})/);
@@ -7464,7 +7465,7 @@ async function confirmModifyResponse(propId, date, provName, newStatus) {
 async function getGestionnaireName() {
   const org = API.getOrg();
   if (!org) return 'votre gestionnaire';
-  const { data: members } = await sb.from('members').select('*').eq('org_id', org.id).in('role', ['admin','manager']).limit(1);
+  const { data: members } = await sb.from('members').select('*').eq('org_id', org.id).eq('role', 'concierge').limit(1);
   if (members && members.length) {
     return members[0].display_name || members[0].invited_email?.split('@')[0] || 'votre gestionnaire';
   }
@@ -7766,7 +7767,7 @@ async function showCreateInvoiceModal(type, isQuote) {
       });
     } else if (type === 'provider_to_concierge' || type === 'owner_to_concierge') {
       // Client = the concierge (org owner)
-      const { data: admins } = await sb.from('members').select('id,user_id,display_name,invited_email,company_name').eq('org_id', org?.id || '').in('role', ['admin','manager']);
+      const { data: admins } = await sb.from('members').select('id,user_id,display_name,invited_email,company_name').eq('org_id', org?.id || '').eq('role', 'concierge');
       (admins || []).forEach(a => {
         const label = (a.company_name || a.display_name || a.invited_email);
         if (label) clients.push({ id: a.user_id, label, name: label, email: a.invited_email });
@@ -8641,9 +8642,9 @@ async function adminValidateService(requestId, newStatus) {
       const propName = req.property_name || '';
       if (newStatus === 'done') {
         showToast('Prestation validee !');
-        await sendAutoMessage(org.id, 'Gestionnaire', 'admin', req.assigned_provider,
+        await sendAutoMessage(org.id, 'Gestionnaire', 'concierge', req.assigned_provider,
           '&#9989; ' + svcLabel + ' validee ! Merci pour votre travail.');
-        await sendAutoMessage(org.id, 'Gestionnaire', 'admin', 'proprietaire',
+        await sendAutoMessage(org.id, 'Gestionnaire', 'concierge', 'proprietaire',
           '&#9989; ' + svcLabel + ' validee et terminee' + (propName ? ' pour ' + propName : '') + '.');
         // Auto-generate invoice line
         await autoInvoiceOnDone(req);
@@ -8661,7 +8662,7 @@ async function adminValidateService(requestId, newStatus) {
         if (req.assigned_provider) setTimeout(() => showRatingModal(requestId, req.assigned_provider), 500);
       } else {
         showToast('Prestation renvoyee au prestataire');
-        await sendAutoMessage(org.id, 'Gestionnaire', 'admin', req.assigned_provider,
+        await sendAutoMessage(org.id, 'Gestionnaire', 'concierge', req.assigned_provider,
           '&#10060; ' + svcLabel + ' : le controle qualite n\'est pas satisfaisant. Merci de reprendre le travail.');
       }
     }
@@ -8793,7 +8794,7 @@ async function checkPendingInvoices() {
     const org = API.getOrg();
     if (!org) return;
     const role = API.getRole();
-    if (role !== 'admin' && role !== 'manager') return;
+    if (role !== 'concierge') return;
 
     // Only check once per day
     const lastCheck = localStorage.getItem('lokizio_invoice_check');
@@ -10786,10 +10787,12 @@ async function showAccountModal() {
   const { data: { user } } = await sb.auth.getUser();
   if (!user) return;
   document.getElementById('accountEmail').textContent = user.email;
-  // Admin-only: show legal settings button
-  const role = API.getRole();
+  // Super-admin only (Fabien): show legal settings button
   const legalBtn = document.getElementById('accLegalBtn');
-  if (legalBtn) legalBtn.style.display = (role === 'admin' || role === 'manager') ? '' : 'none';
+  if (legalBtn) {
+    legalBtn.style.display = 'none';
+    try { const sa = await API.isSuperAdmin(); if (sa && legalBtn) legalBtn.style.display = ''; } catch {}
+  }
   // Update theme toggle state
   const themeToggle = document.getElementById('themeToggleAccount');
   if (themeToggle) {
@@ -10849,7 +10852,7 @@ async function showAccountModal() {
 }
 async function showRoleChangeModal() {
   const roles = [
-    { id: 'admin', label: 'Conciergerie', icon: '&#127970;', color: '#e94560', desc: 'Gerez les menages pour plusieurs proprietaires' },
+    { id: 'concierge', label: 'Concierge', icon: '&#127970;', color: '#e94560', desc: 'Gerez les menages pour plusieurs proprietaires' },
     { id: 'owner', label: 'Proprietaire', icon: '&#127968;', color: '#f59e0b', desc: 'Suivez les menages de vos biens' },
     { id: 'provider', label: 'Prestataire', icon: '&#129529;', color: '#34d399', desc: 'Consultez et validez vos missions' },
   ];
@@ -10857,7 +10860,7 @@ async function showRoleChangeModal() {
   let html = '<div style="padding:10px;">';
   html += '<div style="font-size:14px;color:var(--text2);margin-bottom:14px;text-align:center;">Choisissez votre role :</div>';
   roles.forEach(r => {
-    const isCurrent = r.id === currentRole || (r.id === 'admin' && currentRole === 'manager');
+    const isCurrent = r.id === currentRole;
     html += `<div onclick="changeRole('${r.id}')" style="display:flex;align-items:center;gap:12px;padding:12px;background:${isCurrent ? r.color + '15' : 'var(--surface2)'};border:${isCurrent ? '2px solid ' + r.color : '1px solid var(--border2)'};border-radius:10px;margin-bottom:8px;cursor:pointer;transition:all 0.2s;" onmouseover="this.style.borderColor='${r.color}'" onmouseout="this.style.borderColor='${isCurrent ? r.color : 'var(--border2)'}'">`;
     html += `<span style="font-size:24px;">${r.icon}</span>`;
     html += `<div style="flex:1;"><div style="font-weight:700;color:${r.color};font-size:14px;">${r.label}${isCurrent ? ' <span style="font-size:10px;opacity:0.6;">(actuel)</span>' : ''}</div>`;
@@ -10879,12 +10882,12 @@ async function changeRole(newRole) {
   const isTrial = trialDays > 0;
 
   // Same role — do nothing
-  if (newRole === currentRole || (newRole === 'admin' && currentRole === 'manager')) { closeMsg(); return; }
+  if (newRole === currentRole) { closeMsg(); return; }
 
   // If user has a paid premium (not trial), handle subscription changes
   if (isPremium && !isTrial) {
-    const fromConcierge = (currentRole === 'admin' || currentRole === 'manager');
-    const toConcierge = (newRole === 'admin');
+    const fromConcierge = (currentRole === 'concierge');
+    const toConcierge = (newRole === 'concierge');
     const toOwner = (newRole === 'owner');
     const toProvider = (newRole === 'provider');
 
@@ -10950,8 +10953,8 @@ async function changeRole(newRole) {
   // Free or trial: show confirmation with current plan info
   closeMsg();
   let html = '<div style="padding:10px;text-align:center;">';
-  const roleLabels = { admin: 'Administrateur', manager: 'Conciergerie', owner: 'Proprietaire', provider: 'Prestataire' };
-  const roleColors = { admin: '#6c63ff', owner: '#f59e0b', provider: '#34d399' };
+  const roleLabels = { concierge: 'Concierge', owner: 'Proprietaire', provider: 'Prestataire' };
+  const roleColors = { concierge: '#6c63ff', owner: '#f59e0b', provider: '#34d399' };
   html += '<div style="font-size:16px;font-weight:700;color:' + (roleColors[newRole]||'var(--text)') + ';margin-bottom:10px;">Passer en mode ' + (roleLabels[newRole]||newRole) + '</div>';
   if (isTrial) {
     html += '<div style="font-size:12px;color:var(--success);margin-bottom:12px;padding:8px;background:rgba(52,211,153,0.1);border-radius:8px;">&#127881; Essai gratuit en cours — ' + trialDays + ' jour' + (trialDays > 1 ? 's' : '') + ' restant' + (trialDays > 1 ? 's' : '') + '<br>Toutes les fonctionnalites restent disponibles.</div>';
@@ -11006,9 +11009,9 @@ async function doChangeRole(newRole, subscriptionAction) {
 }
 
 function showRoleTransition(fromRole, toRole) {
-  const labels = { admin: 'Administrateur', manager: 'Conciergerie', owner: 'Proprietaire', provider: 'Prestataire' };
-  const colors = { admin: '#e94560', manager: '#e94560', owner: '#f59e0b', provider: '#34d399' };
-  const icons = { admin: '🏢', manager: '🏢', owner: '🏠', provider: '🧹' };
+  const labels = { concierge: 'Concierge', owner: 'Proprietaire', provider: 'Prestataire' };
+  const colors = { concierge: '#6c63ff', owner: '#f59e0b', provider: '#34d399' };
+  const icons = { concierge: '🏢', owner: '🏠', provider: '🧹' };
   const fromLabel = labels[fromRole] || fromRole;
   const toLabel = labels[toRole] || toRole;
   const fromColor = colors[fromRole] || '#666';
@@ -11352,7 +11355,7 @@ async function openOverlayPopup(id) {
       document.getElementById('profileAddress').value = member.address || '';
       const roleDisp = document.getElementById('profileRoleDisplay');
       if (roleDisp) {
-        const roleLabels = { admin: 'Administrateur', manager: 'Conciergerie', owner: 'Proprietaire', provider: 'Prestataire' };
+        const roleLabels = { concierge: 'Concierge', owner: 'Proprietaire', provider: 'Prestataire', tenant: 'Locataire' };
         roleDisp.textContent = roleLabels[API.getRole()] || API.getRole() || '—';
       }
     } else if (id === 'billingProfileOverlay' && member) {
@@ -11427,8 +11430,8 @@ async function showTeamModal() {
   if (members.length === 0) {
     list.innerHTML = '<div style="color:var(--text3);font-size:12px;padding:8px;">Aucun membre</div>';
   } else {
-    const roleLabels = { admin: '👑 Admin', manager: '📋 Gestionnaire', owner: '🏠 Proprietaire', provider: '🧹 Prestataire' };
-    const roleColors = { admin: '#e94560', manager: '#6c63ff', owner: '#34d399', provider: '#f59e0b' };
+    const roleLabels = { concierge: '🏢 Concierge', owner: '🏠 Proprietaire', provider: '🧹 Prestataire' };
+    const roleColors = { concierge: '#6c63ff', owner: '#34d399', provider: '#f59e0b' };
     list.innerHTML = members.map(m => {
       const email = m.profiles ? m.profiles.email : (m.invited_email || '?');
       const role = m.role || 'owner';
@@ -11437,7 +11440,7 @@ async function showTeamModal() {
         <span style="font-size:11px;font-weight:700;color:${roleColors[role]||'#888'};background:${roleColors[role]||'#888'}22;padding:3px 8px;border-radius:6px;">${roleLabels[role]||role}</span>
         <span style="flex:1;font-size:13px;">${esc(email)}</span>
         ${m.accepted ? '<span style="color:var(--success);font-size:11px;">✓</span>' : '<span style="color:var(--text3);font-size:11px;">En attente</span>'}
-        ${API.getRole() === 'admin' && members.length > 1 ? '<button class="btn btnSmall btnDanger" style="padding:2px 6px;font-size:11px;" onclick="removeTeamMember(\''+m.id+'\')">✕</button>' : ''}
+        ${API.getRole() === 'concierge' && members.length > 1 ? '<button class="btn btnSmall btnDanger" style="padding:2px 6px;font-size:11px;" onclick="removeTeamMember(\''+m.id+'\')">✕</button>' : ''}
       </div>`;
     }).join('');
   }
@@ -11459,7 +11462,7 @@ async function inviteTeamMember() {
   if (result) {
     // Show invitation link to copy
     const appUrl = window.location.origin + window.location.pathname;
-    const roleLabels = { owner: 'proprietaire', provider: 'prestataire', manager: 'gestionnaire' };
+    const roleLabels = { owner: 'proprietaire', provider: 'prestataire', concierge: 'concierge' };
     const msg = `Bonjour,\n\nVous etes invite(e) en tant que ${roleLabels[role] || role} sur Lokizio.\n\n1. Creez un compte sur : ${appUrl}\n2. Utilisez l'email : ${email}\n3. Votre acces sera automatiquement configure.\n\n-- Lokizio`;
 
     await customConfirm(
@@ -11479,7 +11482,7 @@ async function inviteTeamMember() {
   }
 }
 async function removeTeamMember(memberId) {
-  if (API.getRole() !== 'admin') { showToast('Seul l\'administrateur peut retirer des membres'); return; }
+  if (API.getRole() !== 'concierge') { showToast('Seul l\'administrateur peut retirer des membres'); return; }
   const ok = await customConfirm(t('team.remove_confirm') || 'Retirer ce membre de l\'equipe ?', t('btn.delete') || 'Retirer');
   if (!ok) return;
   await API.removeMember(memberId);
@@ -11849,7 +11852,7 @@ function showPremiumModal(reason) {
 }
 async function upgradeToPremium() {
   const role = API.getRole();
-  const priceId = (role === 'admin' || role === 'manager') ? STRIPE_PRICE_BUSINESS : STRIPE_PRICE_PRO;
+  const priceId = (role === 'concierge') ? STRIPE_PRICE_BUSINESS : STRIPE_PRICE_PRO;
   // Find upgrade button and show loading
   const btn = document.querySelector('.btnUpgrade');
   const origText = btn ? btn.textContent : '';
@@ -12594,7 +12597,7 @@ async function finishOnboarding(roleId) {
     if (orgErr) console.error('Create org error:', orgErr);
     if (newOrg) {
       org = newOrg;
-      const { data: newMember } = await sb.from('members').insert({ org_id: org.id, user_id: user.id, role: 'admin', accepted: true }).select().single();
+      const { data: newMember } = await sb.from('members').insert({ org_id: org.id, user_id: user.id, role: 'concierge', accepted: true }).select().single();
       member = newMember;
       const { data: newProp } = await sb.from('properties').insert({ org_id: org.id, owner_member_id: member.id, name: 'Mon logement' }).select().single();
       if (newProp) wizardData.defaultPropId = newProp.id;
@@ -12611,7 +12614,7 @@ async function finishOnboarding(roleId) {
   }
 
   if (org && member) {
-    const dbRole = roleId === 'concierge' ? 'admin' : roleId === 'owner' ? 'owner' : roleId;
+    const dbRole = roleId;
     await sb.from('members').update({ role: dbRole }).eq('id', member.id);
     wizardData.orgId = org.id;
     wizardData.memberId = member.id;
@@ -13929,7 +13932,7 @@ async function savePlanning() { if(cleanings.length>0) { try { await API.save_pl
 async function autoRefreshPlanning() {
   try {
     const role = API.getRole();
-    if (role !== 'admin' && role !== 'manager') return;
+    if (role !== 'concierge') return;
     const prop = API.getActiveProperty(fullConfig);
     if (!prop) return;
     const hasIcal = prop.icals && prop.icals.some(i => i.url);
@@ -13963,7 +13966,7 @@ async function autoRefreshPlanning() {
           for (const c of newOnes) {
             if (c.provider && !notified.has(c.provider)) {
               notified.add(c.provider);
-              await sendAutoMessage(org.id, 'Lokizio', 'admin', c.provider,
+              await sendAutoMessage(org.id, 'Lokizio', 'concierge', c.provider,
                 '&#128276; Nouveau menage detecte pour ' + esc(prop.name) + ' le ' + fmtDate(c.cleaningDate || c.date));
             }
           }
@@ -13978,7 +13981,7 @@ async function autoRefreshPlanning() {
 
 async function generatePlanning(isAuto) {
   const _gpRole = API.getRole();
-  if (_gpRole !== 'admin' && _gpRole !== 'manager') return showToast('Seuls les gestionnaires peuvent generer des plannings');
+  if (_gpRole !== 'concierge') return showToast('Seuls les gestionnaires peuvent generer des plannings');
   // Check daily generation limit for free users (only manual clicks count)
   if (!isAuto) {
     const limits = API.getLimits();
@@ -16023,7 +16026,7 @@ async function sendConnectionRequest(targetUserId, targetName, targetRole, custo
 
     // Determine the role to propose
     let proposedRole = 'provider';
-    if (myRole === 'admin' || myRole === 'manager') proposedRole = targetRole === 'owner' ? 'owner' : 'provider';
+    if (myRole === 'concierge') proposedRole = targetRole === 'owner' ? 'owner' : 'provider';
     else if (myRole === 'owner') proposedRole = 'owner';
     else if (myRole === 'provider') proposedRole = 'provider';
 
@@ -16185,8 +16188,8 @@ async function showConnectionRequests() {
   let html = '<div style="padding:8px;">';
   html += '<div style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:12px;text-align:center;">&#128279; Demandes de connexion</div>';
   requests.forEach(r => {
-    const roleColors = { admin: '#e94560', manager: '#6c63ff', owner: '#f59e0b', provider: '#34d399', concierge: '#6c63ff' };
-    const roleLabels = { admin: 'Admin', manager: 'Conciergerie', owner: 'Proprietaire', provider: 'Prestataire', concierge: 'Conciergerie' };
+    const roleColors = { owner: '#f59e0b', provider: '#34d399', concierge: '#6c63ff' };
+    const roleLabels = { owner: 'Proprietaire', provider: 'Prestataire', concierge: 'Conciergerie' };
     html += '<div style="padding:12px;background:var(--surface2);border-radius:10px;margin-bottom:8px;border-left:3px solid ' + (roleColors[r.sender_role] || '#6c63ff') + ';">';
     html += '<div style="font-weight:700;font-size:14px;color:var(--text);">' + esc(r.sender_name) + '</div>';
     html += '<div style="font-size:11px;color:' + (roleColors[r.sender_role] || '#6c63ff') + ';margin-bottom:8px;">' + (roleLabels[r.sender_role] || r.sender_role) + '</div>';
@@ -16206,8 +16209,8 @@ async function renderAnnuaireTab() {
   const container = document.getElementById('annuaireResults') || document.getElementById('provAnnuaireContent') || document.getElementById('ownerAnnuaireContent');
   if (!container) return;
 
-  const roleColors = { admin: '#e94560', manager: '#6c63ff', owner: '#f59e0b', provider: '#34d399', concierge: '#6c63ff' };
-  const roleLabels = { admin: 'Admin', manager: 'Conciergerie', owner: 'Proprietaire', provider: 'Prestataire', concierge: 'Conciergerie' };
+  const roleColors = { owner: '#f59e0b', provider: '#34d399', concierge: '#6c63ff' };
+  const roleLabels = { owner: 'Proprietaire', provider: 'Prestataire', concierge: 'Conciergerie' };
   const isPrem = API.isPremium();
 
   // For provider/owner: build complete HTML including filters
@@ -16375,7 +16378,7 @@ async function renderAnnuaireTab() {
       if (allMembers) {
         const mkUserIds = _annuaireProfiles.map(p => p.user_id);
         allMembers.forEach(m => {
-          if (!mkUserIds.includes(m.user_id) && m.role !== 'admin') {
+          if (!mkUserIds.includes(m.user_id) && m.role !== 'concierge') {
             _annuaireProfiles.push({ user_id: m.user_id, display_name: m.display_name || '', email: m.invited_email || '', role: m.role, org_id: m.org_id, visible: true, _fromMembers: true });
           }
         });
@@ -16439,13 +16442,9 @@ function filterAnnuaire() {
   // Exclude self from the annuaire listing
   if (window.__currentUserId) filtered = filtered.filter(p => p.user_id !== window.__currentUserId);
 
-  // Role filter (concierge matches admin and manager)
+  // Role filter
   if (role) {
-    if (role === 'concierge') {
-      filtered = filtered.filter(p => p.role === 'admin' || p.role === 'manager' || p.role === 'concierge');
-    } else {
-      filtered = filtered.filter(p => p.role === role);
-    }
+    filtered = filtered.filter(p => p.role === role);
   }
 
   // City filter
@@ -16495,8 +16494,8 @@ async function renderAnnuaireResults(profiles) {
       }
     }
   } catch(e) {}
-  const roleColors = { provider: '#34d399', owner: '#f59e0b', admin: '#e94560', manager: '#6c63ff', concierge: '#6c63ff' };
-  const roleLabels = { provider: 'Prestataire', owner: 'Proprietaire', admin: 'Conciergerie', manager: 'Conciergerie', concierge: 'Conciergerie' };
+  const roleColors = { provider: '#34d399', owner: '#f59e0b', concierge: '#6c63ff' };
+  const roleLabels = { provider: 'Prestataire', owner: 'Proprietaire', concierge: 'Conciergerie' };
   const availLabels = { available: '&#128994; Disponible', full: '&#128308; Complet', vacation: '&#127796; En vacances' };
 
   if (!profiles.length) {
@@ -16529,7 +16528,7 @@ async function renderAnnuaireResults(profiles) {
     // Info line
     html += '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:4px;">';
     // Role-specific wording
-    const isConcierge = (p.role === 'concierge' || p.role === 'admin' || p.role === 'manager');
+    const isConcierge = (p.role === 'concierge');
     const isOwnerRole = (p.role === 'owner');
     // Rating
     const rating = parseFloat(p.rating) || 0;
@@ -16659,7 +16658,7 @@ async function loadMarketplaceData() {
   if (allMembers) {
     const mkUserIds = _mkAllProfiles.map(p => p.user_id);
     allMembers.forEach(m => {
-      if (!mkUserIds.includes(m.user_id) && m.role !== 'admin') {
+      if (!mkUserIds.includes(m.user_id) && m.role !== 'concierge') {
         _mkAllProfiles.push({
           user_id: m.user_id, display_name: m.display_name || m.invited_email || '',
           email: m.invited_email || '', role: m.role, org_id: m.org_id, visible: true, _fromMembers: true
@@ -16684,7 +16683,6 @@ function filterMarketplace() {
   let filtered = _mkAllProfiles;
   if (role) {
     filtered = filtered.filter(p => {
-      if (role === 'concierge') return p.role === 'concierge' || p.role === 'admin' || p.role === 'manager';
       return p.role === role;
     });
   }
@@ -16767,8 +16765,8 @@ async function renderMarketplaceResults(profiles) {
     </div>`;
     return;
   }
-  const roleColors = { provider: '#34d399', owner: '#f59e0b', admin: '#e94560', manager: '#6c63ff' };
-  const roleLabels = { provider: 'Prestataire', owner: 'Proprietaire', admin: 'Administrateur', manager: 'Conciergerie' };
+  const roleColors = { provider: '#34d399', owner: '#f59e0b', concierge: '#6c63ff' };
+  const roleLabels = { provider: 'Prestataire', owner: 'Proprietaire', concierge: 'Concierge' };
   const availLabels = { available: '&#128994; Disponible', full: '&#128308; Complet', vacation: '&#127796; En vacances' };
   let html = '';
   profiles.forEach(p => {
@@ -16838,7 +16836,7 @@ async function toggleMarketplaceVisibility(visible) {
       visible: visible,
       display_name: user.user_metadata?.display_name || user.email.split('@')[0],
       email: user.email,
-      role: (API.getRole() === 'admin' || API.getRole() === 'manager') ? 'concierge' : API.getRole() || 'provider',
+      role: API.getRole() || 'provider',
       org_id: API.getOrg()?.id,
       updated_at: new Date().toISOString()
     };
@@ -16880,7 +16878,7 @@ async function _doSaveMarketplace() {
       availability: document.getElementById('mkAvailability')?.value || 'available',
       services: [...document.querySelectorAll('.mkServiceCb:checked')].map(cb => cb.value),
       visible: document.getElementById('mkVisibleToggle')?.checked || false,
-      role: (_r === 'admin' || _r === 'manager') ? 'concierge' : _r || 'provider',
+      role: _r || 'provider',
       org_id: API.getOrg()?.id || null,
       updated_at: new Date().toISOString()
     };
@@ -17123,7 +17121,7 @@ async function submitServiceRequest() {
       await sendAutoMessage(org.id, senderName, 'owner', providerVal,
         '&#128203; Mission assignee: ' + svcLabel + ' pour ' + propName + ' le ' + date);
     }
-  } else if (role === 'admin' || role === 'manager') {
+  } else if (role === 'concierge') {
     // Concierge created request with provider assigned -> notify provider
     if (providerVal) {
       await sendAutoMessage(org.id, senderName, role, providerVal,
@@ -17181,7 +17179,7 @@ async function loadServiceRequests() {
     html += `</div>`;
     if (r.description) html += `<div style="font-size:12px;color:var(--text2);margin-bottom:8px;">${esc(r.description)}</div>`;
     // Action buttons based on role and status
-    if (role === 'admin' || role === 'manager') {
+    if (role === 'concierge') {
       if (r.status === 'pending') {
         html += `<div style="display:flex;gap:6px;flex-wrap:wrap;">`;
         html += `<select id="svcAssign_${r.id}" style="padding:6px;background:var(--surface);color:var(--text);border:1px solid var(--border2);border-radius:6px;font-size:11px;">`;
@@ -17299,23 +17297,23 @@ async function updateServiceRequest(id, status, provider) {
       const priceInfo = provider ? (() => { const p = getServicePriceForDate(req.property_id, svcType, 'cost_provider', req.requested_date || ''); return p > 0 ? ' — ' + p + '€' : ''; })() : '';
 
       if (status === 'assigned' && provider) {
-        await sendAutoMessage(org.id, 'Gestionnaire', 'admin', provider,
+        await sendAutoMessage(org.id, 'Gestionnaire', 'concierge', provider,
           '&#128203; ' + svcLabel + ' — ' + propName + '\n&#128197; ' + dateStr + timeInfo + priceInfo + notesInfo);
       } else if (status === 'accepted' && provider) {
-        await sendAutoMessage(org.id, 'Gestionnaire', 'admin', provider,
+        await sendAutoMessage(org.id, 'Gestionnaire', 'concierge', provider,
           '&#128203; ' + svcLabel + ' — ' + propName + '\n&#128197; ' + dateStr + timeInfo + priceInfo + notesInfo);
       } else if (status === 'refused') {
-        await sendAutoMessage(org.id, 'Gestionnaire', 'admin', 'proprietaire',
+        await sendAutoMessage(org.id, 'Gestionnaire', 'concierge', 'proprietaire',
           '&#10060; Votre demande de ' + svcLabel + ' pour ' + propName + ' le ' + dateStr + ' a ete refusee');
       } else if (status === 'cancelled') {
         if (req.assigned_provider) {
-          await sendAutoMessage(org.id, 'Gestionnaire', 'admin', req.assigned_provider,
+          await sendAutoMessage(org.id, 'Gestionnaire', 'concierge', req.assigned_provider,
             '&#10060; ' + svcLabel + ' pour ' + propName + ' le ' + dateStr + ' a ete annulee');
         }
-        await sendAutoMessage(org.id, 'Gestionnaire', 'admin', 'proprietaire',
+        await sendAutoMessage(org.id, 'Gestionnaire', 'concierge', 'proprietaire',
           '&#10060; ' + svcLabel + ' pour ' + propName + ' le ' + dateStr + ' a ete annulee');
       } else if (status === 'done') {
-        await sendAutoMessage(org.id, 'Gestionnaire', 'admin', 'proprietaire',
+        await sendAutoMessage(org.id, 'Gestionnaire', 'concierge', 'proprietaire',
           '&#9989; ' + svcLabel + ' termine pour ' + propName + ' le ' + dateStr);
         const provName = req.assigned_provider || provider || '';
         if (provName) setTimeout(() => showRatingModal(id, provName), 500);
@@ -17439,7 +17437,7 @@ async function confirmCancelPrestation(requestId, penaltyPercent, penaltyAmount)
       const svcLabel = getServiceLabel(req.service_type);
       const dateStr = req.requested_date ? new Date(req.requested_date).toLocaleDateString('fr-FR') : '';
       if (req.assigned_provider) {
-        await sendAutoMessage(org.id, 'Gestionnaire', 'admin', req.assigned_provider,
+        await sendAutoMessage(org.id, 'Gestionnaire', 'concierge', req.assigned_provider,
           '🚫 Annulation : ' + svcLabel + ' du ' + dateStr + (penaltyAmount > 0 ? ' (indemnite: ' + penaltyAmount.toFixed(2) + '€)' : '') + (reason ? ' — ' + reason : ''));
       }
     }
@@ -17520,7 +17518,7 @@ function showPrestationDetail(payload, event) {
   }
   // Relancer: only for owner/admin roles, on assigned prestations, max 2 re-notifications
   const _role = API.getRole && API.getRole();
-  const canRelance = u._source === 'service_request' && u.status === 'assigned' && ['owner','admin','manager','concierge'].includes(_role);
+  const canRelance = u._source === 'service_request' && u.status === 'assigned' && ['owner','concierge'].includes(_role);
   const _relanceCount = parseInt(u.relance_count) || 0;
   if (canRelance && _relanceCount < 2) {
     const label = _relanceCount === 0 ? 'Relancer' : 'Relancer (' + _relanceCount + '/2)';
@@ -18080,9 +18078,9 @@ async function initFullChat() {
       const name = m.display_name || m.invited_email || 'Proprietaire';
       contacts.push({ name, role: 'owner', icon: '🏠', color: '#f59e0b' });
     });
-    members.filter(m => (m.role === 'admin' || m.role === 'manager') && m.user_id !== user.id).forEach(m => {
+    members.filter(m => m.role === 'concierge' && m.user_id !== user.id).forEach(m => {
       const name = m.display_name || m.invited_email || 'Gestionnaire';
-      contacts.push({ name, role: 'admin', icon: '🏢', color: '#6c63ff' });
+      contacts.push({ name, role: 'concierge', icon: '🏢', color: '#6c63ff' });
     });
   } catch(e) {
     if (config && config.providers) {
@@ -18154,7 +18152,7 @@ async function sendFullChatMessage() {
   const org = API.getOrg();
   const { error: insertErr } = await sb.from('messages').insert({
     org_id: org.id, sender_id: user.id, sender_name: 'Gestionnaire',
-    sender_role: 'admin', recipient_name: _fullChatProvider, body: body,
+    sender_role: 'concierge', recipient_name: _fullChatProvider, body: body,
   });
   if (insertErr) { console.error('sendFullChatMessage error:', insertErr); showToast('Erreur envoi: ' + (insertErr.message || 'Probleme de connexion')); return; }
   await loadFullChatMessages('fullChatMessages', _fullChatProvider);
@@ -18386,7 +18384,7 @@ async function submitRating(requestId, providerName) {
     await sb.from('service_requests').update(update).eq('id', requestId);
 
     // Update provider's average rating in config (local providers)
-    if (role === 'admin' || role === 'manager') {
+    if (role === 'concierge') {
       const prop = API.getActiveProperty(fullConfig);
       if (prop && prop.providers) {
         const prov = prop.providers.find(p => p.name === providerName);

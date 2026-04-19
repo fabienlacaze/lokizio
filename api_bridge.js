@@ -15,7 +15,7 @@ let currentPlan = 'free';
 let activePropertyId = null;
 let currentOrg = null;
 let currentMember = null;
-let currentRole = 'admin';
+let currentRole = 'concierge';
 let allMemberships = []; // All orgs the user belongs to
 
 const API = (function() {
@@ -56,7 +56,7 @@ const API = (function() {
         const urlRef = new URLSearchParams(window.location.search).get('ref') || localStorage.getItem('mm_referral') || '';
         const { data: newOrg, error: orgErr } = await sb.from('organizations').insert({ name: orgName, plan: 'business', referral_code: refCode, referred_by: urlRef || null }).select().single();
         if (orgErr || !newOrg) { console.error('Onboarding org error:', orgErr); allMemberships = []; return null; }
-        await sb.from('members').insert({ org_id: newOrg.id, user_id: userId, role: 'admin', invited_email: user.email, accepted: true });
+        await sb.from('members').insert({ org_id: newOrg.id, user_id: userId, role: 'concierge', invited_email: user.email, accepted: true });
         const trialEnd = new Date(); trialEnd.setDate(trialEnd.getDate() + 10);
         await sb.from('subscriptions').upsert({ user_id: userId, plan: 'business', current_period_end: trialEnd.toISOString() }, { onConflict: 'user_id' });
         // Reload
@@ -74,7 +74,7 @@ const API = (function() {
             const newRewards = (referrerOrg.referral_rewards || 0) + 1;
             await sb.from('organizations').update({ referral_rewards: newRewards, plan: 'business' }).eq('id', referrerOrg.id);
             // Extend referrer's subscription by 30 days
-            const { data: refMembers } = await sb.from('members').select('user_id').eq('org_id', referrerOrg.id).eq('role', 'admin').limit(1);
+            const { data: refMembers } = await sb.from('members').select('user_id').eq('org_id', referrerOrg.id).eq('role', 'concierge').limit(1);
             if (refMembers && refMembers.length) {
               const { data: refSub } = await sb.from('subscriptions').select('*').eq('user_id', refMembers[0].user_id).single();
               if (refSub) {
@@ -284,8 +284,27 @@ const API = (function() {
     switchOrg(orgId) { return switchOrg(orgId); },
     getRole() { return currentRole; },
     getMember() { return currentMember; },
-    isAdmin() { return currentRole === 'admin' || currentRole === 'manager'; },
+    isAdmin() { return currentRole === 'concierge'; },
     isProvider() { return currentRole === 'provider'; },
+    isConcierge() { return currentRole === 'concierge'; },
+    isProprietaire() { return currentRole === 'owner'; },
+    isPrestataire() { return currentRole === 'provider'; },
+    isLocataire() { return currentRole === 'tenant'; },
+    async isSuperAdmin() {
+      try {
+        const { data } = await sb.auth.getUser();
+        const uid = data?.user?.id;
+        if (!uid) return false;
+        const { data: rows } = await sb.from('super_admins').select('user_id').eq('user_id', uid).maybeSingle();
+        return !!rows;
+      } catch { return false; }
+    },
+    // Role display label in French (UI)
+    roleLabel(r) {
+      const role = r || currentRole;
+      const map = { concierge: 'Concierge', owner: 'Proprietaire', provider: 'Prestataire', tenant: 'Locataire' };
+      return map[role] || role || '';
+    },
 
     // ─── Members ───
     async loadMembers() {
