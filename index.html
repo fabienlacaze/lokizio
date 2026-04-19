@@ -1143,7 +1143,7 @@ async function loadPDF() {
 </script>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v8.86</div>
+<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v8.87</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -1153,7 +1153,7 @@ async function loadPDF() {
     <!-- Broom that sweeps -->
     <div id="splashBroom" style="position:absolute;top:50%;left:-60px;font-size:48px;transform:translateY(-50%) rotate(-30deg);opacity:0;transition:all 0.8s cubic-bezier(0.25,0.46,0.45,0.94);">✨</div>
   </div>
-  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v8.86</span></div>
+  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v8.87</span></div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie pour locations</div>
   <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou</div>
   <!-- Loading bar -->
@@ -2577,6 +2577,7 @@ function getStatusLabel(s) { return (STATUS_CONFIG[s] || {}).label || s || ''; }
 // ── Splash Changelog (update this with each significant version) ──
 // Full versioned changelog — add new entries at TOP
 const VERSION_CHANGELOG = [
+  { v: '8.87', changes: ['Notifications push ajoutees: factures envoyees / payees, devis acceptes / refuses', 'Facturation auto: email de resume envoye a l\'admin a chaque generation', 'Log de consentement RGPD a l\'inscription (conformite art. 7)', 'Emails: lien de desabonnement en un clic + header List-Unsubscribe (conformite CAN-SPAM)'] },
   { v: '8.86', changes: ['Invitation: possibilite d\'inviter un Locataire directement depuis le bouton "Inviter"', 'Formulaire locataire: choix du bien, dates arrivee/depart, consignes d\'acces', 'Email d\'invitation automatique avec les infos du sejour'] },
   { v: '8.85', changes: ['Bouton de switch de role retire du header (le badge role existant sert deja au changement)'] },
   { v: '8.84', changes: ['Badge de role Locataire (violet) affiche dans le header pour les utilisateurs locataires'] },
@@ -7855,6 +7856,19 @@ async function authRegister() {
     if (data.user && data.user.identities && data.user.identities.length === 0) {
       errEl.textContent = t('auth.email.taken'); return;
     }
+    // Log RGPD consent (art. 7 — proof of consent)
+    try {
+      if (data.user?.id) {
+        await sb.from('rgpd_consents').insert({
+          user_id: data.user.id,
+          email: email,
+          consent_type: 'cgu_cgv_privacy_inscription',
+          cgu_version: '2026-04-19',
+          privacy_version: '2.0',
+          user_agent: navigator.userAgent.slice(0, 500),
+        });
+      }
+    } catch (e) { console.warn('RGPD consent log failed:', e); }
     // Always show confirmation popup after successful signup
     errEl.textContent = '';
     try { await sb.auth.signOut(); } catch(e) {}
@@ -8375,19 +8389,39 @@ async function saveInvoice(status, type, isQuote) {
 async function acceptQuote(id) {
   const ok = await customConfirm('Marquer ce devis comme accepte par le client ?', 'Accepter');
   if (!ok) return;
+  const { data: q } = await sb.from('invoices').select('*').eq('id', id).single();
   const { error } = await sb.from('invoices').update({ status: 'accepted', quote_accepted_at: new Date().toISOString() }).eq('id', id);
   if (error) { showToast('Erreur: ' + error.message); return; }
   showToast('Devis marque accepte');
+  try { await notifyQuoteDecision(q, 'accepted'); } catch {}
   loadInvoices();
 }
 
 async function refuseQuote(id) {
   const ok = await customConfirm('Marquer ce devis comme refuse par le client ?', 'Refuser');
   if (!ok) return;
+  const { data: q } = await sb.from('invoices').select('*').eq('id', id).single();
   const { error } = await sb.from('invoices').update({ status: 'refused', quote_refused_at: new Date().toISOString() }).eq('id', id);
   if (error) { showToast('Erreur: ' + error.message); return; }
   showToast('Devis marque refuse');
+  try { await notifyQuoteDecision(q, 'refused'); } catch {}
   loadInvoices();
+}
+
+async function notifyQuoteDecision(q, decision) {
+  if (!q) return;
+  const org = API.getOrg();
+  if (!org) return;
+  const { data: members } = await sb.from('members').select('user_id,display_name,invited_email,company_name').eq('org_id', org.id);
+  const issuerUser = (members || []).find(m => q.issuer_name && (m.display_name === q.issuer_name || m.company_name === q.issuer_name));
+  if (!issuerUser?.user_id) return;
+  const num = q.invoice_number || '';
+  const client = q.client_name || '';
+  if (decision === 'accepted') {
+    await sendPushToUser(issuerUser.user_id, 'Devis accepte', client + ' a accepte le devis ' + num, { tag: 'quote-' + q.id });
+  } else {
+    await sendPushToUser(issuerUser.user_id, 'Devis refuse', client + ' a refuse le devis ' + num, { tag: 'quote-' + q.id });
+  }
 }
 
 // Convert a quote to an invoice
@@ -10500,11 +10534,36 @@ async function exportComptableCSV() {
 async function updateInvoiceStatus(id, status) {
   try {
     const update = { status };
+    if (status === 'paid') update.paid_at = new Date().toISOString();
+    if (status === 'sent') update.sent_at = new Date().toISOString();
+    const { data: inv } = await sb.from('invoices').select('*').eq('id', id).single();
     const { error } = await sb.from('invoices').update(update).eq('id', id);
     if (error) { console.error('updateInvoiceStatus error:', error); showToast('Erreur: ' + safeErr(error, 'Mise a jour impossible')); return; }
     showToast('Facture mise a jour');
+    // Push to recipient/issuer depending on transition
+    try { await notifyInvoiceStatus(inv, status); } catch(e) { console.warn('notifyInvoiceStatus:', e); }
     loadInvoices();
   } catch(e) { console.error('updateInvoiceStatus:', e); showToast('Erreur: ' + e.message); }
+}
+
+// Send push to relevant party on invoice status change
+async function notifyInvoiceStatus(inv, newStatus) {
+  if (!inv) return;
+  const org = API.getOrg();
+  if (!org) return;
+  // Find client user (recipient) and issuer user (emitter)
+  const { data: members } = await sb.from('members').select('user_id,display_name,invited_email,company_name').eq('org_id', org.id);
+  const matchByName = (name) => (members || []).find(m => name && (m.display_name === name || m.invited_email === name || m.company_name === name));
+  const clientUser = matchByName(inv.client_name) || matchByName(inv.client_email);
+  const issuerUser = matchByName(inv.issuer_name) || matchByName(inv.issuer_email);
+  const num = inv.invoice_number || '';
+  const amt = (inv.total_ttc || 0).toFixed(2) + '€';
+
+  if (newStatus === 'sent' && clientUser?.user_id) {
+    await sendPushToUser(clientUser.user_id, 'Nouvelle facture', 'Facture ' + num + ' a payer (' + amt + ')', { tag: 'inv-' + inv.id });
+  } else if (newStatus === 'paid' && issuerUser?.user_id) {
+    await sendPushToUser(issuerUser.user_id, 'Paiement recu', 'Facture ' + num + ' reglee (' + amt + ')', { tag: 'inv-' + inv.id });
+  }
 }
 
 async function deleteInvoice(id) {
