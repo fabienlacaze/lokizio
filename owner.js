@@ -262,3 +262,519 @@ window.saveOwnerPropDetail = saveOwnerPropDetail;
 window.handleOwnerPropPhoto = handleOwnerPropPhoto;
 window.findConciergerie = findConciergerie;
 window.switchOwnerNav = switchOwnerNav;
+async function showOwnerMode() {
+  try {
+  setupBottomNav('owner');
+  updateConnectionBadge();
+  const content = document.querySelector('.content');
+  if (!content) return;
+  content.innerHTML = '';
+
+  const { data: { user } } = await sb.auth.getUser();
+  if (!user) return;
+
+  const org = API.getOrg();
+  if (!org) {
+    content.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text3);">Aucune organisation trouvee.</div>';
+    return;
+  }
+
+  // Get member info to find which properties this owner can see
+  const member = API.getMember();
+
+  // Load properties
+  const { data: allProperties } = await sb.from('properties').select('*').eq('org_id', org.id);
+  // Filter: owner sees only properties assigned to them (or where owner_email matches)
+  let properties = (allProperties || []).filter(p => p.owner_member_id === member.id || p.owner_email === user.email);
+  // Free plan: limit to 1 property
+  const ownerPlanCheck = API.getPlan();
+  const isOwnerProCheck = ownerPlanCheck === 'pro' || ownerPlanCheck === 'premium' || ownerPlanCheck === 'business';
+  if (!isOwnerProCheck && properties.length > 1) properties = properties.slice(0, 1);
+
+  // Header
+  const headerEl = document.querySelector('.header');
+  if (headerEl) {
+    const h1 = headerEl.querySelector('h1');
+    if (h1) {
+      h1.innerHTML = 'Lokizio';
+      appendRoleBadge(h1);
+    }
+    document.querySelectorAll('.header-actions .btnHelp').forEach(btn => {
+      const onclick = btn.getAttribute('onclick') || '';
+      if (!onclick.includes('authLogout') && !onclick.includes('toggleTheme') && !onclick.includes('showAccountModal') && !onclick.includes('showMarketplace') && !onclick.includes('showInviteModal') && !onclick.includes('showConnectionRequests')) {
+        btn.style.display = 'none';
+      }
+    });
+  }
+
+  const today = new Date().toISOString().split('T')[0];
+  const weekEnd = new Date(Date.now() + 7 * 86400000).toISOString().split('T')[0];
+  let allCleanings = [];
+  let totalCost = 0;
+
+  for (const prop of properties) {
+    const { data: planning } = await sb.from('plannings').select('cleanings').eq('property_id', prop.id).single();
+    if (planning && planning.cleanings) {
+      planning.cleanings.forEach(c => {
+        allCleanings.push({ ...c, propertyId: prop.id, propertyName: prop.name });
+        if ((c.cleaningDate || c.date) >= today) {
+          // Use unified pricing: property > org > defaults
+          totalCost += getServicePriceForDate(prop.id, 'cleaning_standard', 'price_owner', c.cleaningDate || c.date);
+        }
+      });
+    }
+  }
+
+  const futureCleanings = allCleanings.filter(c => (c.cleaningDate || c.date) >= today);
+  const weekCleanings = futureCleanings.filter(c => (c.cleaningDate || c.date) <= weekEnd);
+
+  // Load validations
+  const validations = {};
+  for (const prop of properties) {
+    const { data: vals } = await sb.from('cleaning_validations').select('*').eq('property_id', prop.id);
+    if (vals) vals.forEach(v => { validations[v.property_id + '_' + v.cleaning_date + '_' + v.provider_name] = v; });
+  }
+
+  // Load service requests for owner's properties
+  const { data: ownerSvcRequests } = await sb.from('service_requests').select('*').eq('org_id', org.id).in('status', ['pending','assigned','accepted','in_progress','done','pending_validation','disputed']);
+  const ownerPropertyIds = properties.map(p => p.id);
+  const ownerServiceRequests = (ownerSvcRequests || []).filter(r => ownerPropertyIds.includes(r.property_id));
+
+  // Build unified owner prestations
+  const ownerUnified = [];
+  futureCleanings.forEach(c => {
+    const dateStr = c.cleaningDate || c.date;
+    const key = c.propertyId + '_' + dateStr + '_' + (c.provider || '');
+    const v = validations[key];
+    ownerUnified.push({
+      _source: 'cleaning',
+      type: 'cleaning_standard',
+      date: dateStr,
+      propertyName: c.propertyName,
+      provider: c.provider,
+      status: v ? v.status : 'pending',
+      propertyId: c.propertyId,
+      _validation: v
+    });
+  });
+  ownerServiceRequests.forEach(r => {
+    const rDate = r.requested_date || r.preferred_date || '';
+    // Hide past service requests
+    if (rDate && rDate < today) return;
+    ownerUnified.push({
+      _source: 'service_request',
+      _id: r.id,
+      type: r.service_type,
+      date: rDate,
+      propertyName: r.property_name || '',
+      status: r.status,
+      notes: r.notes,
+      provider: r.assigned_provider || '',
+    });
+  });
+  ownerUnified.sort((a, b) => (a.date || '').localeCompare(b.date || ''));
+
+  // Count by category for owner filters
+  const ownerCatCounts = { all: ownerUnified.length };
+  ownerUnified.forEach(u => {
+    const catObj = SERVICE_CATALOG.find(c => c.services.some(s => s.id === u.type));
+    const catKey = catObj ? catObj.cat : 'autre';
+    ownerCatCounts[catKey] = (ownerCatCounts[catKey] || 0) + 1;
+  });
+
+  let html = '';
+
+  // ═══ TAB 1: Apercu (Overview) ═══
+  html += '<div id="ownerContentOverview">';
+
+  // Org switcher (if owner belongs to multiple orgs)
+  const memberships = API.getAllMemberships();
+  if (memberships.length > 1) {
+    html += `<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap;">
+      <span style="font-size:12px;color:var(--text3);">Conciergerie :</span>
+      <select onchange="switchOwnerOrg(this.value)" style="flex:1;padding:8px 12px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:13px;font-weight:600;">`;
+    memberships.forEach(m => {
+      const orgName = m.organizations?.name || 'Organisation';
+      const selected = m.org_id === org.id ? ' selected' : '';
+      html += `<option value="${m.org_id}"${selected}>${_escHtml(orgName)}</option>`;
+    });
+    html += `</select></div>`;
+  }
+
+  // KPI cards - clickable to navigate to planning/overview tabs
+  html += `<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:16px;">
+    <div onclick="switchOwnerNav('prestations')" style="background:linear-gradient(135deg,#f59e0b,#d97706);border-radius:12px;padding:16px;text-align:center;cursor:pointer;transition:transform 0.1s,opacity 0.1s;" onpointerdown="this.style.transform='scale(0.95)';this.style.opacity='0.85'" onpointerup="this.style.transform='';this.style.opacity=''" onpointerleave="this.style.transform='';this.style.opacity=''">
+      <div style="font-size:24px;font-weight:800;color:#fff;">${weekCleanings.length}</div>
+      <div style="font-size:11px;color:rgba(255,255,255,0.8);">${t('kpi.this_week')}</div>
+    </div>
+    <div style="background:linear-gradient(135deg,#34d399,#059669);border-radius:12px;padding:16px;text-align:center;cursor:pointer;transition:transform 0.1s,opacity 0.1s;" onpointerdown="this.style.transform='scale(0.95)';this.style.opacity='0.85'" onpointerup="this.style.transform='';this.style.opacity=''" onpointerleave="this.style.transform='';this.style.opacity=''">
+      <div style="font-size:24px;font-weight:800;color:#fff;">${totalCost}€</div>
+      <div style="font-size:11px;color:rgba(255,255,255,0.8);">${t('kpi.cost')}</div>
+    </div>
+  </div>`;
+
+  // Concierge info card
+  const { data: adminMembers } = await sb.from('members').select('*').eq('org_id', org.id).eq('role', 'concierge');
+  if (adminMembers && adminMembers.length) {
+    const admin = adminMembers[0];
+    const adminEmail = admin.invited_email || '';
+    const adminName = admin.display_name || adminEmail.split('@')[0] || 'Gestionnaire';
+    // Try to find phone from properties providers config
+    let adminPhone = '';
+    html += `<div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:12px;display:flex;align-items:center;gap:14px;">
+      <div style="width:44px;height:44px;background:linear-gradient(135deg,#e94560,#c73e54);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;color:#fff;flex-shrink:0;">&#127970;</div>
+      <div style="flex:1;">
+        <div style="font-size:11px;color:var(--text3);text-transform:uppercase;margin-bottom:2px;">Ma conciergerie</div>
+        <div style="font-weight:700;font-size:14px;">${_escHtml(org.name || adminName)}</div>
+        <div style="font-size:12px;color:var(--text3);margin-top:2px;">${_escHtml(adminEmail)}</div>
+      </div>
+      <a href="mailto:${_escHtml(adminEmail)}" style="background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:8px 12px;font-size:12px;color:var(--text);text-decoration:none;font-weight:600;">&#9993; Contacter</a>
+    </div>`;
+  }
+
+  // Today's cleanings summary in overview
+  const todayCleaningsOwner = allCleanings.filter(c => (c.cleaningDate || c.date) === today);
+  if (todayCleaningsOwner.length > 0) {
+    html += `<details style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:12px;">
+      <summary style="list-style:none;cursor:pointer;display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;"><div style="font-weight:700;font-size:14px;">&#128197; Aujourd'hui — ${todayCleaningsOwner.length} prestation(s)</div><span class="collapseArrow">&#9662;</span></summary>`;
+    todayCleaningsOwner.forEach(c => {
+      const key = c.propertyId + '_' + (c.cleaningDate || c.date) + '_' + (c.provider || '');
+      const v = validations[key];
+      const status = v ? v.status : 'pending';
+      const statusIcons = { done: '&#9989;', departed: '&#128682;', in_progress: '&#129529;', arrived: '&#127968;', assigned: '&#128228;', accepted: '&#10003;&#10003;', seen: '&#128065;', sent: '&#9993;', refused: '&#10060;', pending: '&#9203;' };
+      html += `<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px solid var(--border);font-size:13px;">
+        <div style="flex:1;font-weight:600;">${esc(c.propertyName)}</div>
+        <div style="color:var(--text2);">${esc(c.provider || '?')}</div>
+        <span style="font-size:11px;color:${getStatusColor(status)};white-space:nowrap;">${statusIcons[status] || '&#9203;'} ${getStatusLabel(status)}</span>
+      </div>`;
+    });
+    html += '</details>';
+  } else {
+    html += `<details style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:12px;">
+      <summary style="list-style:none;cursor:pointer;display:flex;justify-content:space-between;align-items:center;"><div style="font-weight:700;font-size:14px;">&#128197; Aujourd'hui</div><span class="collapseArrow">&#9662;</span></summary>
+      <div style="color:var(--text3);font-size:13px;margin-top:8px;">Aucune prestation prevue aujourd'hui</div>
+    </details>`;
+  }
+
+  // Upcoming prestations for owner
+  const ownerUpcoming = ownerUnified.filter(u => {
+    const d = u.date || '';
+    return d > today && !['done','cancelled','departed'].includes(u.status);
+  }).slice(0, 8);
+  if (ownerUpcoming.length > 0) {
+    const _osc = { done:'#34d399', in_progress:'#3b82f6', assigned:'#8b5cf6', accepted:'#34d399', pending:'#f59e0b', pending_validation:'#f59e0b', refused:'#ef4444' };
+    const _osl = { done:'Termine', in_progress:'En cours', assigned:'En attente de reponse', accepted:'Accepte', pending:'Attente', pending_validation:'Validation', refused:'Refuse' };
+    html += '<details style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:12px;">';
+    html += '<summary style="list-style:none;cursor:pointer;display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;"><div style="font-weight:700;font-size:14px;">&#128203; Prochaines prestations</div><span class="collapseArrow">&#9662;</span></summary>';
+    ownerUpcoming.forEach(u => {
+      const svcLabel = getServiceLabel(u.type);
+      html += '<div onclick="goToPrestation(\'' + (u.date||'') + '\',\'' + (u.type||'') + '\',\'' + esc(u.provider||'').replace(/'/g,"\\\\'") + '\')" style="display:flex;align-items:center;gap:8px;padding:8px 0;border-top:1px solid var(--border);cursor:pointer;" onmouseover="this.style.background=\'rgba(255,255,255,0.03)\'" onmouseout="this.style.background=\'\'">';
+      html += '<div style="min-width:40px;font-size:11px;color:var(--text3);">' + fmtDate(u.date).substring(0,5) + '</div>';
+      html += '<div style="flex:1;font-size:12px;font-weight:600;">' + svcLabel + '</div>';
+      if (u.propertyName) html += '<div style="font-size:11px;color:var(--text3);">' + esc(u.propertyName) + '</div>';
+      if (u.provider) html += '<div style="font-size:11px;color:var(--text3);">' + esc(u.provider) + '</div>';
+      html += '<span style="font-size:10px;padding:2px 6px;border-radius:4px;background:' + (_osc[u.status]||'#666') + '22;color:' + (_osc[u.status]||'#666') + ';font-weight:600;">' + (_osl[u.status]||u.status) + '</span>';
+      html += '</div>';
+    });
+    if (ownerUnified.filter(u => (u.date||'') > today && !['done','cancelled','departed'].includes(u.status)).length > 8) {
+      html += '<div onclick="switchOwnerNav(\'prestations\')" style="text-align:center;padding:8px;font-size:11px;color:var(--accent2);cursor:pointer;font-weight:600;">Voir tout &#8250;</div>';
+    }
+    html += '</details>';
+  }
+
+  // Monthly cost history
+  const costByMonth = {};
+  allCleanings.forEach(c => {
+    const d = c.cleaningDate || c.date || '';
+    if (!d) return;
+    const month = d.substring(0, 7);
+    const price = getServicePriceForDate(c.propertyId || '', 'cleaning_standard', 'price_owner', d);
+    if (!costByMonth[month]) costByMonth[month] = { count: 0, total: 0 };
+    costByMonth[month].count++;
+    costByMonth[month].total += price;
+  });
+  const sortedMonths = Object.keys(costByMonth).sort().slice(-6);
+  if (sortedMonths.length > 1) {
+    html += '<details style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:12px;">';
+    html += '<summary style="list-style:none;cursor:pointer;display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;"><div style="font-weight:700;font-size:14px;">&#128200; Historique depenses</div><span class="collapseArrow">&#9662;</span></summary>';
+    const maxCost = Math.max(...sortedMonths.map(m => costByMonth[m].total));
+    sortedMonths.forEach(m => {
+      const d = costByMonth[m];
+      const pct = maxCost > 0 ? Math.round(d.total / maxCost * 100) : 0;
+      const monthLabel = new Date(m + '-15').toLocaleDateString('fr-FR', { month: 'short', year: '2-digit' });
+      html += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">';
+      html += '<div style="width:50px;font-size:11px;color:var(--text3);text-align:right;">' + monthLabel + '</div>';
+      html += '<div style="flex:1;height:18px;background:var(--surface2);border-radius:4px;overflow:hidden;">';
+      html += '<div style="height:100%;width:' + pct + '%;background:linear-gradient(90deg,#6c63ff,#a78bfa);border-radius:4px;transition:width 0.3s;display:flex;align-items:center;justify-content:flex-end;padding-right:4px;">';
+      if (pct > 25) html += '<span style="font-size:9px;color:#fff;font-weight:700;">' + d.total + '&euro;</span>';
+      html += '</div></div>';
+      if (pct <= 25) html += '<span style="font-size:10px;color:var(--text3);">' + d.total + '&euro;</span>';
+      html += '</div>';
+    });
+    html += '</details>';
+  }
+
+  html += '</div>'; // close ownerContentOverview
+
+  // ═══ TAB 2: Biens (Properties) — uses same inline form as admin ═══
+  html += '<div id="ownerContentProperties" style="display:none;">';
+  html += '<div id="ownerBiensSelector" style="margin-bottom:8px;"></div>';
+  html += '<div id="ownerPropertyDetailsInline"></div>';
+  html += '</div>'; // close ownerContentProperties
+
+  // ═══ TAB: Equipe ═══
+  html += '<div id="ownerContentAnnuaire" style="display:none;"><div id="ownerAnnuaireContent"></div></div>';
+
+  // ═══ TAB 3: Prestations (unified) ═══
+  html += '<div id="ownerContentPrestations" style="display:none;">';
+
+  // Header with + Demander button
+  html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">';
+  html += '<div style="font-size:16px;font-weight:700;color:var(--text);">📋 Prestations</div>';
+  html += '<button class="btn btnSmall btnPrimary" onclick="showServiceRequestModal()" style="padding:8px 14px;font-size:12px;">+ Demander</button>';
+  html += '</div>';
+
+  // Filter buttons
+  html += '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;">';
+  html += '<button class="prestFilter active" onclick="filterPrestations(\'all\')">Tout (' + ownerCatCounts.all + ')</button>';
+  SERVICE_CATALOG.forEach(cat => {
+    if (ownerCatCounts[cat.cat]) {
+      html += '<button class="prestFilter" onclick="filterPrestations(\'' + cat.cat + '\')">' + (cat.services[0] ? cat.services[0].icon : '') + ' ' + cat.label + ' (' + ownerCatCounts[cat.cat] + ')</button>';
+    }
+  });
+  html += '</div>';
+
+  if (ownerUnified.length === 0) {
+    html += `<div style="text-align:center;padding:40px 20px;">
+      <div style="font-size:40px;margin-bottom:12px;">&#128197;</div>
+      <div style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:8px;">Aucune prestation prevue</div>
+      <div style="font-size:13px;color:var(--text3);">Votre conciergerie n'a pas encore programme de prestations.</div>
+    </div>`;
+  } else {
+    const _omonths = ['Jan','Fev','Mar','Avr','Mai','Jun','Jul','Aou','Sep','Oct','Nov','Dec'];
+    const _omonthsFull = ['Janvier','Fevrier','Mars','Avril','Mai','Juin','Juillet','Aout','Septembre','Octobre','Novembre','Decembre'];
+    const _odays = ['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'];
+    let ownerLastMonth = '';
+    ownerUnified.forEach(u => {
+      const dateStr = u.date || '';
+      // Month group (collapsible)
+      if (dateStr) {
+        const monthKey = dateStr.substring(0, 7);
+        if (monthKey !== ownerLastMonth) {
+          if (ownerLastMonth !== '') html += '</details>';
+          ownerLastMonth = monthKey;
+          const gd = new Date(dateStr + 'T12:00:00');
+          const monthLabel = _omonthsFull[gd.getMonth()] + ' ' + gd.getFullYear();
+          html += '<details open style="margin-bottom:8px;"><summary style="list-style:none;cursor:pointer;display:flex;align-items:center;gap:8px;padding:10px 4px;font-size:13px;font-weight:700;color:var(--text2);text-transform:capitalize;border-bottom:1px solid var(--border);"><span class="collapseArrow">&#9662;</span>' + monthLabel + '</summary>';
+        }
+      }
+      const catObj = SERVICE_CATALOG.find(c => c.services.some(s => s.id === u.type));
+      const catKey = catObj ? catObj.cat : 'autre';
+      const svcObj = (catObj ? catObj.services : []).find(s => s.id === u.type);
+      const svcIcon = svcObj ? svcObj.icon : '📋';
+      const svcName = svcObj ? svcObj.label : u.type;
+      const color = getStatusColor(u.status);
+      const label = getStatusLabel(u.status) || u.status;
+      const isToday = dateStr === today;
+
+      // Date block parts
+      let dayNum = '', monthStr = '', dowStr = '';
+      if (dateStr) {
+        const d = new Date(dateStr + 'T12:00:00');
+        dayNum = d.getDate();
+        monthStr = _omonths[d.getMonth()];
+        dowStr = _odays[d.getDay()];
+      }
+
+      const ownerPrestPayload = encodeURIComponent(JSON.stringify({
+        _source: u._source, _id: u._id || '', type: u.type, date: dateStr, propertyName: u.propertyName,
+        propertyId: u.propertyId, provider: u.provider, status: u.status, source: u.source,
+        priority: u.priority, description: u.description, cancel_reason: u.cancel_reason,
+        cancel_penalty_amount: u.cancel_penalty_amount
+      }));
+      html += '<div class="adminPrestCard" data-category="' + catKey + '" data-date="' + dateStr + '" data-type="' + (u.type||'') + '" data-provider="' + esc(u.provider||'') + '" onclick="showPrestationDetail(\'' + ownerPrestPayload + '\', event)" style="border-left:4px solid ' + color + ';cursor:pointer;' + (isToday ? 'box-shadow:0 0 0 1px rgba(233,69,96,0.3);' : '') + '">';
+      html += '<div style="display:flex;align-items:stretch;gap:0;padding:0;">';
+      if (dayNum) {
+        html += '<div class="card-date-block">';
+        html += '<div class="card-dow">' + dowStr + '</div>';
+        html += '<div class="card-day">' + dayNum + '</div>';
+        html += '<div class="card-month">' + monthStr + '</div>';
+        html += '</div>';
+      }
+      html += '<div style="display:flex;align-items:center;padding:0 8px;font-size:26px;flex-shrink:0;">' + svcIcon + '</div>';
+      html += '<div style="flex:1;min-width:0;padding:10px 8px 10px 0;">';
+      html += '<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">';
+      html += '<span style="font-size:14px;font-weight:700;color:var(--text);">' + esc(svcName) + '</span>';
+      if (u.source) html += '<span style="font-size:9px;padding:1px 5px;border-radius:3px;background:' + (u.source.toLowerCase().includes('airbnb') ? '#e9456030' : '#2563eb30') + ';color:' + (u.source.toLowerCase().includes('airbnb') ? '#e94560' : '#2563eb') + ';font-weight:700;">' + esc(u.source).toUpperCase() + '</span>';
+      html += '</div>';
+      html += '<div style="font-size:11px;color:var(--text3);margin-top:3px;">';
+      const mp = [];
+      if (u.propertyName) mp.push('&#127968; ' + esc(u.propertyName));
+      if (u.provider) mp.push('&#128100; ' + esc(u.provider));
+      html += mp.join(' &middot; ');
+      html += '</div>';
+      html += '</div>';
+      html += '<div style="display:flex;align-items:center;gap:6px;flex-shrink:0;padding:0 12px;">';
+      html += '<span class="card-status" title="' + (getStatusHint(u.status)||'') + '" style="background:' + color + '18;color:' + color + ';cursor:help;">' + label + '</span>';
+      const ownerCanCancel = u._source === 'service_request' && !['done','departed','in_progress','cancelled'].includes(u.status);
+      if (ownerCanCancel) {
+        const _cp = getServicePriceForDate(u.propertyId || '', u.type || 'cleaning_standard', 'price_owner', dateStr);
+        html += '<a href="#" onclick="showCancelModal(\'' + u._id + '\',\'' + dateStr + '\',\'' + esc(svcName).replace(/'/g,"\\\\'") + '\',' + _cp + ');return false;" style="font-size:10px;color:var(--text3);text-decoration:none;" title="Annuler">&#128465;</a>';
+      }
+      if (u.status === 'pending_validation' && u._source === 'service_request') {
+        html += '<button onclick="ownerValidateService(\'' + u._id + '\',true)" style="padding:4px 8px;font-size:10px;background:#34d399;color:#fff;border:none;border-radius:6px;cursor:pointer;" title="Valider">&#10003;</button>';
+        html += '<button onclick="ownerDisputeService(\'' + u._id + '\',\'' + esc(u.provider || '').replace(/'/g,"\\\\'") + '\',\'' + esc(svcName).replace(/'/g,"\\\\'") + '\')" style="padding:4px 8px;font-size:10px;background:#e94560;color:#fff;border:none;border-radius:6px;cursor:pointer;" title="Contester">&#10007;</button>';
+      }
+      if ((u.status === 'done' || u.status === 'pending_validation') && u._source === 'service_request' && u.provider) {
+        html += '<a href="#" onclick="showRatingModal(\'' + u._id + '\',\'' + esc(u.provider).replace(/'/g,"\\\\'") + '\');return false;" style="font-size:10px;color:#f59e0b;text-decoration:none;" title="Noter">&#11088;</a>';
+      }
+      html += '</div>';
+      html += '</div>';
+      html += '</div>';
+    });
+    if (ownerLastMonth !== '') html += '</details>';
+  }
+
+  html += '</div>'; // close ownerContentPrestations
+
+  // Recent activity (Pro only) — appended to overview tab via JS after render
+  let activityHtml = '';
+  const ownerPlan = API.getPlan();
+  const isOwnerPro = ownerPlan === 'pro' || ownerPlan === 'premium' || ownerPlan === 'business';
+  if (isOwnerPro) {
+    const { data: recentMsgs } = await sb.from('messages').select('*').eq('org_id', org.id).eq('sender_role', 'provider').order('created_at', { ascending: false }).limit(10);
+    if (recentMsgs && recentMsgs.length) {
+      activityHtml += `<details style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:12px;">
+        <summary style="list-style:none;cursor:pointer;display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;"><div style="font-weight:700;font-size:14px;">&#128276; Activite recente</div><span class="collapseArrow">&#9662;</span></summary>`;
+      recentMsgs.forEach(m => {
+        const time = new Date(m.created_at).toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+        activityHtml += `<div onclick="switchOwnerNav('prestations')" style="padding:6px 0;border-top:1px solid var(--border);font-size:12px;cursor:pointer;line-height:1.5;" onmouseover="this.style.background='rgba(255,255,255,0.03)'" onmouseout="this.style.background=''">
+          <span style="color:var(--text3);">${time}</span> — ${esc(m.body)}
+        </div>`;
+      });
+      activityHtml += '</details>';
+    }
+  } else {
+    // Free: show locked activity section
+    activityHtml += `<div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:12px;position:relative;overflow:hidden;">
+      <div style="font-weight:700;font-size:14px;margin-bottom:10px;">&#128276; Activite recente</div>
+      <div style="filter:blur(4px);pointer-events:none;">
+        <div style="padding:6px 0;border-top:1px solid var(--border);font-size:12px;color:var(--text3);">28/03 16:14 — prestataire a confirme — menage termine</div>
+        <div style="padding:6px 0;border-top:1px solid var(--border);font-size:12px;color:var(--text3);">28/03 16:14 — prestataire a termine et quitte</div>
+      </div>
+      <div style="position:absolute;top:0;left:0;width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(15,15,26,0.7);border-radius:12px;cursor:pointer;" onclick="showPremiumModal('L\\'activite recente est reservee aux abonnes Pro')">
+        <span style="font-size:32px;">&#128274;</span>
+        <span style="color:#fff;font-size:13px;font-weight:600;margin-top:8px;">Pro</span>
+      </div>
+    </div>`;
+  }
+
+  // Chat button
+  // Chat page (hidden, shown by nav Messages tab)
+  // Billing page (redesigned)
+  html += '<div id="ownerContentBilling" style="display:none;">';
+  html += '<div style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:12px;">💰 Mes factures</div>';
+  // Tabs
+  html += '<div style="display:flex;gap:4px;background:var(--surface2);padding:4px;border-radius:10px;margin-bottom:14px;">';
+  html += '<button id="ownerFinTab_create" class="annSubTab" onclick="switchOwnerFinTab(\'create\')" style="flex:1;padding:10px 14px;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">&#10133; Creer</button>';
+  html += '<button id="ownerFinTab_list" class="annSubTab annSubTabActive" onclick="switchOwnerFinTab(\'list\')" style="flex:1;padding:10px 14px;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">&#128196; Consulter</button>';
+  html += '</div>';
+  html += '<div id="ownerFinPanel_create" style="display:none;">';
+  html += '<div style="display:inline-flex;gap:2px;margin-bottom:12px;padding:3px;background:var(--surface2);border-radius:8px;">';
+  html += '<div id="ownerDocType_invoice_btn" onclick="setOwnerDocType(\'invoice\')" class="finFactModeBtn finFactModeActive" style="cursor:pointer;padding:5px 14px;border-radius:6px;font-size:11px;font-weight:500;">&#128196; Facture</div>';
+  html += '<div id="ownerDocType_quote_btn" onclick="setOwnerDocType(\'quote\')" class="finFactModeBtn" style="cursor:pointer;padding:5px 14px;border-radius:6px;font-size:11px;font-weight:500;">&#128203; Devis</div>';
+  html += '</div>';
+  html += '<div id="ownerDocTypeHint" style="font-size:13px;color:var(--text2);margin-bottom:10px;">A la conciergerie (remboursement, frais...)</div>';
+  html += '<button onclick="openOwnerInvoice(\'owner_to_concierge\')" style="padding:18px 14px;background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;border:none;border-radius:12px;font-weight:700;cursor:pointer;width:100%;">';
+  html += '<div style="font-size:28px;margin-bottom:6px;">&#129529;</div><div style="font-size:14px;">A la conciergerie</div>';
+  html += '<div style="font-size:10px;opacity:0.85;margin-top:4px;font-weight:400;">Remboursement, frais, etc.</div>';
+  html += '</button></div>';
+  html += '<div id="ownerFinPanel_list">';
+  html += '<div id="ownerInvoiceSummary" style="margin-bottom:12px;"></div>';
+  html += '<div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap;align-items:center;">';
+  html += '<div style="flex:1;min-width:200px;position:relative;"><span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text3);font-size:13px;">&#128269;</span><input type="text" id="ownerInvoiceSearch" placeholder="Numero, propriete..." oninput="renderOwnerInvoicesView()" style="width:100%;padding:7px 10px 7px 30px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:12px;box-sizing:border-box;"></div>';
+  html += '<div id="ownerInvoicePeriodChips" style="display:flex;gap:4px;flex-wrap:wrap;"></div>';
+  html += '</div>';
+  html += '<div id="ownerInvoiceStatusChips" style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:10px;"></div>';
+  html += '<div id="ownerInvoicesList"></div>';
+  html += '</div>'; // close ownerFinPanel_list
+  // Upcoming prestations section (forecast) — same layout as admin prestation list
+  html += '<details style="margin-top:16px;"><summary style="cursor:pointer;font-size:13px;font-weight:700;color:var(--text);padding:8px 0;list-style:none;display:flex;align-items:center;gap:6px;"><span class="collapseArrow">&#9662;</span> Prestations a venir (' + futureCleanings.length + ')</summary>';
+  html += '<div style="padding-top:8px;">';
+  if (futureCleanings.length === 0) {
+    html += '<div style="text-align:center;padding:20px;color:var(--text3);font-size:13px;">Aucune prestation prevue</div>';
+  } else {
+    // Group by month like admin list
+    const _monthsFull = ['Janvier','Fevrier','Mars','Avril','Mai','Juin','Juillet','Aout','Septembre','Octobre','Novembre','Decembre'];
+    const _days = ['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'];
+    const _monthsShort = ['Jan','Fev','Mar','Avr','Mai','Jun','Jul','Aou','Sep','Oct','Nov','Dec'];
+    const groups = {};
+    futureCleanings.forEach(c => {
+      const d = c.cleaningDate || c.date || '';
+      const key = d.substring(0, 7);
+      if (!groups[key]) groups[key] = [];
+      groups[key].push(c);
+    });
+    const keys = Object.keys(groups).sort();
+    keys.forEach(mk => {
+      const list = groups[mk];
+      const [yy, mm] = mk.split('-');
+      const monthLabel = _monthsFull[parseInt(mm)-1] + ' ' + yy;
+      const monthTotal = list.reduce((s, c) => s + (getServicePriceForDate(c.propertyId || '', 'cleaning_standard', 'price_owner', c.cleaningDate || c.date || '') || 0), 0);
+      html += '<details open style="margin-bottom:8px;">';
+      html += '<summary style="list-style:none;cursor:pointer;display:flex;align-items:center;justify-content:space-between;padding:8px 4px;font-size:12px;font-weight:700;color:var(--text2);border-bottom:1px solid var(--border);">';
+      html += '<span style="display:flex;align-items:center;gap:6px;"><span class="collapseArrow">&#9662;</span>' + monthLabel + ' <span style="color:var(--text3);font-weight:400;font-size:11px;">(' + list.length + ')</span></span>';
+      html += '<span style="font-size:11px;color:var(--text3);font-weight:400;">Total <b style="color:#f59e0b;">' + monthTotal.toFixed(0) + '€</b></span>';
+      html += '</summary><div style="padding-top:6px;">';
+      list.forEach(c => {
+        const dateStr = c.cleaningDate || c.date || '';
+        const dt = dateStr ? new Date(dateStr + 'T12:00:00') : null;
+        const dayNum = dt ? dt.getDate() : '';
+        const dowStr = dt ? _days[dt.getDay()] : '';
+        const monthStr = dt ? _monthsShort[dt.getMonth()] : '';
+        const price = getServicePriceForDate(c.propertyId || '', 'cleaning_standard', 'price_owner', dateStr);
+        const svcIcon = (typeof getServiceIcon === 'function') ? getServiceIcon('cleaning_standard') : '🧹';
+        const svcLabel = (typeof getServiceLabel === 'function') ? getServiceLabel('cleaning_standard') : 'Menage';
+        const provColor = c.provider ? (typeof getProvColor === 'function' ? getProvColor(c.provider) : '#6c63ff') : '#888';
+        html += '<div class="adminPrestCard" style="border-left:4px solid #f59e0b;cursor:default;">';
+        html += '<div style="display:flex;align-items:stretch;gap:0;padding:0;">';
+        html += '<div class="card-date-block"><div class="card-dow">' + dowStr + '</div><div class="card-day">' + dayNum + '</div><div class="card-month">' + monthStr + '</div></div>';
+        html += '<div style="display:flex;align-items:center;padding:0 8px;font-size:26px;flex-shrink:0;">' + svcIcon + '</div>';
+        html += '<div style="flex:1;min-width:0;padding:8px 4px;">';
+        html += '<div style="font-size:14px;font-weight:700;color:var(--text);">' + esc(svcLabel) + '</div>';
+        html += '<div style="font-size:11px;color:var(--text3);margin-top:2px;">&#127968; ' + esc(c.propertyName || '') + (c.provider ? ' · <span style="color:' + provColor + ';">&#129529; ' + esc(c.provider) + '</span>' : ' · <span style="color:var(--text3);">Non assigne</span>') + '</div>';
+        html += '</div>';
+        html += '<div style="display:flex;flex-direction:column;justify-content:center;align-items:flex-end;padding:8px 12px;flex-shrink:0;">';
+        html += '<div style="font-weight:800;font-size:16px;color:#f59e0b;">' + (price > 0 ? price + '€' : '-') + '</div>';
+        html += '<span style="font-size:10px;padding:2px 8px;background:rgba(245,158,11,0.15);color:#f59e0b;border-radius:4px;font-weight:600;margin-top:4px;">A facturer</span>';
+        html += '</div></div></div>';
+      });
+      html += '</div></details>';
+    });
+  }
+  html += '</div></details>';
+  html += '</div>';
+
+  html += '<div id="ownerContentChat" style="display:none;">';
+  html += '<div style="display:flex;flex-direction:column;height:calc(100vh - 210px);">';
+  html += '<div style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:12px;">💬 Messages — Gestionnaire</div>';
+  html += '<div id="ownerFullChatMessages" style="flex:1;overflow-y:auto;padding:16px;background:var(--surface);border:1px solid var(--border);border-radius:12px;margin-bottom:10px;min-height:200px;"></div>';
+  html += '<div style="display:flex;gap:8px;">';
+  html += '<input type="text" id="ownerFullChatInput" placeholder="Ecrire un message..." onkeydown="if(event.key===\'Enter\')sendOwnerFullChatMessage()" style="flex:1;padding:12px 16px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:12px;font-size:14px;font-family:\'Inter\',sans-serif;">';
+  html += '<button onclick="sendOwnerFullChatMessage()" style="background:linear-gradient(135deg,#6c63ff,#5a54e0);color:#fff;border:none;padding:12px 20px;border-radius:12px;font-size:16px;cursor:pointer;">➤</button>';
+  html += '</div></div></div>';
+
+  // Floating chat button (opens mini widget)
+  html += `<button onclick="openOwnerChat()" style="position:fixed;bottom:110px;right:20px;width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,#6c63ff,#5a54e0);color:#fff;border:none;font-size:24px;cursor:pointer;box-shadow:0 4px 12px rgba(108,99,255,0.4);z-index:50;">&#128172;</button>`;
+
+  content.innerHTML = html;
+
+  // Append activity to overview tab after render
+  const overviewTab = document.getElementById('ownerContentOverview');
+  if (overviewTab && activityHtml) overviewTab.insertAdjacentHTML('beforeend', activityHtml);
+  // Load owner invoices
+  loadOwnerInvoices();
+  } catch(err) { console.error('showOwnerMode error:', err); showToast('Erreur chargement mode proprietaire: ' + (err.message || 'Probleme de connexion')); }
+}
+
+window.showOwnerMode = showOwnerMode;
