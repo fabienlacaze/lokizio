@@ -1143,7 +1143,7 @@ async function loadPDF() {
 </script>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v8.64</div>
+<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v8.65</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -1153,7 +1153,7 @@ async function loadPDF() {
     <!-- Broom that sweeps -->
     <div id="splashBroom" style="position:absolute;top:50%;left:-60px;font-size:48px;transform:translateY(-50%) rotate(-30deg);opacity:0;transition:all 0.8s cubic-bezier(0.25,0.46,0.45,0.94);">✨</div>
   </div>
-  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v8.64</span></div>
+  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v8.65</span></div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie pour locations</div>
   <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou</div>
   <!-- Loading bar -->
@@ -1687,7 +1687,7 @@ async function loadPDF() {
   <!-- Sub-tabs -->
   <div style="display:flex;gap:4px;margin-bottom:14px;overflow-x:auto;">
     <button class="prestSubTab active" onclick="switchFinanceTab('revenus')">&#128200; Revenus</button>
-    <button class="prestSubTab" onclick="switchFinanceTab('factures')">&#128176; Factures</button>
+    <button class="prestSubTab" onclick="switchFinanceTab('factures')">&#128176; Factures <span id="invoiceOverdueBadge" style="display:none;margin-left:4px;background:#e94560;color:#fff;font-size:9px;font-weight:700;padding:1px 5px;border-radius:8px;"></span></button>
     <button class="prestSubTab" onclick="switchFinanceTab('tarifs')">&#128182; Tarifs</button>
   </div>
 
@@ -2527,6 +2527,7 @@ function getStatusLabel(s) { return (STATUS_CONFIG[s] || {}).label || s || ''; }
 // ── Splash Changelog (update this with each significant version) ──
 // Full versioned changelog — add new entries at TOP
 const VERSION_CHANGELOG = [
+  { v: '8.65', changes: ['Factures: 6 nouvelles ameliorations en serie', 'Badge retard rouge sur l\'onglet Factures (nb factures en retard)', 'Bouton Dupliquer sur chaque facture (cree un brouillon)', 'Selection multiple + action groupee "Marquer payees"', 'Filtre par client (dropdown)', 'Tri (date, montant, client)', 'Mode compact (1 ligne par facture) / Detaille (carte complete)'] },
   { v: '8.64', changes: ['Fix recherche globale: fonctionne aussi pour les utilisateurs sans org (prestataires) - RLS filtre automatiquement'] },
   { v: '8.63', changes: ['Nouvelle popup "Voir la facture" - vraie facture complete avec emetteur (SIRET/TVA/adresse), client, periode, tableau detaille, totaux HT/TVA/TTC, mentions legales', 'Bouton "Voir la facture" ajoute dans la popup historique'] },
   { v: '8.62', changes: ['Recherche globale: chips cliquables pour raccourcis (Toutes les factures, Tous les biens, etc.)'] },
@@ -9516,19 +9517,61 @@ function renderInvoicesView() {
   };
 
   const periodFiltered = _invoicesCache.filter(inPeriod);
-  const filtered = periodFiltered.filter(inv => {
+  let filtered = periodFiltered.filter(inv => {
     if (_invoiceStatus !== 'all' && statusOf(inv) !== _invoiceStatus) return false;
+    if (_invoiceClientFilter && (inv.client_name || '').toLowerCase() !== _invoiceClientFilter.toLowerCase()) return false;
     return matchSearch(inv);
   });
+  // Sorting
+  filtered.sort((a, b) => {
+    const dA = a.created_at || '', dB = b.created_at || '';
+    const amA = a.total_ttc || 0, amB = b.total_ttc || 0;
+    const cA = (a.client_name || '').toLowerCase(), cB = (b.client_name || '').toLowerCase();
+    if (_invoiceSort === 'date_asc') return dA.localeCompare(dB);
+    if (_invoiceSort === 'amount_desc') return amB - amA;
+    if (_invoiceSort === 'amount_asc') return amA - amB;
+    if (_invoiceSort === 'client_asc') return cA.localeCompare(cB);
+    return dB.localeCompare(dA); // date_desc (default)
+  });
+
+  // Build unique client list for filter
+  const uniqueClients = [...new Set(periodFiltered.map(i => i.client_name).filter(Boolean))].sort();
 
   // KPI summary (based on period-filtered, ignoring status/search)
   renderInvoiceSummary(periodFiltered);
   // Chips
   renderInvoicePeriodChips();
   renderInvoiceStatusChips(periodFiltered);
+  // Overdue badge on tab
+  const overdueCount = _invoicesCache.filter(isOv).length;
+  const badge = document.getElementById('invoiceOverdueBadge');
+  if (badge) {
+    if (overdueCount > 0) { badge.textContent = overdueCount; badge.style.display = ''; }
+    else badge.style.display = 'none';
+  }
+
+  // Toolbar: client filter + sort + compact + bulk actions
+  let toolbar = '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px;padding:8px;background:var(--surface2);border-radius:8px;">';
+  toolbar += '<select onchange="setInvoiceClientFilter(this.value)" style="padding:6px 8px;background:var(--surface);color:var(--text);border:1px solid var(--border2);border-radius:6px;font-size:11px;">';
+  toolbar += '<option value="">Tous les clients</option>';
+  uniqueClients.forEach(c => { toolbar += '<option value="' + esc(c) + '"' + (_invoiceClientFilter === c ? ' selected' : '') + '>' + esc(c) + '</option>'; });
+  toolbar += '</select>';
+  toolbar += '<select onchange="setInvoiceSort(this.value)" style="padding:6px 8px;background:var(--surface);color:var(--text);border:1px solid var(--border2);border-radius:6px;font-size:11px;">';
+  [['date_desc','Plus recent'],['date_asc','Plus ancien'],['amount_desc','Montant ↓'],['amount_asc','Montant ↑'],['client_asc','Client A-Z']].forEach(o => {
+    toolbar += '<option value="' + o[0] + '"' + (_invoiceSort === o[0] ? ' selected' : '') + '>' + o[1] + '</option>';
+  });
+  toolbar += '</select>';
+  toolbar += '<button onclick="toggleInvoiceCompact()" style="padding:6px 10px;background:' + (_invoiceCompactMode ? 'var(--accent)' : 'var(--surface)') + ';color:' + (_invoiceCompactMode ? '#fff' : 'var(--text)') + ';border:1px solid var(--border2);border-radius:6px;font-size:11px;cursor:pointer;" title="Mode compact">' + (_invoiceCompactMode ? '📋 Compact' : '📖 Detaille') + '</button>';
+  if (_invoiceSelection.size > 0) {
+    toolbar += '<div style="flex:1;"></div>';
+    toolbar += '<span style="font-size:11px;color:var(--accent2);font-weight:600;">' + _invoiceSelection.size + ' selectionnee(s)</span>';
+    toolbar += '<button onclick="bulkMarkPaid()" style="padding:6px 10px;background:#34d399;color:#fff;border:none;border-radius:6px;font-size:11px;cursor:pointer;">&#9989; Marquer payees</button>';
+    toolbar += '<button onclick="clearInvoiceSelection()" style="padding:6px 10px;background:var(--surface);color:var(--text);border:1px solid var(--border2);border-radius:6px;font-size:11px;cursor:pointer;">Annuler</button>';
+  }
+  toolbar += '</div>';
 
   if (!filtered.length) {
-    container.innerHTML = '<div style="text-align:center;color:var(--text3);font-size:13px;padding:30px 20px;"><div style="font-size:32px;opacity:0.4;margin-bottom:8px;">&#128196;</div>Aucune facture pour ces filtres</div>';
+    container.innerHTML = toolbar + '<div style="text-align:center;color:var(--text3);font-size:13px;padding:30px 20px;"><div style="font-size:32px;opacity:0.4;margin-bottom:8px;">&#128196;</div>Aucune facture pour ces filtres</div>';
     return;
   }
 
@@ -9542,7 +9585,7 @@ function renderInvoicesView() {
   });
   const sortedKeys = Object.keys(groups).sort().reverse();
 
-  let html = '';
+  let html = toolbar;
   sortedKeys.forEach(mk => {
     const list = groups[mk];
     const [yy, mm] = mk.split('-');
@@ -9586,11 +9629,29 @@ function _renderInvoiceCard(inv, today) {
   const firstItem = (inv.items && inv.items.length) ? inv.items[0] : null;
   const prestLabel = firstItem && firstItem.description ? firstItem.description : (inv.property_name || 'Facture');
 
+  const isSelected = _invoiceSelection.has(inv.id);
+  const canSelect = inv.status === 'sent' || inv.status === 'draft';
   let html = '';
-  html += '<div onclick="showInvoiceDetail(\'' + inv.id + '\')" style="background:var(--surface2);border:1px solid var(--border2);border-left:3px solid ' + color + ';border-radius:10px;padding:12px;margin-bottom:8px;cursor:pointer;transition:border-color 0.15s;" onmouseover="this.style.borderColor=\'' + color + '\'" onmouseout="this.style.borderColor=\'var(--border2)\'">';
+  // Compact mode: single-line row
+  if (_invoiceCompactMode) {
+    html += '<div style="display:flex;align-items:center;gap:8px;background:var(--surface2);border:1px solid var(--border2);border-left:3px solid ' + color + ';border-radius:8px;padding:8px 10px;margin-bottom:4px;font-size:12px;">';
+    if (canSelect) html += '<input type="checkbox" ' + (isSelected ? 'checked' : '') + ' onclick="event.stopPropagation();toggleInvoiceSelect(\'' + inv.id + '\')" style="margin:0;">';
+    html += '<div onclick="showInvoiceDetail(\'' + inv.id + '\')" style="flex:1;min-width:0;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">';
+    html += '<strong>' + esc(inv.invoice_number || '—') + '</strong> · ' + esc(inv.client_name || '—') + ' · ' + dateStr;
+    html += '</div>';
+    html += '<span style="font-weight:700;color:var(--text);">' + (inv.total_ttc || 0).toFixed(2) + '€</span>';
+    html += '<span style="font-size:10px;padding:2px 6px;background:' + color + '20;color:' + color + ';border-radius:4px;font-weight:600;flex-shrink:0;">' + label + '</span>';
+    html += '<button class="btn btnSmall btnOutline" style="padding:3px 6px;font-size:10px;" onclick="event.stopPropagation();showInvoiceFullView(\'' + inv.id + '\')" title="Voir">&#128065;</button>';
+    html += '<button class="btn btnSmall btnOutline" style="padding:3px 6px;font-size:10px;" onclick="event.stopPropagation();downloadInvoicePDF(\'' + inv.id + '\')" title="PDF">&#128196;</button>';
+    html += '</div>';
+    return html;
+  }
+  html += '<div style="background:var(--surface2);border:1px solid ' + (isSelected ? 'var(--accent)' : 'var(--border2)') + ';border-left:3px solid ' + color + ';border-radius:10px;padding:12px;margin-bottom:8px;transition:border-color 0.15s;">';
   html += '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">';
-  // Left: content
-  html += '<div style="flex:1;min-width:0;">';
+  // Left: checkbox + content
+  html += '<div style="flex:1;min-width:0;display:flex;gap:8px;align-items:flex-start;">';
+  if (canSelect) html += '<input type="checkbox" ' + (isSelected ? 'checked' : '') + ' onclick="event.stopPropagation();toggleInvoiceSelect(\'' + inv.id + '\')" style="margin-top:4px;flex-shrink:0;">';
+  html += '<div onclick="showInvoiceDetail(\'' + inv.id + '\')" style="flex:1;min-width:0;cursor:pointer;">';
   html += '<div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:2px;">' + esc(prestLabel) + '</div>';
   let meta = '';
   if (inv.property_name) meta += '&#127968; ' + esc(inv.property_name);
@@ -9599,8 +9660,7 @@ function _renderInvoiceCard(inv, today) {
   html += '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">';
   html += '<span style="font-size:10px;color:var(--text3);">' + esc(inv.invoice_number || 'Facture') + ' · ' + typeIcon + ' ' + typeLabel + ' · ' + dateStr + '</span>';
   if (dueHint) html += dueHint;
-  html += '</div>';
-  html += '</div>';
+  html += '</div></div></div>';
   // Right: amount + status
   html += '<div style="text-align:right;flex-shrink:0;">';
   html += '<div style="font-size:17px;font-weight:800;color:var(--text);">' + (inv.total_ttc || 0).toFixed(2) + ' \u20ac</div>';
@@ -9611,6 +9671,7 @@ function _renderInvoiceCard(inv, today) {
   html += '<div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap;" onclick="event.stopPropagation()">';
   html += '<button class="btn btnSmall btnOutline" style="padding:4px 8px;font-size:11px;" onclick="showInvoiceDetail(\'' + inv.id + '\')">&#128065; Voir</button>';
   html += '<button class="btn btnSmall btnOutline" style="padding:4px 8px;font-size:11px;" onclick="downloadInvoicePDF(\'' + inv.id + '\')">&#128196; PDF</button>';
+  html += '<button class="btn btnSmall btnOutline" style="padding:4px 8px;font-size:11px;" onclick="duplicateInvoice(\'' + inv.id + '\')" title="Dupliquer">&#128203; Dupliquer</button>';
   if (inv.status === 'draft') html += '<button class="btn btnSmall" style="padding:4px 8px;font-size:11px;background:#6c63ff;color:#fff;" onclick="updateInvoiceStatus(\'' + inv.id + '\',\'sent\')">Envoyer</button>';
   if (inv.status === 'sent') html += '<button class="btn btnSmall btnSuccess" style="padding:4px 8px;font-size:11px;" onclick="updateInvoiceStatus(\'' + inv.id + '\',\'paid\')">&#9989; Marquer payee</button>';
   if (isOverdue) html += '<button class="btn btnSmall" style="padding:4px 8px;font-size:11px;background:#f59e0b;color:#fff;" onclick="sendInvoiceReminder(\'' + inv.id + '\')">&#128276; Relancer</button>';
@@ -10000,6 +10061,60 @@ async function deleteInvoice(id) {
   loadInvoices();
 }
 
+async function duplicateInvoice(id) {
+  try {
+    const { data: orig } = await sb.from('invoices').select('*').eq('id', id).single();
+    if (!orig) { showToast('Facture introuvable'); return; }
+    const copy = { ...orig };
+    delete copy.id;
+    delete copy.created_at;
+    delete copy.updated_at;
+    delete copy.sent_at;
+    delete copy.paid_at;
+    copy.status = 'draft';
+    copy.invoice_number = null;
+    const { data: newInv, error } = await sb.from('invoices').insert(copy).select('id').single();
+    if (error) { showToast('Erreur: ' + error.message); return; }
+    showToast('Facture dupliquee (brouillon)');
+    loadInvoices();
+  } catch(e) { console.error('duplicateInvoice:', e); showToast('Erreur: ' + e.message); }
+}
+
+// Bulk selection state
+let _invoiceSelection = new Set();
+let _invoiceCompactMode = localStorage.getItem('mm_invoice_compact') === '1';
+let _invoiceClientFilter = '';
+let _invoiceSort = 'date_desc';
+
+function toggleInvoiceSelect(id) {
+  if (_invoiceSelection.has(id)) _invoiceSelection.delete(id);
+  else _invoiceSelection.add(id);
+  renderInvoicesView();
+}
+
+async function bulkMarkPaid() {
+  if (!_invoiceSelection.size) return;
+  const ok = await customConfirm('Marquer ' + _invoiceSelection.size + ' facture(s) comme payees ?', 'Confirmer');
+  if (!ok) return;
+  const now = new Date().toISOString();
+  const ids = Array.from(_invoiceSelection);
+  await sb.from('invoices').update({ status: 'paid', paid_at: now }).in('id', ids);
+  _invoiceSelection.clear();
+  showToast(ids.length + ' facture(s) marquees payees');
+  loadInvoices();
+}
+
+function clearInvoiceSelection() { _invoiceSelection.clear(); renderInvoicesView(); }
+
+function toggleInvoiceCompact() {
+  _invoiceCompactMode = !_invoiceCompactMode;
+  localStorage.setItem('mm_invoice_compact', _invoiceCompactMode ? '1' : '0');
+  renderInvoicesView();
+}
+
+function setInvoiceClientFilter(v) { _invoiceClientFilter = v || ''; renderInvoicesView(); }
+function setInvoiceSort(v) { _invoiceSort = v || 'date_desc'; renderInvoicesView(); }
+
 async function ensureInvoiceNumber(inv) {
   if (inv.invoice_number) return inv;
   // Generate: FAC-YYYY-NNN (sequential within org)
@@ -10221,6 +10336,7 @@ async function runGlobalSearch(q) {
   if (kwServices) queries.push(srQ(q2 => q2.order('requested_date', { ascending: false }).limit(20)));
   else queries.push(srQ(q2 => q2.ilike('service_type', like).limit(10)));
   const settled = await Promise.allSettled(queries);
+  console.log('[search]', { q, orgId, kwInvoices, kwProperties, kwMembers, kwServices, results: settled.map(s => s.status === 'fulfilled' ? { data: s.value.data?.length, error: s.value.error } : { rejected: s.reason }) });
   // Queries order: 0=invoices, 1=properties, 2=(members if orgId else service_requests), 3=service_requests (if orgId)
   const invRes = settled[0];
   const propRes = settled[1];
@@ -10244,7 +10360,11 @@ async function runGlobalSearch(q) {
   section('Prestations', srRes?.value?.data, r => {
     return '<div style="background:var(--surface2);border-radius:8px;padding:8px 10px;font-size:12px;margin-bottom:4px;">&#129529; <strong>' + (r.service_type || '—') + '</strong> · ' + (r.requested_date || '') + ' <span style="color:var(--text3);font-size:10px;">(' + r.status + ')</span></div>';
   });
-  if (!h) h = '<div style="color:var(--text3);font-size:12px;text-align:center;padding:20px;">Aucun resultat pour "' + q + '"</div>';
+  if (!h) {
+    h = '<div style="color:var(--text3);font-size:12px;text-align:center;padding:20px;">Aucun resultat pour "' + q + '"';
+    if (!orgId) h += '<div style="font-size:10px;margin-top:6px;opacity:0.7;">Vous n\'appartenez pas a une organisation - seules vos donnees personnelles sont accessibles.</div>';
+    h += '</div>';
+  }
   out.innerHTML = h;
 }
 
