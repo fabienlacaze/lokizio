@@ -284,12 +284,13 @@ const API = (function() {
     switchOrg(orgId) { return switchOrg(orgId); },
     getRole() { return currentRole; },
     getMember() { return currentMember; },
-    isAdmin() { return currentRole === 'concierge'; },
+    isAdmin() { return currentRole === 'admin' || currentRole === 'concierge'; },
     isProvider() { return currentRole === 'provider'; },
-    isConcierge() { return currentRole === 'concierge'; },
+    isConcierge() { return currentRole === 'admin' || currentRole === 'concierge'; },
     isProprietaire() { return currentRole === 'owner'; },
     isPrestataire() { return currentRole === 'provider'; },
     isLocataire() { return currentRole === 'tenant'; },
+    isRealAdmin() { return currentRole === 'admin'; },
     async isSuperAdmin() {
       try {
         const { data } = await sb.auth.getUser();
@@ -302,7 +303,7 @@ const API = (function() {
     // Role display label in French (UI)
     roleLabel(r) {
       const role = r || currentRole;
-      const map = { concierge: 'Concierge', owner: 'Proprietaire', provider: 'Prestataire', tenant: 'Locataire' };
+      const map = { admin: 'Administrateur', concierge: 'Concierge', owner: 'Proprietaire', provider: 'Prestataire', tenant: 'Locataire' };
       return map[role] || role || '';
     },
 
