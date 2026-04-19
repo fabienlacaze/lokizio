@@ -1143,7 +1143,7 @@ async function loadPDF() {
 </script>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v8.60</div>
+<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v8.61</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -1153,7 +1153,7 @@ async function loadPDF() {
     <!-- Broom that sweeps -->
     <div id="splashBroom" style="position:absolute;top:50%;left:-60px;font-size:48px;transform:translateY(-50%) rotate(-30deg);opacity:0;transition:all 0.8s cubic-bezier(0.25,0.46,0.45,0.94);">✨</div>
   </div>
-  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v8.60</span></div>
+  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v8.61</span></div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie pour locations</div>
   <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou</div>
   <!-- Loading bar -->
@@ -2527,6 +2527,7 @@ function getStatusLabel(s) { return (STATUS_CONFIG[s] || {}).label || s || ''; }
 // ── Splash Changelog (update this with each significant version) ──
 // Full versioned changelog — add new entries at TOP
 const VERSION_CHANGELOG = [
+  { v: '8.61', changes: ['Recherche globale: mots-cles ("facture" liste toutes les factures, "bien" liste les proprietes, etc.)', 'Resultats cliquables dans la recherche', 'Factures: bouton Voir explicite (ouvre la popup de detail)', 'Edge Function auto-bill: headers CORS ajoutes (fix Failed to fetch sur Simuler)'] },
   { v: '8.60', changes: ['Recherche globale: bouton loupe dans le header - cherche dans factures, proprietes, membres, prestations'] },
   { v: '8.59', changes: ['Auto-billing: bouton Simuler - apercu des factures qui seraient creees, sans ecriture en base', 'Edge Function: mode preview=1 qui retourne les factures simulees'] },
   { v: '8.58', changes: ['Pays deplace dans Mon profil personnel (champ "Pays (jours feries)")', 'Retire de la popup Mes conges - une seule source de verite'] },
@@ -5485,6 +5486,7 @@ function _renderProvInvoiceCard(inv, today) {
   html += '<span style="display:inline-block;margin-top:4px;font-size:11px;padding:2px 8px;background:' + color + '20;color:' + color + ';border-radius:4px;font-weight:600;">' + label + '</span>';
   html += '</div></div>';
   html += '<div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap;" onclick="event.stopPropagation()">';
+  html += '<button class="btn btnSmall btnOutline" style="padding:4px 8px;font-size:11px;" onclick="showInvoiceDetail(\'' + inv.id + '\')">&#128065; Voir</button>';
   html += '<button class="btn btnSmall btnOutline" style="padding:4px 8px;font-size:11px;" onclick="downloadInvoicePDF(\'' + inv.id + '\')">&#128196; PDF</button>';
   html += '</div></div>';
   return html;
@@ -6883,6 +6885,7 @@ function _renderOwnerInvoiceCard(inv, today) {
   html += '<span style="display:inline-block;margin-top:4px;font-size:11px;padding:2px 8px;background:' + color + '20;color:' + color + ';border-radius:4px;font-weight:600;">' + label + '</span>';
   html += '</div></div>';
   html += '<div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap;" onclick="event.stopPropagation()">';
+  html += '<button class="btn btnSmall btnOutline" style="padding:4px 8px;font-size:11px;" onclick="showInvoiceDetail(\'' + inv.id + '\')">&#128065; Voir</button>';
   html += '<button class="btn btnSmall btnOutline" style="padding:4px 8px;font-size:11px;" onclick="downloadInvoicePDF(\'' + inv.id + '\')">&#128196; PDF</button>';
   if (!isPaid) html += '<button class="btn btnSmall" style="padding:4px 8px;font-size:11px;background:linear-gradient(135deg,#6c63ff,#5a54e0);color:#fff;" onclick="ownerPayInvoice(\'' + inv.id + '\',' + (inv.total_ttc || 0) + ')">&#128179; Payer</button>';
   html += '</div></div>';
@@ -9603,6 +9606,7 @@ function _renderInvoiceCard(inv, today) {
   html += '</div>';
   // Actions
   html += '<div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap;" onclick="event.stopPropagation()">';
+  html += '<button class="btn btnSmall btnOutline" style="padding:4px 8px;font-size:11px;" onclick="showInvoiceDetail(\'' + inv.id + '\')">&#128065; Voir</button>';
   html += '<button class="btn btnSmall btnOutline" style="padding:4px 8px;font-size:11px;" onclick="downloadInvoicePDF(\'' + inv.id + '\')">&#128196; PDF</button>';
   if (inv.status === 'draft') html += '<button class="btn btnSmall" style="padding:4px 8px;font-size:11px;background:#6c63ff;color:#fff;" onclick="updateInvoiceStatus(\'' + inv.id + '\',\'sent\')">Envoyer</button>';
   if (inv.status === 'sent') html += '<button class="btn btnSmall btnSuccess" style="padding:4px 8px;font-size:11px;" onclick="updateInvoiceStatus(\'' + inv.id + '\',\'paid\')">&#9989; Marquer payee</button>';
@@ -10077,12 +10081,26 @@ async function runGlobalSearch(q) {
   const org = API.getOrg();
   const orgId = org?.id;
   const like = '%' + q + '%';
+  const lcq = q.toLowerCase();
   const queries = [];
-  queries.push(sb.from('invoices').select('id, invoice_number, client_name, total_ttc, type, status').or('invoice_number.ilike.' + like + ',client_name.ilike.' + like).limit(10));
+  // Keywords: typing "facture" returns all invoices, "bien"/"propriete" returns all properties, etc.
+  const kwInvoices = ['facture','factures','invoice','invoices','facturation'].some(k => lcq.includes(k));
+  const kwProperties = ['bien','biens','propriete','proprietes','property','properties','maison','appartement'].some(k => lcq.includes(k));
+  const kwMembers = ['membre','membres','equipe','team','prestataire','prestataires','proprietaire'].some(k => lcq.includes(k));
+  const kwServices = ['prestation','prestations','menage','service','services'].some(k => lcq.includes(k));
+
+  if (kwInvoices) queries.push(sb.from('invoices').select('id, invoice_number, client_name, total_ttc, type, status').order('created_at', { ascending: false }).limit(20));
+  else queries.push(sb.from('invoices').select('id, invoice_number, client_name, total_ttc, type, status').or('invoice_number.ilike.' + like + ',client_name.ilike.' + like).limit(10));
+
   if (orgId) {
-    queries.push(sb.from('properties').select('id, name, owner_name, address').eq('org_id', orgId).or('name.ilike.' + like + ',owner_name.ilike.' + like + ',address.ilike.' + like).limit(10));
-    queries.push(sb.from('members').select('id, display_name, invited_email, role').eq('org_id', orgId).or('display_name.ilike.' + like + ',invited_email.ilike.' + like).limit(10));
-    queries.push(sb.from('service_requests').select('id, service_type, status, requested_date, property_id').eq('org_id', orgId).ilike('service_type', like).limit(10));
+    if (kwProperties) queries.push(sb.from('properties').select('id, name, owner_name, address').eq('org_id', orgId).limit(20));
+    else queries.push(sb.from('properties').select('id, name, owner_name, address').eq('org_id', orgId).or('name.ilike.' + like + ',owner_name.ilike.' + like + ',address.ilike.' + like).limit(10));
+
+    if (kwMembers) queries.push(sb.from('members').select('id, display_name, invited_email, role').eq('org_id', orgId).limit(20));
+    else queries.push(sb.from('members').select('id, display_name, invited_email, role').eq('org_id', orgId).or('display_name.ilike.' + like + ',invited_email.ilike.' + like).limit(10));
+
+    if (kwServices) queries.push(sb.from('service_requests').select('id, service_type, status, requested_date, property_id').eq('org_id', orgId).order('requested_date', { ascending: false }).limit(20));
+    else queries.push(sb.from('service_requests').select('id, service_type, status, requested_date, property_id').eq('org_id', orgId).ilike('service_type', like).limit(10));
   }
   const [invRes, propRes, memRes, srRes] = await Promise.allSettled(queries);
   let h = '';
@@ -10092,7 +10110,7 @@ async function runGlobalSearch(q) {
     items.forEach(it => { h += renderItem(it); });
   }
   section('Factures', invRes?.value?.data, inv => {
-    return '<div style="background:var(--surface2);border-radius:8px;padding:8px 10px;font-size:12px;margin-bottom:4px;"><strong>' + (inv.invoice_number || '—') + '</strong> · ' + (inv.client_name || '') + ' · ' + (inv.total_ttc || 0) + '€ <span style="color:var(--text3);font-size:10px;">(' + inv.status + ')</span></div>';
+    return '<div onclick="closeMsg();setTimeout(()=>showInvoiceDetail(\'' + inv.id + '\'),150)" style="background:var(--surface2);border-radius:8px;padding:8px 10px;font-size:12px;margin-bottom:4px;cursor:pointer;" onmouseover="this.style.background=\'var(--surface)\'" onmouseout="this.style.background=\'var(--surface2)\'"><strong>' + (inv.invoice_number || '—') + '</strong> · ' + (inv.client_name || '') + ' · ' + (inv.total_ttc || 0) + '€ <span style="color:var(--text3);font-size:10px;">(' + inv.status + ')</span></div>';
   });
   section('Proprietes', propRes?.value?.data, p => {
     return '<div style="background:var(--surface2);border-radius:8px;padding:8px 10px;font-size:12px;margin-bottom:4px;">&#127968; <strong>' + (p.name || '—') + '</strong>' + (p.owner_name ? ' · ' + p.owner_name : '') + (p.address ? '<div style="color:var(--text3);font-size:10px;">' + p.address + '</div>' : '') + '</div>';
