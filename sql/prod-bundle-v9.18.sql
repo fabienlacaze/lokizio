@@ -1,0 +1,75 @@
+-- ══════════════════════════════════════════════════════════════════════════════
+-- Lokizio PROD migration bundle — v9.18 (security + data-leak fixes)
+-- A executer UNE SEULE FOIS dans le SQL Editor de ton projet PROD
+-- (mrvejwyvhuivmipfwlzz.supabase.co)
+--
+-- Ce bundle applique :
+-- 1. RLS service_requests : provider ne peut update que ses propres requests
+-- 2. Messages : colonnes property_id + reservation_id + recipient_user_id pour
+--    scoper les messages tenant par reservation (fix fuite de donnees)
+-- 3. connection_requests : index unique partiel anti-doublon
+--
+-- ══════════════════════════════════════════════════════════════════════════════
+
+-- ─── 1. fix-service-requests-rls.sql ───
+
+DROP POLICY IF EXISTS "Members can update service requests" ON service_requests;
+DROP POLICY IF EXISTS "Admin/concierge update service requests" ON service_requests;
+CREATE POLICY "Admin/concierge update service requests" ON service_requests FOR UPDATE
+  USING (
+    org_id = auth.user_org_id()
+    AND auth.user_role() IN ('admin', 'manager', 'concierge')
+  );
+
+DROP POLICY IF EXISTS "Provider update own service requests" ON service_requests;
+CREATE POLICY "Provider update own service requests" ON service_requests FOR UPDATE
+  USING (
+    org_id = auth.user_org_id()
+    AND auth.user_role() = 'provider'
+    AND (provider_id = auth.uid() OR assigned_to = auth.uid())
+  );
+
+-- Cleaning validations: seul admin/concierge peut valider (anti-fraude)
+DROP POLICY IF EXISTS "Members can update validations" ON cleaning_validations;
+DROP POLICY IF EXISTS "Admin/concierge update validations" ON cleaning_validations;
+CREATE POLICY "Admin/concierge update validations" ON cleaning_validations FOR UPDATE
+  USING (
+    property_id IN (SELECT id FROM properties WHERE org_id = auth.user_org_id())
+    AND auth.user_role() IN ('admin', 'manager', 'concierge')
+  );
+
+-- ─── 2. add-messages-context-columns.sql ───
+
+ALTER TABLE messages ADD COLUMN IF NOT EXISTS property_id uuid REFERENCES properties(id) ON DELETE SET NULL;
+ALTER TABLE messages ADD COLUMN IF NOT EXISTS reservation_id uuid REFERENCES reservations(id) ON DELETE SET NULL;
+ALTER TABLE messages ADD COLUMN IF NOT EXISTS recipient_user_id uuid REFERENCES auth.users(id) ON DELETE SET NULL;
+
+CREATE INDEX IF NOT EXISTS idx_messages_property ON messages(property_id) WHERE property_id IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_messages_reservation ON messages(reservation_id) WHERE reservation_id IS NOT NULL;
+
+-- RLS tenant chat: filtrage par reservation/property (fix fuite)
+DROP POLICY IF EXISTS "Tenant messages scoped" ON messages;
+CREATE POLICY "Tenant messages scoped" ON messages FOR SELECT
+  USING (
+    -- Staff voit tout l'org
+    (auth.user_role() IN ('admin','manager','concierge','owner','provider') AND org_id = auth.user_org_id())
+    OR
+    -- Tenant: uniquement sa reservation/property + messages a lui
+    (auth.user_role() = 'tenant' AND (
+      sender_id = auth.uid()
+      OR recipient_user_id = auth.uid()
+      OR reservation_id IN (SELECT id FROM reservations WHERE tenant_user_id = auth.uid())
+      OR property_id IN (SELECT property_id FROM reservations WHERE tenant_user_id = auth.uid() AND status = 'active')
+    ))
+  );
+
+-- ─── 3. add-connection-requests-unique.sql ───
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_connection_requests_unique_active
+  ON connection_requests (
+    LEAST(sender_id, receiver_id),
+    GREATEST(sender_id, receiver_id)
+  )
+  WHERE status IN ('pending', 'accepted');
+
+NOTIFY pgrst, 'reload schema';
