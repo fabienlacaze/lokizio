@@ -238,7 +238,7 @@ async function loadPDF() {
       <label for="rememberMe" style="font-size:12px;color:var(--text3);cursor:pointer;" data-i18n="auth.remember">Se souvenir de moi</label>
     </div>
     <div id="authRgpdCheck" style="display:none;margin-top:10px;font-size:11px;color:var(--text3);line-height:1.5;">
-      <label style="display:flex;align-items:flex-start;gap:8px;cursor:pointer;"><input type="checkbox" id="authRgpdAccept" style="margin-top:2px;flex-shrink:0;"><span>J'accepte les <a href="cgu.html" target="_blank" style="color:var(--accent2);">CGU</a>, les <a href="cgv.html" target="_blank" style="color:var(--accent2);">CGV</a> et la <a href="privacy.html" target="_blank" style="color:var(--accent2);">politique de confidentialité</a>. Mes données sont traitées conformément au RGPD.</span></label>
+      <label style="display:flex;align-items:flex-start;gap:8px;cursor:pointer;"><input aria-label="Accepter les CGU et la politique de confidentialite" type="checkbox" id="authRgpdAccept" style="margin-top:2px;flex-shrink:0;"><span>J'accepte les <a href="cgu.html" target="_blank" style="color:var(--accent2);">CGU</a>, les <a href="cgv.html" target="_blank" style="color:var(--accent2);">CGV</a> et la <a href="privacy.html" target="_blank" style="color:var(--accent2);">politique de confidentialité</a>. Mes données sont traitées conformément au RGPD.</span></label>
     </div>
     <button id="authSubmitBtn" onclick="authSubmit()" data-i18n="auth.login.btn" style="width:100%;padding:12px;background:linear-gradient(135deg,#e94560,#c73e54);color:#fff;border:none;font-size:14px;font-weight:600;cursor:pointer;border-radius:8px;margin-top:12px;">Se connecter</button>
     <div id="forgotPassLink" style="text-align:center;margin-top:10px;"><a href="#" onclick="forgotPassword();return false;" style="color:var(--accent2);font-size:12px;text-decoration:none;" data-i18n="auth.forgot">Mot de passe oublie ?</a></div>
@@ -395,12 +395,12 @@ async function loadPDF() {
   <div id="headerCenter" style="position:absolute;left:50%;transform:translateX(-50%);display:flex;align-items:center;pointer-events:none;"></div>
   <div class="header-actions">
     <!-- Hidden but kept for JS references -->
-    <button class="btnHelp" onclick="showLangModal()" title="Langue" id="langBtn" style="display:none;font-size:14px;padding:4px 8px;"><img src="https://flagcdn.com/w20/fr.png" width="20" height="15" id="langFlagImg" style="vertical-align:middle;"> <span style="font-size:11px;vertical-align:middle;" id="langCode">FR</span></button>
-    <button class="btnHelp" onclick="showChangelog()" title="Historique" style="display:none;font-size:13px;">&#128221;</button>
-    <button class="btnHelp" id="btnTeam" onclick="showTeamModal()" title="Equipe" style="display:none;font-size:13px;">&#128101;</button>
-    <button class="btnHelp" id="btnMarketplace" onclick="showMarketplace()" title="Annuaire" style="display:none;font-size:13px;">&#127758;</button>
+    <button class="btnHelp" onclick="showLangModal()" title="Langue" id="langBtn" style="display:none;font-size:14px;padding:4px 8px;"><img src="https://flagcdn.com/w20/fr.png" width="20" height="15" id="langFlagImg" style="vertical-align:middle;" alt=""> <span style="font-size:11px;vertical-align:middle;" id="langCode">FR</span></button>
+    <button aria-label="Historique" class="btnHelp" onclick="showChangelog()" title="Historique" style="display:none;font-size:13px;">&#128221;</button>
+    <button aria-label="Equipe" class="btnHelp" id="btnTeam" onclick="showTeamModal()" title="Equipe" style="display:none;font-size:13px;">&#128101;</button>
+    <button aria-label="Annuaire" class="btnHelp" id="btnMarketplace" onclick="showMarketplace()" title="Annuaire" style="display:none;font-size:13px;">&#127758;</button>
     <button class="btnHelp" onclick="showHelp()" title="Aide" style="display:none;">?</button>
-    <button class="btnHelp" onclick="toggleTheme()" title="Theme" id="themeBtn" style="display:none;">&#9788;</button>
+    <button aria-label="Theme" class="btnHelp" onclick="toggleTheme()" title="Theme" id="themeBtn" style="display:none;">&#9788;</button>
     <!-- Visible buttons -->
     <button class="btnHelp" onclick="showGlobalSearch()" title="Recherche globale" aria-label="Recherche" style="font-size:13px;">&#128269;</button>
     <button class="btnHelp" id="btnConnections" onclick="showConnectionRequests()" title="Demandes de connexion" aria-label="Demandes de connexion" style="display:none;font-size:13px;position:relative;">&#128276;<span id="connectionBadge" style="display:none;position:absolute;top:-4px;right:-4px;background:#e94560;color:#fff;font-size:9px;font-weight:700;min-width:16px;height:16px;border-radius:8px;align-items:center;justify-content:center;">0</span></button>
@@ -431,7 +431,7 @@ async function loadPDF() {
   <div id="installBanner" class="installBanner" style="display:none;">
     <div class="installText"><span data-i18n="install.title">Installer Lokizio</span><small data-i18n="install.subtitle">Acces rapide depuis l'ecran d'accueil</small></div>
     <button class="btnInstall" onclick="installPWA()" data-i18n="install.btn">Installer</button>
-    <button class="btnDismiss" onclick="dismissInstall()">&times;</button>
+    <button aria-label="Fermer" class="btnDismiss" onclick="dismissInstall()">&times;</button>
   </div>
 
   <!-- ═══ TAB: DASHBOARD ═══ -->
@@ -567,7 +567,7 @@ async function loadPDF() {
             <option value="owner">Proprietaires</option>
             <option value="concierge">Conciergeries</option>
           </select>
-          <input type="text" id="annCityFilter" placeholder="Ville ou code postal..." oninput="filterAnnuaire()" style="flex:1;min-width:120px;padding:8px 12px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:13px;">
+          <input aria-label="Ville ou code postal..." type="text" id="annCityFilter" placeholder="Ville ou code postal..." oninput="filterAnnuaire()" style="flex:1;min-width:120px;padding:8px 12px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:13px;">
           <select id="annSortFilter" onchange="filterAnnuaire()" style="padding:8px 12px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:13px;">
             <option value="recent">Plus recents</option>
             <option value="rating">Meilleure note</option>
@@ -759,7 +759,7 @@ async function loadPDF() {
       <div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap;align-items:center;">
         <div style="flex:1;min-width:200px;position:relative;">
           <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text3);font-size:13px;">&#128269;</span>
-          <input type="text" id="invoiceSearch" placeholder="Numero, client, propriete..." oninput="loadInvoices()" style="width:100%;padding:7px 10px 7px 30px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:12px;box-sizing:border-box;">
+          <input aria-label="Numero, client, propriete..." type="text" id="invoiceSearch" placeholder="Numero, client, propriete..." oninput="loadInvoices()" style="width:100%;padding:7px 10px 7px 30px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:12px;box-sizing:border-box;">
         </div>
         <div id="invoicePeriodChips" style="display:flex;gap:4px;flex-wrap:wrap;"></div>
       </div>
@@ -840,7 +840,7 @@ async function loadPDF() {
       </div>
       <!-- Input -->
       <div style="display:flex;gap:8px;">
-        <input type="text" id="fullChatInput" placeholder="Ecrire un message..." onkeydown="if(event.key==='Enter')sendFullChatMessage()" style="flex:1;padding:12px 16px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:12px;font-size:14px;font-family:'Inter',sans-serif;">
+        <input aria-label="Ecrire un message..." type="text" id="fullChatInput" placeholder="Ecrire un message..." onkeydown="if(event.key==='Enter')sendFullChatMessage()" style="flex:1;padding:12px 16px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:12px;font-size:14px;font-family:'Inter',sans-serif;">
         <button onclick="sendFullChatMessage()" style="background:linear-gradient(135deg,#6c63ff,#5a54e0);color:#fff;border:none;padding:12px 20px;border-radius:12px;font-size:16px;cursor:pointer;">➤</button>
       </div>
     </div>
@@ -874,7 +874,7 @@ async function loadPDF() {
 <div id="marketplaceModal" class="modal" style="max-width:700px;display:none;" role="dialog" aria-modal="true">
   <div class="modalHeader" style="display:flex;justify-content:space-between;align-items:center;">
     <span>&#127758; Annuaire des professionnels</span>
-    <button class="btn btnSmall" onclick="closeMarketplace()" style="padding:4px 10px;font-size:16px;">&#10005;</button>
+    <button aria-label="Fermer" class="btn btnSmall" onclick="closeMarketplace()" style="padding:4px 10px;font-size:16px;">&#10005;</button>
   </div>
   <div class="modalBody" style="padding:16px;">
     <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;">
@@ -884,7 +884,7 @@ async function loadPDF() {
         <option value="owner" style="background:#1a1a2e;color:#f0f0f5;">Proprietaires</option>
         <option value="concierge" style="background:#1a1a2e;color:#f0f0f5;">Conciergeries</option>
       </select>
-      <input type="text" id="mkCityFilter" placeholder="Ville ou code postal..." oninput="filterMarketplace()" style="flex:1;min-width:150px;padding:8px 12px;background:#1a1a2e;color:#f0f0f5;border:1px solid var(--border2);border-radius:8px;font-size:13px;">
+      <input aria-label="Ville ou code postal..." type="text" id="mkCityFilter" placeholder="Ville ou code postal..." oninput="filterMarketplace()" style="flex:1;min-width:150px;padding:8px 12px;background:#1a1a2e;color:#f0f0f5;border:1px solid var(--border2);border-radius:8px;font-size:13px;">
       <select id="mkRadiusFilter" onchange="filterMarketplace()" style="padding:8px 12px;background:#1a1a2e;color:#f0f0f5;border:1px solid var(--border2);border-radius:8px;font-size:13px;">
         <option value="0" style="background:#1a1a2e;color:#f0f0f5;">Toutes distances</option>
         <option value="10" style="background:#1a1a2e;color:#f0f0f5;">10 km</option>
@@ -906,7 +906,7 @@ async function loadPDF() {
 <div class="modal" id="msgModal" role="dialog" aria-modal="true">
   <div class="modalHeader" style="display:flex;justify-content:space-between;align-items:center;">
     <span id="msgTitle">Lokizio</span>
-    <button class="modalClose" onclick="closeMsg()">&times;</button>
+    <button aria-label="Fermer" class="modalClose" onclick="closeMsg()">&times;</button>
   </div>
   <div class="modalBody" id="msgBody"></div>
   <div class="modalBtns" id="msgModalBtns"><button class="btn btnPrimary" style="padding:12px 32px;font-size:14px;" onclick="closeMsg()" data-i18n="modal.ok">OK</button></div>
@@ -949,7 +949,7 @@ async function loadPDF() {
 <div class="modal" id="accountModal" style="max-width:440px;">
   <div class="modalHeader" style="display:flex;justify-content:space-between;align-items:center;">
     <span id="accountTitle">Mon compte</span>
-    <button class="modalClose" onclick="closeAccountModal()">&times;</button>
+    <button aria-label="Fermer" class="modalClose" onclick="closeAccountModal()">&times;</button>
   </div>
   <div class="modalBody" id="accountBody">
     <!-- Hidden email placeholder (kept for JS references) -->
@@ -976,7 +976,7 @@ async function loadPDF() {
           <div style="font-size:11px;color:var(--text3);">Basculer entre clair et sombre</div>
         </div>
         <label style="position:relative;width:44px;height:24px;cursor:pointer;">
-          <input type="checkbox" id="themeToggleAccount" onchange="toggleTheme()" style="opacity:0;width:0;height:0;">
+          <input aria-label="Basculer le theme sombre/clair" type="checkbox" id="themeToggleAccount" onchange="toggleTheme()" style="opacity:0;width:0;height:0;">
           <span style="position:absolute;inset:0;background:var(--border2);border-radius:12px;transition:0.3s;"></span>
           <span style="position:absolute;top:2px;left:2px;width:20px;height:20px;background:#fff;border-radius:50%;transition:0.3s;"></span>
         </label>
@@ -1002,7 +1002,7 @@ async function loadPDF() {
   <div class="stackedOverlayBox">
     <div class="stackedOverlayHeader">
       <span>&#128100; Mon profil personnel</span>
-      <button class="modalClose" onclick="closeOverlayPopup('personalProfileOverlay')">&times;</button>
+      <button aria-label="Fermer" class="modalClose" onclick="closeOverlayPopup('personalProfileOverlay')">&times;</button>
     </div>
     <div class="stackedOverlayBody">
       <!-- Info stockage -->
@@ -1011,15 +1011,15 @@ async function loadPDF() {
       <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:16px;">
         <div>
           <label style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:4px;">Nom complet</label>
-          <input id="profileName" type="text" placeholder="Nom complet" oninput="saveProfile()" onchange="saveProfile()" style="width:100%;padding:10px 12px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;box-sizing:border-box;">
+          <input aria-label="Nom complet" id="profileName" type="text" placeholder="Nom complet" oninput="saveProfile()" onchange="saveProfile()" style="width:100%;padding:10px 12px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;box-sizing:border-box;">
         </div>
         <div>
           <label style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:4px;">Telephone</label>
-          <input id="profilePhone" type="tel" placeholder="06 12 34 56 78" oninput="saveProfile()" onchange="saveProfile()" style="width:100%;padding:10px 12px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;box-sizing:border-box;">
+          <input aria-label="06 12 34 56 78" id="profilePhone" type="tel" placeholder="06 12 34 56 78" oninput="saveProfile()" onchange="saveProfile()" style="width:100%;padding:10px 12px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;box-sizing:border-box;">
         </div>
         <div>
           <label style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:4px;">Adresse / Ville</label>
-          <input id="profileAddress" type="text" placeholder="Adresse / Ville" oninput="saveProfile()" onchange="saveProfile()" style="width:100%;padding:10px 12px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;box-sizing:border-box;">
+          <input aria-label="Adresse / Ville" id="profileAddress" type="text" placeholder="Adresse / Ville" oninput="saveProfile()" onchange="saveProfile()" style="width:100%;padding:10px 12px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;box-sizing:border-box;">
         </div>
         <div>
           <label style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:4px;">Pays (jours feries)</label>
@@ -1039,11 +1039,11 @@ async function loadPDF() {
       <div style="background:var(--surface2);border-radius:10px;overflow:hidden;margin-bottom:16px;">
         <label style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-bottom:1px solid var(--border);cursor:pointer;">
           <div><div style="font-size:13px;color:var(--text);">&#128231; Emails</div><div style="font-size:11px;color:var(--text3);margin-top:2px;">Recevoir les notifications par email</div></div>
-          <input type="checkbox" id="profileNotifEmail" onchange="saveNotifPref('notif_email', this.checked)" style="width:42px;height:22px;cursor:pointer;">
+          <input aria-label="Notifications email" type="checkbox" id="profileNotifEmail" onchange="saveNotifPref('notif_email', this.checked)" style="width:42px;height:22px;cursor:pointer;">
         </label>
         <label style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;cursor:pointer;">
           <div><div style="font-size:13px;color:var(--text);">&#128241; Notifications push</div><div style="font-size:11px;color:var(--text3);margin-top:2px;">Alertes dans le navigateur/mobile</div></div>
-          <input type="checkbox" id="profileNotifPush" onchange="saveNotifPref('notif_push', this.checked)" style="width:42px;height:22px;cursor:pointer;">
+          <input aria-label="Notifications push" type="checkbox" id="profileNotifPush" onchange="saveNotifPref('notif_push', this.checked)" style="width:42px;height:22px;cursor:pointer;">
         </label>
       </div>
 
@@ -1085,18 +1085,18 @@ async function loadPDF() {
   <div class="stackedOverlayBox">
     <div class="stackedOverlayHeader">
       <span>&#128179; Profil facturation</span>
-      <button class="modalClose" onclick="closeOverlayPopup('billingProfileOverlay')">&times;</button>
+      <button aria-label="Fermer" class="modalClose" onclick="closeOverlayPopup('billingProfileOverlay')">&times;</button>
     </div>
     <div class="stackedOverlayBody">
       <div style="display:flex;flex-direction:column;gap:10px;">
         <label style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;">Raison sociale</label>
-        <input id="billingCompany" type="text" placeholder="Raison sociale / Nom commercial" oninput="saveBillingProfile()" onchange="saveBillingProfile()" style="padding:10px 12px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;">
+        <input aria-label="Raison sociale / Nom commercial" id="billingCompany" type="text" placeholder="Raison sociale / Nom commercial" oninput="saveBillingProfile()" onchange="saveBillingProfile()" style="padding:10px 12px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;">
         <label style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;">SIRET</label>
-        <input id="billingSiret" type="text" inputmode="numeric" pattern="[0-9]{14}" placeholder="14 chiffres" maxlength="14" oninput="this.value=this.value.replace(/[^0-9]/g,'')" oninput="saveBillingProfile()" onchange="saveBillingProfile()" style="padding:10px 12px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;">
+        <input aria-label="14 chiffres" id="billingSiret" type="text" inputmode="numeric" pattern="[0-9]{14}" placeholder="14 chiffres" maxlength="14" oninput="this.value=this.value.replace(/[^0-9]/g,'')" oninput="saveBillingProfile()" onchange="saveBillingProfile()" style="padding:10px 12px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;">
         <label style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;">N° TVA intracommunautaire</label>
-        <input id="billingVat" type="text" placeholder="FR12345678901" oninput="saveBillingProfile()" onchange="saveBillingProfile()" style="padding:10px 12px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;">
+        <input aria-label="FR12345678901" id="billingVat" type="text" placeholder="FR12345678901" oninput="saveBillingProfile()" onchange="saveBillingProfile()" style="padding:10px 12px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;">
         <label style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;">Adresse de facturation</label>
-        <input id="billingAddress" type="text" placeholder="Adresse complete" oninput="saveBillingProfile()" onchange="saveBillingProfile()" style="padding:10px 12px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;">
+        <input aria-label="Adresse complete" id="billingAddress" type="text" placeholder="Adresse complete" oninput="saveBillingProfile()" onchange="saveBillingProfile()" style="padding:10px 12px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;">
         <label style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;">Regime TVA</label>
         <select id="billingVatRegime" oninput="saveBillingProfile()" onchange="saveBillingProfile()" style="padding:10px 12px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;">
           <option value="micro">Micro-entreprise (TVA non applicable, art. 293B du CGI)</option>
@@ -1113,7 +1113,7 @@ async function loadPDF() {
   <div class="stackedOverlayBox">
     <div class="stackedOverlayHeader">
       <span>&#127758; Mon profil annuaire</span>
-      <button class="modalClose" onclick="closeOverlayPopup('marketplaceProfileOverlay')">&times;</button>
+      <button aria-label="Fermer" class="modalClose" onclick="closeOverlayPopup('marketplaceProfileOverlay')">&times;</button>
     </div>
     <div class="stackedOverlayBody">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;padding:10px 12px;background:var(--surface2);border-radius:8px;">
@@ -1122,21 +1122,21 @@ async function loadPDF() {
           <div style="font-size:11px;color:var(--text3);">Les autres utilisateurs peuvent vous trouver</div>
         </div>
         <label style="position:relative;width:44px;height:24px;cursor:pointer;">
-          <input type="checkbox" id="mkVisibleToggle" onchange="toggleMarketplaceVisibility(this.checked)" style="opacity:0;width:0;height:0;">
+          <input aria-label="Profil visible dans annuaire" type="checkbox" id="mkVisibleToggle" onchange="toggleMarketplaceVisibility(this.checked)" style="opacity:0;width:0;height:0;">
           <span style="position:absolute;inset:0;background:var(--border2);border-radius:12px;transition:0.3s;"></span>
           <span style="position:absolute;top:2px;left:2px;width:20px;height:20px;background:#fff;border-radius:50%;transition:0.3s;"></span>
         </label>
       </div>
       <div id="mkProfileFields" style="display:none;flex-direction:column;gap:10px;">
-        <input type="text" id="mkName" placeholder="Nom affiche" oninput="autoSaveMarketplaceField()" style="padding:10px 12px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;">
+        <input aria-label="Nom affiche" type="text" id="mkName" placeholder="Nom affiche" oninput="autoSaveMarketplaceField()" style="padding:10px 12px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;">
         <div style="display:flex;gap:8px;">
-          <input type="text" id="mkCity" placeholder="Ville" oninput="autoSaveMarketplaceField()" style="flex:1;padding:10px 12px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;">
-          <input type="tel" id="mkPhone" placeholder="Telephone" oninput="autoSaveMarketplaceField()" style="flex:1;padding:10px 12px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;">
+          <input aria-label="Ville" type="text" id="mkCity" placeholder="Ville" oninput="autoSaveMarketplaceField()" style="flex:1;padding:10px 12px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;">
+          <input aria-label="Telephone" type="tel" id="mkPhone" placeholder="Telephone" oninput="autoSaveMarketplaceField()" style="flex:1;padding:10px 12px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;">
         </div>
-        <textarea id="mkDescription" placeholder="Description" rows="3" oninput="autoSaveMarketplaceField()" style="padding:10px 12px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;font-family:'Inter',sans-serif;resize:vertical;"></textarea>
+        <textarea aria-label="Description" id="mkDescription" placeholder="Description" rows="3" oninput="autoSaveMarketplaceField()" style="padding:10px 12px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;font-family:'Inter',sans-serif;resize:vertical;"></textarea>
         <div style="font-size:11px;color:var(--text3);text-transform:uppercase;">Services proposes</div>
         <div style="display:flex;flex-wrap:wrap;gap:6px;" id="mkServicesCheckboxes"></div>
-        <input type="number" id="mkExperienceYears" min="0" max="50" placeholder="Annees d'experience" oninput="autoSaveMarketplaceField()" style="padding:10px 12px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;">
+        <input aria-label="Annees d'experience" type="number" id="mkExperienceYears" min="0" max="50" placeholder="Annees d'experience" oninput="autoSaveMarketplaceField()" style="padding:10px 12px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;">
         <!-- Hidden: availability is now driven by vacation calendar -->
         <select id="mkAvailability" style="display:none;"><option value="available">available</option></select>
         <div style="font-size:11px;color:var(--text3);background:var(--surface2);border-radius:8px;padding:10px;line-height:1.4;">&#128197; <b>Disponibilite</b> : geree automatiquement via <a href="#" onclick="event.preventDefault();closeOverlayPopup('marketplaceProfileOverlay');showVacationPlanner();" style="color:var(--accent2);text-decoration:underline;">Mes conges</a>. Vous apparaitrez "En vacances" pendant vos periodes.</div>
@@ -1151,7 +1151,7 @@ async function loadPDF() {
   <div class="stackedOverlayBox" style="max-width:480px;">
     <div class="stackedOverlayHeader">
       <span>&#128279; Envoyer une demande de connexion</span>
-      <button class="modalClose" onclick="closeOverlayPopup('connectRequestOverlay')">&times;</button>
+      <button aria-label="Fermer" class="modalClose" onclick="closeOverlayPopup('connectRequestOverlay')">&times;</button>
     </div>
     <div class="stackedOverlayBody">
       <div style="font-size:12px;color:var(--text3);margin-bottom:12px;line-height:1.5;">Vous envoyez une demande de connexion a <b id="connectReqTarget" style="color:var(--text);"></b></div>
@@ -1166,7 +1166,7 @@ async function loadPDF() {
       <label style="display:block;font-size:12px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">Services proposes</label>
       <div id="connectReqServices" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px;padding:10px;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;max-height:180px;overflow-y:auto;"></div>
       <label style="display:block;font-size:12px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">Message <span id="connectReqCounter" style="float:right;color:var(--text3);font-weight:400;text-transform:none;letter-spacing:0;">0 / 300</span></label>
-      <textarea id="connectReqMessage" maxlength="300" placeholder="Presentez-vous en quelques mots..." rows="4" oninput="const c=document.getElementById('connectReqCounter');if(c)c.textContent=this.value.length+' / 300';" style="width:100%;padding:10px 12px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;resize:vertical;font-family:'Inter',sans-serif;margin-bottom:12px;box-sizing:border-box;"></textarea>
+      <textarea aria-label="Presentez-vous en quelques mots..." id="connectReqMessage" maxlength="300" placeholder="Presentez-vous en quelques mots..." rows="4" oninput="const c=document.getElementById('connectReqCounter');if(c)c.textContent=this.value.length+' / 300';" style="width:100%;padding:10px 12px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;resize:vertical;font-family:'Inter',sans-serif;margin-bottom:12px;box-sizing:border-box;"></textarea>
       <div style="display:flex;gap:10px;">
         <button onclick="closeOverlayPopup('connectRequestOverlay')" style="flex:1;padding:12px;background:var(--surface2);color:var(--text2);border:1px solid var(--border2);border-radius:8px;font-size:14px;cursor:pointer;">Annuler</button>
         <button onclick="submitConnectionRequest()" style="flex:2;padding:12px;background:linear-gradient(135deg,#6c63ff,#5a54e0);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;">Envoyer la demande</button>
@@ -1180,7 +1180,7 @@ async function loadPDF() {
   <div class="stackedOverlayBox" style="max-width:520px;">
     <div class="stackedOverlayHeader">
       <span>&#127796; Mes conges</span>
-      <button class="modalClose" onclick="closeOverlayPopup('vacationPlannerOverlay')">&times;</button>
+      <button aria-label="Fermer" class="modalClose" onclick="closeOverlayPopup('vacationPlannerOverlay')">&times;</button>
     </div>
     <div class="stackedOverlayBody">
       <div style="font-size:12px;color:var(--text3);margin-bottom:12px;line-height:1.5;">Pendant vos periodes de conges, vous n'apparaitrez pas disponible pour de nouvelles prestations.</div>
@@ -1193,7 +1193,7 @@ async function loadPDF() {
 <div class="modal" id="teamModal" style="max-width:520px;">
   <div class="modalHeader" style="display:flex;justify-content:space-between;align-items:center;">
     <span>&#128101; Equipe</span>
-    <button class="modalClose" onclick="closeTeamModal()">&times;</button>
+    <button aria-label="Fermer" class="modalClose" onclick="closeTeamModal()">&times;</button>
   </div>
   <div class="modalBody">
     <div style="margin-bottom:16px;">
@@ -1207,7 +1207,7 @@ async function loadPDF() {
     <div style="border-top:1px solid var(--border2);padding-top:16px;">
       <label style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:1px;">INVITER UN MEMBRE</label>
       <div style="display:flex;gap:8px;margin-top:8px;">
-        <input type="email" id="inviteEmail" placeholder="email@exemple.com" style="flex:1;padding:10px 12px;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;color:var(--text);font-size:13px;">
+        <input aria-label="email@exemple.com" type="email" id="inviteEmail" placeholder="email@exemple.com" style="flex:1;padding:10px 12px;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;color:var(--text);font-size:13px;">
         <select id="inviteRole" onchange="toggleInviteTenantFields()" style="padding:10px;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;color:var(--text);font-size:13px;">
           <option value="owner">Proprietaire</option>
           <option value="concierge">Concierge</option>
@@ -1219,11 +1219,11 @@ async function loadPDF() {
         <label style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:4px;">Propriete</label>
         <select id="inviteTenantProperty" style="width:100%;padding:9px;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;color:var(--text);font-size:13px;margin-bottom:8px;"></select>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
-          <div><label style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:4px;">Arrivee</label><input type="date" id="inviteTenantStart" style="width:100%;padding:9px;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;color:var(--text);font-size:13px;box-sizing:border-box;"></div>
-          <div><label style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:4px;">Depart</label><input type="date" id="inviteTenantEnd" style="width:100%;padding:9px;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;color:var(--text);font-size:13px;box-sizing:border-box;"></div>
+          <div><label style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:4px;">Arrivee</label><input aria-label="Date debut reservation" type="date" id="inviteTenantStart" style="width:100%;padding:9px;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;color:var(--text);font-size:13px;box-sizing:border-box;"></div>
+          <div><label style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:4px;">Depart</label><input aria-label="Date fin reservation" type="date" id="inviteTenantEnd" style="width:100%;padding:9px;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;color:var(--text);font-size:13px;box-sizing:border-box;"></div>
         </div>
         <label style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:4px;">Consignes d'acces (optionnel)</label>
-        <textarea id="inviteTenantAccess" rows="2" placeholder="Code porte, emplacement des cles, wifi..." style="width:100%;padding:9px;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;color:var(--text);font-size:13px;box-sizing:border-box;resize:vertical;font-family:inherit;margin-bottom:8px;"></textarea>
+        <textarea aria-label="Code porte, emplacement des cles, wifi..." id="inviteTenantAccess" rows="2" placeholder="Code porte, emplacement des cles, wifi..." style="width:100%;padding:9px;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;color:var(--text);font-size:13px;box-sizing:border-box;resize:vertical;font-family:inherit;margin-bottom:8px;"></textarea>
       </div>
       <button id="inviteSubmitBtn" class="btn btnPrimary" style="width:100%;padding:12px;font-size:13px;margin-top:10px;" onclick="submitInvite()">&#9993; Envoyer l'invitation</button>
     </div>
@@ -1232,7 +1232,7 @@ async function loadPDF() {
 <div class="modal" id="premiumModal" style="max-width:640px;" role="dialog" aria-modal="true">
   <div class="modalHeader" style="display:flex;justify-content:space-between;align-items:center;">
     <span data-i18n="premium.modal.title">Choisissez votre plan</span>
-    <button class="btn btnSmall" onclick="closePremiumModal()" style="padding:4px 10px;font-size:16px;">&#10005;</button>
+    <button aria-label="Fermer" class="btn btnSmall" onclick="closePremiumModal()" style="padding:4px 10px;font-size:16px;">&#10005;</button>
   </div>
   <div class="modalBody" style="padding:16px;overflow-x:auto;">
     <div id="premiumReason" style="display:none;background:rgba(233,69,96,0.15);border:1px solid rgba(233,69,96,0.3);border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:13px;color:var(--accent);text-align:center;font-weight:600;"></div>
@@ -1286,7 +1286,7 @@ async function loadPDF() {
 <div class="modal" id="sendModal" style="max-width:420px;">
   <div class="modalHeader" style="display:flex;justify-content:space-between;align-items:center;">
     <span data-i18n="send.title">Envoyer le planning</span>
-    <button class="btn btnSmall" onclick="closeSendModal()" style="padding:4px 10px;">&#10005;</button>
+    <button aria-label="Fermer" class="btn btnSmall" onclick="closeSendModal()" style="padding:4px 10px;">&#10005;</button>
   </div>
   <div class="modalBody" style="padding:16px 20px;">
     <div id="sendProviderSelect" style="margin-bottom:8px;"></div>
@@ -1299,7 +1299,7 @@ async function loadPDF() {
 <div class="modal" id="langModal" style="max-width:360px;">
   <div class="modalHeader" style="display:flex;justify-content:space-between;align-items:center;">
     <span>&#127760; Langue / Language</span>
-    <button class="btn btnSmall" onclick="closeLangModal()" style="padding:4px 10px;">&#10005;</button>
+    <button aria-label="Fermer" class="btn btnSmall" onclick="closeLangModal()" style="padding:4px 10px;">&#10005;</button>
   </div>
   <div class="modalBody" style="padding:16px 20px;">
     <div style="display:flex;flex-direction:column;gap:6px;" id="langList"></div>
@@ -1321,7 +1321,7 @@ async function loadPDF() {
   <div class="modalHeader">Saisie</div>
   <div class="modalBody" style="padding:20px;">
     <div id="promptMsg" style="font-size:14px;color:var(--text);margin-bottom:14px;"></div>
-    <input type="text" id="promptInput" style="width:100%;padding:12px 14px;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;color:var(--text);font-size:14px;font-family:'Inter',sans-serif;outline:none;" />
+    <input aria-label="Reponse" type="text" id="promptInput" style="width:100%;padding:12px 14px;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;color:var(--text);font-size:14px;font-family:'Inter',sans-serif;outline:none;" />
     <div style="display:flex;gap:10px;justify-content:center;margin-top:18px;">
       <button class="btn btnOutline" style="padding:12px 28px;font-size:14px;" onclick="resolvePrompt(false)">Annuler</button>
       <button class="btn btnPrimary" style="padding:12px 28px;font-size:14px;" onclick="resolvePrompt(true)">OK</button>
@@ -1348,45 +1348,45 @@ async function loadPDF() {
   <div id="chatMessages" style="flex:1;overflow-y:auto;padding:16px;background:var(--bg);"></div>
   <!-- Chat input -->
   <div style="padding:12px 16px;border-top:1px solid var(--border2);display:flex;gap:8px;background:var(--surface);">
-    <input type="text" id="chatInput" placeholder="Ecrire un message..." onkeydown="if(event.key==='Enter')sendChatMessage()" style="flex:1;padding:12px 16px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:12px;font-size:14px;font-family:'Inter',sans-serif;">
+    <input aria-label="Ecrire un message..." type="text" id="chatInput" placeholder="Ecrire un message..." onkeydown="if(event.key==='Enter')sendChatMessage()" style="flex:1;padding:12px 16px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:12px;font-size:14px;font-family:'Inter',sans-serif;">
     <button onclick="sendChatMessage()" style="background:linear-gradient(135deg,#6c63ff,#5a54e0);color:#fff;border:none;padding:12px 18px;border-radius:12px;font-size:16px;cursor:pointer;">➤</button>
   </div>
 </div>
-<button id="chatFab" onclick="toggleChatWidget()" style="display:none;position:fixed;bottom:110px;right:16px;width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,#6c63ff,#5a54e0);color:#fff;border:none;font-size:22px;cursor:pointer;box-shadow:0 4px 16px rgba(108,99,255,0.4);z-index:150;">&#128172;</button>
+<button id="chatFab" aria-label="Ouvrir le chat" onclick="toggleChatWidget()" style="display:none;position:fixed;bottom:110px;right:16px;width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,#6c63ff,#5a54e0);color:#fff;border:none;font-size:22px;cursor:pointer;box-shadow:0 4px 16px rgba(108,99,255,0.4);z-index:150;">&#128172;</button>
 
 <!-- Add Provider Modal -->
 <div class="modal" id="addProviderModal" style="max-width:420px;">
   <div class="modalHeader" style="display:flex;justify-content:space-between;align-items:center;">
     <span data-i18n="provider.add.title">Ajouter un prestataire</span>
-    <button class="btn btnSmall" onclick="closeAddProviderModal()" style="padding:4px 10px;">&#10005;</button>
+    <button aria-label="Fermer" class="btn btnSmall" onclick="closeAddProviderModal()" style="padding:4px 10px;">&#10005;</button>
   </div>
   <div class="modalBody" style="padding:16px 20px;">
     <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text3);margin-bottom:4px;text-transform:uppercase;letter-spacing:0.5px;" data-i18n="config.name">Nom <span class="helpTip" style="font-size:10px;">?<span class="helpBubble" style="width:200px;">Nom complet du prestataire de menage</span></span></label>
-    <input id="txtNewName" type="text" placeholder="Nom du prestataire" style="width:100%;padding:10px 14px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;margin-bottom:12px;box-sizing:border-box;">
+    <input aria-label="Nom du prestataire" id="txtNewName" type="text" placeholder="Nom du prestataire" style="width:100%;padding:10px 14px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;margin-bottom:12px;box-sizing:border-box;">
 
     <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text3);margin-bottom:4px;text-transform:uppercase;letter-spacing:0.5px;" data-i18n="config.phone">Telephone <span class="helpTip" style="font-size:10px;">?<span class="helpBubble" style="width:200px;">Numero pour WhatsApp, SMS et Telegram</span></span></label>
-    <input id="txtNewPhone" type="tel" placeholder="06 12 34 56 78" style="width:100%;padding:10px 14px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;margin-bottom:12px;box-sizing:border-box;">
+    <input aria-label="06 12 34 56 78" id="txtNewPhone" type="tel" placeholder="06 12 34 56 78" style="width:100%;padding:10px 14px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;margin-bottom:12px;box-sizing:border-box;">
 
     <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text3);margin-bottom:4px;text-transform:uppercase;letter-spacing:0.5px;">Email <span class="helpTip" style="font-size:10px;">?<span class="helpBubble" style="width:200px;">Pour l'envoi du planning par email et les notifications</span></span></label>
-    <input id="txtNewEmail" type="email" placeholder="prenom@email.com" style="width:100%;padding:10px 14px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;margin-bottom:12px;box-sizing:border-box;">
+    <input aria-label="prenom@email.com" id="txtNewEmail" type="email" placeholder="prenom@email.com" style="width:100%;padding:10px 14px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;margin-bottom:12px;box-sizing:border-box;">
 
     <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text3);margin-bottom:4px;text-transform:uppercase;letter-spacing:0.5px;">Adresse <span class="helpTip" style="font-size:10px;">?<span class="helpBubble" style="width:200px;">Adresse du prestataire pour calculer la distance avec les proprietes</span></span></label>
-    <input id="txtNewAddress" type="text" placeholder="Ville ou adresse" style="width:100%;padding:10px 14px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;margin-bottom:12px;box-sizing:border-box;">
+    <input aria-label="Ville ou adresse" id="txtNewAddress" type="text" placeholder="Ville ou adresse" style="width:100%;padding:10px 14px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;margin-bottom:12px;box-sizing:border-box;">
 
     <div style="display:flex;gap:10px;margin-bottom:12px;">
       <div style="flex:1;">
         <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text3);margin-bottom:4px;text-transform:uppercase;letter-spacing:0.5px;">% <span class="helpTip" style="font-size:10px;">?<span class="helpBubble" style="width:220px;">Part des menages attribues a ce prestataire. Le total de tous les prestataires doit faire 100%</span></span></label>
-        <input id="txtNewPct" type="number" min="0" max="100" placeholder="50" style="width:100%;padding:10px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;box-sizing:border-box;">
+        <input aria-label="50" id="txtNewPct" type="number" min="0" max="100" placeholder="50" style="width:100%;padding:10px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;box-sizing:border-box;">
       </div>
       <div style="flex:1;">
         <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text3);margin-bottom:4px;text-transform:uppercase;letter-spacing:0.5px;" data-i18n="config.price">Tarif <span class="helpTip" style="font-size:10px;">?<span class="helpBubble" style="width:200px;">Prix d'un menage en euros pour ce prestataire</span></span></label>
-        <input id="txtNewPrice" type="number" min="0" placeholder="65" style="width:100%;padding:10px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;box-sizing:border-box;">
+        <input aria-label="65" id="txtNewPrice" type="number" min="0" placeholder="65" style="width:100%;padding:10px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;box-sizing:border-box;">
       </div>
     </div>
 
     <div style="flex:1;margin-bottom:16px;">
       <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text3);margin-bottom:4px;text-transform:uppercase;letter-spacing:0.5px;">Max menages/jour <span class="helpTip" style="font-size:10px;">?<span class="helpBubble" style="width:220px;">Nombre maximum de menages par jour pour eviter la surcharge du prestataire</span></span></label>
-      <input id="txtNewMaxPerDay" type="number" min="1" max="20" value="3" placeholder="3" style="width:100%;padding:10px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;box-sizing:border-box;">
+      <input aria-label="3" id="txtNewMaxPerDay" type="number" min="1" max="20" value="3" placeholder="3" style="width:100%;padding:10px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;box-sizing:border-box;">
     </div>
 
     <div style="display:flex;gap:10px;">
@@ -1400,25 +1400,25 @@ async function loadPDF() {
 <div class="modal" id="propDetailModal" style="max-width:600px;max-height:90vh;overflow-y:auto;">
   <div class="modalHeader" style="display:flex;justify-content:space-between;align-items:center;">
     <span data-i18n="prop.detail.title">Details de la propriete</span>
-    <button class="btn btnSmall" onclick="closePropDetail()" style="padding:4px 10px;">&#10005;</button>
+    <button aria-label="Fermer" class="btn btnSmall" onclick="closePropDetail()" style="padding:4px 10px;">&#10005;</button>
   </div>
   <div class="modalBody" style="padding:16px 20px;">
     <!-- Photo -->
     <div style="text-align:center;margin-bottom:16px;">
       <div id="propPhotoPreview" style="width:100%;max-height:200px;border-radius:12px;overflow:hidden;background:var(--surface2);display:flex;align-items:center;justify-content:center;margin-bottom:8px;min-height:120px;cursor:pointer;" onclick="document.getElementById('propPhotoInput').click()">
         <span id="propPhotoPlaceholder" style="color:var(--text3);font-size:13px;">&#128247; Cliquez pour ajouter une photo</span>
-        <img id="propPhotoImg" style="width:100%;object-fit:cover;display:none;">
+        <img alt="" id="propPhotoImg" style="width:100%;object-fit:cover;display:none;">
       </div>
-      <input type="file" id="propPhotoInput" accept="image/*" style="display:none;" onchange="handlePropPhoto(this)">
+      <input aria-label="Photo du bien" type="file" id="propPhotoInput" accept="image/*" style="display:none;" onchange="handlePropPhoto(this)">
     </div>
 
     <!-- Name -->
     <label style="display:block;font-size:12px;color:var(--text3);margin-bottom:4px;text-transform:uppercase;letter-spacing:0.5px;" data-i18n="prop.detail.name">Nom</label>
-    <input id="propDetailName" type="text" style="width:100%;padding:10px 14px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;margin-bottom:12px;box-sizing:border-box;">
+    <input aria-label="Nom du bien" id="propDetailName" type="text" style="width:100%;padding:10px 14px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;margin-bottom:12px;box-sizing:border-box;">
 
     <!-- Address -->
     <label style="display:block;font-size:12px;color:var(--text3);margin-bottom:4px;text-transform:uppercase;letter-spacing:0.5px;" data-i18n="prop.detail.address">Adresse</label>
-    <input id="propDetailAddress" type="text" placeholder="12 rue de France, Nice" style="width:100%;padding:10px 14px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;margin-bottom:12px;box-sizing:border-box;">
+    <input aria-label="12 rue de France, Nice" id="propDetailAddress" type="text" placeholder="12 rue de France, Nice" style="width:100%;padding:10px 14px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;margin-bottom:12px;box-sizing:border-box;">
 
     <!-- Type + Rooms + Surface (row) -->
     <div style="display:flex;gap:10px;margin-bottom:12px;flex-wrap:wrap;">
@@ -1435,11 +1435,11 @@ async function loadPDF() {
       </div>
       <div style="flex:0.5;min-width:80px;">
         <label style="display:block;font-size:12px;color:var(--text3);margin-bottom:4px;text-transform:uppercase;letter-spacing:0.5px;" data-i18n="prop.detail.rooms">Pieces</label>
-        <input id="propDetailRooms" type="number" min="1" max="20" style="width:100%;padding:10px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:13px;box-sizing:border-box;">
+        <input aria-label="Nombre de pieces" id="propDetailRooms" type="number" min="1" max="20" style="width:100%;padding:10px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:13px;box-sizing:border-box;">
       </div>
       <div style="flex:0.5;min-width:80px;">
         <label style="display:block;font-size:12px;color:var(--text3);margin-bottom:4px;text-transform:uppercase;letter-spacing:0.5px;">m²</label>
-        <input id="propDetailSurface" type="number" min="1" max="1000" style="width:100%;padding:10px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:13px;box-sizing:border-box;">
+        <input aria-label="Surface en m2" id="propDetailSurface" type="number" min="1" max="1000" style="width:100%;padding:10px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:13px;box-sizing:border-box;">
       </div>
     </div>
 
@@ -1447,7 +1447,7 @@ async function loadPDF() {
     <div style="display:flex;gap:10px;margin-bottom:12px;">
       <div style="flex:1;">
         <label style="display:block;font-size:12px;color:var(--text3);margin-bottom:4px;text-transform:uppercase;letter-spacing:0.5px;" data-i18n="prop.detail.price">Tarif menage (€)</label>
-        <input id="propDetailPrice" type="number" min="0" step="5" placeholder="65" style="width:100%;padding:10px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:13px;box-sizing:border-box;">
+        <input aria-label="65" id="propDetailPrice" type="number" min="0" step="5" placeholder="65" style="width:100%;padding:10px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:13px;box-sizing:border-box;">
       </div>
       <div style="flex:1;">
         <label style="display:block;font-size:12px;color:var(--text3);margin-bottom:4px;text-transform:uppercase;letter-spacing:0.5px;" data-i18n="prop.detail.duration">Duree estimee</label>
@@ -1467,7 +1467,7 @@ async function loadPDF() {
     <!-- Owner Price -->
     <div style="margin-bottom:12px;">
       <label style="display:block;font-size:12px;color:var(--text3);margin-bottom:4px;text-transform:uppercase;letter-spacing:0.5px;">Tarif proprietaire (€/menage)</label>
-      <input id="propDetailOwnerPrice" type="number" min="0" step="5" placeholder="Ex: 50" style="width:100%;padding:10px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:13px;box-sizing:border-box;">
+      <input aria-label="Ex: 50" id="propDetailOwnerPrice" type="number" min="0" step="5" placeholder="Ex: 50" style="width:100%;padding:10px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:13px;box-sizing:border-box;">
       <div style="font-size:10px;color:var(--text3);margin-top:4px;">Montant facture au proprietaire pour chaque menage</div>
     </div>
 
@@ -1479,7 +1479,7 @@ async function loadPDF() {
     <label style="display:block;font-size:12px;color:var(--text3);margin-bottom:4px;text-transform:uppercase;letter-spacing:0.5px;" data-i18n="prop.detail.checklist">Instructions de menage</label>
     <div id="propChecklist" style="background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:10px;margin-bottom:12px;max-height:200px;overflow-y:auto;"></div>
     <div style="display:flex;gap:8px;margin-bottom:12px;">
-      <input id="propNewCheckItem" type="text" placeholder="Nouvelle instruction..." style="flex:1;padding:8px 12px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:13px;" onkeydown="if(event.key==='Enter')addCheckItem()">
+      <input aria-label="Nouvelle instruction..." id="propNewCheckItem" type="text" placeholder="Nouvelle instruction..." style="flex:1;padding:8px 12px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:13px;" onkeydown="if(event.key==='Enter')addCheckItem()">
       <button class="btn btnSmall btnSuccess" onclick="addCheckItem()" style="padding:6px 14px;">+</button>
     </div>
 
@@ -1487,25 +1487,25 @@ async function loadPDF() {
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;">
       <div>
         <label style="display:block;font-size:12px;color:var(--text3);margin-bottom:4px;text-transform:uppercase;letter-spacing:0.5px;">Check-in</label>
-        <input type="time" id="propDetailCheckin" style="width:100%;padding:10px 14px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:13px;font-family:'Inter',sans-serif;box-sizing:border-box;">
+        <input aria-label="Heure check-in" type="time" id="propDetailCheckin" style="width:100%;padding:10px 14px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:13px;font-family:'Inter',sans-serif;box-sizing:border-box;">
       </div>
       <div>
         <label style="display:block;font-size:12px;color:var(--text3);margin-bottom:4px;text-transform:uppercase;letter-spacing:0.5px;">Check-out</label>
-        <input type="time" id="propDetailCheckout" style="width:100%;padding:10px 14px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:13px;font-family:'Inter',sans-serif;box-sizing:border-box;">
+        <input aria-label="Heure check-out" type="time" id="propDetailCheckout" style="width:100%;padding:10px 14px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:13px;font-family:'Inter',sans-serif;box-sizing:border-box;">
       </div>
     </div>
 
     <!-- Access code -->
     <label style="display:block;font-size:12px;color:var(--text3);margin-bottom:4px;text-transform:uppercase;letter-spacing:0.5px;">Code d'acces / Digicode</label>
-    <input type="text" id="propDetailAccessCode" placeholder="Ex: 1234B, boite a cles..." style="width:100%;padding:10px 14px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:13px;font-family:'Inter',sans-serif;box-sizing:border-box;margin-bottom:16px;">
+    <input aria-label="Ex: 1234B, boite a cles..." type="text" id="propDetailAccessCode" placeholder="Ex: 1234B, boite a cles..." style="width:100%;padding:10px 14px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:13px;font-family:'Inter',sans-serif;box-sizing:border-box;margin-bottom:16px;">
 
     <!-- Consignes -->
     <label style="display:block;font-size:12px;color:var(--text3);margin-bottom:4px;text-transform:uppercase;letter-spacing:0.5px;">Consignes d'arrivee</label>
-    <textarea id="propDetailConsignes" rows="2" placeholder="Parking, wifi, instructions..." style="width:100%;padding:10px 14px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:13px;resize:vertical;font-family:'Inter',sans-serif;box-sizing:border-box;margin-bottom:16px;"></textarea>
+    <textarea aria-label="Parking, wifi, instructions..." id="propDetailConsignes" rows="2" placeholder="Parking, wifi, instructions..." style="width:100%;padding:10px 14px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:13px;resize:vertical;font-family:'Inter',sans-serif;box-sizing:border-box;margin-bottom:16px;"></textarea>
 
     <!-- Notes -->
     <label style="display:block;font-size:12px;color:var(--text3);margin-bottom:4px;text-transform:uppercase;letter-spacing:0.5px;" data-i18n="prop.detail.notes">Notes</label>
-    <textarea id="propDetailNotes" rows="3" placeholder="Notes sur la propriete..." style="width:100%;padding:10px 14px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:13px;resize:vertical;font-family:'Inter',sans-serif;box-sizing:border-box;margin-bottom:16px;"></textarea>
+    <textarea aria-label="Notes sur la propriete..." id="propDetailNotes" rows="3" placeholder="Notes sur la propriete..." style="width:100%;padding:10px 14px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:13px;resize:vertical;font-family:'Inter',sans-serif;box-sizing:border-box;margin-bottom:16px;"></textarea>
 
     <!-- Save button -->
     <button class="btn btnPrimary" style="width:100%;padding:14px;font-size:14px;" onclick="savePropDetail()" data-i18n="prop.detail.save">Enregistrer</button>
@@ -1517,15 +1517,15 @@ async function loadPDF() {
   <div class="mapContainer">
     <div class="mapHeader">
       <h3 id="mapTitle">Zone d'action</h3>
-      <button class="btn btnSmall" onclick="closeMap()" style="padding:6px 12px;">&#10005;</button>
+      <button aria-label="Fermer" class="btn btnSmall" onclick="closeMap()" style="padding:6px 12px;">&#10005;</button>
     </div>
     <div class="mapControls">
       <label data-i18n="map.radius">Rayon :</label>
-      <input type="range" id="mapRadius" min="1" max="100" value="15" oninput="updateMapRadius(this.value)">
+      <input aria-label="Rayon de recherche" type="range" id="mapRadius" min="1" max="100" value="15" oninput="updateMapRadius(this.value)">
       <span class="radiusVal" id="mapRadiusVal">15 km</span>
       <button class="btn btnSmall btnSuccess" onclick="saveMapLocation()" data-i18n="map.save" style="padding:6px 14px;">Enregistrer</button>
     </div>
-    <input type="text" class="mapSearch" id="mapSearch" placeholder="Rechercher une adresse..." onkeydown="if(event.key==='Enter')searchAddress()">
+    <input aria-label="Rechercher une adresse..." type="text" class="mapSearch" id="mapSearch" placeholder="Rechercher une adresse..." onkeydown="if(event.key==='Enter')searchAddress()">
     <div id="mapView"></div>
   </div>
 </div>
@@ -1533,7 +1533,7 @@ async function loadPDF() {
 <div class="statusBar"><span id="statusText">Pret</span></div>
 
 <!-- FAB - Floating Generate Button (mobile) -->
-<button class="fab" id="fabGenerate" onclick="generatePlanning()" title="Generer le planning" style="display:none;">&#9654;</button>
+<button aria-label="Generer le planning" class="fab" id="fabGenerate" onclick="generatePlanning()" title="Generer le planning" style="display:none;">&#9654;</button>
 
 <!-- Bottom Navigation Bar (mobile) -->
 <nav class="bottomNav" id="bottomNav" role="navigation" aria-label="Navigation principale">
@@ -2542,7 +2542,7 @@ async function showPasswordRecoveryForm() {
         <p style="color:#9ca3af;font-size:13px;margin:0;">Definissez votre nouveau mot de passe pour Lokizio</p>
       </div>
       <div style="position:relative;margin-bottom:8px;">
-        <input type="password" id="recoveryPwd1" placeholder="Nouveau mot de passe" oninput="updatePwdStrength()" style="width:100%;padding:12px 44px 12px 16px;background:#0f0f1a;color:#fff;border:1px solid rgba(255,255,255,0.1);border-radius:10px;font-size:14px;box-sizing:border-box;font-family:Inter,sans-serif;">
+        <input aria-label="Nouveau mot de passe" type="password" id="recoveryPwd1" placeholder="Nouveau mot de passe" oninput="updatePwdStrength()" style="width:100%;padding:12px 44px 12px 16px;background:#0f0f1a;color:#fff;border:1px solid rgba(255,255,255,0.1);border-radius:10px;font-size:14px;box-sizing:border-box;font-family:Inter,sans-serif;">
         <button type="button" onclick="togglePwdVisibility('recoveryPwd1', this)" aria-label="Afficher le mot de passe" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:transparent;border:none;color:#9ca3af;font-size:16px;cursor:pointer;padding:6px;">&#128065;</button>
       </div>
       <div id="pwdStrength" style="font-size:11px;color:#6b7280;line-height:1.5;margin-bottom:12px;">
@@ -2553,7 +2553,7 @@ async function showPasswordRecoveryForm() {
         <div id="pwdReq-special" data-label="Un caractere special" style="display:flex;align-items:center;gap:4px;"><span class="pwdReq-icon">&#9675;</span> <span>Un caractere special (!@#$...)</span></div>
       </div>
       <div style="position:relative;margin-bottom:16px;">
-        <input type="password" id="recoveryPwd2" placeholder="Confirmez le mot de passe" style="width:100%;padding:12px 44px 12px 16px;background:#0f0f1a;color:#fff;border:1px solid rgba(255,255,255,0.1);border-radius:10px;font-size:14px;box-sizing:border-box;font-family:Inter,sans-serif;">
+        <input aria-label="Confirmez le mot de passe" type="password" id="recoveryPwd2" placeholder="Confirmez le mot de passe" style="width:100%;padding:12px 44px 12px 16px;background:#0f0f1a;color:#fff;border:1px solid rgba(255,255,255,0.1);border-radius:10px;font-size:14px;box-sizing:border-box;font-family:Inter,sans-serif;">
         <button type="button" onclick="togglePwdVisibility('recoveryPwd2', this)" aria-label="Afficher le mot de passe" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:transparent;border:none;color:#9ca3af;font-size:16px;cursor:pointer;padding:6px;">&#128065;</button>
       </div>
       <div id="recoveryMsg" style="color:#e94560;font-size:12px;margin-bottom:12px;min-height:16px;"></div>
@@ -2881,15 +2881,15 @@ async function showEditMarketplaceProfile(user, name, email) {
   let html = '<div style="padding:10px;">';
   html += '<div style="font-size:16px;font-weight:700;color:#6c63ff;margin-bottom:12px;text-align:center;">&#128221; Mon profil annuaire</div>';
   html += '<label style="font-size:11px;color:var(--text3);display:block;margin-bottom:3px;">Nom</label>';
-  html += '<input id="mkName" type="text" value="' + esc(displayName) + '" placeholder="Votre nom" onchange="saveMarketplaceProfile()" style="' + inputStyle + '">';
+  html += '<input aria-label="Votre nom" id="mkName" type="text" value="' + esc(displayName) + '" placeholder="Votre nom" onchange="saveMarketplaceProfile()" style="' + inputStyle + '">';
   html += '<label style="font-size:11px;color:var(--text3);display:block;margin-bottom:3px;">Email</label>';
   html += '<input type="text" value="' + esc(displayEmail) + '" readonly style="' + inputStyle + 'opacity:0.6;">';
   html += '<label style="font-size:11px;color:var(--text3);display:block;margin-bottom:3px;">Telephone</label>';
-  html += '<input id="mkPhone" type="tel" value="' + esc(phone) + '" placeholder="06 12 34 56 78" onchange="saveMarketplaceProfile()" style="' + inputStyle + '">';
+  html += '<input aria-label="06 12 34 56 78" id="mkPhone" type="tel" value="' + esc(phone) + '" placeholder="06 12 34 56 78" onchange="saveMarketplaceProfile()" style="' + inputStyle + '">';
   html += '<label style="font-size:11px;color:var(--text3);display:block;margin-bottom:3px;">Ville</label>';
-  html += '<input id="mkCity" type="text" value="' + esc(city) + '" placeholder="Ex: Nice, Paris..." onchange="saveMarketplaceProfile()" style="' + inputStyle + '">';
+  html += '<input aria-label="Ex: Nice, Paris..." id="mkCity" type="text" value="' + esc(city) + '" placeholder="Ex: Nice, Paris..." onchange="saveMarketplaceProfile()" style="' + inputStyle + '">';
   html += '<label style="font-size:11px;color:var(--text3);display:block;margin-bottom:3px;">Description</label>';
-  html += '<textarea id="mkDesc" placeholder="Presentez vos services, votre experience..." rows="3" onchange="saveMarketplaceProfile()" style="' + inputStyle + 'font-family:Inter,sans-serif;resize:vertical;">' + esc(desc) + '</textarea>';
+  html += '<textarea aria-label="Presentez vos services, votre experience..." id="mkDesc" placeholder="Presentez vos services, votre experience..." rows="3" onchange="saveMarketplaceProfile()" style="' + inputStyle + 'font-family:Inter,sans-serif;resize:vertical;">' + esc(desc) + '</textarea>';
   html += '<div style="font-size:10px;color:var(--text3);text-align:center;margin-top:4px;">Sauvegarde automatique</div>';
   html += '<button class="btn btnOutline" style="width:100%;padding:12px;margin-top:8px;" onclick="closeMsg()">Fermer</button>';
   html += '</div>';
@@ -3215,7 +3215,7 @@ function showQcPhotoModal(requestId, req, checklist) {
     html += '<span style="font-size:13px;font-weight:600;color:var(--text);">' + (item.icon || '&#128247;') + ' ' + esc(item.label) + '</span>';
     if (req2) html += '<span style="font-size:10px;color:var(--accent);">Requis</span>';
     html += '</div>';
-    html += '<div id="qcPreview_' + i + '" style="display:none;margin-bottom:6px;"><img style="width:100%;max-height:150px;object-fit:cover;border-radius:8px;"></div>';
+    html += '<div id="qcPreview_' + i + '" style="display:none;margin-bottom:6px;"><img alt="" style="width:100%;max-height:150px;object-fit:cover;border-radius:8px;"></div>';
     html += '<label style="display:block;padding:10px;border:1px dashed var(--border2);border-radius:8px;text-align:center;cursor:pointer;color:var(--text3);font-size:12px;">';
     html += '&#128248; Prendre une photo';
     html += '<input type="file" accept="image/*" capture="environment" data-qc-idx="' + i + '" onchange="handleQcPhoto(this,' + i + ')" style="display:none;">';
@@ -3307,7 +3307,7 @@ async function providerWithdraw(id, dateStr) {
   } else {
     html += '<div style="font-size:12px;color:var(--success);margin-bottom:12px;">Desistement gratuit (plus de 7 jours avant)</div>';
   }
-  html += '<textarea id="withdrawReason" placeholder="Raison (optionnel)..." style="width:100%;padding:10px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:13px;font-family:Inter,sans-serif;resize:vertical;min-height:40px;box-sizing:border-box;margin-bottom:12px;"></textarea>';
+  html += '<textarea aria-label="Raison (optionnel)..." id="withdrawReason" placeholder="Raison (optionnel)..." style="width:100%;padding:10px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:13px;font-family:Inter,sans-serif;resize:vertical;min-height:40px;box-sizing:border-box;margin-bottom:12px;"></textarea>';
   html += '<div style="display:flex;gap:8px;">';
   html += '<button class="btn btnOutline" style="flex:1;padding:12px;" onclick="closeMsg()">Retour</button>';
   html += '<button class="btn" style="flex:1;padding:12px;background:#ef4444;color:#fff;border:none;font-weight:700;" onclick="confirmProviderWithdraw(\'' + id + '\',' + penalty.percent + ')">Confirmer</button>';
@@ -3683,7 +3683,7 @@ function showModifyResponsePopup(propId, date, provName, currentStatus) {
   html += '<div style="font-size:12px;color:var(--text3);margin-bottom:14px;text-align:center;">' + fmtDate(date) + '</div>';
   html += '<div style="text-align:left;margin-bottom:14px;">';
   html += '<label style="font-size:12px;color:var(--text3);display:block;margin-bottom:4px;">Raison / commentaire (optionnel) :</label>';
-  html += '<textarea id="changeStatusReason" placeholder="Ex: imprevu, indisponibilite..." style="width:100%;padding:10px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:13px;font-family:Inter,sans-serif;resize:vertical;min-height:50px;box-sizing:border-box;"></textarea>';
+  html += '<textarea aria-label="Ex: imprevu, indisponibilite..." id="changeStatusReason" placeholder="Ex: imprevu, indisponibilite..." style="width:100%;padding:10px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:13px;font-family:Inter,sans-serif;resize:vertical;min-height:50px;box-sizing:border-box;"></textarea>';
   html += '</div>';
   // Warning: provider canceling an accepted prestation = penalty policy
   if (currentStatus === 'accepted') {
@@ -3954,7 +3954,7 @@ async function showQcReview(requestId) {
   req.qc_photos.forEach((p, i) => {
     html += '<div style="margin-bottom:12px;">';
     html += '<div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:6px;">' + (p.icon || '&#128247;') + ' ' + esc(p.room) + '</div>';
-    html += '<img src="' + safePhotoUrl(p.photo) + '" style="width:100%;max-height:250px;object-fit:cover;border-radius:10px;border:1px solid var(--border);" onclick="window.open(this.src)">';
+    html += '<img alt="" src="' + safePhotoUrl(p.photo) + '" style="width:100%;max-height:250px;object-fit:cover;border-radius:10px;border:1px solid var(--border);" onclick="window.open(this.src)">';
     if (p.timestamp) html += '<div style="font-size:10px;color:var(--text3);margin-top:2px;">' + new Date(p.timestamp).toLocaleString('fr-FR') + '</div>';
     html += '</div>';
   });
@@ -4277,11 +4277,11 @@ async function ownerDisputeService(requestId, providerName, serviceName) {
   html += '</div>';
   html += '<div style="margin-bottom:12px;">';
   html += '<label style="font-size:11px;color:var(--text3);text-transform:uppercase;display:block;margin-bottom:4px;">Details (obligatoire)</label>';
-  html += '<textarea id="disputeDetails" rows="3" placeholder="Decrivez le probleme..." style="width:100%;padding:10px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:13px;font-family:Inter,sans-serif;resize:vertical;box-sizing:border-box;"></textarea>';
+  html += '<textarea aria-label="Decrivez le probleme..." id="disputeDetails" rows="3" placeholder="Decrivez le probleme..." style="width:100%;padding:10px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:13px;font-family:Inter,sans-serif;resize:vertical;box-sizing:border-box;"></textarea>';
   html += '</div>';
   html += '<div style="margin-bottom:12px;">';
   html += '<label style="font-size:11px;color:var(--text3);text-transform:uppercase;display:block;margin-bottom:4px;">Photos (optionnel)</label>';
-  html += '<input type="file" id="disputePhotos" accept="image/*" multiple style="font-size:12px;color:var(--text3);">';
+  html += '<input aria-label="Photos preuve litige" type="file" id="disputePhotos" accept="image/*" multiple style="font-size:12px;color:var(--text3);">';
   html += '</div>';
   html += '<div style="display:flex;gap:8px;">';
   html += '<button class="btn btnDanger" style="flex:1;padding:10px;font-size:13px;" onclick="submitDispute(\'' + requestId + '\',\'' + esc(providerName).replace(/'/g,"\\\\'") + '\')">Envoyer la contestation</button>';
@@ -5390,7 +5390,7 @@ function renderPressing() {
   const statusLabels = { available: t('linen.status.available'), used: 'Utilise', pressing: 'Au pressing' };
   const statusIcons = { available: '&#10003;', used: '&#128716;', pressing: '&#128084;' };
 
-  let html = '<div class="addLinenRow"><input type="text" id="newLinenName" placeholder="Nom du jeu (ex: Jeu A)" onkeydown="if(event.key===\'Enter\')addLinen()"><button class="btn btnSmall btnSuccess" onclick="addLinen()">+ Ajouter</button></div>';
+  let html = '<div class="addLinenRow"><input aria-label="Nom du jeu (ex: Jeu A)" type="text" id="newLinenName" placeholder="Nom du jeu (ex: Jeu A)" onkeydown="if(event.key===\'Enter\')addLinen()"><button class="btn btnSmall btnSuccess" onclick="addLinen()">+ Ajouter</button></div>';
 
   if (!linens.length) {
     html += '<div class="emptyState">Aucun jeu de linge. Ajoutez-en un ci-dessus.</div>';
@@ -5416,7 +5416,7 @@ function renderPressing() {
       const usageCount = (l.usageHistory || []).filter(h => h.action === 'used').length;
 
       html += `<div class="linenCard">
-        <button class="btnDelete" onclick="removeLinen('${l.id}')" title="Supprimer">&times;</button>
+        <button aria-label="Fermer" class="btnDelete" onclick="removeLinen('${l.id}')" title="Supprimer">&times;</button>
         <div class="linenName">${esc(l.name)}</div>
         <div class="linenStatus ${l.status}">${statusIcons[l.status]} ${statusLabels[l.status]}</div>
         <div class="linenInfo">${lastInfo} | ${usageCount} utilisation(s)</div>
@@ -5479,9 +5479,9 @@ function renderIcalList() {
     const plat = ICAL_PLATFORMS.find(p => p.id === ical.platform) || ICAL_PLATFORMS[6];
     return `<div class="icalRow">
       <span class="urlLabel ${plat.color}" style="min-width:90px;text-align:center;">${plat.name}</span>
-      <input type="text" id="ical_${i}" value="${esc(ical.url)}" placeholder="URL iCal..." onchange="updateIcalUrl(${i}, this.value)">
-      <button class="btnIcon" onclick="pasteField('ical_${i}')" title="Coller">&#128203;</button>
-      <button class="btn btnSmall btnDanger" style="padding:4px 8px;" onclick="removeIcal(${i})">&#10005;</button>
+      <input aria-label="URL iCal..." type="text" id="ical_${i}" value="${esc(ical.url)}" placeholder="URL iCal..." onchange="updateIcalUrl(${i}, this.value)">
+      <button aria-label="Coller" class="btnIcon" onclick="pasteField('ical_${i}')" title="Coller">&#128203;</button>
+      <button aria-label="Fermer" class="btn btnSmall btnDanger" style="padding:4px 8px;" onclick="removeIcal(${i})">&#10005;</button>
     </div>`;
   }).join('');
   // Sync old fields for backward compat
@@ -5509,9 +5509,9 @@ function showIcalModal() {
       const plat = ICAL_PLATFORMS.find(p => p.id === ical.platform) || ICAL_PLATFORMS[6];
       html += `<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
         <span class="urlLabel ${plat.color}" style="min-width:80px;text-align:center;font-size:11px;">${plat.name}</span>
-        <input type="text" id="icalModal_${i}" value="${esc(ical.url)}" placeholder="URL iCal..." onchange="updateIcalUrl(${i}, this.value)" style="flex:1;padding:8px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:6px;font-size:12px;">
-        <button class="btnIcon" onclick="pasteField('icalModal_${i}')" title="Coller" style="font-size:14px;">&#128203;</button>
-        <button class="btn btnSmall btnDanger" style="padding:4px 8px;" onclick="removeIcal(${i});showIcalModal();">&#10005;</button>
+        <input aria-label="URL iCal..." type="text" id="icalModal_${i}" value="${esc(ical.url)}" placeholder="URL iCal..." onchange="updateIcalUrl(${i}, this.value)" style="flex:1;padding:8px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:6px;font-size:12px;">
+        <button aria-label="Coller" class="btnIcon" onclick="pasteField('icalModal_${i}')" title="Coller" style="font-size:14px;">&#128203;</button>
+        <button aria-label="Fermer" class="btn btnSmall btnDanger" style="padding:4px 8px;" onclick="removeIcal(${i});showIcalModal();">&#10005;</button>
       </div>`;
     });
   }
@@ -5527,7 +5527,7 @@ function showIcalModal() {
       html += '<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border2);">';
       html += '<span class="srcBadge ' + getSourceClass(mr.source) + '" style="font-size:9px;">' + esc(mr.source || 'Direct') + '</span>';
       html += '<span style="font-size:12px;flex:1;">' + fmtDate(mr.checkin) + ' → ' + fmtDate(mr.checkout) + (mr.guestName ? ' — ' + esc(mr.guestName) : '') + '</span>';
-      html += '<button onclick="deleteManualReservation(' + mi + ')" style="background:none;border:none;color:#ef4444;font-size:14px;cursor:pointer;">&#10005;</button>';
+      html += '<button aria-label="Fermer" onclick="deleteManualReservation(' + mi + ')" style="background:none;border:none;color:#ef4444;font-size:14px;cursor:pointer;">&#10005;</button>';
       html += '</div>';
     });
     html += '</div>';
@@ -5613,7 +5613,7 @@ function showLangModal() {
     const isActive = currentLang === l.code;
     const proBadge = l.premium ? '<span style="font-size:8px;background:var(--accent2);color:#fff;padding:2px 5px;border-radius:4px;font-weight:700;margin-left:6px;">PRO</span>' : '';
     return `<button onclick="selectLang('${l.code}',${l.premium})" style="display:flex;align-items:center;gap:10px;padding:12px 14px;background:${isActive?'rgba(233,69,96,0.12)':'rgba(255,255,255,0.03)'};border:1px solid ${isActive?'var(--accent)':'var(--border2)'};border-radius:10px;cursor:pointer;color:var(--text);font-size:14px;font-weight:${isActive?'700':'400'};transition:all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.06)'" onmouseout="this.style.background='${isActive?'rgba(233,69,96,0.12)':'rgba(255,255,255,0.03)'}'">
-      <img src="https://flagcdn.com/w20/${l.flag}.png" width="20" height="15">
+      <img src="https://flagcdn.com/w20/${l.flag}.png" width="20" height="15" alt="">
       ${l.name}${proBadge}
       ${isActive?'<span style="margin-left:auto;color:var(--accent);">&#10003;</span>':''}
     </button>`;
@@ -5671,7 +5671,7 @@ function showOnboarding() {
   langs.forEach(l => {
     const premBadge = l.premium ? ' <span style="font-size:8px;background:var(--accent2);color:#fff;padding:2px 5px;border-radius:4px;font-weight:700;letter-spacing:0.5px;">PRO</span>' : '';
     html += `<button class="btn btnOutline" onclick="setLang('${l.code}');showOnboardingStep2()" style="padding:12px 20px;font-size:14px;min-width:130px;">`;
-    html += `<img src="https://flagcdn.com/w20/${l.flag}.png" width="20" height="15" style="vertical-align:middle;margin-right:8px;">`;
+    html += `<img src="https://flagcdn.com/w20/${l.flag}.png" width="20" height="15" style="vertical-align:middle;margin-right:8px;" alt="">`;
     html += `${l.name}${premBadge}</button>`;
   });
   html += '</div></div>';
@@ -5819,7 +5819,7 @@ window._wizardActive = false;
 // Reusable address autocomplete + map widget for wizards
 function wizAddressFieldHTML(inputId, mapId) {
   return `<div style="position:relative;z-index:10000;">
-    <input id="${inputId}" type="text" placeholder="Tapez votre adresse..." autocomplete="off" style="width:100%;padding:12px 14px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;font-family:'Inter',sans-serif;box-sizing:border-box;">
+    <input aria-label="Tapez votre adresse..." id="${inputId}" type="text" placeholder="Tapez votre adresse..." autocomplete="off" style="width:100%;padding:12px 14px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;font-family:'Inter',sans-serif;box-sizing:border-box;">
     <div id="${inputId}_suggestions" style="display:none;position:absolute;top:100%;left:0;right:0;background:#1a1a2e;border:1px solid rgba(255,255,255,0.15);border-radius:0 0 10px 10px;max-height:180px;overflow-y:auto;z-index:10001;box-shadow:0 12px 32px rgba(0,0,0,0.7);"></div>
   </div>
   <div id="${mapId}" style="width:100%;height:180px;border-radius:8px;overflow:hidden;margin-top:8px;background:var(--surface2);position:relative;z-index:1;"></div>`;
@@ -5976,7 +5976,7 @@ function wizardStep_ConciergeName() {
   html += '<div style="font-size:32px;margin-bottom:8px;">&#127970;</div>';
   html += '<div style="font-size:16px;font-weight:700;color:#6c63ff;margin-bottom:4px;">Etape 1/4</div>';
   html += '<div style="font-size:14px;color:var(--text2);margin-bottom:16px;">Comment s\'appelle votre conciergerie ?</div>';
-  html += '<input id="wizOrgName" type="text" placeholder="Ex: Conciergerie Cote d\'Azur" value="" style="width:100%;padding:12px 14px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;font-family:\'Inter\',sans-serif;box-sizing:border-box;margin-bottom:16px;">';
+  html += '<input aria-label="Ex: Conciergerie Cote d\'Azur" id="wizOrgName" type="text" placeholder="Ex: Conciergerie Cote d\'Azur" value="" style="width:100%;padding:12px 14px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;font-family:\'Inter\',sans-serif;box-sizing:border-box;margin-bottom:16px;">';
   html += '<div style="display:flex;gap:10px;">';
   html += '<button class="btn btnOutline" style="flex:1;padding:12px;font-size:13px;" onclick="showOnboardingStep2()">&#10094; Retour</button>';
   html += '<button class="btn btnPrimary" style="flex:1;padding:14px;font-size:14px;" onclick="wizardSaveConciergeName()">Suivant &#10140;</button>';
@@ -6004,7 +6004,7 @@ function wizardStep_PropertyName() {
   html += '<div style="font-size:16px;font-weight:700;color:var(--accent);margin-bottom:4px;">Etape ' + step + '</div>';
   html += '<div style="font-size:14px;color:var(--text2);margin-bottom:16px;">' + (wizardData.roleId === 'concierge' ? 'Ajoutez votre premiere propriete' : 'Configurez votre propriete') + '</div>';
   html += '<label style="display:block;font-size:11px;color:var(--text3);margin-bottom:4px;text-transform:uppercase;">Nom du logement</label>';
-  html += '<input id="wizPropName" type="text" placeholder="Ex: Appartement Nice Centre" value="" style="width:100%;padding:12px 14px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;font-family:\'Inter\',sans-serif;box-sizing:border-box;margin-bottom:10px;">';
+  html += '<input aria-label="Ex: Appartement Nice Centre" id="wizPropName" type="text" placeholder="Ex: Appartement Nice Centre" value="" style="width:100%;padding:12px 14px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;font-family:\'Inter\',sans-serif;box-sizing:border-box;margin-bottom:10px;">';
   html += '<label style="display:block;font-size:11px;color:var(--text3);margin-bottom:4px;text-transform:uppercase;">Adresse</label>';
   html += wizAddressFieldHTML('wizPropAddress', 'wizPropMap');
   html += '<div style="height:16px;"></div>';
@@ -6078,16 +6078,16 @@ function wizardStep_PropertyDetails() {
   html += '<option value="" style="background:#1a1a2e;color:#f0f0f5;">--</option><option value="apartment" style="background:#1a1a2e;color:#f0f0f5;">Appartement</option><option value="house" style="background:#1a1a2e;color:#f0f0f5;">Maison</option><option value="studio" style="background:#1a1a2e;color:#f0f0f5;">Studio</option><option value="villa" style="background:#1a1a2e;color:#f0f0f5;">Villa</option><option value="chalet" style="background:#1a1a2e;color:#f0f0f5;">Chalet</option><option value="other" style="background:#1a1a2e;color:#f0f0f5;">Autre</option>';
   html += '</select></div>';
   html += '<div style="flex:1;"><label style="display:block;font-size:11px;color:var(--text3);margin-bottom:4px;text-transform:uppercase;">Pieces</label>';
-  html += '<input id="wizPropRooms" type="number" min="1" max="20" placeholder="3" style="width:100%;padding:10px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:13px;box-sizing:border-box;"></div>';
+  html += '<input aria-label="3" id="wizPropRooms" type="number" min="1" max="20" placeholder="3" style="width:100%;padding:10px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:13px;box-sizing:border-box;"></div>';
   html += '<div style="flex:1;"><label style="display:block;font-size:11px;color:var(--text3);margin-bottom:4px;text-transform:uppercase;">Total m²</label>';
-  html += '<input id="wizPropSurface" type="number" min="1" placeholder="65" required style="width:100%;padding:10px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:13px;box-sizing:border-box;"></div>';
+  html += '<input aria-label="65" id="wizPropSurface" type="number" min="1" placeholder="65" required style="width:100%;padding:10px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:13px;box-sizing:border-box;"></div>';
   html += '</div>';
 
   // Tarif + Duration (auto-estimated)
   html += '<div id="wizEstimation" style="display:none;background:rgba(52,211,153,0.1);border:1px solid rgba(52,211,153,0.2);border-radius:8px;padding:8px 12px;margin-bottom:10px;font-size:12px;color:#34d399;">&#9889; Estimation automatique basee sur ' + '<span id="wizEstRooms">0</span> pieces et <span id="wizEstSurface">0</span>m²</div>';
   html += '<div style="display:flex;gap:8px;margin-bottom:10px;">';
   html += '<div style="flex:1;"><label style="display:block;font-size:11px;color:var(--text3);margin-bottom:4px;text-transform:uppercase;">Tarif menage (€)</label>';
-  html += '<input id="wizPropTarif" type="number" min="0" placeholder="65" style="width:100%;padding:10px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:13px;box-sizing:border-box;"></div>';
+  html += '<input aria-label="65" id="wizPropTarif" type="number" min="0" placeholder="65" style="width:100%;padding:10px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:13px;box-sizing:border-box;"></div>';
   html += '<div style="flex:1;"><label style="display:block;font-size:11px;color:var(--text3);margin-bottom:4px;text-transform:uppercase;">Duree estimee</label>';
   html += '<select id="wizPropDuration" style="width:100%;padding:10px;background:#1a1a2e;color:#f0f0f5;border:1px solid var(--border2);border-radius:8px;font-size:13px;box-sizing:border-box;">';
   html += '<option value="" style="background:#1a1a2e;color:#f0f0f5;">--</option><option value="0h30" style="background:#1a1a2e;color:#f0f0f5;">30 min</option><option value="1h" style="background:#1a1a2e;color:#f0f0f5;">1h</option><option value="1h30" style="background:#1a1a2e;color:#f0f0f5;">1h30</option><option value="2h" style="background:#1a1a2e;color:#f0f0f5;">2h</option><option value="2h30" style="background:#1a1a2e;color:#f0f0f5;">2h30</option><option value="3h" style="background:#1a1a2e;color:#f0f0f5;">3h</option><option value="3h30" style="background:#1a1a2e;color:#f0f0f5;">3h30</option><option value="4h" style="background:#1a1a2e;color:#f0f0f5;">4h</option>';
@@ -6097,18 +6097,18 @@ function wizardStep_PropertyDetails() {
   // Check-in / Check-out
   html += '<div style="display:flex;gap:8px;margin-bottom:10px;">';
   html += '<div style="flex:1;"><label style="display:block;font-size:11px;color:var(--text3);margin-bottom:4px;text-transform:uppercase;">Check-in</label>';
-  html += '<input id="wizPropCheckin" type="time" value="15:00" style="width:100%;padding:10px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:13px;box-sizing:border-box;"></div>';
+  html += '<input aria-label="Heure check-in" id="wizPropCheckin" type="time" value="15:00" style="width:100%;padding:10px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:13px;box-sizing:border-box;"></div>';
   html += '<div style="flex:1;"><label style="display:block;font-size:11px;color:var(--text3);margin-bottom:4px;text-transform:uppercase;">Check-out</label>';
-  html += '<input id="wizPropCheckout" type="time" value="11:00" style="width:100%;padding:10px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:13px;box-sizing:border-box;"></div>';
+  html += '<input aria-label="Heure check-out" id="wizPropCheckout" type="time" value="11:00" style="width:100%;padding:10px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:13px;box-sizing:border-box;"></div>';
   html += '</div>';
 
   // Access code
   html += '<label style="display:block;font-size:11px;color:var(--text3);margin-bottom:4px;text-transform:uppercase;">Code d\'acces / Digicode</label>';
-  html += '<input id="wizPropCode" type="text" placeholder="Ex: 1234B, boite a cles..." style="width:100%;padding:10px 14px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:13px;box-sizing:border-box;margin-bottom:10px;">';
+  html += '<input aria-label="Ex: 1234B, boite a cles..." id="wizPropCode" type="text" placeholder="Ex: 1234B, boite a cles..." style="width:100%;padding:10px 14px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:13px;box-sizing:border-box;margin-bottom:10px;">';
 
   // Instructions
   html += '<label style="display:block;font-size:11px;color:var(--text3);margin-bottom:4px;text-transform:uppercase;">Consignes / Notes</label>';
-  html += '<textarea id="wizPropNotes" placeholder="Instructions specifiques pour acceder au bien..." rows="3" style="width:100%;padding:10px 14px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:13px;font-family:\'Inter\',sans-serif;box-sizing:border-box;resize:vertical;margin-bottom:12px;"></textarea>';
+  html += '<textarea aria-label="Instructions specifiques pour acceder au bien..." id="wizPropNotes" placeholder="Instructions specifiques pour acceder au bien..." rows="3" style="width:100%;padding:10px 14px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:13px;font-family:\'Inter\',sans-serif;box-sizing:border-box;resize:vertical;margin-bottom:12px;"></textarea>';
 
   html += '<div style="display:flex;gap:10px;">';
   html += '<button class="btn btnOutline" style="flex:1;padding:12px;font-size:13px;" onclick="wizardStep_PropertyName()">&#10094; Retour</button>';
@@ -6234,7 +6234,7 @@ function wizardStep_IcalUrl() {
     html += '<div style="margin-bottom:10px;">';
     html += '<div style="display:flex;gap:8px;align-items:center;">';
     html += '<span style="background:' + p.color + ';color:#fff;padding:4px 10px;border-radius:6px;font-size:11px;font-weight:600;min-width:70px;text-align:center;">' + p.name + '</span>';
-    html += '<input id="wiz_' + p.id + '" type="url" placeholder="' + p.placeholder + '" style="flex:1;padding:10px 12px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:11px;font-family:\'Inter\',sans-serif;">';
+    html += '<input aria-label="' + p.placeholder + '" id="wiz_' + p.id + '" type="url" placeholder="' + p.placeholder + '" style="flex:1;padding:10px 12px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:11px;font-family:\'Inter\',sans-serif;">';
     if (p.url) {
       html += '<a href="' + p.url + '" target="_blank" style="background:rgba(255,255,255,0.08);color:var(--text2);padding:8px 10px;border-radius:8px;font-size:10px;text-decoration:none;white-space:nowrap;border:1px solid var(--border2);" title="Ouvrir ' + p.name + '">Ouvrir &#8599;</a>';
     }
@@ -6331,31 +6331,31 @@ function wizardStep_Provider() {
 
   // Name
   html += '<label style="display:block;font-size:11px;color:var(--text3);margin-bottom:4px;text-transform:uppercase;">Nom</label>';
-  html += '<input id="wizProvName" type="text" placeholder="Nom du prestataire" style="width:100%;padding:10px 14px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;font-family:\'Inter\',sans-serif;box-sizing:border-box;margin-bottom:10px;">';
+  html += '<input aria-label="Nom du prestataire" id="wizProvName" type="text" placeholder="Nom du prestataire" style="width:100%;padding:10px 14px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;font-family:\'Inter\',sans-serif;box-sizing:border-box;margin-bottom:10px;">';
 
   // Phone
   html += '<label style="display:block;font-size:11px;color:var(--text3);margin-bottom:4px;text-transform:uppercase;">Telephone</label>';
-  html += '<input id="wizProvPhone" type="tel" placeholder="06 12 34 56 78" style="width:100%;padding:10px 14px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;font-family:\'Inter\',sans-serif;box-sizing:border-box;margin-bottom:10px;">';
+  html += '<input aria-label="06 12 34 56 78" id="wizProvPhone" type="tel" placeholder="06 12 34 56 78" style="width:100%;padding:10px 14px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;font-family:\'Inter\',sans-serif;box-sizing:border-box;margin-bottom:10px;">';
 
   // Email
   html += '<label style="display:block;font-size:11px;color:var(--text3);margin-bottom:4px;text-transform:uppercase;">Email</label>';
-  html += '<input id="wizProvEmail" type="email" placeholder="prenom@email.com" style="width:100%;padding:10px 14px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;font-family:\'Inter\',sans-serif;box-sizing:border-box;margin-bottom:10px;">';
+  html += '<input aria-label="prenom@email.com" id="wizProvEmail" type="email" placeholder="prenom@email.com" style="width:100%;padding:10px 14px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;font-family:\'Inter\',sans-serif;box-sizing:border-box;margin-bottom:10px;">';
 
   // Address
   html += '<label style="display:block;font-size:11px;color:var(--text3);margin-bottom:4px;text-transform:uppercase;">Adresse</label>';
-  html += '<input id="wizProvAddress" type="text" placeholder="Ville ou adresse" style="width:100%;padding:10px 14px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;font-family:\'Inter\',sans-serif;box-sizing:border-box;margin-bottom:10px;">';
+  html += '<input aria-label="Ville ou adresse" id="wizProvAddress" type="text" placeholder="Ville ou adresse" style="width:100%;padding:10px 14px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;font-family:\'Inter\',sans-serif;box-sizing:border-box;margin-bottom:10px;">';
 
   // % + Tarif
   html += '<div style="display:flex;gap:8px;margin-bottom:10px;">';
   html += '<div style="flex:1;"><label style="display:block;font-size:11px;color:var(--text3);margin-bottom:4px;text-transform:uppercase;">% repartition</label>';
-  html += '<input id="wizProvPct" type="number" min="0" max="100" value="100" style="width:100%;padding:10px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;box-sizing:border-box;"></div>';
+  html += '<input aria-label="Pourcentage de repartition" id="wizProvPct" type="number" min="0" max="100" value="100" style="width:100%;padding:10px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;box-sizing:border-box;"></div>';
   html += '<div style="flex:1;"><label style="display:block;font-size:11px;color:var(--text3);margin-bottom:4px;text-transform:uppercase;">Tarif (€)</label>';
-  html += '<input id="wizProvPrice" type="number" min="0" placeholder="65" style="width:100%;padding:10px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;box-sizing:border-box;"></div>';
+  html += '<input aria-label="65" id="wizProvPrice" type="number" min="0" placeholder="65" style="width:100%;padding:10px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;box-sizing:border-box;"></div>';
   html += '</div>';
 
   // Max per day
   html += '<label style="display:block;font-size:11px;color:var(--text3);margin-bottom:4px;text-transform:uppercase;">Max menages/jour</label>';
-  html += '<input id="wizProvMax" type="number" min="1" max="20" value="3" style="width:100%;padding:10px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;box-sizing:border-box;margin-bottom:12px;">';
+  html += '<input aria-label="Capacite max" id="wizProvMax" type="number" min="1" max="20" value="3" style="width:100%;padding:10px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;box-sizing:border-box;margin-bottom:12px;">';
 
   html += '<div style="display:flex;gap:10px;">';
   html += '<button class="btn btnOutline" style="flex:1;padding:12px;font-size:13px;" onclick="wizardStep_IcalUrl()">&#10094; Retour</button>';
@@ -6392,14 +6392,14 @@ function wizardStep_ProviderInfo() {
   html += '<div style="font-size:16px;font-weight:700;color:#34d399;margin-bottom:4px;">Etape 1/2</div>';
   html += '<div style="font-size:14px;color:var(--text2);margin-bottom:16px;">Vos informations</div>';
   html += '<label style="display:block;font-size:11px;color:var(--text3);margin-bottom:4px;text-transform:uppercase;">Votre nom</label>';
-  html += '<input id="wizProvSelfName" type="text" placeholder="Prenom Nom" style="width:100%;padding:12px 14px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;font-family:\'Inter\',sans-serif;box-sizing:border-box;margin-bottom:10px;">';
+  html += '<input aria-label="Prenom Nom" id="wizProvSelfName" type="text" placeholder="Prenom Nom" style="width:100%;padding:12px 14px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;font-family:\'Inter\',sans-serif;box-sizing:border-box;margin-bottom:10px;">';
   html += '<label style="display:block;font-size:11px;color:var(--text3);margin-bottom:4px;text-transform:uppercase;">Telephone</label>';
-  html += '<input id="wizProvSelfPhone" type="tel" placeholder="06 12 34 56 78" style="width:100%;padding:12px 14px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;font-family:\'Inter\',sans-serif;box-sizing:border-box;margin-bottom:10px;">';
+  html += '<input aria-label="06 12 34 56 78" id="wizProvSelfPhone" type="tel" placeholder="06 12 34 56 78" style="width:100%;padding:12px 14px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;font-family:\'Inter\',sans-serif;box-sizing:border-box;margin-bottom:10px;">';
   html += '<label style="display:block;font-size:11px;color:var(--text3);margin-bottom:4px;text-transform:uppercase;">Votre adresse</label>';
   html += wizAddressFieldHTML('wizProvSelfAddress', 'wizProvMap');
   html += '<div style="margin-top:10px;">';
   html += '<label style="display:block;font-size:11px;color:var(--text3);margin-bottom:4px;text-transform:uppercase;">Rayon d\'action : <span id="wizRadiusVal" style="color:var(--accent);font-weight:700;">15 km</span></label>';
-  html += '<input id="wizRadius" type="range" min="1" max="100" value="15" oninput="document.getElementById(\'wizRadiusVal\').textContent=this.value+\' km\';updateWizProvCircle()" style="width:100%;accent-color:var(--accent);">';
+  html += '<input aria-label="Rayon en km" id="wizRadius" type="range" min="1" max="100" value="15" oninput="document.getElementById(\'wizRadiusVal\').textContent=this.value+\' km\';updateWizProvCircle()" style="width:100%;accent-color:var(--accent);">';
   html += '<div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text3);"><span>1 km</span><span>50 km</span><span>100 km</span></div>';
   html += '</div>';
   html += '<div style="height:12px;"></div>';
@@ -6657,7 +6657,7 @@ function renderChecklist() {
   div.innerHTML = propCheckItems.map((item, i) => `
     <div style="display:flex;align-items:center;gap:8px;padding:6px 4px;border-bottom:1px solid var(--border);">
       <span style="flex:1;font-size:13px;color:var(--text);">${esc(item)}</span>
-      <button class="btn btnSmall btnDanger" style="padding:2px 8px;font-size:11px;" onclick="removeCheckItem(${i})">&#10005;</button>
+      <button aria-label="Fermer" class="btn btnSmall btnDanger" style="padding:2px 8px;font-size:11px;" onclick="removeCheckItem(${i})">&#10005;</button>
     </div>
   `).join('');
 }
@@ -6898,7 +6898,7 @@ function checkRentalNotifications() {
     if (c.checkoutDate === todayStr) notifications.push({type:'checkout',date:c.checkoutDateFR||fmtDate(c.checkoutDate),source:c.source,provider:c.provider,days:0});
   });
   if (notifications.length > 0) {
-    let html = '<button class="notifClose" onclick="dismissNotif()">&times;</button>';
+    let html = '<button aria-label="Fermer" class="notifClose" onclick="dismissNotif()">&times;</button>';
     html += '<div style="font-weight:600;margin-bottom:8px;">&#128276; Rappels locations</div>';
     notifications.forEach(n => {
       const icon = n.type === 'checkin' ? '&#10140;' : '&#10550;';
@@ -6973,12 +6973,12 @@ async function renderProviders() {
       <td class="center" style="font-size:12px;cursor:pointer;" onclick="rateProvider(${i})" title="Noter">${ratingDisplay}</td>
       <td class="center" style="cursor:pointer;" onclick="toggleFavorite(${i})" title="Favori">${favIcon}</td>
       <td><input type="text" class="provInput pctInput" id="ppct_${i}" value="${p.percentage}" onchange="redistributePct(${i})"></td>
-      <td><input type="text" class="provInput pctInput" id="pprice_${i}" value="${p.price||''}" placeholder="0"></td>
+      <td><input aria-label="0" type="text" class="provInput pctInput" id="pprice_${i}" value="${p.price||''}" placeholder="0"></td>
       <td class="center"><button class="btn btnSmall" onclick="showVacModal(${i})">${vacCount > 0 ? vacCount+' per.' : (t('vacation.none') || 'None')}</button></td>
-      <td class="center"><button class="btnLocation" onclick="editProvider(${i})" title="Modifier" style="font-size:14px;">&#9998;</button></td>
-      <td class="center"><button class="btnLocation ${p.lat ? 'hasLocation' : ''}" onclick="openMapForProvider(${i})" title="${p.address || 'Definir la zone'}">&#128205;</button></td>
-      <td class="center"><button class="btnLocation" onclick="openChat('${esc(p.name)}')" title="Chat" style="font-size:14px;">&#128172;</button></td>
-      <td class="center"><button class="btn btnSmall btnDanger" style="padding:4px 8px;" onclick="removeProvider(${i})">&#10005;</button></td>
+      <td class="center"><button aria-label="Modifier" class="btnLocation" onclick="editProvider(${i})" title="Modifier" style="font-size:14px;">&#9998;</button></td>
+      <td class="center"><button aria-label="${p.address || 'Definir la zone'}" class="btnLocation ${p.lat ? 'hasLocation' : ''}" onclick="openMapForProvider(${i})" title="${p.address || 'Definir la zone'}">&#128205;</button></td>
+      <td class="center"><button aria-label="Chat" class="btnLocation" onclick="openChat('${esc(p.name)}')" title="Chat" style="font-size:14px;">&#128172;</button></td>
+      <td class="center"><button aria-label="Fermer" class="btn btnSmall btnDanger" style="padding:4px 8px;" onclick="removeProvider(${i})">&#10005;</button></td>
     </tr>`;
     totalPct += parseInt(p.percentage) || 0;
   });
@@ -7246,9 +7246,9 @@ function renderVacContent() {
   let html = `<div style="font-size:15px;font-weight:600;color:var(--accent);margin-bottom:12px;">Vacances de ${esc(p.name)}</div>`;
   const periods = (p.vacations||'').split('|').filter(v=>v);
   if (periods.length > 0) {
-    periods.forEach((per,i) => { const [from,to]=per.split('/'); html+=`<div class="vacPeriod"><span class="vacDot">&#9679;</span> ${fmtDate(from)} au ${fmtDate(to)} <button class="btn btnSmall btnDanger" style="padding:3px 8px;font-size:11px;margin-left:auto" onclick="removeVac(${i})">&#10005;</button></div>`; });
+    periods.forEach((per,i) => { const [from,to]=per.split('/'); html+=`<div class="vacPeriod"><span class="vacDot">&#9679;</span> ${fmtDate(from)} au ${fmtDate(to)} <button aria-label="Fermer" class="btn btnSmall btnDanger" style="padding:3px 8px;font-size:11px;margin-left:auto" onclick="removeVac(${i})">&#10005;</button></div>`; });
   } else { html += '<div style="color:var(--text3);margin-bottom:12px;">Aucune periode de vacances.</div>'; }
-  html += `<div style="border-top:1px solid var(--border);padding-top:14px;margin-top:14px;"><div class="lbl">Nouvelle periode</div><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:6px;"><span style="font-size:12px;color:var(--text2);">Du</span><input type="date" id="vacFrom" style="font-size:13px;padding:8px;"><span style="font-size:12px;color:var(--text2);">au</span><input type="date" id="vacTo" style="font-size:13px;padding:8px;"><button class="btn btnSmall btnSuccess" onclick="addVac()">Ajouter</button></div></div>`;
+  html += `<div style="border-top:1px solid var(--border);padding-top:14px;margin-top:14px;"><div class="lbl">Nouvelle periode</div><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:6px;"><span style="font-size:12px;color:var(--text2);">Du</span><input aria-label="Date debut vacances" type="date" id="vacFrom" style="font-size:13px;padding:8px;"><span style="font-size:12px;color:var(--text2);">au</span><input aria-label="Date fin vacances" type="date" id="vacTo" style="font-size:13px;padding:8px;"><button class="btn btnSmall btnSuccess" onclick="addVac()">Ajouter</button></div></div>`;
   document.getElementById('vacBody').innerHTML = html;
 }
 function addVac() { const from=document.getElementById('vacFrom').value,to=document.getElementById('vacTo').value; if(!from||!to){showMsg(t('vacation.dates.required'));return;} if(from>to){showMsg('La date de debut doit etre avant la fin.');return;} const p=config.providers[vacPopupIdx]; p.vacations=p.vacations?p.vacations+'|'+from+'/'+to:from+'/'+to; renderVacContent(); }
@@ -7443,7 +7443,7 @@ function renderResults() {
     const days=getIntervalDays(c.prevCheckout,c.date);
     let intervalCls='',intervalBadge='';
     if(days>=0){if(days===0){intervalCls='intervalShort';intervalBadge=`<span class="intervalBadge short">${days}j</span>`;}else if(days<=2){intervalCls='intervalMed';intervalBadge=`<span class="intervalBadge med">${days}j</span>`;}else{intervalCls='intervalLong';intervalBadge=`<span class="intervalBadge long">${days}j</span>`;}}
-    html+=`<tr class="${rowCls} ${intervalCls}"><td style="color:var(--text3);font-size:12px">${num+1}</td><td><span class="srcBadge ${getSourceClass(c.source)}">${esc(c.source)}</span>${newBadge}</td><td style="font-weight:600">${esc(c.dayName||'')} ${esc(c.dateFR||'')}</td><td style="color:var(--text2)">${esc(c.checkoutDateFR||'')}</td><td class="center">${intervalBadge}</td><td><input type="date" value="${esc(c.cleaningDate||'')}" min="${esc(minDate)}" max="${esc(maxDate)}" onchange="changeCleaningDate(${i},this.value)" style="background:rgba(255,255,255,0.04);color:var(--success);border:1px solid var(--border2);font-size:12px;padding:6px;font-weight:600;border-radius:8px;font-family:'Inter',sans-serif;"></td><td>${buildProvSelect(i,c.provider)}${vacHtml}${lockedBadge}</td><td class="center"><input type="checkbox"${checked} onchange="toggleTransmit(${i})" title="Marquer comme transmis"></td><td class="center"><button class="btn btnSmall" style="padding:4px 6px;" onclick="setReminder(${i})" title="Rappel">&#128276;</button></td></tr>`;
+    html+=`<tr class="${rowCls} ${intervalCls}"><td style="color:var(--text3);font-size:12px">${num+1}</td><td><span class="srcBadge ${getSourceClass(c.source)}">${esc(c.source)}</span>${newBadge}</td><td style="font-weight:600">${esc(c.dayName||'')} ${esc(c.dateFR||'')}</td><td style="color:var(--text2)">${esc(c.checkoutDateFR||'')}</td><td class="center">${intervalBadge}</td><td><input type="date" value="${esc(c.cleaningDate||'')}" min="${esc(minDate)}" max="${esc(maxDate)}" onchange="changeCleaningDate(${i},this.value)" style="background:rgba(255,255,255,0.04);color:var(--success);border:1px solid var(--border2);font-size:12px;padding:6px;font-weight:600;border-radius:8px;font-family:'Inter',sans-serif;"></td><td>${buildProvSelect(i,c.provider)}${vacHtml}${lockedBadge}</td><td class="center"><input type="checkbox"${checked} onchange="toggleTransmit(${i})" title="Marquer comme transmis"></td><td class="center"><button aria-label="Rappel" class="btn btnSmall" style="padding:4px 6px;" onclick="setReminder(${i})" title="Rappel">&#128276;</button></td></tr>`;
   });
   html+='</table>'; document.getElementById('resultDiv').innerHTML=html; renderSummary();
   if(currentTab==='calendar')renderCalendar();
@@ -7728,7 +7728,7 @@ function showProviderLinks() {
       <span class="provDot" style="background:${color}"></span>
       <span style="font-weight:600;min-width:80px;">${esc(p.name)}</span>
       <input type="text" value="${esc(link)}" readonly style="flex:1;padding:6px 10px;background:var(--surface2);color:var(--text3);border:1px solid var(--border2);border-radius:6px;font-size:11px;">
-      <button class="btn btnSmall" onclick="navigator.clipboard.writeText('${esc(link)}');showToast('${esc(p.name)} - lien copie !')" style="padding:6px 10px;">&#128203;</button>
+      <button class="btn btnSmall" aria-label="Copier le lien" onclick="navigator.clipboard.writeText('${esc(link)}');showToast('${esc(p.name)} - lien copie !')" style="padding:6px 10px;">&#128203;</button>
     </div>`;
   });
   document.getElementById('msgBody').innerHTML = html;
@@ -7983,7 +7983,7 @@ function detectNewCleaningsAndNotify(data) {
     <span style="color:#fff;font-size:13px;font-weight:600;">&#128276; ${totalNew} nouveau(x) menage(s) detecte(s) pour ${provCount} prestataire(s)</span>
     <div style="display:flex;gap:8px;">
       <button onclick="notifyAllProviders();this.parentElement.parentElement.remove();" style="background:#fff;color:#059669;border:none;padding:8px 16px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;">&#9993; Notifier tous</button>
-      <button onclick="this.parentElement.parentElement.remove();" style="background:rgba(255,255,255,0.2);color:#fff;border:none;padding:8px 12px;border-radius:8px;font-size:12px;cursor:pointer;">&#10005;</button>
+      <button aria-label="Fermer" onclick="this.parentElement.parentElement.remove();" style="background:rgba(255,255,255,0.2);color:#fff;border:none;padding:8px 12px;border-radius:8px;font-size:12px;cursor:pointer;">&#10005;</button>
     </div>`;
   document.body.appendChild(bar);
   setTimeout(() => { if (bar.parentElement) bar.remove(); }, 15000);
@@ -8522,7 +8522,7 @@ function renderCalendar() {
   const MONTHS=['Janvier','Fevrier','Mars','Avril','Mai','Juin','Juillet','Aout','Septembre','Octobre','Novembre','Decembre'];
   const DAYS=['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'];
   const filterProp=_filterPropertyId;
-  let html='<div class="calNav"><button onclick="calPrev()">&laquo;</button><span>'+MONTHS[calMonth]+' '+calYear+'</span><button onclick="calNext()">&raquo;</button></div>';
+  let html='<div class="calNav"><button aria-label="Mois precedent" onclick="calPrev()">&laquo;</button><span>'+MONTHS[calMonth]+' '+calYear+'</span><button aria-label="Mois suivant" onclick="calNext()">&raquo;</button></div>';
   const firstDate=new Date(calYear,calMonth,1);let firstDay=firstDate.getDay();firstDay=firstDay===0?6:firstDay-1;
   const daysInMonth=new Date(calYear,calMonth+1,0).getDate();
   const today=new Date();const todayStr=today.getFullYear()+'-'+String(today.getMonth()+1).padStart(2,'0')+'-'+String(today.getDate()).padStart(2,'0');
@@ -8893,7 +8893,7 @@ function showAddPropertyWizard() {
   html += '<div style="font-size:16px;font-weight:700;color:var(--accent);margin-bottom:4px;">Nouvelle propriete</div>';
   html += '</div>';
   html += '<label style="display:block;font-size:11px;color:var(--text3);margin-bottom:4px;text-transform:uppercase;">Nom du logement</label>';
-  html += '<input id="addPropName" type="text" placeholder="Ex: Appartement Nice Centre" style="width:100%;padding:12px 14px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;font-family:\'Inter\',sans-serif;box-sizing:border-box;margin-bottom:10px;">';
+  html += '<input aria-label="Ex: Appartement Nice Centre" id="addPropName" type="text" placeholder="Ex: Appartement Nice Centre" style="width:100%;padding:12px 14px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;font-family:\'Inter\',sans-serif;box-sizing:border-box;margin-bottom:10px;">';
   html += '<label style="display:block;font-size:11px;color:var(--text3);margin-bottom:4px;text-transform:uppercase;">Adresse</label>';
   html += wizAddressFieldHTML('addPropAddress', 'addPropMap');
   html += '<div style="display:flex;gap:10px;margin-top:16px;">';
@@ -8940,15 +8940,15 @@ function showAddManualReservation() {
   html += '<div style="font-size:16px;font-weight:700;color:var(--accent);margin-bottom:14px;text-align:center;">Ajouter une reservation</div>';
   html += '<div style="display:flex;flex-direction:column;gap:10px;">';
   html += '<div><label style="font-size:12px;color:var(--text3);display:block;margin-bottom:4px;">Date d\'arrivee (check-in)</label>';
-  html += '<input type="date" id="mrCheckin" style="width:100%;padding:10px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:13px;box-sizing:border-box;"></div>';
+  html += '<input aria-label="Date check-in manuel" type="date" id="mrCheckin" style="width:100%;padding:10px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:13px;box-sizing:border-box;"></div>';
   html += '<div><label style="font-size:12px;color:var(--text3);display:block;margin-bottom:4px;">Date de depart (check-out)</label>';
-  html += '<input type="date" id="mrCheckout" style="width:100%;padding:10px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:13px;box-sizing:border-box;"></div>';
+  html += '<input aria-label="Date check-out manuel" type="date" id="mrCheckout" style="width:100%;padding:10px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:13px;box-sizing:border-box;"></div>';
   html += '<div><label style="font-size:12px;color:var(--text3);display:block;margin-bottom:4px;">Source</label>';
   html += '<select id="mrSource" style="width:100%;padding:10px;background:#1a1a2e;color:#f0f0f5;border:1px solid var(--border2);border-radius:8px;font-size:13px;box-sizing:border-box;">';
   sources.forEach(s => html += '<option value="' + s + '" style="background:#1a1a2e;color:#f0f0f5;">' + s + '</option>');
   html += '</select></div>';
   html += '<div><label style="font-size:12px;color:var(--text3);display:block;margin-bottom:4px;">Nom du voyageur (optionnel)</label>';
-  html += '<input type="text" id="mrGuest" placeholder="Ex: Jean Dupont" style="width:100%;padding:10px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:13px;box-sizing:border-box;"></div>';
+  html += '<input aria-label="Ex: Jean Dupont" type="text" id="mrGuest" placeholder="Ex: Jean Dupont" style="width:100%;padding:10px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:13px;box-sizing:border-box;"></div>';
   html += '</div>';
   html += '<div style="display:flex;gap:8px;margin-top:14px;">';
   html += '<button class="btn btnOutline" style="flex:1;padding:12px;" onclick="closeMsg()">Annuler</button>';
@@ -9262,7 +9262,7 @@ async function showServiceRequestModal() {
   html += '</select>';
   // Date
   html += '<label style="font-size:11px;color:var(--text3);text-transform:uppercase;">Date souhaitee</label>';
-  html += '<input type="date" id="svcReqDate" style="width:100%;padding:10px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:13px;margin-bottom:10px;box-sizing:border-box;">';
+  html += '<input aria-label="Date demande service" type="date" id="svcReqDate" style="width:100%;padding:10px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:13px;margin-bottom:10px;box-sizing:border-box;">';
   // Frequency
   html += '<label style="font-size:11px;color:var(--text3);text-transform:uppercase;">Frequence</label>';
   html += '<select id="svcReqFrequency" style="width:100%;padding:10px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:13px;margin-bottom:10px;">';
@@ -9287,10 +9287,10 @@ async function showServiceRequestModal() {
   html += '</select>';
   // Price
   html += '<label style="font-size:11px;color:var(--text3);text-transform:uppercase;">Prix (€)</label>';
-  html += '<input type="number" id="svcReqPrice" placeholder="0" style="width:100%;padding:10px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:13px;margin-bottom:10px;box-sizing:border-box;">';
+  html += '<input aria-label="0" type="number" id="svcReqPrice" placeholder="0" style="width:100%;padding:10px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:13px;margin-bottom:10px;box-sizing:border-box;">';
   // Description
   html += '<label style="font-size:11px;color:var(--text3);text-transform:uppercase;">Description (optionnel)</label>';
-  html += '<textarea id="svcReqDesc" rows="3" placeholder="Details sur la demande..." style="width:100%;padding:10px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:13px;margin-bottom:14px;resize:vertical;box-sizing:border-box;font-family:inherit;"></textarea>';
+  html += '<textarea aria-label="Details sur la demande..." id="svcReqDesc" rows="3" placeholder="Details sur la demande..." style="width:100%;padding:10px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:13px;margin-bottom:14px;resize:vertical;box-sizing:border-box;font-family:inherit;"></textarea>';
   // Buttons
   html += '<div style="display:flex;gap:8px;">';
   html += '<button class="btn btnOutline" style="flex:1;padding:12px;" onclick="closeMsg()">Annuler</button>';
@@ -9503,7 +9503,7 @@ async function loadServiceRequests() {
         if (r.dispute_details) html += `<div style="font-size:11px;color:var(--text3);margin-bottom:6px;line-height:1.4;">${esc(r.dispute_details)}</div>`;
         if (r.dispute_photos && r.dispute_photos.length) {
           html += `<div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:6px;">`;
-          r.dispute_photos.forEach(p => { html += `<img src="${safePhotoUrl(p)}" onclick="window.open(this.src)" style="width:48px;height:48px;object-fit:cover;border-radius:6px;cursor:pointer;border:1px solid var(--border2);">`; });
+          r.dispute_photos.forEach(p => { html += `<img alt="" src="${safePhotoUrl(p)}" onclick="window.open(this.src)" style="width:48px;height:48px;object-fit:cover;border-radius:6px;cursor:pointer;border:1px solid var(--border2);">`; });
           html += `</div>`;
         }
         html += `<div style="display:flex;gap:6px;">`;
@@ -9659,7 +9659,7 @@ function showCancelModal(requestId, dateStr, svcLabel, price) {
   // Reason
   html += '<div style="margin-bottom:12px;">';
   html += '<label style="font-size:12px;color:var(--text3);display:block;margin-bottom:4px;">Raison (optionnel) :</label>';
-  html += '<textarea id="cancelReason" placeholder="Ex: changement de planning, imprevu..." style="width:100%;padding:10px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:13px;font-family:Inter,sans-serif;resize:vertical;min-height:50px;box-sizing:border-box;"></textarea>';
+  html += '<textarea aria-label="Ex: changement de planning, imprevu..." id="cancelReason" placeholder="Ex: changement de planning, imprevu..." style="width:100%;padding:10px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:13px;font-family:Inter,sans-serif;resize:vertical;min-height:50px;box-sizing:border-box;"></textarea>';
   html += '</div>';
   // Penalty summary
   if (penaltyAmount > 0) {
@@ -10147,7 +10147,7 @@ function showRatingModal(requestId, providerName) {
   }
   html += '</div>';
   html += '<input type="hidden" id="ratingValue" value="0">';
-  html += '<textarea id="ratingComment" rows="2" placeholder="Commentaire (optionnel)..." style="width:100%;padding:10px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:13px;margin-bottom:14px;resize:vertical;box-sizing:border-box;font-family:inherit;"></textarea>';
+  html += '<textarea aria-label="Commentaire (optionnel)..." id="ratingComment" rows="2" placeholder="Commentaire (optionnel)..." style="width:100%;padding:10px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:13px;margin-bottom:14px;resize:vertical;box-sizing:border-box;font-family:inherit;"></textarea>';
   html += '<div style="display:flex;gap:8px;">';
   html += '<button class="btn btnOutline" style="flex:1;padding:12px;" onclick="closeMsg()">Plus tard</button>';
   html += '<button class="btn btnPrimary" style="flex:1;padding:12px;" onclick="submitRating(\'' + requestId + '\',\'' + esc(providerName).replace(/'/g, "\\'") + '\')">Envoyer</button>';

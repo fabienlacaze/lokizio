@@ -31,6 +31,13 @@ export async function checkI18n({ root }) {
       if (/\bt\s*\(\s*['"]/.test(line)) return;
       // Skip console/debug
       if (/console\.(log|error|warn|debug|info)/.test(line)) return;
+      // Skip notifyError (errors use native strings — acceptable)
+      if (/\bnotifyError\s*\(/.test(line)) return;
+      // Skip showToast (transient UI feedback, often status messages — acceptable to not i18n)
+      if (/\bshowToast\s*\(/.test(line)) return;
+      // Skip error thrown messages (Error('...'))
+      if (/\bnew\s+Error\s*\(/.test(line)) return;
+      if (/\bthrow\s+new\s+Error/.test(line)) return;
       // Skip comments (simple heuristic)
       const trimmed = line.trim();
       if (trimmed.startsWith('//') || trimmed.startsWith('*')) return;

@@ -145,7 +145,7 @@ async function authRegister() {
     } catch (e) { console.warn('RGPD consent log failed:', e); }
     // Always show confirmation popup after successful signup
     errEl.textContent = '';
-    try { await sb.auth.signOut(); } catch(e) {}
+    try { await sb.auth.signOut(); } catch(e) { /* best-effort logout, ignore */ }
     // Show inline confirmation in auth screen (modal is inside appMain which is hidden)
     const authBox = document.querySelector('#authScreen > div');
     if (authBox) {

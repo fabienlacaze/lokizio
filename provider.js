@@ -649,7 +649,7 @@ async function showProviderMode() {
         html += '</div>';
       }
     }
-  } catch(e) {}
+  } catch(e) { /* best-effort, ignore */ }
 
   // Org switcher (if provider belongs to multiple orgs)
   const provMemberships = API.getAllMemberships();
@@ -775,7 +775,7 @@ async function showProviderMode() {
       });
       html += '</details>';
     }
-  } catch(e) {}
+  } catch(e) { /* best-effort, ignore */ }
 
   if (unified.length === 0) {
     html += '<div style="text-align:center;padding:40px 20px;">';

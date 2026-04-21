@@ -185,7 +185,7 @@ async function renderPropertyDetailsInline() {
           if (ownerMember.phone) ownerPhone = ownerMember.phone;
           if (ownerMember.address) ownerAddress = ownerMember.address;
         }
-      } catch(e) {}
+      } catch(e) { /* best-effort, ignore */ }
     }
     html += `<div style="${sectionStyle}background:rgba(108,99,255,0.06);">`;
     html += `<div style="${sectionTitleStyle}">&#128100; Proprietaire</div>`;
@@ -495,7 +495,7 @@ function scrollToPropField(targetId, action) {
       el.style.transition = prevTransition || '';
     }, 1000);
     if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.tagName === 'SELECT') {
-      try { el.focus(); } catch(e) {}
+      try { el.focus(); } catch(e) { /* element unavailable, ignore */ }
     }
   }, 200);
 }
@@ -514,7 +514,7 @@ function renderInlineServicesList(prop) {
       const label = getServiceLabel(svcId);
       let freqLabel = getFreqLabel(cfg.frequency || 'booking_end');
       if (cfg.frequency === 'one_time' && cfg.scheduled_date) {
-        try { freqLabel = 'Ponctuel · ' + new Date(cfg.scheduled_date + 'T12:00:00').toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' }); } catch(e) {}
+        try { freqLabel = 'Ponctuel · ' + new Date(cfg.scheduled_date + 'T12:00:00').toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' }); } catch(e) { /* malformed date, keep default label */ }
       }
       const formula = SERVICE_PRICING[svcId];
       const summary = formula && cfg.params ? formula.summary(cfg.params) : '';

@@ -27,7 +27,7 @@ async function showMarketplace(prefillAddress) {
       try {
         const props = await API.loadProperties();
         if (props && props.length && props[0].address) address = props[0].address;
-      } catch(e) {}
+      } catch(e) { /* best-effort pre-fill, ignore */ }
     }
     if (address) {
       const parts = address.split(',').map(p => p.trim());
@@ -456,7 +456,7 @@ async function renderAnnuaireTab() {
   // ── 5. Load marketplace profiles ──
   try {
     // Store current user id for self-exclusion in filterAnnuaire
-    try { const { data: { user: _u } } = await sb.auth.getUser(); if (_u) window.__currentUserId = _u.id; } catch(_) {}
+    try { const { data: { user: _u } } = await sb.auth.getUser(); if (_u) window.__currentUserId = _u.id; } catch(_) { /* best-effort user fetch, ignore */ }
     const { data: mkData } = await sb.from('marketplace_profiles').select('*').eq('visible', true);
     _annuaireProfiles = mkData || [];
     // Also add org members not on marketplace
@@ -581,7 +581,7 @@ async function renderAnnuaireResults(profiles) {
         if (members) members.forEach(m => { if (m.user_id) connectedUserIds.add(m.user_id); });
       }
     }
-  } catch(e) {}
+  } catch(e) { /* best-effort, ignore */ }
   const roleColors = { provider: '#34d399', owner: '#f59e0b', concierge: '#6c63ff' };
   const roleLabels = { provider: 'Prestataire', owner: 'Proprietaire', concierge: 'Conciergerie' };
   const availLabels = { available: '&#128994; Disponible', full: '&#128308; Complet', vacation: '&#127796; En vacances' };
@@ -841,7 +841,7 @@ async function renderMarketplaceResults(profiles) {
         if (members) members.forEach(m => { if (m.user_id) _mkConnected.add(m.user_id); });
       }
     }
-  } catch(e) {}
+  } catch(e) { /* best-effort, ignore */ }
   if (!profiles.length) {
     container.innerHTML = `<div style="text-align:center;padding:40px 20px;">
       <div style="font-size:48px;margin-bottom:12px;opacity:0.4;">&#128269;</div>

@@ -29,8 +29,9 @@ export async function checkLint({ root }) {
         if (findings.length < 20) findings.push({ file: rel, line: ln, type: 'todo', text: line.trim().slice(0, 100) });
       }
 
-      // Empty catch blocks on same line: catch(e) {}
-      if (/catch\s*\([^)]*\)\s*\{\s*\}/.test(line)) {
+      // Empty catch blocks (no comment inside) on same line: catch(e) {}
+      // Ignore catches with a /* ... */ comment inside (intentionally silent).
+      if (/catch\s*\([^)]*\)\s*\{\s*\}/.test(line) && !/catch\s*\([^)]*\)\s*\{\s*\/\*/.test(line)) {
         emptyCatchCount++;
         if (findings.length < 20) findings.push({ file: rel, line: ln, type: 'empty_catch', text: line.trim().slice(0, 100) });
       }

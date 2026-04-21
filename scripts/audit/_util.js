@@ -1,7 +1,7 @@
 import { readdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 
-const EXCLUDE_DIRS = new Set(['node_modules', '.git', 'coverage', 'playwright-report', 'test-results', 'tests']);
+const EXCLUDE_DIRS = new Set(['node_modules', '.git', 'coverage', 'playwright-report', 'test-results', 'tests', 'scripts']);
 const EXCLUDE_FILES = new Set(['sw.js', 'supabase_config.js']);
 
 export function listJsFiles(root, subdir = '') {

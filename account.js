@@ -218,7 +218,6 @@ async function doChangeRole(newRole, subscriptionAction) {
       }
     }
   } else {
-    console.log('UPDATE members.role=', JSON.stringify(newRole), 'typeof=', typeof newRole, 'length=', newRole?.length);
     const { error } = await sb.from('members').update({ role: newRole }).eq('id', member.id);
     updateErr = error;
   }

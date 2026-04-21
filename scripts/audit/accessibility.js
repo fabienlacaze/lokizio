@@ -20,14 +20,19 @@ export async function checkAccessibility({ root }) {
   const inputIds = [...html.matchAll(/<input\b[^>]*\bid=["']([^"']+)["']/g)].map(m => m[1]);
   const labelFors = new Set([...html.matchAll(/<label\b[^>]*\bfor=["']([^"']+)["']/g)].map(m => m[1]));
   const inputAriaLabels = new Set();
-  for (const m of html.matchAll(/<input\b[^>]*\bid=["']([^"']+)["'][^>]*\baria-label\s*=/g)) {
-    inputAriaLabels.add(m[1]);
+  // Check every input tag for co-occurrence of id and aria-label, regardless of order
+  for (const m of html.matchAll(/<input\b([^>]*)>/g)) {
+    const attrs = m[1];
+    const idM = attrs.match(/\bid=["']([^"']+)["']/);
+    if (idM && /\baria-label\s*=/.test(attrs)) inputAriaLabels.add(idM[1]);
   }
 
   const inputsMissingLabel = inputIds.filter(id => {
     // Skip hidden/readonly inputs that are programmatic
     const inputTag = html.match(new RegExp(`<input\\b[^>]*id=["']${id}["'][^>]*>`));
     if (inputTag && /\b(type=["']hidden|readonly)/i.test(inputTag[0])) return false;
+    // Skip JS-template IDs (contain ${...})
+    if (id.includes('${') || id.includes('}')) return false;
     return !labelFors.has(id) && !inputAriaLabels.has(id);
   });
 

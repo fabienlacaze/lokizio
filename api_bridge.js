@@ -43,10 +43,8 @@ const API = (function() {
           const { data: org } = await sb.from('organizations').select('*').eq('id', m.org_id).single();
           m.organizations = org;
         }
-        console.log('loadOrg: found', members.length, 'member(s), role:', members[0]?.role);
       }
       if (error || !members || !members.length) {
-        console.log('No org found, creating onboarding...', error);
         // Auto-create org + member + trial subscription
         const user = (await sb.auth.getUser()).data.user;
         const orgName = user.email ? user.email.split('@')[0] : 'Mon organisation';
@@ -84,11 +82,9 @@ const API = (function() {
                 await sb.from('subscriptions').update({ plan: 'business', current_period_end: newEnd.toISOString() }).eq('user_id', refMembers[0].user_id);
               }
             }
-            console.log('Referrer rewarded: +30 days business');
           }
           localStorage.removeItem('mm_referral');
         }
-        console.log('Onboarding complete: org=' + currentOrg.name);
         return currentOrg;
       }
       allMemberships = members;
