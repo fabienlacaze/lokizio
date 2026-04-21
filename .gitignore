@@ -3,5 +3,6 @@ coverage/
 playwright-report/
 test-results/
 .vitest-cache/
+audit-report.html
 .DS_Store
 *.log

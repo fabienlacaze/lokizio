@@ -20,9 +20,19 @@ npm install
 npm run serve          # http://localhost:8000
 ```
 
-## Tests
+## Tests & audit
 
-Voir [tests/README.md](tests/README.md) pour les details.
+**Un seul bouton pour tout verifier :**
+
+```bash
+npm run audit          # tests + couverture + E2E + lint + secrets + a11y + i18n (~2min)
+npm run audit:quick    # idem sans E2E (~5s) — pour iterer
+npm run audit:strict   # warnings traites comme des echecs (CI strict)
+```
+
+Le rapport HTML complet est genere dans [audit-report.html](audit-report.html).
+
+**Ou les commandes individuelles :**
 
 ```bash
 npm test               # 137 tests unitaires (~1s)
@@ -30,6 +40,8 @@ npm run test:watch
 npm run test:e2e       # Playwright (lance le serveur auto)
 npm run coverage
 ```
+
+Voir [tests/README.md](tests/README.md) pour les details.
 
 ## Structure
 
