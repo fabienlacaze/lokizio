@@ -11,21 +11,35 @@
 --
 -- ══════════════════════════════════════════════════════════════════════════════
 
+-- ─── 0. Ensure RLS helpers exist (idempotent, safe to re-run) ───
+-- These SECURITY DEFINER helpers are used by all policies below to avoid
+-- infinite recursion (policy on members cannot SELECT from members).
+-- Placed in public schema because the Supabase dashboard SQL editor
+-- denies CREATE FUNCTION in the auth schema.
+
+CREATE OR REPLACE FUNCTION public.user_org_id() RETURNS uuid AS $$
+  SELECT org_id FROM public.members WHERE user_id = auth.uid() AND accepted = true LIMIT 1;
+$$ LANGUAGE sql SECURITY DEFINER STABLE;
+
+CREATE OR REPLACE FUNCTION public.user_role() RETURNS text AS $$
+  SELECT role FROM public.members WHERE user_id = auth.uid() AND accepted = true LIMIT 1;
+$$ LANGUAGE sql SECURITY DEFINER STABLE;
+
 -- ─── 1. fix-service-requests-rls.sql ───
 
 DROP POLICY IF EXISTS "Members can update service requests" ON service_requests;
 DROP POLICY IF EXISTS "Admin/concierge update service requests" ON service_requests;
 CREATE POLICY "Admin/concierge update service requests" ON service_requests FOR UPDATE
   USING (
-    org_id = auth.user_org_id()
-    AND auth.user_role() IN ('admin', 'manager', 'concierge')
+    org_id = public.user_org_id()
+    AND public.user_role() IN ('admin', 'manager', 'concierge')
   );
 
 DROP POLICY IF EXISTS "Provider update own service requests" ON service_requests;
 CREATE POLICY "Provider update own service requests" ON service_requests FOR UPDATE
   USING (
-    org_id = auth.user_org_id()
-    AND auth.user_role() = 'provider'
+    org_id = public.user_org_id()
+    AND public.user_role() = 'provider'
     AND (provider_id = auth.uid() OR assigned_to = auth.uid())
   );
 
@@ -34,8 +48,8 @@ DROP POLICY IF EXISTS "Members can update validations" ON cleaning_validations;
 DROP POLICY IF EXISTS "Admin/concierge update validations" ON cleaning_validations;
 CREATE POLICY "Admin/concierge update validations" ON cleaning_validations FOR UPDATE
   USING (
-    property_id IN (SELECT id FROM properties WHERE org_id = auth.user_org_id())
-    AND auth.user_role() IN ('admin', 'manager', 'concierge')
+    property_id IN (SELECT id FROM properties WHERE org_id = public.user_org_id())
+    AND public.user_role() IN ('admin', 'manager', 'concierge')
   );
 
 -- ─── 2. add-messages-context-columns.sql ───
@@ -52,10 +66,10 @@ DROP POLICY IF EXISTS "Tenant messages scoped" ON messages;
 CREATE POLICY "Tenant messages scoped" ON messages FOR SELECT
   USING (
     -- Staff voit tout l'org
-    (auth.user_role() IN ('admin','manager','concierge','owner','provider') AND org_id = auth.user_org_id())
+    (public.user_role() IN ('admin','manager','concierge','owner','provider') AND org_id = public.user_org_id())
     OR
     -- Tenant: uniquement sa reservation/property + messages a lui
-    (auth.user_role() = 'tenant' AND (
+    (public.user_role() = 'tenant' AND (
       sender_id = auth.uid()
       OR recipient_user_id = auth.uid()
       OR reservation_id IN (SELECT id FROM reservations WHERE tenant_user_id = auth.uid())
