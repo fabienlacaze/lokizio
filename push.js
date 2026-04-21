@@ -2,7 +2,7 @@
 // Depends on globals: sb, SUPABASE_URL
 // Exposes: subscribePushNotifications, sendPushToUser, urlBase64ToUint8Array, VAPID_PUBLIC_KEY
 
-const VAPID_PUBLIC_KEY = 'BMAMPjPS9Hb4yfjMpaku-69Cuwlot-lrBl53uF1JDF3OMzuEUckskFCS77Y534VT2PSf0S68ZSOJjfjXUqVU8-Q';
+const VAPID_PUBLIC_KEY = 'BPwAvv6QyNkK6-do47hSTNbdfCXuSkH31l0NkNzVy7ZVV3WUBhE1M6i14JA8McW1Ye4md8kHvZyJYvwY0cvVlQs';
 
 async function subscribePushNotifications() {
   try {
