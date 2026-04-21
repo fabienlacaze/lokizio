@@ -4,5 +4,8 @@ playwright-report/
 test-results/
 .vitest-cache/
 audit-report.html
+.env
+.env.test
+.env.local
 .DS_Store
 *.log

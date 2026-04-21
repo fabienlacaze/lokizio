@@ -9,6 +9,7 @@
     "test:watch": "vitest",
     "test:unit": "vitest run tests/unit",
     "test:edge": "vitest run tests/edge",
+    "test:integration": "vitest run --config vitest.integration.config.js",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "test:all": "npm run test && npm run test:e2e",
@@ -21,7 +22,9 @@
   },
   "devDependencies": {
     "@playwright/test": "^1.48.0",
+    "@supabase/supabase-js": "^2.104.0",
     "@vitest/coverage-v8": "^2.1.0",
+    "dotenv": "^17.4.2",
     "jsdom": "^25.0.0",
     "vitest": "^2.1.0"
   }

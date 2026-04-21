@@ -23,6 +23,7 @@ import { performance } from 'node:perf_hooks';
 import { checkUnitTests } from './audit/unit.js';
 import { checkCoverage } from './audit/coverage.js';
 import { checkE2E } from './audit/e2e.js';
+import { checkIntegration } from './audit/integration.js';
 import { checkLint } from './audit/lint.js';
 import { checkSecrets } from './audit/secrets.js';
 import { checkBundle } from './audit/bundle.js';
@@ -68,8 +69,9 @@ const icon = (status) => {
 const CHECKERS = [
   { id: 'unit',     label: 'UNIT',     fn: checkUnitTests,     always: true },
   { id: 'coverage', label: 'COVERAGE', fn: checkCoverage,      always: true },
-  { id: 'e2e',      label: 'E2E',      fn: checkE2E,           skipOnQuick: true },
-  { id: 'lint',     label: 'LINT',     fn: checkLint,          always: true },
+  { id: 'e2e',         label: 'E2E',         fn: checkE2E,         skipOnQuick: true },
+  { id: 'integration', label: 'INTEGRATION', fn: checkIntegration, skipOnQuick: true },
+  { id: 'lint',        label: 'LINT',        fn: checkLint,        always: true },
   { id: 'bundle',   label: 'BUNDLE',   fn: checkBundle,        always: true },
   { id: 'security', label: 'SECURITY', fn: checkSecrets,       always: true },
   { id: 'dead',     label: 'DEAD',     fn: checkDeadCode,      always: true },
