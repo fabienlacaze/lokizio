@@ -289,6 +289,8 @@ async function loadAdminPrestations(forceReload) {
   });
   if (lastMonthGroup !== '') html += '</details>'; // close last month group
   listEl.innerHTML = html;
+  // Apply filters (hide past by default) after initial render
+  applyAdminPrestFilters();
   } catch(err) { console.error('loadAdminPrestations error:', err); showToast('Erreur chargement prestations: ' + (err.message || 'Probleme de connexion')); }
 }
 

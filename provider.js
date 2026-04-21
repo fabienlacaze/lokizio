@@ -1083,6 +1083,9 @@ async function showProviderMode() {
 
   content.innerHTML = html;
 
+  // Apply filters (hide past by default) after initial render
+  if (typeof applyProvPrestFilters === 'function') applyProvPrestFilters();
+
   // Request push notifications
   if ('Notification' in window && Notification.permission === 'default') {
     Notification.requestPermission();
@@ -1090,6 +1093,27 @@ async function showProviderMode() {
   } catch(err) { console.error('showProviderMode error:', err); showToast('Erreur chargement mode prestataire: ' + (err.message || 'Probleme de connexion')); }
 }
 
+function applyProvPrestFilters() {
+  const todayStr = new Date().toISOString().split('T')[0];
+  const hidePast = !!window._provHidePast;
+  document.querySelectorAll('.prestCard').forEach(card => {
+    const cardDate = card.dataset.date || '';
+    const pastMatch = !hidePast || !cardDate || cardDate >= todayStr;
+    card.style.display = pastMatch ? '' : 'none';
+  });
+}
+
+function toggleProvHidePast(btn) {
+  window._provHidePast = !window._provHidePast;
+  if (btn) {
+    btn.classList.toggle('active', window._provHidePast);
+    btn.innerHTML = window._provHidePast ? '&#128065; Afficher passees' : '&#128065;&#65039; Masquer passees';
+  }
+  applyProvPrestFilters();
+}
+
 // Additional exports
 window.showProviderMode = showProviderMode;
+window.applyProvPrestFilters = applyProvPrestFilters;
+window.toggleProvHidePast = toggleProvHidePast;
 window._appendProviderExtraTabs = _appendProviderExtraTabs;
