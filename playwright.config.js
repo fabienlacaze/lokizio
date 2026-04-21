@@ -13,8 +13,17 @@ export default defineConfig({
     screenshot: 'only-on-failure',
   },
   projects: [
-    { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
-    { name: 'mobile', use: { ...devices['iPhone 13'] } },
+    { name: 'chromium', use: { ...devices['Desktop Chrome'] }, testDir: './tests/e2e' },
+    { name: 'mobile', use: { ...devices['iPhone 13'] }, testDir: './tests/e2e' },
+    // Full authenticated user flows against lokizio-test Supabase.
+    // Runs serially to avoid session conflicts and share a single http-server.
+    {
+      name: 'flows',
+      testDir: './tests/e2e-flows',
+      use: { ...devices['Desktop Chrome'] },
+      timeout: 60_000,
+      fullyParallel: false,
+    },
   ],
   webServer: {
     command: 'npm run serve',
