@@ -72,4 +72,29 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_connection_requests_unique_active
   )
   WHERE status IN ('pending', 'accepted');
 
+-- ─── 4. app_settings table (legal infos) ───
+-- This table is used by legal.js to persist mentions / CGU / CGV / privacy page values.
+-- Single row with id=1.
+
+CREATE TABLE IF NOT EXISTS app_settings (
+  id int PRIMARY KEY,
+  company_name text,
+  legal_status text,
+  siret text,
+  tva_number text,
+  address text,
+  director_name text,
+  contact_email text,
+  mediator text,
+  price_pro numeric(8,2),
+  price_business numeric(8,2),
+  updated_at timestamptz DEFAULT now()
+);
+ALTER TABLE app_settings ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Authenticated read app_settings" ON app_settings;
+CREATE POLICY "Authenticated read app_settings" ON app_settings FOR SELECT TO authenticated USING (true);
+DROP POLICY IF EXISTS "Super admin write app_settings" ON app_settings;
+CREATE POLICY "Super admin write app_settings" ON app_settings FOR ALL
+  USING (EXISTS (SELECT 1 FROM super_admins WHERE user_id = auth.uid()));
+
 NOTIFY pgrst, 'reload schema';
