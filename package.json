@@ -1,0 +1,24 @@
+{
+  "name": "lokizio-tests",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Test suite for Lokizio (unit + integration + E2E)",
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:unit": "vitest run tests/unit",
+    "test:edge": "vitest run tests/edge",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:all": "npm run test && npm run test:e2e",
+    "coverage": "vitest run --coverage",
+    "serve": "npx --yes http-server . -p 8000 -c-1 --cors"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.48.0",
+    "@vitest/coverage-v8": "^2.1.0",
+    "jsdom": "^25.0.0",
+    "vitest": "^2.1.0"
+  }
+}
