@@ -308,8 +308,9 @@ $$ LANGUAGE sql SECURITY DEFINER STABLE;
 
 -- organizations
 ALTER TABLE organizations ENABLE ROW LEVEL SECURITY;
+-- Uses public.user_org_id() (SECURITY DEFINER) to avoid infinite recursion.
 CREATE POLICY "Members view org" ON organizations FOR SELECT
-  USING (id IN (SELECT org_id FROM members WHERE user_id = auth.uid()));
+  USING (id = public.user_org_id());
 CREATE POLICY "Admin update org" ON organizations FOR UPDATE
   USING (id = public.user_org_id() AND public.user_role() IN ('admin','manager','concierge'));
 CREATE POLICY "Authenticated create org" ON organizations FOR INSERT
@@ -318,7 +319,7 @@ CREATE POLICY "Authenticated create org" ON organizations FOR INSERT
 -- members
 ALTER TABLE members ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Members view org members" ON members FOR SELECT
-  USING (org_id IN (SELECT org_id FROM members WHERE user_id = auth.uid()));
+  USING (org_id = public.user_org_id());
 CREATE POLICY "Admin insert member" ON members FOR INSERT TO authenticated
   WITH CHECK (org_id = public.user_org_id() OR user_id = auth.uid());
 CREATE POLICY "Admin update member" ON members FOR UPDATE
@@ -329,24 +330,21 @@ CREATE POLICY "Self or admin delete member" ON members FOR DELETE
 -- properties
 ALTER TABLE properties ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Members view properties" ON properties FOR SELECT
-  USING (org_id IN (SELECT org_id FROM members WHERE user_id = auth.uid()));
+  USING (org_id = public.user_org_id());
 CREATE POLICY "Admin manage properties" ON properties FOR ALL
   USING (org_id = public.user_org_id() AND public.user_role() IN ('admin','manager','concierge'));
 
 -- reservations
 ALTER TABLE reservations ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Staff view reservations" ON reservations FOR SELECT
-  USING (
-    org_id IN (SELECT org_id FROM members WHERE user_id = auth.uid())
-    OR tenant_user_id = auth.uid()
-  );
+  USING (org_id = public.user_org_id() OR tenant_user_id = auth.uid());
 CREATE POLICY "Admin manage reservations" ON reservations FOR ALL
   USING (org_id = public.user_org_id() AND public.user_role() IN ('admin','manager','concierge','owner'));
 
 -- service_requests
 ALTER TABLE service_requests ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Members view service requests" ON service_requests FOR SELECT
-  USING (org_id IN (SELECT org_id FROM members WHERE user_id = auth.uid()));
+  USING (org_id = public.user_org_id());
 CREATE POLICY "Admin insert service requests" ON service_requests FOR INSERT TO authenticated
   WITH CHECK (org_id = public.user_org_id());
 CREATE POLICY "Admin/concierge update service requests" ON service_requests FOR UPDATE
@@ -363,14 +361,14 @@ CREATE POLICY "Admin delete service requests" ON service_requests FOR DELETE
 -- cleaning_validations
 ALTER TABLE cleaning_validations ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Members view validations" ON cleaning_validations FOR SELECT
-  USING (property_id IN (SELECT id FROM properties WHERE org_id IN (SELECT org_id FROM members WHERE user_id = auth.uid())));
+  USING (property_id IN (SELECT id FROM properties WHERE org_id = public.user_org_id()));
 CREATE POLICY "Admin manage validations" ON cleaning_validations FOR ALL
   USING (property_id IN (SELECT id FROM properties WHERE org_id = public.user_org_id() AND public.user_role() IN ('admin','manager','concierge')));
 
 -- invoices
 ALTER TABLE invoices ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Members view invoices" ON invoices FOR SELECT
-  USING (org_id IN (SELECT org_id FROM members WHERE user_id = auth.uid()));
+  USING (org_id = public.user_org_id());
 CREATE POLICY "Members manage invoices" ON invoices FOR ALL
   USING (org_id = public.user_org_id());
 
@@ -456,5 +454,15 @@ CREATE POLICY "Own sent emails" ON email_log FOR SELECT USING (sender_id = auth.
 
 -- email_optout (public insert via edge function)
 ALTER TABLE email_optout ENABLE ROW LEVEL SECURITY;
+
+-- ═══ GRANTS (needed after DROP SCHEMA public or on fresh projects) ═══
+
+GRANT USAGE ON SCHEMA public TO anon, authenticated, service_role;
+GRANT ALL ON ALL TABLES IN SCHEMA public TO anon, authenticated, service_role;
+GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO anon, authenticated, service_role;
+GRANT ALL ON ALL FUNCTIONS IN SCHEMA public TO anon, authenticated, service_role;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO anon, authenticated, service_role;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO anon, authenticated, service_role;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON FUNCTIONS TO anon, authenticated, service_role;
 
 NOTIFY pgrst, 'reload schema';
