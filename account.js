@@ -74,10 +74,10 @@ async function showAccountModal() {
 }
 async function showRoleChangeModal() {
   const roles = [
-    { id: 'concierge', label: 'Concierge', icon: '&#127970;', color: '#e94560', desc: 'Gerez les menages pour plusieurs proprietaires' },
-    { id: 'owner', label: 'Proprietaire', icon: '&#127968;', color: '#f59e0b', desc: 'Suivez les menages de vos biens' },
-    { id: 'provider', label: 'Prestataire', icon: '&#129529;', color: '#34d399', desc: 'Consultez et validez vos missions' },
-    { id: 'tenant', label: 'Locataire', icon: '&#128273;', color: '#a78bfa', desc: 'Suivez les interventions dans votre logement' },
+    { id: 'concierge', label: 'Concierge', icon: '&#127970;', color: '#e94560', desc: t('role.concierge.desc') },
+    { id: 'owner', label: 'Proprietaire', icon: '&#127968;', color: '#f59e0b', desc: t('role.owner.desc') },
+    { id: 'provider', label: 'Prestataire', icon: '&#129529;', color: '#34d399', desc: t('role.provider.desc') },
+    { id: 'tenant', label: 'Locataire', icon: '&#128273;', color: '#a78bfa', desc: t('role.tenant.desc') },
   ];
   // Add Admin option only for super-admins (Fabien)
   try {
@@ -524,13 +524,13 @@ async function inviteTenantMember() {
   const end = document.getElementById('inviteTenantEnd').value;
   const access = document.getElementById('inviteTenantAccess').value.trim();
 
-  if (!email) { showMsg('Entrez un email.'); return; }
-  if (!propId) { showMsg('Selectionnez un bien.'); return; }
+  if (!email) { showMsg(t('invite.email.required')); return; }
+  if (!propId) { showMsg(t('invite.property.required')); return; }
   if (!start || !end) { showMsg('Renseignez les dates d\'arrivee et de depart.'); return; }
   if (start > end) { showMsg('La date de depart doit etre apres la date d\'arrivee.'); return; }
   if (!API.isConcierge()) {
     const role = API.getRole();
-    if (role !== 'owner') { showMsg('Seul un concierge ou proprietaire peut inviter un locataire.'); return; }
+    if (role !== 'owner') { showMsg(t('invite.tenant.only_concierge_owner')); return; }
   }
 
   const org = API.getOrg();
@@ -612,8 +612,8 @@ async function inviteTeamMember() {
     const msg = `Bonjour,\n\nVous etes invite(e) en tant que ${roleLabels[role] || role} sur Lokizio.\n\n1. Creez un compte sur : ${appUrl}\n2. Utilisez l'email : ${email}\n3. Votre acces sera automatiquement configure.\n\n-- Lokizio`;
 
     await customConfirm(
-      'Invitation creee pour ' + email + ' (role: ' + (roleLabels[role] || role) + ').\n\nEnvoyez-lui ce lien pour creer son compte :\n' + appUrl + '\n\nAvec l\'email : ' + email,
-      'Copier le message'
+      t('invite.created') + email + ' (role: ' + (roleLabels[role] || role) + ').\n\nEnvoyez-lui ce lien pour creer son compte :\n' + appUrl + '\n\nAvec l\'email : ' + email,
+      t('invite.copy_message')
     ).then(ok => {
       if (ok) {
         navigator.clipboard.writeText(msg).catch(() => {});
@@ -652,8 +652,8 @@ function showChangePasswordForm() {
         <p style="color:#9ca3af;font-size:13px;margin:0;">Definissez votre nouveau mot de passe</p>
       </div>
       <div style="position:relative;margin-bottom:8px;">
-        <input type="password" id="changePwd1" placeholder="Nouveau mot de passe" oninput="updateChangePwdStrength()" style="width:100%;padding:12px 44px 12px 16px;background:#0f0f1a;color:#fff;border:1px solid rgba(255,255,255,0.1);border-radius:10px;font-size:14px;box-sizing:border-box;font-family:Inter,sans-serif;">
-        <button type="button" onclick="togglePwdVisibility('changePwd1', this)" aria-label="Afficher le mot de passe" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:transparent;border:none;color:#9ca3af;font-size:16px;cursor:pointer;padding:6px;">&#128065;</button>
+        <input type="password" id="changePwd1" placeholder="${t('password.new')}" oninput="updateChangePwdStrength()" style="width:100%;padding:12px 44px 12px 16px;background:#0f0f1a;color:#fff;border:1px solid rgba(255,255,255,0.1);border-radius:10px;font-size:14px;box-sizing:border-box;font-family:Inter,sans-serif;">
+        <button type="button" onclick="togglePwdVisibility('changePwd1', this)" aria-label="${t('password.show')}" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:transparent;border:none;color:#9ca3af;font-size:16px;cursor:pointer;padding:6px;">&#128065;</button>
       </div>
       <div id="changePwdStrength" style="font-size:11px;color:#6b7280;line-height:1.5;margin-bottom:12px;">
         <div id="changePwdReq-len" style="display:flex;align-items:center;gap:4px;"><span class="pwdReq-icon">&#9675;</span> <span>8 caracteres minimum</span></div>
@@ -663,8 +663,8 @@ function showChangePasswordForm() {
         <div id="changePwdReq-special" style="display:flex;align-items:center;gap:4px;"><span class="pwdReq-icon">&#9675;</span> <span>Un caractere special (!@#$...)</span></div>
       </div>
       <div style="position:relative;margin-bottom:16px;">
-        <input type="password" id="changePwd2" placeholder="Confirmez le mot de passe" oninput="updateChangePwdStrength()" style="width:100%;padding:12px 44px 12px 16px;background:#0f0f1a;color:#fff;border:1px solid rgba(255,255,255,0.1);border-radius:10px;font-size:14px;box-sizing:border-box;font-family:Inter,sans-serif;">
-        <button type="button" onclick="togglePwdVisibility('changePwd2', this)" aria-label="Afficher le mot de passe" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:transparent;border:none;color:#9ca3af;font-size:16px;cursor:pointer;padding:6px;">&#128065;</button>
+        <input type="password" id="changePwd2" placeholder="${t('password.confirm')}" oninput="updateChangePwdStrength()" style="width:100%;padding:12px 44px 12px 16px;background:#0f0f1a;color:#fff;border:1px solid rgba(255,255,255,0.1);border-radius:10px;font-size:14px;box-sizing:border-box;font-family:Inter,sans-serif;">
+        <button type="button" onclick="togglePwdVisibility('changePwd2', this)" aria-label="${t('password.show')}" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:transparent;border:none;color:#9ca3af;font-size:16px;cursor:pointer;padding:6px;">&#128065;</button>
       </div>
       <div id="changePwdMsg" style="color:#e94560;font-size:12px;margin-bottom:12px;min-height:16px;"></div>
       <button id="submitChangePwdBtn" onclick="submitChangePassword()" disabled style="width:100%;padding:14px;background:linear-gradient(135deg,#e94560,#c73e54);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:not-allowed;opacity:0.5;transition:opacity 0.2s;">Mettre a jour</button>
@@ -700,11 +700,11 @@ async function submitChangePassword() {
   const msg = document.getElementById('changePwdMsg');
   msg.style.color = '#e94560';
   if (!p1 || p1.length < 8) { msg.textContent = '8 caracteres minimum'; return; }
-  if (!/[A-Z]/.test(p1)) { msg.textContent = 'Au moins une lettre majuscule requise'; return; }
-  if (!/[a-z]/.test(p1)) { msg.textContent = 'Au moins une lettre minuscule requise'; return; }
-  if (!/[0-9]/.test(p1)) { msg.textContent = 'Au moins un chiffre requis'; return; }
+  if (!/[A-Z]/.test(p1)) { msg.textContent = t('password.rule.upper'); return; }
+  if (!/[a-z]/.test(p1)) { msg.textContent = t('password.rule.lower'); return; }
+  if (!/[0-9]/.test(p1)) { msg.textContent = t('password.rule.digit'); return; }
   if (!/[^A-Za-z0-9]/.test(p1)) { msg.textContent = 'Au moins un caractere special requis (!@#$...)'; return; }
-  if (p1 !== p2) { msg.textContent = 'Les mots de passe ne correspondent pas'; return; }
+  if (p1 !== p2) { msg.textContent = t('password.mismatch'); return; }
   msg.textContent = '';
   try {
     const { error } = await sb.auth.updateUser({ password: p1 });
@@ -712,7 +712,7 @@ async function submitChangePassword() {
     document.getElementById('changePwdOverlay').remove();
     showToast(t('account.pwd_changed') || 'Mot de passe modifie !');
   } catch(e) {
-    msg.textContent = 'Erreur: ' + (e.message || 'Impossible de mettre a jour');
+    msg.textContent = 'Erreur: ' + (e.message || t('account.update_failed'));
   }
 }
 async function changeEmail() {
@@ -749,7 +749,7 @@ async function deleteAccount() {
 
   const ok2 = await customConfirm(
     '<div style="text-align:center;"><div style="font-size:32px;margin-bottom:8px;">&#9888;</div><div style="font-size:14px;color:var(--text);">Derniere chance !<br>Cette action supprimera votre compte et toutes vos donnees.</div></div>',
-    'JE CONFIRME LA SUPPRESSION'
+    t('account.delete.confirm_text')
   );
   if (!ok2) return;
 

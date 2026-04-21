@@ -4,7 +4,7 @@
 // Exposes: acceptQuote, refuseQuote, convertQuoteToInvoice, loadQuotes, switchFinQuoteTab
 
 async function acceptQuote(id) {
-  const ok = await customConfirm('Marquer ce devis comme accepte par le client ?', 'Accepter');
+  const ok = await customConfirm(t('invoice.quote.accept_confirm'), 'Accepter');
   if (!ok) return;
   const { data: q } = await sb.from('invoices').select('*').eq('id', id).single();
   const { error } = await sb.from('invoices').update({ status: 'accepted', quote_accepted_at: new Date().toISOString() }).eq('id', id);
@@ -15,7 +15,7 @@ async function acceptQuote(id) {
 }
 
 async function refuseQuote(id) {
-  const ok = await customConfirm('Marquer ce devis comme refuse par le client ?', 'Refuser');
+  const ok = await customConfirm(t('invoice.quote.refuse_confirm'), 'Refuser');
   if (!ok) return;
   const { data: q } = await sb.from('invoices').select('*').eq('id', id).single();
   const { error } = await sb.from('invoices').update({ status: 'refused', quote_refused_at: new Date().toISOString() }).eq('id', id);
@@ -42,7 +42,7 @@ async function notifyQuoteDecision(q, decision) {
 }
 
 async function convertQuoteToInvoice(quoteId) {
-  const ok = await customConfirm('Convertir ce devis en facture ? Le devis sera marque comme accepte.', 'Convertir');
+  const ok = await customConfirm(t('invoice.quote.convert_confirm'), 'Convertir');
   if (!ok) return;
   try {
     const { data: q } = await sb.from('invoices').select('*').eq('id', quoteId).single();

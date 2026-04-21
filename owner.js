@@ -151,7 +151,7 @@ async function renderOwnerPropertyDetails() {
   html += '<div style="margin-bottom:12px;"><label style="' + labelStyle + '">Code d\'acces</label>';
   html += '<input id="ownerPropAccessCode" type="text" value="' + esc(prop.accessCode || '') + '" placeholder="Ex: 1234" style="' + inputStyle + '"></div>';
   html += '<div style="margin-bottom:12px;"><label style="' + labelStyle + '">Instructions d\'arrivee</label>';
-  html += '<textarea id="ownerPropArrival" rows="2" placeholder="Indications pour arriver..." style="' + inputStyle + 'resize:vertical;font-family:\'Inter\',sans-serif;">' + esc(prop.arrivalInstructions || '') + '</textarea></div>';
+  html += '<textarea id="ownerPropArrival" rows="2" placeholder="' + t('owner.address_directions') + '" style="' + inputStyle + 'resize:vertical;font-family:\'Inter\',sans-serif;">' + esc(prop.arrivalInstructions || '') + '</textarea></div>';
   html += '<div style="margin-bottom:4px;"><label style="' + labelStyle + '">Notes</label>';
   html += '<textarea id="ownerPropNotes" rows="3" placeholder="Notes..." style="' + inputStyle + 'resize:vertical;font-family:\'Inter\',sans-serif;">' + esc(prop.notes || '') + '</textarea></div>';
   html += '</div>';
@@ -463,7 +463,7 @@ async function showOwnerMode() {
   }).slice(0, 8);
   if (ownerUpcoming.length > 0) {
     const _osc = { done:'#34d399', in_progress:'#3b82f6', assigned:'#8b5cf6', accepted:'#34d399', pending:'#f59e0b', pending_validation:'#f59e0b', refused:'#ef4444' };
-    const _osl = { done:'Termine', in_progress:'En cours', assigned:'En attente de reponse', accepted:'Accepte', pending:'Attente', pending_validation:'Validation', refused:'Refuse' };
+    const _osl = { done:'Termine', in_progress:'En cours', assigned:t('chat.waiting_answer'), accepted:'Accepte', pending:'Attente', pending_validation:'Validation', refused:'Refuse' };
     html += '<details style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:12px;">';
     html += '<summary style="list-style:none;cursor:pointer;display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;"><div style="font-weight:700;font-size:14px;">&#128203; Prochaines prestations</div><span class="collapseArrow">&#9662;</span></summary>';
     ownerUpcoming.forEach(u => {
@@ -760,7 +760,7 @@ async function showOwnerMode() {
   html += '<div style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:12px;">💬 Messages — Gestionnaire</div>';
   html += '<div id="ownerFullChatMessages" style="flex:1;overflow-y:auto;padding:16px;background:var(--surface);border:1px solid var(--border);border-radius:12px;margin-bottom:10px;min-height:200px;"></div>';
   html += '<div style="display:flex;gap:8px;">';
-  html += '<input type="text" id="ownerFullChatInput" placeholder="Ecrire un message..." onkeydown="if(event.key===\'Enter\')sendOwnerFullChatMessage()" style="flex:1;padding:12px 16px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:12px;font-size:14px;font-family:\'Inter\',sans-serif;">';
+  html += '<input type="text" id="ownerFullChatInput" placeholder="' + t('chat.write_message') + '" onkeydown="if(event.key===\'Enter\')sendOwnerFullChatMessage()" style="flex:1;padding:12px 16px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:12px;font-size:14px;font-family:\'Inter\',sans-serif;">';
   html += '<button onclick="sendOwnerFullChatMessage()" style="background:linear-gradient(135deg,#6c63ff,#5a54e0);color:#fff;border:none;padding:12px 20px;border-radius:12px;font-size:16px;cursor:pointer;">➤</button>';
   html += '</div></div></div>';
 
@@ -932,7 +932,7 @@ function renderOwnerInvoiceSummary(invoices) {
 function renderOwnerInvoicePeriodChips() {
   const row = document.getElementById('ownerInvoicePeriodChips');
   if (!row) return;
-  const chips = [ {id:'all',label:'Tout'}, {id:'thisMonth',label:'Ce mois'}, {id:'lastMonth',label:'Mois dernier'}, {id:'thisYear',label:'Cette annee'} ];
+  const chips = [ {id:'all',label:'Tout'}, {id:'thisMonth',label:'Ce mois'}, {id:'lastMonth',label:'Mois dernier'}, {id:'thisYear',label:t('invoice.period.this_year')} ];
   row.innerHTML = chips.map(c => {
     const act = _ownerInvoicePeriod === c.id;
     return '<button onclick="setOwnerInvoicePeriod(\'' + c.id + '\')" style="padding:5px 10px;border-radius:20px;font-size:11px;border:1px solid ' + (act ? '#6c63ff' : 'var(--border2)') + ';background:' + (act ? 'rgba(108,99,255,0.2)' : 'var(--surface2)') + ';color:' + (act ? '#a78bfa' : 'var(--text3)') + ';cursor:pointer;white-space:nowrap;">' + c.label + '</button>';

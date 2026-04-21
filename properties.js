@@ -273,7 +273,7 @@ async function renderPropertyDetailsInline() {
   html += `<div style="margin-bottom:12px;"><label style="${labelStyle}">Consignes d'arrivee</label>
     <textarea id="inlinePropConsignes" rows="2" placeholder="Parking, wifi, instructions..." style="${inputStyle}resize:vertical;font-family:'Inter',sans-serif;">${esc(prop.consignes || '')}</textarea></div>`;
   html += `<div style="margin-bottom:4px;"><label style="${labelStyle}">Notes</label>
-    <textarea id="inlinePropNotes" rows="3" placeholder="Notes sur la propriete..." style="${inputStyle}resize:vertical;font-family:'Inter',sans-serif;">${esc(prop.notes || '')}</textarea></div>`;
+    <textarea id="inlinePropNotes" rows="3" placeholder="${t('property.notes_placeholder')}" style="${inputStyle}resize:vertical;font-family:'Inter',sans-serif;">${esc(prop.notes || '')}</textarea></div>`;
   html += `</div>`;
   html += `</details>`;
 
@@ -312,7 +312,7 @@ async function renderPropertyDetailsInline() {
   // SECTION: Delete only (auto-save handles saving)
   if ((fullConfig.properties || []).length > 1) {
     html += `<div style="margin-bottom:16px;">`;
-    html += `<button class="btn btnSmall btnDanger" onclick="customConfirm('Supprimer ce bien et toutes ses donnees ?','Supprimer').then(ok=>{if(ok){removeCurrentProperty();setTimeout(()=>{inlinePropCheckItems=[];renderBiensPropertySelector();renderPropertyDetailsInline()},300)}})" style="padding:10px 16px;font-size:13px;">&#128465; Supprimer le bien</button>`;
+    html += `<button class="btn btnSmall btnDanger" onclick="customConfirm(t('property.delete_confirm'),'Supprimer').then(ok=>{if(ok){removeCurrentProperty();setTimeout(()=>{inlinePropCheckItems=[];renderBiensPropertySelector();renderPropertyDetailsInline()},300)}})" style="padding:10px 16px;font-size:13px;">&#128465; Supprimer le bien</button>`;
     html += `</div>`;
   }
 
@@ -535,7 +535,7 @@ function renderInlineServicesList(prop) {
 
 // Remove a service from active property
 async function removeServiceFromProp(svcId) {
-  const ok = await customConfirm('Retirer ce service du bien ?', 'Confirmation');
+  const ok = await customConfirm(t('property.remove_service_confirm'), 'Confirmation');
   if (!ok) return;
   const prop = API.getActiveProperty(fullConfig);
   if (!prop || !prop.serviceConfig) return;

@@ -173,7 +173,7 @@ function renderProvInvoiceSummary(invoices) {
 function renderProvInvoicePeriodChips() {
   const row = document.getElementById('provInvoicePeriodChips');
   if (!row) return;
-  const chips = [ {id:'all',label:'Tout'}, {id:'thisMonth',label:'Ce mois'}, {id:'lastMonth',label:'Mois dernier'}, {id:'thisYear',label:'Cette annee'} ];
+  const chips = [ {id:'all',label:'Tout'}, {id:'thisMonth',label:'Ce mois'}, {id:'lastMonth',label:'Mois dernier'}, {id:'thisYear',label:t('invoice.period.this_year')} ];
   row.innerHTML = chips.map(c => {
     const act = _provInvoicePeriod === c.id;
     return '<button onclick="setProvInvoicePeriod(\'' + c.id + '\')" style="padding:5px 10px;border-radius:20px;font-size:11px;border:1px solid ' + (act ? '#6c63ff' : 'var(--border2)') + ';background:' + (act ? 'rgba(108,99,255,0.2)' : 'var(--surface2)') + ';color:' + (act ? '#a78bfa' : 'var(--text3)') + ';cursor:pointer;white-space:nowrap;">' + c.label + '</button>';
@@ -216,14 +216,14 @@ function switchProvFinTab(tab) {
 }
 
 let _provDocType = 'invoice';
-function setProvDocType(t) {
-  _provDocType = t;
+function setProvDocType(docType) {
+  _provDocType = docType;
   const invBtn = document.getElementById('provDocType_invoice_btn');
   const qBtn = document.getElementById('provDocType_quote_btn');
   const hint = document.getElementById('provDocTypeHint');
-  if (invBtn) invBtn.classList.toggle('finFactModeActive', t === 'invoice');
-  if (qBtn) qBtn.classList.toggle('finFactModeActive', t === 'quote');
-  if (hint) hint.textContent = t === 'quote' ? 'Emettre un devis pour validation avant prestation' : 'A qui envoyer cette facture ?';
+  if (invBtn) invBtn.classList.toggle('finFactModeActive', docType === 'invoice');
+  if (qBtn) qBtn.classList.toggle('finFactModeActive', docType === 'quote');
+  if (hint) hint.textContent = docType === 'quote' ? t('billing.quote_before') : t('billing.invoice_target');
 }
 function openProvInvoice(type) { showCreateInvoiceModal(type, _provDocType === 'quote'); }
 
@@ -719,7 +719,7 @@ async function showProviderMode() {
 
   // Today's prestations summary
   const _sc = { done:'#34d399', departed:'#34d399', in_progress:'#3b82f6', arrived:'#6c63ff', assigned:'#8b5cf6', accepted:'#34d399', pending:'#f59e0b', pending_validation:'#f59e0b', refused:'#ef4444', cancelled:'#ef4444' };
-  const _sl = { done:'Termine', departed:'Parti', in_progress:'En cours', arrived:'Sur place', assigned:'En attente de reponse', accepted:'Accepte', pending:'Attente', pending_validation:'Validation', refused:'Refuse', cancelled:'Annulee' };
+  const _sl = { done:'Termine', departed:'Parti', in_progress:'En cours', arrived:'Sur place', assigned:t('chat.waiting_answer'), accepted:'Accepte', pending:'Attente', pending_validation:'Validation', refused:'Refuse', cancelled:'Annulee' };
   const todayItems = unified.filter(u => u.date === today && !['done','cancelled','departed'].includes(u.status));
   html += '<details style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:12px;">';
   html += '<summary style="list-style:none;cursor:pointer;display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;"><div style="font-weight:700;font-size:14px;">&#128197; Aujourd\'hui — ' + todayItems.length + ' prestation(s)</div><span class="collapseArrow">&#9662;</span></summary>';
@@ -1074,7 +1074,7 @@ async function showProviderMode() {
   html += '<div style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:12px;">💬 Messages</div>';
   html += '<div id="provFullChatMessages" style="flex:1;overflow-y:auto;padding:16px;background:var(--surface);border:1px solid var(--border);border-radius:12px;margin-bottom:10px;min-height:200px;"></div>';
   html += '<div style="display:flex;gap:8px;">';
-  html += '<input type="text" id="provFullChatInput" placeholder="Ecrire un message..." onkeydown="if(event.key===\'Enter\')sendProvFullChatMessage()" style="flex:1;padding:12px 16px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:12px;font-size:14px;font-family:\'Inter\',sans-serif;">';
+  html += '<input type="text" id="provFullChatInput" placeholder="' + t('chat.write_message') + '" onkeydown="if(event.key===\'Enter\')sendProvFullChatMessage()" style="flex:1;padding:12px 16px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:12px;font-size:14px;font-family:\'Inter\',sans-serif;">';
   html += '<button onclick="sendProvFullChatMessage()" style="background:linear-gradient(135deg,#6c63ff,#5a54e0);color:#fff;border:none;padding:12px 20px;border-radius:12px;font-size:16px;cursor:pointer;">➤</button>';
   html += '</div></div></div>';
 

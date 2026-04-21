@@ -51,7 +51,7 @@ async function showCreateInvoiceModal(type, isQuote) {
     }
   } catch(e) { console.error('load clients:', e); }
 
-  const typeLabel = type === 'concierge_to_owner' ? 'Pour le proprietaire' : (type === 'owner_to_concierge' ? 'Pour la conciergerie' : (type === 'provider_to_owner' ? 'Pour le proprietaire' : 'Pour la conciergerie'));
+  const typeLabel = type === 'concierge_to_owner' ? t('invoice.for_owner') : (type === 'owner_to_concierge' ? t('invoice.for_concierge') : (type === 'provider_to_owner' ? t('invoice.for_owner') : t('invoice.for_concierge')));
   const typeColor = type === 'concierge_to_owner' ? '#e94560' : (type === 'owner_to_concierge' ? '#f59e0b' : (type === 'provider_to_owner' ? '#f59e0b' : '#34d399'));
   const typeIcon = type === 'concierge_to_owner' ? '&#127968;' : (type === 'owner_to_concierge' ? '&#127968;' : (type === 'provider_to_owner' ? '&#127968;' : '&#129529;'));
 
@@ -59,7 +59,7 @@ async function showCreateInvoiceModal(type, isQuote) {
   // Header banner
   html += '<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:linear-gradient(135deg,' + typeColor + '22,' + typeColor + '11);border:1px solid ' + typeColor + '40;border-radius:10px;margin-bottom:14px;">';
   html += '<span style="font-size:24px;">' + typeIcon + '</span>';
-  html += '<div style="flex:1;"><div style="font-size:14px;font-weight:700;color:' + typeColor + ';">' + (isQuote ? 'Creer un devis' : 'Creer une facture') + '</div>';
+  html += '<div style="flex:1;"><div style="font-size:14px;font-weight:700;color:' + typeColor + ';">' + (isQuote ? t('invoice.create_quote') : t('invoice.create_invoice')) + '</div>';
   html += '<div style="font-size:11px;color:var(--text3);">' + typeLabel + ' · Numero genere automatiquement</div></div>';
   html += '</div>';
 
@@ -97,7 +97,7 @@ async function showCreateInvoiceModal(type, isQuote) {
   html += '<button class="btn btnSmall btnOutline" style="width:100%;padding:9px;font-size:12px;margin-bottom:12px;" onclick="autoFillInvoiceItems(\'' + type + '\')">&#9889; Auto-remplir depuis les prestations de la periode</button>';
 
   // Items table
-  html += '<div style="margin-bottom:10px;"><label style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:4px;">' + (isQuote ? 'Lignes du devis' : 'Lignes de facture') + '</label>';
+  html += '<div style="margin-bottom:10px;"><label style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:4px;">' + (isQuote ? t('invoice.quote_lines') : t('invoice.lines')) + '</label>';
   html += '<div style="background:var(--surface2);border-radius:10px;padding:10px;border:1px solid var(--border);">';
   html += '<div style="display:grid;grid-template-columns:1fr 60px 80px 70px 26px;gap:6px;padding:0 2px 6px;border-bottom:1px solid var(--border);font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;">';
   html += '<div>Description</div><div style="text-align:center;">Qte</div><div style="text-align:right;">PU HT</div><div style="text-align:right;">Total</div><div></div>';
@@ -108,7 +108,7 @@ async function showCreateInvoiceModal(type, isQuote) {
 
   // Notes
   html += '<div style="margin-bottom:12px;"><label style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:4px;">Notes (optionnel)</label>';
-  html += '<textarea id="invNotes" rows="2" placeholder="Conditions particulieres, modalites de paiement..." style="width:100%;padding:8px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:12px;resize:vertical;box-sizing:border-box;font-family:inherit;"></textarea></div>';
+  html += '<textarea id="invNotes" rows="2" placeholder="' + t('invoice.conditions_placeholder') + '" style="width:100%;padding:8px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:12px;resize:vertical;box-sizing:border-box;font-family:inherit;"></textarea></div>';
 
   // Totals (sticky bottom-ish)
   html += '<div id="invTotals" style="background:linear-gradient(135deg,rgba(108,99,255,0.1),rgba(108,99,255,0.05));border:1px solid rgba(108,99,255,0.3);border-radius:10px;padding:12px;margin-bottom:14px;"></div>';
@@ -318,7 +318,7 @@ async function autoFillInvoiceItems(type) {
       byProvider[p].price = byProvider[p].price || getServicePrice(prop?.id || '', sr.service_type, 'cost_provider');
     });
     window._invoiceItems = Object.entries(byProvider).map(([name, data]) => ({
-      description: 'Prestations de ' + name + ' - ' + (prop?.name || ''),
+      description: t('invoice.prestations_of') + name + ' - ' + (prop?.name || ''),
       quantity: data.count,
       unit_price: data.price
     }));

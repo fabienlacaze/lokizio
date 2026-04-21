@@ -7,16 +7,16 @@
 
 let _conciergeDocType = 'invoice';
 
-function setConciergeDocType(t) {
-  _conciergeDocType = t;
+function setConciergeDocType(docType) {
+  _conciergeDocType = docType;
   const invBtn = document.getElementById('concDocType_invoice_btn');
   const qBtn = document.getElementById('concDocType_quote_btn');
   const hint = document.getElementById('concDocTypeHint');
   const provLbl = document.getElementById('concBtnProviderLabel');
-  if (invBtn) invBtn.classList.toggle('finFactModeActive', t === 'invoice');
-  if (qBtn) qBtn.classList.toggle('finFactModeActive', t === 'quote');
-  if (hint) hint.textContent = t === 'quote' ? 'Emettre un devis pour validation avant prestation' : 'A qui envoyer cette facture ?';
-  if (provLbl) provLbl.textContent = t === 'quote' ? 'Devis recu (prestataire)' : 'Facture recue (prestataire)';
+  if (invBtn) invBtn.classList.toggle('finFactModeActive', docType === 'invoice');
+  if (qBtn) qBtn.classList.toggle('finFactModeActive', docType === 'quote');
+  if (hint) hint.textContent = docType === 'quote' ? t('billing.quote_before') : t('billing.invoice_target');
+  if (provLbl) provLbl.textContent = docType === 'quote' ? 'Devis recu (prestataire)' : 'Facture recue (prestataire)';
 }
 function openConciergeInvoice(type) {
   showCreateInvoiceModal(type, _conciergeDocType === 'quote');
@@ -71,14 +71,14 @@ async function renderAutoBillingPanel() {
   h += '</div>';
   h += '<div style="margin-bottom:14px;"><label style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:6px;">Types de factures generees</label>';
   h += '<div style="display:flex;flex-direction:column;gap:8px;">';
-  h += '<label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:8px 10px;background:var(--surface2);border-radius:8px;" title="Factures que vous envoyez a vos proprietaires pour les prestations realisees"><input type="checkbox" id="ab_type_c2o"' + (typesEnabled.concierge_to_owner ? ' checked' : '') + '> <span style="font-size:13px;">&#127968; A envoyer aux proprietaires</span></label>';
-  h += '<label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:8px 10px;background:var(--surface2);border-radius:8px;" title="Factures recues de vos prestataires pour leurs interventions"><input type="checkbox" id="ab_type_p2c"' + (typesEnabled.provider_to_concierge ? ' checked' : '') + '> <span style="font-size:13px;">&#129529; Recues des prestataires</span></label>';
+  h += '<label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:8px 10px;background:var(--surface2);border-radius:8px;" title="' + t('billing.concierge_to_owner.desc') + '"><input type="checkbox" id="ab_type_c2o"' + (typesEnabled.concierge_to_owner ? ' checked' : '') + '> <span style="font-size:13px;">&#127968; A envoyer aux proprietaires</span></label>';
+  h += '<label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:8px 10px;background:var(--surface2);border-radius:8px;" title="' + t('billing.provider_to_concierge.desc') + '"><input type="checkbox" id="ab_type_p2c"' + (typesEnabled.provider_to_concierge ? ' checked' : '') + '> <span style="font-size:13px;">&#129529; Recues des prestataires</span></label>';
   h += '</div></div>';
   h += '<div style="font-size:11px;color:var(--text3);margin-bottom:12px;">Derniere execution: <b style="color:var(--text2);">' + lastRun + '</b></div>';
   h += '<div style="display:flex;gap:8px;flex-wrap:wrap;">';
   h += '<button class="btn btnPrimary" style="flex:1;min-width:120px;padding:11px;" onclick="saveBillingSettings()">&#128190; Enregistrer</button>';
   h += '<button class="btn btnOutline" style="padding:11px 14px;" onclick="previewAutoBill()" title="Simule sans rien creer">&#128065; Simuler</button>';
-  h += '<button class="btn btnOutline" style="padding:11px 14px;" onclick="triggerAutoBillNow()" title="Declencher la generation maintenant">&#9889; Tester maintenant</button>';
+  h += '<button class="btn btnOutline" style="padding:11px 14px;" onclick="triggerAutoBillNow()" title="' + t('billing.trigger_now') + '">&#9889; Tester maintenant</button>';
   h += '</div>';
   h += '<div id="autoBillingHistory" style="margin-top:14px;"></div>';
   h += '</div>';
@@ -151,7 +151,7 @@ async function previewProviderAutoBill() {
 }
 
 function showAutoBillPreviewModal(invoices) {
-  const typeLabels = { concierge_to_owner: 'Au proprietaire', provider_to_concierge: 'A la conciergerie', provider_to_owner: 'Au proprietaire (direct)' };
+  const typeLabels = { concierge_to_owner: 'Au proprietaire', provider_to_concierge: t('billing.to_concierge'), provider_to_owner: 'Au proprietaire (direct)' };
   let h = '<div style="font-size:13px;color:var(--text2);margin-bottom:12px;">' + invoices.length + ' facture(s) seraient creees. Aucune ecriture en base pour cette simulation.</div>';
   if (!invoices.length) {
     h += '<div style="padding:20px;text-align:center;color:var(--text3);font-size:13px;background:var(--surface2);border-radius:8px;">Aucune facture a creer pour cette periode (rien a facturer ou deja facture).</div>';

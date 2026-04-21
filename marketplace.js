@@ -106,7 +106,7 @@ async function sendConnectionRequest(targetUserId, targetName, targetRole, custo
     if (active) {
       if (active.status === 'pending') { showToast('Demande deja envoyee'); return; }
       if (active.status === 'accepted') {
-        const wantDisconnect = await customConfirm('Vous etes deja connecte avec ' + targetName + '. Voulez-vous vous deconnecter ?', 'Se deconnecter');
+        const wantDisconnect = await customConfirm(t('marketplace.already_connected_with') + targetName + '. Voulez-vous vous deconnecter ?', 'Se deconnecter');
         if (wantDisconnect) await disconnectUser(targetUserId, targetName);
         return;
       }
@@ -184,9 +184,9 @@ async function submitConnectionRequest() {
   const reason = document.getElementById('connectReqReason')?.value || 'work';
   const message = (document.getElementById('connectReqMessage')?.value || '').trim().slice(0, 300);
   const reasonLabels = {
-    work: 'Collaborer sur des prestations',
+    work: t('marketplace.goal.collaborate'),
     hire: 'Recruter / Proposer des missions',
-    service: 'Demander un service pour mes biens',
+    service: t('marketplace.goal.request_service'),
     network: 'Reseau professionnel',
     other: 'Autre'
   };
@@ -203,7 +203,7 @@ async function submitConnectionRequest() {
 
 async function cancelConnectionRequest(targetUserId, targetName) {
   try {
-    const ok = await customConfirm('Annuler votre demande de connexion' + (targetName ? ' a ' + targetName : '') + ' ?', 'Confirmation');
+    const ok = await customConfirm(t('marketplace.cancel_request') + (targetName ? ' a ' + targetName : '') + ' ?', 'Confirmation');
     if (!ok) return;
     const { data: { user } } = await sb.auth.getUser();
     if (!user) return;
@@ -320,8 +320,8 @@ async function renderAnnuaireTab() {
     fullHtml += '<div id="annuairePanel_search" style="display:none;">';
     fullHtml += '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;">';
     fullHtml += '<select id="annRoleFilter" onchange="filterAnnuaire()" style="padding:8px 12px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:13px;">';
-    fullHtml += '<option value="">Tous les profils</option><option value="provider">Prestataires</option><option value="owner">Proprietaires</option><option value="concierge">Conciergeries</option></select>';
-    fullHtml += '<input type="text" id="annCityFilter" placeholder="Ville ou code postal..." oninput="filterAnnuaire()" style="flex:1;min-width:120px;padding:8px 12px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:13px;">';
+    fullHtml += '<option value="">' + t('marketplace.all_profiles') + '</option><option value="provider">Prestataires</option><option value="owner">Proprietaires</option><option value="concierge">Conciergeries</option></select>';
+    fullHtml += '<input type="text" id="annCityFilter" placeholder="' + t('marketplace.city_or_postal') + '" oninput="filterAnnuaire()" style="flex:1;min-width:120px;padding:8px 12px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:13px;">';
     fullHtml += '<select id="annSortFilter" onchange="filterAnnuaire()" style="padding:8px 12px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:13px;">';
     fullHtml += '<option value="recent">Plus recents</option><option value="rating">Meilleure note</option><option value="cleanings">Plus d\'experience</option></select>';
     fullHtml += '</div>';
@@ -624,9 +624,9 @@ async function renderAnnuaireResults(profiles) {
     if (rating > 0) {
       const stars = '&#11088;'.repeat(Math.round(rating));
       let rtip;
-      if (isConcierge) rtip = 'Note moyenne de ' + rating.toFixed(1) + '/5 sur ' + ratingCount + ' avis verifie' + (ratingCount > 1 ? 's' : '') + '. Donnee par les proprietaires et prestataires avec lesquels cette conciergerie a travaille.';
-      else if (isOwnerRole) rtip = 'Note moyenne de ' + rating.toFixed(1) + '/5 sur ' + ratingCount + ' avis verifie' + (ratingCount > 1 ? 's' : '') + '. Donnee par les prestataires et conciergeries ayant collabore avec ce proprietaire.';
-      else rtip = 'Note moyenne de ' + rating.toFixed(1) + '/5 sur ' + ratingCount + ' avis verifie' + (ratingCount > 1 ? 's' : '') + '. Donnee par les conciergeries et proprietaires apres validation de chaque prestation realisee.';
+      if (isConcierge) rtip = t('marketplace.avg_rating') + rating.toFixed(1) + '/5 sur ' + ratingCount + ' avis verifie' + (ratingCount > 1 ? 's' : '') + '. Donnee par les proprietaires et prestataires avec lesquels cette conciergerie a travaille.';
+      else if (isOwnerRole) rtip = t('marketplace.avg_rating') + rating.toFixed(1) + '/5 sur ' + ratingCount + ' avis verifie' + (ratingCount > 1 ? 's' : '') + '. Donnee par les prestataires et conciergeries ayant collabore avec ce proprietaire.';
+      else rtip = t('marketplace.avg_rating') + rating.toFixed(1) + '/5 sur ' + ratingCount + ' avis verifie' + (ratingCount > 1 ? 's' : '') + '. Donnee par les conciergeries et proprietaires apres validation de chaque prestation realisee.';
       html += '<span style="font-size:11px;color:#f59e0b;cursor:help;" title="' + _escHtml(rtip) + '">' + stars + ' ' + rating.toFixed(1) + '/5</span>';
     } else {
       let notip;
@@ -641,7 +641,7 @@ async function renderAnnuaireResults(profiles) {
     if (isConcierge) {
       statLabel = cleanings + ' prestation' + (cleanings > 1 ? 's' : '') + ' organisee' + (cleanings > 1 ? 's' : '');
       cleanTip = cleanings === 0
-        ? 'Aucune prestation organisee a ce jour via Lokizio.'
+        ? t('marketplace.no_organized_prestations')
         : cleanings + ' prestation' + (cleanings > 1 ? 's' : '') + ' planifiee' + (cleanings > 1 ? 's' : '') + ' et coordonnee' + (cleanings > 1 ? 's' : '') + ' par cette conciergerie via Lokizio.';
     } else if (isOwnerRole) {
       statLabel = cleanings + ' bien' + (cleanings > 1 ? 's' : '') + ' gere' + (cleanings > 1 ? 's' : '');
@@ -651,7 +651,7 @@ async function renderAnnuaireResults(profiles) {
     } else {
       statLabel = cleanings + ' prestation' + (cleanings > 1 ? 's' : '');
       cleanTip = cleanings === 0
-        ? 'Aucune prestation validee a ce jour via Lokizio.'
+        ? t('marketplace.no_validated_prestations')
         : cleanings + ' prestation' + (cleanings > 1 ? 's' : '') + ' realisee' + (cleanings > 1 ? 's' : '') + ' et validee' + (cleanings > 1 ? 's' : '') + ' via Lokizio.';
     }
     html += '<span style="font-size:11px;color:var(--text2);cursor:help;" title="' + _escHtml(cleanTip) + '">&#128700; ' + statLabel + '</span>';
@@ -663,16 +663,16 @@ async function renderAnnuaireResults(profiles) {
       else if (daysSince < 365) memberSince = Math.round(daysSince / 30) + ' mois';
       else memberSince = Math.floor(daysSince / 365) + ' an' + (daysSince >= 730 ? 's' : '');
       const joinedDate = new Date(p.created_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
-      html += '<span style="font-size:11px;color:var(--text3);cursor:help;" title="Inscrit sur Lokizio depuis le ' + _escHtml(joinedDate) + '">&#128197; ' + memberSince + '</span>';
+      html += '<span style="font-size:11px;color:var(--text3);cursor:help;" title="' + t('marketplace.registered_since') + _escHtml(joinedDate) + '">&#128197; ' + memberSince + '</span>';
     }
     if (p.experience_years) html += '<span style="font-size:11px;color:var(--text2);cursor:help;" title="Experience professionnelle declaree par l\'utilisateur">&#128188; ' + p.experience_years + ' ans d\'exp.</span>';
     if (p.tarif) html += '<span style="font-size:11px;color:var(--text2);" title="Tarif indicatif">&#128176; ' + _escHtml(p.tarif) + '</span>';
     if (availHtml) {
       let availTip;
-      if (isProfileOnVacation(p)) availTip = 'Actuellement en conges, ne prendra pas de nouvelles missions.';
-      else if (isConcierge) availTip = 'Cette conciergerie accepte de nouveaux proprietaires et prestataires.';
-      else if (isOwnerRole) availTip = 'Ce proprietaire cherche des services pour ses biens.';
-      else availTip = 'Ce prestataire est disponible pour de nouvelles missions.';
+      if (isProfileOnVacation(p)) availTip = t('marketplace.on_vacation');
+      else if (isConcierge) availTip = t('marketplace.concierge_accepts_new');
+      else if (isOwnerRole) availTip = t('marketplace.owner_seeks_services');
+      else availTip = t('marketplace.provider_available');
       html += '<span style="font-size:11px;cursor:help;" title="' + _escHtml(availTip) + '">' + availHtml + '</span>';
     }
     html += '</div>';
@@ -696,7 +696,7 @@ async function renderAnnuaireResults(profiles) {
         html += '<button onclick="disconnectUser(\'' + _escHtml(p.user_id) + '\',\'' + _escHtml(p.display_name || '') + '\')" style="padding:6px 10px;background:none;color:var(--text3);border:1px solid var(--border2);border-radius:8px;font-size:10px;cursor:pointer;" title="Se deconnecter">Retirer</button>';
       } else if (isPending) {
         html += '<span style="margin-left:auto;padding:6px 14px;background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.3);border-radius:8px;font-size:11px;color:#f59e0b;font-weight:600;">&#9203; En attente</span>';
-        html += '<button onclick="cancelConnectionRequest(\'' + _escHtml(p.user_id) + '\',\'' + _escHtml(p.display_name || '') + '\')" style="padding:6px 10px;background:none;color:var(--text3);border:1px solid var(--border2);border-radius:8px;font-size:10px;cursor:pointer;" title="Annuler la demande">Annuler</button>';
+        html += '<button onclick="cancelConnectionRequest(\'' + _escHtml(p.user_id) + '\',\'' + _escHtml(p.display_name || '') + '\')" style="padding:6px 10px;background:none;color:var(--text3);border:1px solid var(--border2);border-radius:8px;font-size:10px;cursor:pointer;" title="' + t('marketplace.cancel_my_request') + '">Annuler</button>';
       } else if (isPrem) {
         html += '<button onclick="openConnectRequestPopup(\'' + _escHtml(p.user_id) + '\',\'' + _escHtml(p.display_name || '') + '\',\'' + _escHtml(p.role) + '\')" style="margin-left:auto;padding:6px 14px;background:linear-gradient(135deg,#6c63ff,#5a54e0);color:#fff;border:none;border-radius:8px;font-size:11px;font-weight:600;cursor:pointer;">&#128279; Se connecter</button>';
       } else {
@@ -893,7 +893,7 @@ async function renderMarketplaceResults(profiles) {
           <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
             ${p.phone ? `<a href="tel:${_escHtml(p.phone)}" style="display:inline-flex;align-items:center;gap:4px;font-size:12px;color:#34d399;text-decoration:none;padding:5px 10px;background:rgba(52,211,153,0.1);border-radius:8px;border:1px solid rgba(52,211,153,0.2);transition:background 0.2s;" onmouseenter="this.style.background='rgba(52,211,153,0.2)'" onmouseleave="this.style.background='rgba(52,211,153,0.1)'">&#128222; Appeler</a>` : ''}
             ${p.email ? `<a href="mailto:${_escHtml(p.email)}" style="display:inline-flex;align-items:center;gap:4px;font-size:12px;color:var(--accent);text-decoration:none;padding:5px 10px;background:rgba(108,99,255,0.1);border-radius:8px;border:1px solid rgba(108,99,255,0.2);transition:background 0.2s;" onmouseenter="this.style.background='rgba(108,99,255,0.2)'" onmouseleave="this.style.background='rgba(108,99,255,0.1)'">&#9993; Email</a>` : ''}
-            ${p.user_id !== _mkMyUserId ? (_mkConnected.has(p.user_id) ? `<span style="margin-left:auto;display:inline-flex;align-items:center;gap:4px;padding:6px 10px;background:rgba(52,211,153,0.1);border:1px solid rgba(52,211,153,0.3);border-radius:8px;font-size:11px;color:#34d399;font-weight:600;">&#10003; Connecte</span><button onclick="disconnectUser('${_escHtml(p.user_id)}','${_escHtml(p.display_name)}')" style="padding:6px 10px;background:none;color:var(--text3);border:1px solid var(--border2);border-radius:8px;font-size:10px;cursor:pointer;">Retirer</button>` : _mkPending.has(p.user_id) ? `<span style="margin-left:auto;padding:6px 14px;background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.3);border-radius:8px;font-size:11px;color:#f59e0b;font-weight:600;">&#9203; En attente</span>` : API.isPremium() ? `<button onclick="sendConnectionRequest('${_escHtml(p.user_id)}','${_escHtml(p.display_name)}','${_escHtml(p.role)}')" style="margin-left:auto;padding:7px 16px;background:linear-gradient(135deg,#6c63ff,#5a54e0);color:#fff;border:none;border-radius:8px;font-size:11px;font-weight:600;cursor:pointer;">&#128279; Se connecter</button>` : `<button onclick="showPremiumModal('Passez Premium pour vous connecter.')" style="margin-left:auto;padding:7px 16px;background:var(--surface);color:var(--text3);border:1px solid var(--border2);border-radius:8px;font-size:11px;cursor:pointer;">&#128274; Premium</button>`) : ''}
+            ${p.user_id !== _mkMyUserId ? (_mkConnected.has(p.user_id) ? `<span style="margin-left:auto;display:inline-flex;align-items:center;gap:4px;padding:6px 10px;background:rgba(52,211,153,0.1);border:1px solid rgba(52,211,153,0.3);border-radius:8px;font-size:11px;color:#34d399;font-weight:600;">&#10003; Connecte</span><button onclick="disconnectUser('${_escHtml(p.user_id)}','${_escHtml(p.display_name)}')" style="padding:6px 10px;background:none;color:var(--text3);border:1px solid var(--border2);border-radius:8px;font-size:10px;cursor:pointer;">Retirer</button>` : _mkPending.has(p.user_id) ? `<span style="margin-left:auto;padding:6px 14px;background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.3);border-radius:8px;font-size:11px;color:#f59e0b;font-weight:600;">&#9203; En attente</span>` : API.isPremium() ? `<button onclick="sendConnectionRequest('${_escHtml(p.user_id)}','${_escHtml(p.display_name)}','${_escHtml(p.role)}')" style="margin-left:auto;padding:7px 16px;background:linear-gradient(135deg,#6c63ff,#5a54e0);color:#fff;border:none;border-radius:8px;font-size:11px;font-weight:600;cursor:pointer;">&#128279; Se connecter</button>` : `<button onclick="showPremiumModal(t('marketplace.premium_required_connect'))" style="margin-left:auto;padding:7px 16px;background:var(--surface);color:var(--text3);border:1px solid var(--border2);border-radius:8px;font-size:11px;cursor:pointer;">&#128274; Premium</button>`) : ''}
           </div>
         </div>
       </div>

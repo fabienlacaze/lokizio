@@ -86,7 +86,7 @@ async function authLogin() {
     checkAuth();
   } catch (e) {
     console.error('Login error:', e);
-    errEl.textContent = 'Erreur de connexion. Verifiez votre reseau.';
+    errEl.textContent = t('auth.network_error');
   }
 }
 async function authRegister() {
@@ -98,9 +98,9 @@ async function authRegister() {
   errEl.textContent = ''; errEl.style.color = '#e94560';
   if (!email || !pass) { errEl.textContent = t('auth.fill.all'); return; }
   if (pass.length < 8) { errEl.textContent = '8 caracteres minimum'; return; }
-  if (!/[A-Z]/.test(pass)) { errEl.textContent = 'Au moins une lettre majuscule requise'; return; }
-  if (!/[a-z]/.test(pass)) { errEl.textContent = 'Au moins une lettre minuscule requise'; return; }
-  if (!/[0-9]/.test(pass)) { errEl.textContent = 'Au moins un chiffre requis'; return; }
+  if (!/[A-Z]/.test(pass)) { errEl.textContent = t('password.rule.upper'); return; }
+  if (!/[a-z]/.test(pass)) { errEl.textContent = t('password.rule.lower'); return; }
+  if (!/[0-9]/.test(pass)) { errEl.textContent = t('password.rule.digit'); return; }
   if (!/[^A-Za-z0-9]/.test(pass)) { errEl.textContent = 'Au moins un caractere special requis (!@#$...)'; return; }
   if (pass !== passConfirm) { errEl.textContent = t('auth.pass.mismatch'); return; }
   try {
@@ -183,7 +183,7 @@ async function forgotPassword() {
     errEl.textContent = t('auth.reset.sent') || 'Email de reinitialisation envoye ! Verifiez votre boite mail.';
   } catch (e) {
     console.error('Reset password error:', e);
-    errEl.textContent = 'Erreur de connexion. Verifiez votre reseau.';
+    errEl.textContent = t('auth.network_error');
   }
 }
 async function authLogout() {

@@ -251,7 +251,7 @@ async function loadAdminPrestations(forceReload) {
     } else if (u.status === 'pending_validation' && u._source === 'service_request') {
       html += '<button style="padding:4px 12px;font-size:10px;font-weight:700;border:none;border-radius:5px;cursor:pointer;background:rgba(52,211,153,0.2);color:#34d399;" onclick="adminValidateService(\'' + u._id + '\',\'done\')">&#10003; Valider</button>';
     } else if (u.status === 'disputed' && u._source === 'service_request') {
-      html += '<span class="card-status" style="background:#dc262618;color:#dc2626;cursor:help;" title="Conteste par le proprietaire">&#9888; Contestee</span>';
+      html += '<span class="card-status" style="background:#dc262618;color:#dc2626;cursor:help;" title="' + t('admin.prestation.disputed') + '">&#9888; Contestee</span>';
       html += '<button style="padding:4px 8px;font-size:10px;border:none;border-radius:5px;cursor:pointer;background:rgba(108,99,255,0.2);color:#6c63ff;" onclick="adminValidateService(\'' + u._id + '\',\'in_progress\')">&#128260; Reprendre</button>';
       html += '<button style="padding:4px 8px;font-size:10px;border:none;border-radius:5px;cursor:pointer;background:rgba(220,38,38,0.2);color:#dc2626;" onclick="adminValidateService(\'' + u._id + '\',\'cancelled\')">&#128683; Annuler</button>';
     } else {

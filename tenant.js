@@ -67,7 +67,7 @@ function renderTenantHome() {
   const r = _tenantReservation || {};
   const fmtD = (d) => d ? new Date(d + 'T12:00:00').toLocaleDateString('fr-FR', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' }) : '—';
   let h = '<div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:14px;">';
-  h += '<div style="font-size:18px;font-weight:800;color:var(--text);margin-bottom:4px;">&#127968; ' + esc(p.name || 'Votre logement') + '</div>';
+  h += '<div style="font-size:18px;font-weight:800;color:var(--text);margin-bottom:4px;">&#127968; ' + esc(p.name || t('tenant.home_title')) + '</div>';
   if (p.address) h += '<div style="font-size:12px;color:var(--text3);margin-bottom:10px;">' + esc(p.address) + '</div>';
   if (p.photo) h += '<img src="' + esc(p.photo) + '" style="width:100%;max-height:220px;object-fit:cover;border-radius:10px;margin-bottom:10px;">';
   h += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px;">';
@@ -98,7 +98,7 @@ async function renderTenantInterventions() {
     h += '<div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:24px;text-align:center;font-size:13px;color:var(--text3);">Aucune intervention prevue pendant votre sejour.</div>';
     el.innerHTML = h; return;
   }
-  const labels = { cleaning_standard: 'Menage', cleaning_deep: 'Menage approfondi', windows: 'Vitres', handyman: 'Bricolage', laundry: 'Linge', ironing: 'Repassage', checkin: 'Check-in', checkout: 'Check-out', key_handover: 'Remise de cles', gardening: 'Jardinage', pool: 'Piscine', pressing: 'Pressing' };
+  const labels = { cleaning_standard: 'Menage', cleaning_deep: 'Menage approfondi', windows: 'Vitres', handyman: 'Bricolage', laundry: 'Linge', ironing: 'Repassage', checkin: 'Check-in', checkout: 'Check-out', key_handover: t('tenant.key_handover'), gardening: 'Jardinage', pool: 'Piscine', pressing: 'Pressing' };
   items.forEach(r => {
     const d = r.requested_date ? new Date(r.requested_date + 'T12:00:00') : null;
     const when = d ? d.toLocaleDateString('fr-FR', { weekday: 'long', day: '2-digit', month: 'long' }) : '—';
@@ -123,7 +123,7 @@ async function renderTenantChat() {
   let h = '<div style="font-size:16px;font-weight:700;color:var(--text);margin:6px 4px 12px;">&#128172; Messages avec la conciergerie</div>';
   h += '<div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:12px;">';
   h += '<div id="tenantChatMessages" style="max-height:55vh;overflow-y:auto;padding:4px;margin-bottom:10px;"></div>';
-  h += '<div style="display:flex;gap:8px;"><input type="text" id="tenantChatInput" placeholder="Ecrire un message..." onkeydown="if(event.key===\'Enter\')tenantSendMessage()" style="flex:1;padding:10px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:13px;">';
+  h += '<div style="display:flex;gap:8px;"><input type="text" id="tenantChatInput" placeholder="' + t('chat.write_message') + '" onkeydown="if(event.key===\'Enter\')tenantSendMessage()" style="flex:1;padding:10px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:13px;">';
   h += '<button onclick="tenantSendMessage()" style="background:var(--accent);color:#fff;border:none;padding:10px 16px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;">Envoyer</button></div>';
   h += '</div>';
   el.innerHTML = h;

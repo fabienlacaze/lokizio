@@ -233,7 +233,7 @@ function _renderInvoiceCard(inv, today) {
       html += '<button class="btn btnSmall" style="padding:4px 8px;font-size:11px;background:#ef4444;color:#fff;" onclick="refuseQuote(\'' + inv.id + '\')" title="Marquer comme refuse">&#10007; Refuser</button>';
     }
     if (inv.status !== 'refused') {
-      html += '<button class="btn btnSmall" style="padding:4px 8px;font-size:11px;background:#6c63ff;color:#fff;" onclick="convertQuoteToInvoice(\'' + inv.id + '\')" title="Convertir ce devis en facture">&#10132; Convertir en facture</button>';
+      html += '<button class="btn btnSmall" style="padding:4px 8px;font-size:11px;background:#6c63ff;color:#fff;" onclick="convertQuoteToInvoice(\'' + inv.id + '\')" title="' + t('invoice.convert_quote') + '">&#10132; Convertir en facture</button>';
     }
   }
   if (inv.status === 'draft') html += '<button class="btn btnSmall" style="padding:4px 8px;font-size:11px;background:#6c63ff;color:#fff;" onclick="updateInvoiceStatus(\'' + inv.id + '\',\'sent\')">Envoyer</button>';
@@ -269,7 +269,7 @@ function renderInvoicePeriodChips() {
     { id: 'all', label: 'Tout' },
     { id: 'thisMonth', label: 'Ce mois' },
     { id: 'lastMonth', label: 'Mois dernier' },
-    { id: 'thisYear', label: 'Cette annee' },
+    { id: 'thisYear', label: t('invoice.period.this_year') },
   ];
   row.innerHTML = chips.map(c => {
     const act = _invoicePeriod === c.id;
@@ -305,7 +305,7 @@ function setInvoicePeriod(p) { _invoicePeriod = p; renderInvoicesView(); }
 function setInvoiceStatus(s) { _invoiceStatus = s; renderInvoicesView(); }
 
 async function sendInvoiceReminder(id) {
-  const ok = await customConfirm('Envoyer une relance au client ?', 'Envoyer');
+  const ok = await customConfirm(t('invoice.send_reminder'), 'Envoyer');
   if (!ok) return;
   try {
     const { data: inv } = await sb.from('invoices').select('*').eq('id', id).maybeSingle();
@@ -478,7 +478,7 @@ async function showInvoiceDetail(id) {
     html += '<span style="padding:4px 12px;background:' + color + '20;color:' + color + ';border-radius:6px;font-weight:700;font-size:13px;">' + label + '</span>';
     html += '</div>';
     // Prestation summary card (always shown)
-    html += '<div onclick="showInvoicePrestationDetail(\'' + inv.id + '\')" style="background:rgba(108,99,255,0.1);border:1px solid rgba(108,99,255,0.3);border-radius:10px;padding:10px 12px;margin-bottom:16px;cursor:pointer;transition:background 0.2s;" onmouseover="this.style.background=\'rgba(108,99,255,0.18)\'" onmouseout="this.style.background=\'rgba(108,99,255,0.1)\'" title="Voir le detail">';
+    html += '<div onclick="showInvoicePrestationDetail(\'' + inv.id + '\')" style="background:rgba(108,99,255,0.1);border:1px solid rgba(108,99,255,0.3);border-radius:10px;padding:10px 12px;margin-bottom:16px;cursor:pointer;transition:background 0.2s;" onmouseover="this.style.background=\'rgba(108,99,255,0.18)\'" onmouseout="this.style.background=\'rgba(108,99,255,0.1)\'" title="' + t('invoice.view_detail') + '">';
     html += '<div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:3px;">&#128203; Prestation</div>';
     html += '<div style="font-size:14px;font-weight:700;color:var(--text);">' + esc(prestLabel) + '</div>';
     if (inv.property_name) html += '<div style="font-size:11px;color:var(--text3);margin-top:2px;">&#127968; ' + esc(inv.property_name) + '</div>';
@@ -643,7 +643,7 @@ async function notifyInvoiceStatus(inv, newStatus) {
 }
 
 async function deleteInvoice(id) {
-  const ok = await customConfirm('Supprimer cette facture ?', 'Supprimer');
+  const ok = await customConfirm(t('invoice.delete_confirm'), 'Supprimer');
   if (!ok) return;
   await sb.from('invoices').delete().eq('id', id);
   showToast('Facture supprimee');
@@ -660,7 +660,7 @@ async function sendInvoiceByEmail(id) {
     h += '<label style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:4px;">Destinataire</label>';
     h += '<input id="emailTo" type="email" value="' + esc(defaultEmail) + '" placeholder="client@exemple.fr" style="width:100%;padding:9px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:13px;box-sizing:border-box;margin-bottom:10px;">';
     h += '<label style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:4px;">Message (optionnel)</label>';
-    h += '<textarea id="emailMsg" rows="3" placeholder="Bonjour, veuillez trouver ci-joint la facture..." style="width:100%;padding:9px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:13px;box-sizing:border-box;margin-bottom:12px;resize:vertical;"></textarea>';
+    h += '<textarea id="emailMsg" rows="3" placeholder="' + t('invoice.email_body') + '" style="width:100%;padding:9px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:13px;box-sizing:border-box;margin-bottom:12px;resize:vertical;"></textarea>';
     h += '<div style="display:flex;gap:8px;">';
     h += '<button class="btn btnOutline" style="flex:1;padding:10px;" onclick="closeMsg()">Annuler</button>';
     h += '<button class="btn btnPrimary" style="flex:1;padding:10px;" onclick="confirmSendInvoiceEmail(\'' + id + '\')">&#128231; Envoyer</button>';
@@ -915,7 +915,7 @@ async function downloadInvoicePDF(invoiceId) {
     doc.text((inv.vat_amount || 0).toFixed(2) + ' EUR', pageW - 16, y, { align: 'right' });
   } else {
     doc.setFontSize(8);
-    doc.text('TVA non applicable, art. 293B du CGI', pageW - 90, y);
+    doc.text(t('invoice.vat.exempt_notice'), pageW - 90, y);
     doc.setFontSize(10);
   }
   y += 8;
