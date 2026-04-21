@@ -67,24 +67,24 @@
 <script src="supabase_config.js?v=731"></script>
 <script src="i18n.js?v=889"></script>
 <script src="ical_parser.js?v=726"></script>
-<script src="api_bridge.js?v=892"></script>
+<script src="api_bridge.js?v=916"></script>
 <script src="vacation.js?v=1"></script>
 <script src="push.js?v=1"></script>
 <script src="legal.js?v=1"></script>
 <script src="quotes.js?v=1"></script>
 <script src="search.js?v=1"></script>
-<script src="tenant.js?v=1"></script>
+<script src="tenant.js?v=2"></script>
 <script src="auto-billing.js?v=1"></script>
 <script src="invoices.js?v=1"></script>
 <script src="invoice-create.js?v=2"></script>
 <script src="auth.js?v=1"></script>
 <script src="provider.js?v=2"></script>
 <script src="owner.js?v=3"></script>
-<script src="marketplace.js?v=1"></script>
+<script src="marketplace.js?v=2"></script>
 <script src="properties.js?v=1"></script>
 <script src="dashboard.js?v=1"></script>
 <script src="admin-prestations.js?v=1"></script>
-<script src="account.js?v=1"></script>
+<script src="account.js?v=2"></script>
 <!-- Lazy-loaded: Leaflet, Chart.js, jsPDF (loaded on demand to improve startup) -->
 <script>
 function lazyLoad(url, type) {
@@ -120,7 +120,7 @@ async function loadPDF() {
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link href="app.css?v=1" rel="stylesheet">
+<link href="app.css?v=2" rel="stylesheet">
 </head>
 <body>
 
@@ -142,7 +142,7 @@ async function loadPDF() {
 </script>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v9.15</div>
+<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v9.16</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -152,7 +152,7 @@ async function loadPDF() {
     <!-- Broom that sweeps -->
     <div id="splashBroom" style="position:absolute;top:50%;left:-60px;font-size:48px;transform:translateY(-50%) rotate(-30deg);opacity:0;transition:all 0.8s cubic-bezier(0.25,0.46,0.45,0.94);">✨</div>
   </div>
-  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v9.15</span></div>
+  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v9.16</span></div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie pour locations</div>
   <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou</div>
   <!-- Loading bar -->
@@ -208,8 +208,8 @@ async function loadPDF() {
     </div>
     <!-- Language flags -->
     <div style="display:flex;justify-content:center;gap:12px;margin-bottom:16px;">
-      <span class="lang-flag" data-lang="fr" onclick="setLang('fr')" style="cursor:pointer;padding:4px 8px;border-radius:6px;border:2px solid var(--accent);background:rgba(233,69,96,0.15);transform:scale(1.1);display:inline-block;transition:all 0.2s;" title="Francais"><img src="https://flagcdn.com/w20/fr.png" width="20" height="15" alt="FR" style="vertical-align:middle;"></span>
-      <span class="lang-flag" data-lang="en" onclick="setLang('en')" style="cursor:pointer;padding:4px 8px;border-radius:6px;border:2px solid transparent;opacity:0.5;display:inline-block;transition:all 0.2s;" title="English"><img src="https://flagcdn.com/w20/gb.png" width="20" height="15" alt="EN" style="vertical-align:middle;"></span>
+      <span class="lang-flag" data-lang="fr" onclick="setLang('fr')" role="button" tabindex="0" aria-label="Francais" onkeydown="if(event.key==='Enter')setLang('fr')" style="cursor:pointer;padding:4px 8px;border-radius:6px;border:2px solid var(--accent);background:rgba(233,69,96,0.15);transform:scale(1.1);display:inline-block;transition:all 0.2s;" title="Francais"><img src="https://flagcdn.com/w20/fr.png" width="20" height="15" alt="Drapeau francais" style="vertical-align:middle;"></span>
+      <span class="lang-flag" data-lang="en" onclick="setLang('en')" role="button" tabindex="0" aria-label="English" onkeydown="if(event.key==='Enter')setLang('en')" style="cursor:pointer;padding:4px 8px;border-radius:6px;border:2px solid transparent;opacity:0.5;display:inline-block;transition:all 0.2s;" title="English"><img src="https://flagcdn.com/w20/gb.png" width="20" height="15" alt="UK flag" style="vertical-align:middle;"></span>
     </div>
     <!-- Tabs -->
     <div style="display:flex;margin-bottom:20px;border-radius:8px;overflow:hidden;border:1px solid var(--border2);">
@@ -217,19 +217,19 @@ async function loadPDF() {
       <button id="tabRegister" onclick="switchAuthTab('register')" data-i18n="auth.tab.register" style="flex:1;padding:10px;font-size:13px;font-weight:600;cursor:pointer;border:none;background:var(--surface2);color:var(--text3);transition:all 0.2s;">Creer un compte</button>
     </div>
     <div id="authError" style="color:#e94560;font-size:13px;text-align:center;margin-bottom:12px;min-height:18px;"></div>
-    <label style="display:block;font-size:12px;color:var(--text3);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.5px;" data-i18n="auth.email">Email</label>
-    <input id="authEmail" type="email" placeholder="votre@email.com" style="width:100%;padding:12px 14px;font-size:14px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;margin-bottom:14px;outline:none;box-sizing:border-box;" onkeydown="if(event.key==='Enter')authSubmit()">
-    <label style="display:block;font-size:12px;color:var(--text3);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.5px;" data-i18n="auth.password">Mot de passe</label>
+    <label for="authEmail" style="display:block;font-size:12px;color:var(--text3);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.5px;" data-i18n="auth.email">Email</label>
+    <input id="authEmail" name="email" type="email" autocomplete="email" required placeholder="votre@email.com" aria-label="Adresse email" style="width:100%;padding:12px 14px;font-size:14px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;margin-bottom:14px;outline:none;box-sizing:border-box;" onkeydown="if(event.key==='Enter')authSubmit()">
+    <label for="authPass" style="display:block;font-size:12px;color:var(--text3);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.5px;" data-i18n="auth.password">Mot de passe</label>
     <div style="position:relative;">
-      <input id="authPass" type="password" placeholder="8 car + Maj + min + chiffre + special" style="width:100%;padding:12px 14px;padding-right:42px;font-size:14px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;margin-bottom:8px;outline:none;box-sizing:border-box;" onkeydown="if(event.key==='Enter')authSubmit()">
-      <span onclick="togglePassVisibility('authPass',this)" style="position:absolute;right:12px;top:12px;cursor:pointer;color:var(--text3);font-size:16px;user-select:none;">&#128065;</span>
+      <input id="authPass" name="password" type="password" autocomplete="current-password" required minlength="8" placeholder="8 car + Maj + min + chiffre + special" aria-label="Mot de passe" style="width:100%;padding:12px 14px;padding-right:42px;font-size:14px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;margin-bottom:8px;outline:none;box-sizing:border-box;" onkeydown="if(event.key==='Enter')authSubmit()">
+      <span onclick="togglePassVisibility('authPass',this)" role="button" tabindex="0" aria-label="Afficher/masquer le mot de passe" style="position:absolute;right:12px;top:12px;cursor:pointer;color:var(--text3);font-size:16px;user-select:none;">&#128065;</span>
     </div>
     <!-- Confirm password (register only) -->
     <div id="authConfirmWrap" style="display:none;">
-      <label style="display:block;font-size:12px;color:var(--text3);margin-bottom:6px;margin-top:6px;text-transform:uppercase;letter-spacing:0.5px;" data-i18n="auth.confirm">Confirmer le mot de passe</label>
+      <label for="authPassConfirm" style="display:block;font-size:12px;color:var(--text3);margin-bottom:6px;margin-top:6px;text-transform:uppercase;letter-spacing:0.5px;" data-i18n="auth.confirm">Confirmer le mot de passe</label>
       <div style="position:relative;">
-        <input id="authPassConfirm" type="password" placeholder="Retapez le mot de passe" style="width:100%;padding:12px 14px;padding-right:42px;font-size:14px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;margin-bottom:8px;outline:none;box-sizing:border-box;" onkeydown="if(event.key==='Enter')authSubmit()">
-        <span onclick="togglePassVisibility('authPassConfirm',this)" style="position:absolute;right:12px;top:12px;cursor:pointer;color:var(--text3);font-size:16px;user-select:none;">&#128065;</span>
+        <input id="authPassConfirm" name="password-confirm" type="password" autocomplete="new-password" minlength="8" placeholder="Retapez le mot de passe" aria-label="Confirmer le mot de passe" style="width:100%;padding:12px 14px;padding-right:42px;font-size:14px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;margin-bottom:8px;outline:none;box-sizing:border-box;" onkeydown="if(event.key==='Enter')authSubmit()">
+        <span onclick="togglePassVisibility('authPassConfirm',this)" role="button" tabindex="0" aria-label="Afficher/masquer le mot de passe" style="position:absolute;right:12px;top:12px;cursor:pointer;color:var(--text3);font-size:16px;user-select:none;">&#128065;</span>
       </div>
     </div>
     <div id="rememberMeRow" style="display:flex;align-items:center;gap:8px;margin-top:12px;">
@@ -1589,6 +1589,7 @@ function getStatusLabel(s) { return (STATUS_CONFIG[s] || {}).label || s || ''; }
 // ── Splash Changelog (update this with each significant version) ──
 // Full versioned changelog — add new entries at TOP
 const VERSION_CHANGELOG = [
+  { v: '9.16', changes: ['Securite: auth JWT + CORS restreint sur toutes les Edge Functions sensibles', 'Chat locataire filtre par reservation (fuite de donnees corrigee)', 'Calcul TVA correct dans la facturation automatique', 'Accessibilite: labels + autocomplete sur inputs critiques', 'Mobile: modales et tableaux optimises <480px'] },
   { v: '9.15', changes: ['Refactoring: CSS extrait dans app.css (~1000 lignes)', 'Module admin-prestations.js (~460 lignes)', 'Module account.js avec gestion de role + team (~830 lignes)'] },
   { v: '9.14', changes: ['Refactoring: renderDashboardContent (~145 lignes) dans dashboard.js'] },
   { v: '9.13', changes: ['Refactoring: module proprietes + editeur de services extrait dans properties.js (~800 lignes de moins)'] },

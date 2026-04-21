@@ -1015,3 +1015,35 @@
   @media (max-width:400px) {
     .fab { bottom: 74px; right: 14px; width: 50px; height: 50px; font-size: 18px; }
   }
+
+  /* Mobile responsive: modales et tableaux (< 480px) */
+  @media (max-width: 480px) {
+    /* Modales: occuper toute la hauteur disponible, retirer marges excessives */
+    .modal > div,
+    .stackedModal > div,
+    [id$="Modal"] > div:first-child {
+      max-height: calc(100dvh - 16px) !important;
+      max-width: 100vw !important;
+      margin: 8px !important;
+      border-radius: 12px !important;
+    }
+    /* Tableaux: scroll horizontal plutot qu'overflow casse */
+    table { display: block; overflow-x: auto; -webkit-overflow-scrolling: touch; max-width: 100%; }
+    /* Inputs: taille tactile minimale (44px recommande iOS) */
+    input[type="text"], input[type="email"], input[type="password"],
+    input[type="number"], input[type="date"], input[type="tel"],
+    textarea, select { min-height: 44px; font-size: 16px; }
+    /* Header actions: compactes */
+    .header-actions { gap: 4px !important; flex-wrap: wrap; }
+    .btnHelp { padding: 6px 8px !important; min-width: 36px; min-height: 36px; }
+    /* Bouton tactile minimum */
+    button { min-height: 36px; }
+    /* Cards factures: stack vertical */
+    .invoice-card, .provider-card, .property-card { flex-direction: column !important; align-items: stretch !important; }
+  }
+
+  /* Evite les debordements horizontaux globaux sur mobile */
+  @media (max-width: 600px) {
+    html, body { overflow-x: hidden; }
+    .content { padding-left: 4px; padding-right: 4px; }
+  }

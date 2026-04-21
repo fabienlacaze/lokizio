@@ -97,14 +97,15 @@ async function sendConnectionRequest(targetUserId, targetName, targetRole, custo
     const myName = member?.display_name || user.email.split('@')[0];
     const myRole = API.getRole();
 
-    // Check if already sent
-    const { data: existing } = await sb.from('connection_requests')
-      .select('id,status')
+    // Check if already sent (recherche sans .maybeSingle pour gerer les historiques refused multiples)
+    const { data: existingList } = await sb.from('connection_requests')
+      .select('id,status,sender_id,receiver_id')
       .or(`and(sender_id.eq.${user.id},receiver_id.eq.${targetUserId}),and(sender_id.eq.${targetUserId},receiver_id.eq.${user.id})`)
-      .maybeSingle();
-    if (existing) {
-      if (existing.status === 'pending') { showToast('Demande deja envoyee'); return; }
-      if (existing.status === 'accepted') {
+      .order('created_at', { ascending: false });
+    const active = (existingList || []).find(r => r.status === 'pending' || r.status === 'accepted');
+    if (active) {
+      if (active.status === 'pending') { showToast('Demande deja envoyee'); return; }
+      if (active.status === 'accepted') {
         const wantDisconnect = await customConfirm('Vous etes deja connecte avec ' + targetName + '. Voulez-vous vous deconnecter ?', 'Se deconnecter');
         if (wantDisconnect) await disconnectUser(targetUserId, targetName);
         return;

@@ -1,14 +1,33 @@
-const APP_VERSION = '9.15';
+const APP_VERSION = '9.16';
 const CACHE_NAME = 'lokizio-v' + APP_VERSION;
 
 // App shell files to cache for offline support
 const APP_SHELL = [
   './',
   './index.html',
+  './app.css',
   './supabase_config.js',
   './i18n.js',
   './ical_parser.js',
   './api_bridge.js',
+  './auth.js',
+  './dashboard.js',
+  './account.js',
+  './admin-prestations.js',
+  './auto-billing.js',
+  './invoice-create.js',
+  './invoices.js',
+  './legal.js',
+  './legal-fill.js',
+  './marketplace.js',
+  './owner.js',
+  './properties.js',
+  './provider.js',
+  './push.js',
+  './quotes.js',
+  './search.js',
+  './tenant.js',
+  './vacation.js',
   './icons/icon-192.png',
   './icons/icon-512.png',
   './manifest.json',

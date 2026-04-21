@@ -244,7 +244,7 @@ async function doChangeRole(newRole, subscriptionAction) {
         console.error('Stripe change error:', err);
         showToast('Erreur lors du changement d\'abonnement. Contactez le support.');
       }
-    } catch(e) { console.error('Stripe change error:', e); }
+    } catch(e) { notifyError('Impossible de changer d\'abonnement', e); }
   }
 
   closeMsg();

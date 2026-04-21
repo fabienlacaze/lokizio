@@ -133,7 +133,22 @@ async function renderTenantChat() {
 async function loadTenantMessages() {
   if (!_tenantOrgId) return;
   const { data: { user } } = await sb.auth.getUser();
-  const { data: msgs } = await sb.from('messages').select('*').eq('org_id', _tenantOrgId).order('created_at', { ascending: true }).limit(100);
+  if (!user) return;
+  // Filtrage strict: seulement les messages lies a la reservation/property du tenant,
+  // ou les messages qu'il a lui-meme ecrits, ou adresses explicitement a lui.
+  const resId = _tenantReservation?.id || null;
+  const propId = _tenantProperty?.id || null;
+  const orFilters = [
+    'sender_id.eq.' + user.id,
+    'recipient_user_id.eq.' + user.id,
+  ];
+  if (resId) orFilters.push('reservation_id.eq.' + resId);
+  if (propId) orFilters.push('property_id.eq.' + propId);
+  const { data: msgs, error } = await sb.from('messages').select('*')
+    .eq('org_id', _tenantOrgId)
+    .or(orFilters.join(','))
+    .order('created_at', { ascending: true }).limit(100);
+  if (error) { if (typeof notifyError === 'function') notifyError('Chargement messages', error); return; }
   const list = document.getElementById('tenantChatMessages');
   if (!list) return;
   const items = msgs || [];
@@ -164,8 +179,10 @@ async function tenantSendMessage() {
     sender_role: 'tenant',
     recipient_name: 'concierge',
     body: body,
+    property_id: _tenantProperty?.id || null,
+    reservation_id: _tenantReservation?.id || null,
   });
-  if (error) { showToast('Erreur: ' + error.message); return; }
+  if (error) { if (typeof notifyError === 'function') notifyError('Envoi message', error); else showToast('Erreur: ' + error.message); return; }
   await loadTenantMessages();
 }
 

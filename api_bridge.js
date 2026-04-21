@@ -678,3 +678,14 @@ const API = (function() {
     isMobile() { return /Android|iPhone|iPad|iPod/i.test(navigator.userAgent); }
   };
 })();
+
+// Centralized error notifier: logs + optional toast. Use in catch() on user-facing actions.
+// notifyError('Enregistrement impossible', e) -> affiche toast rouge avec message, log full error en console.
+window.notifyError = function(label, err) {
+  const msg = (err && (err.message || err.error_description || err.details)) || String(err || '');
+  console.error('[notifyError]', label, err);
+  try {
+    if (typeof showToast === 'function') showToast((label || 'Erreur') + (msg ? ' — ' + msg : ''), 'error');
+    else if (typeof window.showToast === 'function') window.showToast(label + ' — ' + msg, 'error');
+  } catch (_) { /* toast indisponible, log suffit */ }
+};
