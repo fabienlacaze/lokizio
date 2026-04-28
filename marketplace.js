@@ -446,9 +446,18 @@ async function renderAnnuaireTab() {
       tHtml += '<div style="text-align:center;padding:40px 20px;background:var(--surface2);border-radius:12px;border:1px dashed var(--border2);">';
       tHtml += '<div style="font-size:48px;margin-bottom:12px;opacity:0.6;">&#128101;</div>';
       tHtml += '<div style="font-size:15px;font-weight:700;color:var(--text);margin-bottom:6px;">Aucun contact pour l\'instant</div>';
-      tHtml += '<div style="font-size:12px;color:var(--text3);line-height:1.5;margin-bottom:14px;">Recherchez des prestataires, proprietaires ou conciergeries dans l\'onglet <b>Rechercher</b> pour les ajouter a votre reseau.</div>';
-      tHtml += '<button onclick="switchAnnuaireSubTab(\'search\')" style="padding:10px 20px;background:linear-gradient(135deg,#6c63ff,#5a54e0);color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;">&#128269; Rechercher des contacts</button>';
-      tHtml += '</div>';
+      tHtml += '<div style="font-size:12px;color:var(--text3);line-height:1.5;margin-bottom:18px;">Trois facons d\'ajouter un contact :</div>';
+      tHtml += '<div style="display:flex;flex-direction:column;gap:8px;max-width:340px;margin:0 auto;">';
+      // 1. Search marketplace
+      tHtml += '<button onclick="switchAnnuaireSubTab(\'search\')" style="display:flex;align-items:center;gap:10px;padding:12px 14px;background:linear-gradient(135deg,#6c63ff,#5a54e0);color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;text-align:left;">';
+      tHtml += '<span style="font-size:20px;">&#128269;</span><div style="flex:1;">Rechercher dans l\'annuaire<div style="font-size:11px;font-weight:400;opacity:0.85;">Trouver des contacts deja inscrits</div></div></button>';
+      // 2. Invite by email
+      tHtml += '<button onclick="showInviteContactByEmail()" style="display:flex;align-items:center;gap:10px;padding:12px 14px;background:var(--surface);color:var(--text);border:1px solid var(--accent2);border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;text-align:left;">';
+      tHtml += '<span style="font-size:20px;">&#9993;&#65039;</span><div style="flex:1;">Inviter par email<div style="font-size:11px;font-weight:400;color:var(--text3);">Envoyer un lien d\'invitation a un email</div></div></button>';
+      // 3. Manual add
+      tHtml += '<button onclick="showAddManualContact()" style="display:flex;align-items:center;gap:10px;padding:12px 14px;background:var(--surface);color:var(--text);border:1px solid var(--border2);border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;text-align:left;">';
+      tHtml += '<span style="font-size:20px;">&#128221;</span><div style="flex:1;">Ajouter manuellement<div style="font-size:11px;font-weight:400;color:var(--text3);">Saisir un contact (sans email obligatoire)</div></div></button>';
+      tHtml += '</div></div>';
     }
     teamContainer.innerHTML = tHtml;
   }
@@ -948,6 +957,156 @@ async function createAnnuaireProfile() {
   }, 200);
 }
 window.createAnnuaireProfile = createAnnuaireProfile;
+
+// ─── Manual contact + email invite (Mes contacts empty state) ───
+
+// Open a popup to invite a contact by email (sends invite link via email).
+async function showInviteContactByEmail() {
+  const overlay = document.createElement('div');
+  overlay.id = 'inviteContactOverlay';
+  overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px;';
+  overlay.onclick = (e) => { if (e.target === overlay) overlay.remove(); };
+  let html = '<div style="max-width:420px;width:100%;background:var(--surface);border-radius:14px;border:1px solid var(--border);overflow:hidden;">';
+  html += '<div style="display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border-bottom:1px solid var(--border);">';
+  html += '<div style="font-size:14px;font-weight:700;color:var(--text);">&#9993;&#65039; Inviter par email</div>';
+  html += '<button aria-label="Fermer" onclick="document.getElementById(\'inviteContactOverlay\').remove()" style="background:transparent;border:none;color:var(--text3);font-size:20px;cursor:pointer;">&times;</button>';
+  html += '</div>';
+  html += '<div style="padding:16px;">';
+  html += '<label style="display:block;font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">Email du contact</label>';
+  html += '<input id="inviteContactEmail" type="email" placeholder="prenom@example.com" autocomplete="email" style="width:100%;padding:11px 12px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;box-sizing:border-box;margin-bottom:12px;">';
+  html += '<label style="display:block;font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">Role attendu</label>';
+  html += '<select id="inviteContactRole" style="width:100%;padding:10px 12px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;margin-bottom:12px;">';
+  html += '<option value="provider">&#129529; Prestataire</option>';
+  html += '<option value="owner">&#127968; Proprietaire</option>';
+  html += '<option value="concierge">&#127970; Conciergerie</option>';
+  html += '</select>';
+  html += '<label style="display:block;font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">Message (optionnel)</label>';
+  html += '<textarea id="inviteContactMessage" rows="3" placeholder="Bonjour, je vous invite a rejoindre Lokizio pour collaborer sur des prestations..." style="width:100%;padding:10px 12px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:13px;font-family:Inter,sans-serif;resize:vertical;box-sizing:border-box;margin-bottom:14px;"></textarea>';
+  html += '<div style="display:flex;gap:10px;">';
+  html += '<button onclick="document.getElementById(\'inviteContactOverlay\').remove()" style="flex:1;padding:12px;background:var(--surface2);color:var(--text2);border:1px solid var(--border2);border-radius:8px;font-size:14px;cursor:pointer;">Annuler</button>';
+  html += '<button onclick="sendContactInvite()" style="flex:1;padding:12px;background:linear-gradient(135deg,#6c63ff,#5a54e0);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;">&#128231; Envoyer</button>';
+  html += '</div>';
+  html += '</div></div>';
+  overlay.innerHTML = html;
+  document.body.appendChild(overlay);
+}
+window.showInviteContactByEmail = showInviteContactByEmail;
+
+async function sendContactInvite() {
+  const email = (document.getElementById('inviteContactEmail') || {}).value?.trim() || '';
+  const role = (document.getElementById('inviteContactRole') || {}).value || 'provider';
+  const customMsg = (document.getElementById('inviteContactMessage') || {}).value?.trim() || '';
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    showToast('Email invalide');
+    return;
+  }
+  const appUrl = window.location.origin + window.location.pathname;
+  const roleLabels = { provider: 'prestataire', owner: 'proprietaire', concierge: 'conciergerie' };
+  const subject = 'Invitation Lokizio';
+  const body = (customMsg || ('Vous etes invite a rejoindre Lokizio en tant que ' + roleLabels[role] + '.'))
+    + '\n\nCreez votre compte ici: ' + appUrl
+    + '\nUtilisez l\'email: ' + email
+    + '\n\n-- Lokizio';
+  // Try edge function send-email if available; otherwise fall back to mailto
+  try {
+    const { data: { session } } = await sb.auth.getSession();
+    if (session) {
+      const resp = await fetch(`${SUPABASE_URL}/functions/v1/send-email`, {
+        method: 'POST',
+        headers: {
+          'Authorization': 'Bearer ' + session.access_token,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          to: email, subject, html: body.replace(/\n/g, '<br>'),
+          type: 'connection',
+        }),
+      });
+      if (resp.ok) {
+        document.getElementById('inviteContactOverlay')?.remove();
+        showToast('Invitation envoyee a ' + email);
+        return;
+      }
+    }
+  } catch (e) { /* fall back */ }
+  // Fallback: open default mail client
+  window.location.href = 'mailto:' + email + '?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body);
+  document.getElementById('inviteContactOverlay')?.remove();
+  showToast('Email pret a envoyer');
+}
+window.sendContactInvite = sendContactInvite;
+
+// Open a popup to add a contact manually (saved as a private contact, no email required).
+async function showAddManualContact() {
+  const overlay = document.createElement('div');
+  overlay.id = 'manualContactOverlay';
+  overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px;';
+  overlay.onclick = (e) => { if (e.target === overlay) overlay.remove(); };
+  let html = '<div style="max-width:420px;width:100%;background:var(--surface);border-radius:14px;border:1px solid var(--border);overflow:hidden;">';
+  html += '<div style="display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border-bottom:1px solid var(--border);">';
+  html += '<div style="font-size:14px;font-weight:700;color:var(--text);">&#128221; Ajouter un contact</div>';
+  html += '<button aria-label="Fermer" onclick="document.getElementById(\'manualContactOverlay\').remove()" style="background:transparent;border:none;color:var(--text3);font-size:20px;cursor:pointer;">&times;</button>';
+  html += '</div>';
+  html += '<div style="padding:16px;max-height:70vh;overflow-y:auto;">';
+  html += '<label style="display:block;font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">Nom <span style="color:#ef4444;">*</span></label>';
+  html += '<input id="mcName" type="text" placeholder="Marie Dupont" style="width:100%;padding:11px 12px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;box-sizing:border-box;margin-bottom:10px;">';
+  html += '<label style="display:block;font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">Role</label>';
+  html += '<select id="mcRole" style="width:100%;padding:10px 12px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;margin-bottom:10px;">';
+  html += '<option value="provider">&#129529; Prestataire</option>';
+  html += '<option value="owner">&#127968; Proprietaire</option>';
+  html += '<option value="concierge">&#127970; Conciergerie</option>';
+  html += '<option value="other">&#128100; Autre</option>';
+  html += '</select>';
+  html += '<label style="display:block;font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">Telephone</label>';
+  html += '<input id="mcPhone" type="tel" placeholder="06 12 34 56 78" autocomplete="tel" style="width:100%;padding:11px 12px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;box-sizing:border-box;margin-bottom:10px;">';
+  html += '<label style="display:block;font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">Email (optionnel)</label>';
+  html += '<input id="mcEmail" type="email" placeholder="prenom@example.com" autocomplete="email" style="width:100%;padding:11px 12px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;box-sizing:border-box;margin-bottom:10px;">';
+  html += '<label style="display:block;font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">Notes</label>';
+  html += '<textarea id="mcNotes" rows="2" placeholder="Disponible le week-end, vehicule, etc." style="width:100%;padding:10px 12px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:13px;font-family:Inter,sans-serif;resize:vertical;box-sizing:border-box;margin-bottom:14px;"></textarea>';
+  html += '<div style="display:flex;gap:10px;">';
+  html += '<button onclick="document.getElementById(\'manualContactOverlay\').remove()" style="flex:1;padding:12px;background:var(--surface2);color:var(--text2);border:1px solid var(--border2);border-radius:8px;font-size:14px;cursor:pointer;">Annuler</button>';
+  html += '<button onclick="saveManualContact()" style="flex:1;padding:12px;background:linear-gradient(135deg,#6c63ff,#5a54e0);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;">&#128190; Enregistrer</button>';
+  html += '</div>';
+  html += '</div></div>';
+  overlay.innerHTML = html;
+  document.body.appendChild(overlay);
+}
+window.showAddManualContact = showAddManualContact;
+
+async function saveManualContact() {
+  const name = (document.getElementById('mcName') || {}).value?.trim() || '';
+  const role = (document.getElementById('mcRole') || {}).value || 'provider';
+  const phone = (document.getElementById('mcPhone') || {}).value?.trim() || '';
+  const email = (document.getElementById('mcEmail') || {}).value?.trim() || '';
+  const notes = (document.getElementById('mcNotes') || {}).value?.trim() || '';
+  if (!name) { showToast('Le nom est obligatoire'); return; }
+
+  const org = (typeof API !== 'undefined' && API.getOrg) ? API.getOrg() : null;
+  if (!org) { showToast('Organisation introuvable'); return; }
+
+  // Save as a member with accepted=false (manual contact, no auth user yet)
+  try {
+    const { error } = await sb.from('members').insert({
+      org_id: org.id,
+      role: role === 'other' ? 'provider' : role,
+      invited_email: email || null,
+      display_name: name,
+      phone: phone || null,
+      accepted: false, // unaccepted = pure contact (not yet a real Lokizio user)
+    });
+    if (error) throw error;
+    document.getElementById('manualContactOverlay')?.remove();
+    showToast('Contact ajoute : ' + name);
+    // Reload the annuaire team panel
+    if (typeof renderAnnuaireTab === 'function') {
+      setTimeout(() => renderAnnuaireTab(), 200);
+    }
+  } catch (e) {
+    if (typeof notifyError === 'function') notifyError('Ajout contact', e);
+    else showToast('Erreur: ' + (e.message || e));
+  }
+}
+window.saveManualContact = saveManualContact;
 window.sendConnectionRequest = sendConnectionRequest;
 window.submitConnectionRequest = submitConnectionRequest;
 window.openConnectRequestPopup = openConnectRequestPopup;
