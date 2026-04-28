@@ -81,7 +81,7 @@
 <script src="auth.js?v=1"></script>
 <script src="provider.js?v=3"></script>
 <script src="owner.js?v=3"></script>
-<script src="marketplace.js?v=2"></script>
+<script src="marketplace.js?v=3"></script>
 <script src="properties.js?v=3"></script>
 <script src="dashboard.js?v=1"></script>
 <script src="admin-prestations.js?v=3"></script>
@@ -143,7 +143,7 @@ async function loadPDF() {
 </script>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v9.29</div>
+<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v9.30</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -153,7 +153,7 @@ async function loadPDF() {
     <!-- Broom that sweeps -->
     <div id="splashBroom" style="position:absolute;top:50%;left:-60px;font-size:48px;transform:translateY(-50%) rotate(-30deg);opacity:0;transition:all 0.8s cubic-bezier(0.25,0.46,0.45,0.94);">✨</div>
   </div>
-  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v9.29</span></div>
+  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v9.30</span></div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie pour locations</div>
   <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou</div>
   <!-- Loading bar -->
@@ -6584,6 +6584,16 @@ function wizardStep_ProviderReady() {
 }
 
 async function wizardFinishProvider() {
+  // Insert annuaire opt-in step
+  if (!wizardData._annuaireSeen) {
+    wizardData._annuaireSeen = true;
+    wizardStep_Annuaire(_wizardReallyFinishProvider);
+    return;
+  }
+  await _wizardReallyFinishProvider();
+}
+
+async function _wizardReallyFinishProvider() {
   window._wizardActive = false;
   closeMsg();
   localStorage.setItem('mm_onboarded', '1');
@@ -6627,6 +6637,17 @@ async function wizardFinishProvider() {
 }
 
 async function wizardFinish() {
+  // Insert one last step: ask if the user wants to be visible in the annuaire.
+  // The CTA links to the marketplace profile overlay so they can fine-tune.
+  if (!wizardData._annuaireSeen) {
+    wizardData._annuaireSeen = true;
+    wizardStep_Annuaire(_wizardReallyFinish);
+    return;
+  }
+  await _wizardReallyFinish();
+}
+
+async function _wizardReallyFinish() {
   window._wizardActive = false;
   closeMsg();
   localStorage.setItem('mm_onboarded', '1');
@@ -6643,6 +6664,60 @@ async function wizardFinish() {
   if (content) content.style.display = '';
   showToast('Configuration terminee ! &#127881;');
   setTimeout(() => init(), 1000);
+}
+
+// Wizard step: opt-in to the public Annuaire. Lets the user toggle visibility
+// without leaving the wizard, and offers a shortcut to the full profile editor.
+function wizardStep_Annuaire(onContinue) {
+  let html = '<div style="text-align:center;padding:10px;">';
+  html += '<div style="font-size:42px;margin-bottom:10px;">&#127758;</div>';
+  html += '<div style="font-size:18px;font-weight:700;color:var(--accent);margin-bottom:6px;">Etre visible dans l\'annuaire ?</div>';
+  html += '<div style="font-size:13px;color:var(--text3);line-height:1.6;margin-bottom:16px;">L\'annuaire Lokizio permet aux autres utilisateurs de vous trouver et de se connecter avec vous (autres conciergeries, proprietaires, prestataires).</div>';
+
+  // Visibility toggle
+  html += '<div style="background:var(--surface2);border:1px solid var(--border2);border-radius:10px;padding:14px;margin-bottom:16px;text-align:left;">';
+  html += '<label style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;gap:10px;">';
+  html += '<div><div style="font-size:13px;font-weight:600;color:var(--text);">&#128065;&#65039; Profil visible publiquement</div>';
+  html += '<div style="font-size:11px;color:var(--text3);margin-top:2px;">Vous pourrez le modifier plus tard a tout moment.</div></div>';
+  html += '<input type="checkbox" id="wizAnnuaireVisible" checked style="width:44px;height:24px;cursor:pointer;">';
+  html += '</label>';
+  html += '</div>';
+
+  html += '<div style="font-size:11px;color:var(--text3);margin-bottom:14px;line-height:1.5;">&#128161; Vous pouvez configurer votre profil annuaire en detail apres l\'onboarding (description, photo, services, ville).</div>';
+
+  html += '<div style="display:flex;gap:10px;">';
+  html += '<button class="btn btnOutline" style="flex:1;padding:12px;font-size:13px;" onclick="wizardSaveAnnuaire(false)">Plus tard</button>';
+  html += '<button class="btn btnPrimary" style="flex:1;padding:14px;font-size:14px;" onclick="wizardSaveAnnuaire(true)">Continuer &#10140;</button>';
+  html += '</div>';
+  html += '</div>';
+  document.getElementById('msgBody').innerHTML = html;
+  // Stash the continuation callback
+  window._wizardAnnuaireContinue = onContinue;
+}
+
+async function wizardSaveAnnuaire(applyToggle) {
+  const visible = applyToggle ? !!document.getElementById('wizAnnuaireVisible')?.checked : false;
+  // Persist a minimal marketplace profile so the user appears immediately
+  try {
+    const { data: { user } } = await sb.auth.getUser();
+    if (user) {
+      const role = (typeof API !== 'undefined' && API.getRole) ? API.getRole() : 'concierge';
+      const member = (typeof API !== 'undefined' && API.getMember) ? API.getMember() : null;
+      const displayName = (member && member.display_name) || (wizardData.orgName || '') || (user.email || '').split('@')[0];
+      await sb.from('marketplace_profiles').upsert({
+        user_id: user.id,
+        role,
+        display_name: displayName,
+        company_name: wizardData.orgName || displayName,
+        is_public: visible,
+        country: 'FR',
+      }, { onConflict: 'user_id' });
+    }
+  } catch (e) { /* best-effort, don't block wizard */ }
+  // Continue with the original finisher
+  const cont = window._wizardAnnuaireContinue;
+  window._wizardAnnuaireContinue = null;
+  if (typeof cont === 'function') await cont();
 }
 
 /* ── History/Pressing sub-tabs ── */

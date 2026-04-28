@@ -365,7 +365,7 @@ async function renderAnnuaireTab() {
       pHtml += '<div class="panel" style="margin-bottom:12px;padding:14px;background:linear-gradient(135deg,rgba(108,99,255,0.1),rgba(233,69,96,0.1));border:1px dashed var(--accent);border-radius:12px;text-align:center;">';
       pHtml += '<div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:6px;">&#127758; Rendez-vous visible !</div>';
       pHtml += '<div style="font-size:12px;color:var(--text3);margin-bottom:10px;line-height:1.5;">Creez votre profil pour que les autres utilisateurs puissent vous trouver et se connecter avec vous.</div>';
-      pHtml += '<button onclick="showAccountModal()" style="padding:10px 20px;background:linear-gradient(135deg,#6c63ff,#5a54e0);color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;">Creer mon profil</button>';
+      pHtml += '<button onclick="createAnnuaireProfile()" style="padding:10px 20px;background:linear-gradient(135deg,#6c63ff,#5a54e0);color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;">Creer mon profil</button>';
       pHtml += '</div>';
     } else {
       // Profile completeness bar
@@ -912,6 +912,42 @@ window.switchAnnuaireSubTab = switchAnnuaireSubTab;
 window.toggleAnnServiceFilter = toggleAnnServiceFilter;
 window.filterAnnuaire = filterAnnuaire;
 window.loadMarketplaceData = loadMarketplaceData;
+
+// Click handler for the "Creer mon profil" CTA in the Annuaire tab.
+// 1. Switch to the Annuaire tab if not already there
+// 2. Open the marketplace profile overlay
+// 3. Force the visibility toggle ON (auto-saves on change)
+async function createAnnuaireProfile() {
+  // Make sure we are on the Annuaire tab (concierge / provider / owner navs all use 'annuaire')
+  const role = (typeof API !== 'undefined' && API.getRole) ? API.getRole() : '';
+  if (typeof switchMainTab === 'function' && role === 'concierge') {
+    try { switchMainTab('annuaire'); } catch(e) { /* ignore */ }
+  } else if (typeof switchProviderNav === 'function' && role === 'provider') {
+    try { switchProviderNav('annuaire'); } catch(e) { /* ignore */ }
+  } else if (typeof switchOwnerNav === 'function' && role === 'owner') {
+    try { switchOwnerNav('annuaire'); } catch(e) { /* ignore */ }
+  }
+  // Open the overlay AFTER nav has rendered
+  setTimeout(() => {
+    if (typeof openOverlayPopup === 'function') {
+      openOverlayPopup('marketplaceProfileOverlay');
+    }
+    // Activate the visible toggle on next tick (the overlay loads async)
+    setTimeout(() => {
+      const toggle = document.getElementById('mkVisibleToggle');
+      if (toggle && !toggle.checked) {
+        toggle.checked = true;
+        if (typeof toggleMarketplaceVisibility === 'function') {
+          toggleMarketplaceVisibility(true);
+        } else {
+          // Fallback: dispatch native change event so any listener catches it
+          toggle.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+      }
+    }, 400);
+  }, 200);
+}
+window.createAnnuaireProfile = createAnnuaireProfile;
 window.sendConnectionRequest = sendConnectionRequest;
 window.submitConnectionRequest = submitConnectionRequest;
 window.openConnectRequestPopup = openConnectRequestPopup;
