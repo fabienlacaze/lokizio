@@ -309,10 +309,11 @@ async function renderAnnuaireTab() {
     fullHtml += '<div id="annuaireRequests"></div>';
     // My profile section
     fullHtml += '<div id="annuaireMyProfile"></div>';
-    // Sub-tabs: Mes contacts / Rechercher
+    // Sub-tabs: Mes contacts / Rechercher / Mes annonces
     fullHtml += '<div style="display:flex;gap:4px;background:var(--surface2);padding:4px;border-radius:10px;margin-bottom:14px;">';
-    fullHtml += '<button id="annSubTab_team" class="annSubTab annSubTabActive" onclick="switchAnnuaireSubTab(\'team\')" style="flex:1;padding:10px 14px;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">&#128101; Mes contacts</button>';
-    fullHtml += '<button id="annSubTab_search" class="annSubTab" onclick="switchAnnuaireSubTab(\'search\')" style="flex:1;padding:10px 14px;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">&#128269; Rechercher</button>';
+    fullHtml += '<button id="annSubTab_team" class="annSubTab annSubTabActive" onclick="switchAnnuaireSubTab(\'team\')" style="flex:1;padding:10px 10px;border:none;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;">&#128101; Mes contacts</button>';
+    fullHtml += '<button id="annSubTab_search" class="annSubTab" onclick="switchAnnuaireSubTab(\'search\')" style="flex:1;padding:10px 10px;border:none;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;">&#128269; Rechercher</button>';
+    fullHtml += '<button id="annSubTab_jobs" class="annSubTab" onclick="switchAnnuaireSubTab(\'jobs\')" style="flex:1;padding:10px 10px;border:none;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;">&#128221; Mes annonces</button>';
     fullHtml += '</div>';
     // Team panel
     fullHtml += '<div id="annuairePanel_team"><div id="annuaireTeam"></div></div>';
@@ -328,6 +329,8 @@ async function renderAnnuaireTab() {
     fullHtml += '<div id="annServiceFilters" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;"></div>';
     fullHtml += '<div id="annuaireResults" style="min-height:200px;"></div>';
     fullHtml += '</div>';
+    // Jobs panel (Mes annonces)
+    fullHtml += '<div id="annuairePanel_jobs" style="display:none;"><div id="annuaireMyJobs"></div></div>';
     container.innerHTML = fullHtml;
   }
 
@@ -507,21 +510,102 @@ function toggleAnnServiceFilter(btn) {
   filterAnnuaire();
 }
 
+// Render the "Mes annonces" sub-tab: list marketplace_jobs the current user
+// (or his org) has posted, with status + a way to cancel an open one.
+async function renderMyJobs() {
+  const container = document.getElementById('annuaireMyJobs');
+  if (!container) return;
+  container.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text3);">Chargement...</div>';
+  try {
+    const { data: { user } } = await sb.auth.getUser();
+    if (!user) { container.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text3);">Non connecte</div>'; return; }
+    const org = (typeof API !== 'undefined' && API.getOrg) ? API.getOrg() : null;
+    let query = sb.from('marketplace_jobs').select('*').order('created_at', { ascending: false });
+    if (org && org.id) {
+      query = query.or('org_id.eq.' + org.id + ',posted_by.eq.' + user.id);
+    } else {
+      query = query.eq('posted_by', user.id);
+    }
+    const { data: jobs, error } = await query;
+    if (error) {
+      container.innerHTML = '<div style="text-align:center;padding:20px;color:#ef4444;">Erreur: ' + esc(error.message) + '</div>';
+      return;
+    }
+    if (!jobs || jobs.length === 0) {
+      container.innerHTML = '<div style="text-align:center;padding:30px 20px;color:var(--text3);"><div style="font-size:32px;opacity:0.4;margin-bottom:8px;">&#128221;</div><div style="font-size:13px;">Aucune annonce publiee.</div><div style="font-size:11px;margin-top:6px;opacity:0.7;">Publiez une annonce depuis une prestation sans prestataire pour qu\'elle apparaisse ici.</div></div>';
+      return;
+    }
+    const statusLabels = {
+      open: { label: 'Ouverte', color: '#34d399', bg: 'rgba(52,211,153,0.15)' },
+      taken: { label: 'Acceptee', color: '#6c63ff', bg: 'rgba(108,99,255,0.15)' },
+      cancelled: { label: 'Annulee', color: '#94a3b8', bg: 'rgba(148,163,184,0.15)' },
+      expired: { label: 'Expiree', color: '#f59e0b', bg: 'rgba(245,158,11,0.15)' }
+    };
+    const svcLabel = (sid) => (typeof getServiceLabel === 'function') ? getServiceLabel(sid) : sid;
+    let html = '';
+    jobs.forEach(j => {
+      const st = statusLabels[j.status] || statusLabels.open;
+      const dateLbl = j.requested_date ? new Date(j.requested_date + 'T12:00:00').toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' }) : '';
+      const expLbl = j.expires_at ? new Date(j.expires_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' }) : '';
+      html += '<div style="padding:12px 14px;background:var(--surface2);border:1px solid var(--border2);border-radius:12px;margin-bottom:8px;">';
+      html += '<div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">';
+      html += '<div style="font-weight:700;font-size:14px;color:var(--text);flex:1;">&#129529; ' + esc(svcLabel(j.service_type) || 'Mission') + '</div>';
+      html += '<span style="font-size:11px;font-weight:600;padding:3px 10px;border-radius:10px;background:' + st.bg + ';color:' + st.color + ';">' + st.label + '</span>';
+      html += '</div>';
+      if (j.property_name) html += '<div style="font-size:12px;color:var(--text2);margin-bottom:3px;">&#127968; ' + esc(j.property_name) + '</div>';
+      if (dateLbl) html += '<div style="font-size:12px;color:var(--text3);text-transform:capitalize;">&#128197; ' + dateLbl + '</div>';
+      if (expLbl && j.status === 'open') html += '<div style="font-size:11px;color:var(--text3);margin-top:4px;">&#9203; Expire le ' + expLbl + '</div>';
+      if (j.status === 'open') {
+        html += '<div style="margin-top:8px;display:flex;justify-content:flex-end;">';
+        html += '<button onclick="cancelMyJob(\'' + j.id + '\')" style="padding:6px 12px;background:rgba(239,68,68,0.12);color:#ef4444;border:1px solid rgba(239,68,68,0.3);border-radius:8px;font-size:11px;font-weight:600;cursor:pointer;">Retirer l\'annonce</button>';
+        html += '</div>';
+      }
+      html += '</div>';
+    });
+    container.innerHTML = html;
+  } catch (e) {
+    console.error('renderMyJobs error:', e);
+    container.innerHTML = '<div style="text-align:center;padding:20px;color:#ef4444;">Erreur de chargement</div>';
+  }
+}
+window.renderMyJobs = renderMyJobs;
+
+async function cancelMyJob(jobId) {
+  const ok = await customConfirm('Retirer cette annonce de l\'annuaire ?', 'Retirer');
+  if (!ok) return;
+  try {
+    const { error } = await sb.from('marketplace_jobs').update({ status: 'cancelled' }).eq('id', jobId);
+    if (error) { showToast('Erreur: ' + error.message); return; }
+    showToast('Annonce retiree');
+    renderMyJobs();
+  } catch (e) {
+    showToast('Erreur lors du retrait');
+  }
+}
+window.cancelMyJob = cancelMyJob;
+
 function switchAnnuaireSubTab(tab) {
   const teamBtn = document.getElementById('annSubTab_team');
   const searchBtn = document.getElementById('annSubTab_search');
+  const jobsBtn = document.getElementById('annSubTab_jobs');
   const teamPanel = document.getElementById('annuairePanel_team');
   const searchPanel = document.getElementById('annuairePanel_search');
+  const jobsPanel = document.getElementById('annuairePanel_jobs');
   if (!teamBtn || !searchBtn || !teamPanel || !searchPanel) return;
+  // Reset all
+  [teamBtn, searchBtn, jobsBtn].forEach(b => b && b.classList.remove('annSubTabActive'));
+  if (teamPanel) teamPanel.style.display = 'none';
+  if (searchPanel) searchPanel.style.display = 'none';
+  if (jobsPanel) jobsPanel.style.display = 'none';
   if (tab === 'team') {
     teamBtn.classList.add('annSubTabActive');
-    searchBtn.classList.remove('annSubTabActive');
     teamPanel.style.display = '';
-    searchPanel.style.display = 'none';
+  } else if (tab === 'jobs') {
+    if (jobsBtn) jobsBtn.classList.add('annSubTabActive');
+    if (jobsPanel) jobsPanel.style.display = '';
+    if (typeof renderMyJobs === 'function') renderMyJobs();
   } else {
     searchBtn.classList.add('annSubTabActive');
-    teamBtn.classList.remove('annSubTabActive');
-    teamPanel.style.display = 'none';
     searchPanel.style.display = '';
   }
 }
