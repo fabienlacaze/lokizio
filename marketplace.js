@@ -1226,36 +1226,59 @@ async function showAddManualContact() {
 window.showAddManualContact = showAddManualContact;
 
 async function saveManualContact() {
-  const name = (document.getElementById('mcName') || {}).value?.trim() || '';
-  const role = (document.getElementById('mcRole') || {}).value || 'provider';
-  const phone = (document.getElementById('mcPhone') || {}).value?.trim() || '';
-  const email = (document.getElementById('mcEmail') || {}).value?.trim() || '';
-  const notes = (document.getElementById('mcNotes') || {}).value?.trim() || '';
-  if (!name) { showToast('Le nom est obligatoire'); return; }
+  // Loud feedback helper: always surfaces an error to the user, even if showToast is broken.
+  const tell = (msg, kind) => {
+    console.warn('[saveManualContact]', msg);
+    try { if (typeof showToast === 'function') showToast(msg, kind || ''); } catch (_) { /* toast unavailable */ }
+    if (kind === 'error') { try { alert(msg); } catch (_) { /* alert unavailable */ } }
+  };
+  const nameEl = document.getElementById('mcName');
+  const roleEl = document.getElementById('mcRole');
+  const phoneEl = document.getElementById('mcPhone');
+  const emailEl = document.getElementById('mcEmail');
+  const notesEl = document.getElementById('mcNotes');
+  if (!nameEl) { tell('Erreur: champ Nom introuvable', 'error'); return; }
+  const name = (nameEl.value || '').trim();
+  const role = (roleEl?.value) || 'provider';
+  const phone = (phoneEl?.value || '').trim();
+  const email = (emailEl?.value || '').trim();
+  const notes = (notesEl?.value || '').trim();
+  if (!name) { tell('Le nom est obligatoire', 'error'); nameEl.focus(); return; }
 
   const org = (typeof API !== 'undefined' && API.getOrg) ? API.getOrg() : null;
-  if (!org) { showToast('Organisation introuvable'); return; }
+  if (!org || !org.id) { tell('Organisation introuvable — recharge la page', 'error'); return; }
 
   // Save as a member with accepted=false (manual contact, no auth user yet)
   try {
-    const { error } = await sb.from('members').insert({
+    const payload = {
       org_id: org.id,
       role: role === 'other' ? 'provider' : role,
       invited_email: email || null,
       display_name: name,
       phone: phone || null,
-      accepted: false, // unaccepted = pure contact (not yet a real Lokizio user)
-    });
-    if (error) throw error;
-    document.getElementById('manualContactOverlay')?.remove();
-    showToast('Contact ajoute : ' + name);
-    // Reload the annuaire team panel
-    if (typeof renderAnnuaireTab === 'function') {
-      setTimeout(() => renderAnnuaireTab(), 200);
+      notes: notes || null,
+      accepted: false,
+    };
+    console.log('[saveManualContact] insert payload:', payload);
+    let { data, error } = await sb.from('members').insert(payload).select().maybeSingle();
+    // Fallback: if the `notes` column doesn't exist yet in DB, retry without it
+    if (error && /column.*notes|notes.*column|notes.*does not exist/i.test(error.message || '')) {
+      console.warn('[saveManualContact] retry without notes (column missing in DB)');
+      delete payload.notes;
+      ({ data, error } = await sb.from('members').insert(payload).select().maybeSingle());
     }
+    if (error) {
+      console.error('[saveManualContact] insert error:', error);
+      tell('Erreur: ' + (error.message || error.details || error.code || 'inconnue'), 'error');
+      return;
+    }
+    console.log('[saveManualContact] insert ok:', data);
+    document.getElementById('manualContactOverlay')?.remove();
+    tell('Contact ajoute : ' + name);
+    if (typeof renderAnnuaireTab === 'function') setTimeout(() => renderAnnuaireTab(), 200);
   } catch (e) {
-    if (typeof notifyError === 'function') notifyError('Ajout contact', e);
-    else showToast('Erreur: ' + (e.message || e));
+    console.error('[saveManualContact] exception:', e);
+    tell('Erreur: ' + (e?.message || String(e)), 'error');
   }
 }
 window.saveManualContact = saveManualContact;
