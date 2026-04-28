@@ -202,7 +202,14 @@ async function loadAdminPrestations(forceReload) {
     }));
     const isPast = u.date && u.date < today;
     const pastStyle = isPast ? 'opacity:0.5;filter:grayscale(0.6);position:relative;' : '';
-    html += '<div class="adminPrestCard" data-category="' + cat + '" data-status="' + u.status + '" data-date="' + (u.date||'') + '" data-type="' + (u.type||'') + '" data-provider="' + esc(u.provider||'') + '" data-owner="' + esc(u.propertyName||'') + '" onclick="showPrestationDetail(\'' + prestPayload + '\', event)" style="border-left:4px solid ' + color + ';cursor:pointer;' + pastStyle + (isToday ? 'box-shadow:0 0 0 1px rgba(233,69,96,0.3);' : '') + '" title="' + (isPast ? 'Date passee' : '') + '">';
+    // CRITICAL: prestation in upcoming/today/pending state without an assigned provider
+    const noProvider = !isPast
+      && u._source === 'service_request'
+      && (!u.provider || u.provider.trim() === '')
+      && ['pending', 'pending_validation'].includes(u.status);
+    const cardClass = 'adminPrestCard' + (noProvider ? ' prestNoProvider' : '');
+    const cardTitle = noProvider ? 'PRESTATAIRE NON ASSIGNE - Action requise' : (isPast ? 'Date passee' : '');
+    html += '<div class="' + cardClass + '" data-category="' + cat + '" data-status="' + u.status + '" data-date="' + (u.date||'') + '" data-type="' + (u.type||'') + '" data-provider="' + esc(u.provider||'') + '" data-owner="' + esc(u.propertyName||'') + '" onclick="showPrestationDetail(\'' + prestPayload + '\', event)" style="border-left:4px solid ' + (noProvider ? '#ef4444' : color) + ';cursor:pointer;' + pastStyle + (isToday ? 'box-shadow:0 0 0 1px rgba(233,69,96,0.3);' : '') + '" title="' + cardTitle + '">';
     if (isPast) html += '<div style="position:absolute;top:4px;right:8px;font-size:9px;color:var(--text3);font-style:italic;letter-spacing:0.3px;pointer-events:none;">&#128197; Date passee</div>';
     html += '<div style="display:flex;align-items:stretch;gap:0;padding:0;">';
     // Date block
@@ -222,11 +229,14 @@ async function loadAdminPrestations(forceReload) {
     if (u.source) html += '<span style="font-size:9px;padding:1px 5px;border-radius:3px;background:' + (u.source.toLowerCase().includes('airbnb') ? '#e9456030' : '#2563eb30') + ';color:' + (u.source.toLowerCase().includes('airbnb') ? '#e94560' : '#2563eb') + ';font-weight:700;">' + esc(u.source).toUpperCase() + '</span>';
     if (u.priority === 'high') html += '<span style="font-size:9px;padding:1px 5px;border-radius:3px;background:#ef444420;color:#ef4444;font-weight:700;animation:pulse 1.5s ease-in-out infinite;">URGENT</span>';
     html += '</div>';
-    html += '<div style="font-size:11px;color:var(--text3);margin-top:3px;">';
+    html += '<div style="font-size:11px;color:var(--text3);margin-top:3px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;">';
     const metaParts = [];
     if (u.propertyName) metaParts.push('&#127968; ' + esc(u.propertyName));
     if (u.provider) metaParts.push('&#128100; ' + esc(u.provider));
     html += metaParts.join(' &middot; ');
+    if (noProvider) {
+      html += '<span class="prestNoProvider-badge">&#9888;&#65039; Aucun prestataire</span>';
+    }
     html += '</div>';
     if (u.description) html += '<div style="font-size:10px;color:var(--text3);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + esc(u.description) + '</div>';
     html += '</div>';
