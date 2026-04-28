@@ -143,7 +143,7 @@ async function loadPDF() {
 </script>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v9.23</div>
+<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v9.24</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -153,7 +153,7 @@ async function loadPDF() {
     <!-- Broom that sweeps -->
     <div id="splashBroom" style="position:absolute;top:50%;left:-60px;font-size:48px;transform:translateY(-50%) rotate(-30deg);opacity:0;transition:all 0.8s cubic-bezier(0.25,0.46,0.45,0.94);">✨</div>
   </div>
-  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v9.23</span></div>
+  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v9.24</span></div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie pour locations</div>
   <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou</div>
   <!-- Loading bar -->
@@ -6212,12 +6212,37 @@ function wizardStep_PropertyDetails() {
   html += '<label style="display:block;font-size:11px;color:var(--text3);margin-bottom:4px;text-transform:uppercase;">Consignes / Notes</label>';
   html += '<textarea aria-label="Instructions specifiques pour acceder au bien..." id="wizPropNotes" placeholder="Instructions specifiques pour acceder au bien..." rows="3" style="width:100%;padding:10px 14px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:13px;font-family:\'Inter\',sans-serif;box-sizing:border-box;resize:vertical;margin-bottom:12px;">' + (wizardData.propNotes || '').replace(/</g, '&lt;') + '</textarea>';
 
+  // Services panel (same UX as property detail page)
+  html += '<div style="background:rgba(108,99,255,0.06);border:1px solid rgba(108,99,255,0.2);border-radius:10px;padding:12px;margin-bottom:14px;">';
+  html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">';
+  html += '<div style="font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:0.5px;">&#129529; Services requis</div>';
+  html += '<div id="wizServicesTotal" style="font-size:11px;color:var(--text3);">Total: <span style="color:#34d399;font-weight:700;">0.00 €</span></div>';
+  html += '</div>';
+  html += '<div id="inlinePropServicesChecks"></div>';
+  html += '</div>';
+
   html += '<div style="display:flex;gap:10px;">';
   html += '<button class="btn btnOutline" style="flex:1;padding:12px;font-size:13px;" onclick="wizardSnapshotPropertyDetails();wizardStep_PropertyName()">&#10094; Retour</button>';
   html += '<button id="wizBtnNext2" class="btn btnPrimary" style="flex:1;padding:14px;font-size:14px;opacity:0.4;pointer-events:none;" onclick="wizardSavePropertyDetails()">Suivant &#10140;</button>';
   html += '</div>';
   html += '</div>';
   document.getElementById('msgBody').innerHTML = html;
+
+  // Activate the in-progress property and load fullConfig so the services
+  // panel (renderInlineServicesList) can render the same UI as the
+  // property detail page.
+  (async () => {
+    if (wizardData.propId) {
+      try { API.setActiveProperty(wizardData.propId); } catch(e) { /* ignore */ }
+    }
+    try {
+      fullConfig = await API.load_config();
+    } catch(e) { /* fallback to existing fullConfig */ }
+    if (typeof renderInlineServicesList === 'function' && API.getActiveProperty) {
+      const prop = API.getActiveProperty(fullConfig);
+      if (prop) renderInlineServicesList(prop);
+    }
+  })();
 
   // Validate Next button when type/rooms/surface filled
   setTimeout(() => {
