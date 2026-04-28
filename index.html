@@ -68,7 +68,7 @@
 <script src="i18n.js?v=889"></script>
 <script src="ical_parser.js?v=726"></script>
 <script src="helpers.js?v=1"></script>
-<script src="api_bridge.js?v=917"></script>
+<script src="api_bridge.js?v=918"></script>
 <script src="vacation.js?v=1"></script>
 <script src="push.js?v=2"></script>
 <script src="legal.js?v=1"></script>
@@ -143,7 +143,7 @@ async function loadPDF() {
 </script>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v9.26</div>
+<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v9.27</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -153,7 +153,7 @@ async function loadPDF() {
     <!-- Broom that sweeps -->
     <div id="splashBroom" style="position:absolute;top:50%;left:-60px;font-size:48px;transform:translateY(-50%) rotate(-30deg);opacity:0;transition:all 0.8s cubic-bezier(0.25,0.46,0.45,0.94);">✨</div>
   </div>
-  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v9.26</span></div>
+  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v9.27</span></div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie pour locations</div>
   <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou</div>
   <!-- Loading bar -->
@@ -6990,12 +6990,12 @@ function checkRentalNotifications() {
     // Check 1 day and 2 days before
     for (const daysB of [1, 2]) {
       const d1 = new Date(checkin); d1.setDate(d1.getDate() - daysB);
-      if (toISO(d1) === todayStr) notifications.push({type:'checkin',date:c.dateFR||fmtDate(checkin),source:c.source,provider:c.provider,days:daysB});
-      if (checkout) { const d2 = new Date(checkout); d2.setDate(d2.getDate() - daysB); if (toISO(d2) === todayStr) notifications.push({type:'checkout',date:c.checkoutDateFR||fmtDate(checkout),source:c.source,provider:c.provider,days:daysB}); }
+      if (toISO(d1) === todayStr) notifications.push({type:'checkin',date:c.dateFR||fmtDate(checkin),iso:checkin,svc:c.type||'',source:c.source,provider:c.provider,days:daysB});
+      if (checkout) { const d2 = new Date(checkout); d2.setDate(d2.getDate() - daysB); if (toISO(d2) === todayStr) notifications.push({type:'checkout',date:c.checkoutDateFR||fmtDate(checkout),iso:checkout,svc:c.type||'',source:c.source,provider:c.provider,days:daysB}); }
     }
     // Check today
-    if (checkin === todayStr) notifications.push({type:'checkin',date:c.dateFR||fmtDate(checkin),source:c.source,provider:c.provider,days:0});
-    if (c.checkoutDate === todayStr) notifications.push({type:'checkout',date:c.checkoutDateFR||fmtDate(c.checkoutDate),source:c.source,provider:c.provider,days:0});
+    if (checkin === todayStr) notifications.push({type:'checkin',date:c.dateFR||fmtDate(checkin),iso:checkin,svc:c.type||'',source:c.source,provider:c.provider,days:0});
+    if (c.checkoutDate === todayStr) notifications.push({type:'checkout',date:c.checkoutDateFR||fmtDate(c.checkoutDate),iso:c.checkoutDate,svc:c.type||'',source:c.source,provider:c.provider,days:0});
   });
   if (notifications.length > 0) {
     let html = '<button aria-label="Fermer" class="notifClose" onclick="dismissNotif()">&times;</button>';
@@ -7004,7 +7004,8 @@ function checkRentalNotifications() {
       const icon = n.type === 'checkin' ? '&#10140;' : '&#10550;';
       const label = n.type === 'checkin' ? 'Arrivee' : 'Depart';
       const when = n.days === 0 ? "aujourd'hui" : n.days === 1 ? 'demain' : 'dans 2 jours';
-      html += `<div class="notifItem"><span class="notifIcon">${icon}</span> <b>${esc(label)}</b> ${esc(when)} : ${esc(n.date)} (${esc(n.source)}) - ${esc(n.provider)}</div>`;
+      const onclickAttr = n.iso ? ` onclick="goToPrestation('${esc(n.iso)}','${esc(n.svc)}','${esc(n.provider||'').replace(/'/g, "\\'")}')" style="cursor:pointer;"` : '';
+      html += `<div class="notifItem"${onclickAttr}><span class="notifIcon">${icon}</span> <b>${esc(label)}</b> ${esc(when)} : ${esc(n.date)} (${esc(n.source)}) - ${esc(n.provider)}</div>`;
     });
     const banner = document.getElementById('notifBanner');
     banner.innerHTML = html;

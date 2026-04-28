@@ -149,6 +149,9 @@ const API = (function() {
         icals: prop.icals || [],
         manual_reservations: prop.manualReservations || [],
         providers: prop.providers || [],
+        service_config: prop.serviceConfig || {},
+        required_services: prop.required_services || [],
+        message_template: prop.messageTemplate || null,
         readonly_token: prop.readonlyToken || prop.readonly_token,
         updated_at: new Date().toISOString(),
       })
@@ -240,6 +243,9 @@ const API = (function() {
       icals: dbProp.icals || [],
       manualReservations: dbProp.manual_reservations || [],
       providers: dbProp.providers || [],
+      serviceConfig: dbProp.service_config || {},
+      required_services: dbProp.required_services || [],
+      messageTemplate: dbProp.message_template || '',
       readonlyToken: dbProp.readonly_token || '',
       // Legacy compat
       airbnbIcalUrl: (dbProp.icals || []).find(i => i.platform === 'airbnb')?.url || '',
