@@ -52,9 +52,11 @@
     0%, 100% { background:rgba(239,68,68,0.10); border-color:#ef4444; box-shadow:0 0 0 0 rgba(239,68,68,0); }
     50%      { background:rgba(239,68,68,0.30); border-color:#ff6b6b; box-shadow:0 0 0 4px rgba(239,68,68,0.35); }
   }
-  @keyframes criticalText {
-    0%, 100% { color:#ef4444; transform:scale(1); }
-    50%      { color:#ff8080; transform:scale(1.04); }
+  /* Soft pulse on the badge/button border, but the text stays solid white
+     so it remains readable against the red background at all times. */
+  @keyframes criticalGlow {
+    0%, 100% { box-shadow:0 0 0 0 rgba(255,255,255,0); }
+    50%      { box-shadow:0 0 0 3px rgba(255,255,255,0.45); }
   }
   .prestNoProvider {
     animation: criticalBlink 1.1s ease-in-out infinite;
@@ -63,10 +65,18 @@
   }
   .prestNoProvider-badge {
     display:inline-flex; align-items:center; gap:4px;
-    background:#ef4444; color:#fff; padding:3px 8px; border-radius:5px;
-    font-size:10px; font-weight:800; letter-spacing:0.4px;
-    animation: criticalText 1.1s ease-in-out infinite;
+    background:#dc2626; color:#fff !important;
+    padding:4px 9px; border-radius:5px;
+    font-size:11px; font-weight:800; letter-spacing:0.4px;
     text-transform:uppercase;
+    text-shadow:0 1px 2px rgba(0,0,0,0.4);
+    animation: criticalGlow 1.1s ease-in-out infinite;
+  }
+  .prestSendBtn {
+    background:#dc2626 !important; color:#fff !important;
+    text-shadow:0 1px 2px rgba(0,0,0,0.4);
+    font-weight:700 !important;
+    animation: criticalGlow 1.1s ease-in-out infinite;
   }
   @keyframes bounceIn { 0% { transform:scale(0.3); opacity:0; } 50% { transform:scale(1.05); } 70% { transform:scale(0.95); } 100% { transform:scale(1); opacity:1; } }
   @keyframes slideDown { from { opacity:0; transform:translateY(-10px); } to { opacity:1; transform:translateY(0); } }

@@ -245,7 +245,7 @@ async function loadAdminPrestations(forceReload) {
       const broadcastDate = (u.date || '').replace(/'/g, '');
       const broadcastSvc = (u.type || '').replace(/'/g, '');
       const broadcastProp = esc(u.propertyName || '').replace(/'/g, "\\'");
-      html += '<button onclick="event.stopPropagation();broadcastToProviders(\'' + broadcastDate + '\',\'' + broadcastSvc + '\',\'' + broadcastProp + '\')" style="margin-left:6px;padding:4px 10px;font-size:10px;font-weight:700;border:none;border-radius:5px;cursor:pointer;background:#ef4444;color:#fff;animation:criticalText 1.1s ease-in-out infinite;">&#128228; Envoyer aux prestataires</button>';
+      html += '<button class="prestSendBtn" onclick="event.stopPropagation();broadcastToProviders(\'' + broadcastDate + '\',\'' + broadcastSvc + '\',\'' + broadcastProp + '\')" style="margin-left:6px;padding:5px 11px;font-size:11px;border:none;border-radius:5px;cursor:pointer;">&#128228; Envoyer aux prestataires</button>';
     }
     html += '</div>';
     if (u.description) html += '<div style="font-size:10px;color:var(--text3);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + esc(u.description) + '</div>';
