@@ -275,6 +275,9 @@ const API = (function() {
       providers: prop.providers || [],
       readonlyToken: prop.readonlyToken,
       readonly_token: prop.readonlyToken,
+      service_config: prop.serviceConfig || {},
+      required_services: prop.required_services || [],
+      message_template: prop.messageTemplate || '',
     };
   }
 

@@ -68,7 +68,7 @@
 <script src="i18n.js?v=889"></script>
 <script src="ical_parser.js?v=726"></script>
 <script src="helpers.js?v=1"></script>
-<script src="api_bridge.js?v=918"></script>
+<script src="api_bridge.js?v=919"></script>
 <script src="vacation.js?v=1"></script>
 <script src="push.js?v=2"></script>
 <script src="legal.js?v=1"></script>
@@ -143,7 +143,7 @@ async function loadPDF() {
 </script>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v9.40</div>
+<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v9.41</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -153,7 +153,7 @@ async function loadPDF() {
     <!-- Broom that sweeps -->
     <div id="splashBroom" style="position:absolute;top:50%;left:-60px;font-size:48px;transform:translateY(-50%) rotate(-30deg);opacity:0;transition:all 0.8s cubic-bezier(0.25,0.46,0.45,0.94);">✨</div>
   </div>
-  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v9.40</span></div>
+  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v9.41</span></div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie pour locations</div>
   <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou</div>
   <!-- Loading bar -->
@@ -546,10 +546,11 @@ async function loadPDF() {
     <!-- My profile completeness -->
     <div id="annuaireMyProfile"></div>
 
-    <!-- Sub-tabs: Mes contacts / Rechercher -->
+    <!-- Sub-tabs: Mes contacts / Rechercher / Mes annonces -->
     <div style="display:flex;gap:4px;background:var(--surface2);padding:4px;border-radius:10px;margin-bottom:14px;">
-      <button id="annSubTab_team" class="annSubTab annSubTabActive" onclick="switchAnnuaireSubTab('team')" style="flex:1;padding:10px 14px;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">&#128101; Mes contacts</button>
-      <button id="annSubTab_search" class="annSubTab" onclick="switchAnnuaireSubTab('search')" style="flex:1;padding:10px 14px;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">&#128269; Rechercher</button>
+      <button id="annSubTab_team" class="annSubTab annSubTabActive" onclick="switchAnnuaireSubTab('team')" style="flex:1;padding:10px 10px;border:none;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;">&#128101; Mes contacts</button>
+      <button id="annSubTab_search" class="annSubTab" onclick="switchAnnuaireSubTab('search')" style="flex:1;padding:10px 10px;border:none;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;">&#128269; Rechercher</button>
+      <button id="annSubTab_jobs" class="annSubTab" onclick="switchAnnuaireSubTab('jobs')" style="flex:1;padding:10px 10px;border:none;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;">&#128221; Mes annonces</button>
     </div>
 
     <!-- Panel: Mes contacts (team) -->
@@ -577,6 +578,11 @@ async function loadPDF() {
         <div id="annServiceFilters" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;"></div>
       </div>
       <div id="annuaireResults" style="min-height:200px;"></div>
+    </div>
+
+    <!-- Panel: Mes annonces -->
+    <div id="annuairePanel_jobs" style="display:none;">
+      <div id="annuaireMyJobs"></div>
     </div>
   </div><!-- /tabAnnuaire -->
 
@@ -1591,6 +1597,7 @@ function getStatusLabel(s) { return (STATUS_CONFIG[s] || {}).label || s || ''; }
 // ── Splash Changelog (update this with each significant version) ──
 // Full versioned changelog — add new entries at TOP
 const VERSION_CHANGELOG = [
+  { v: '9.41', changes: ['Fix sauvegarde des services configures : serviceConfig + required_services + messageTemplate sont maintenant ecrits en DB (le mapping frontend->DB les ignorait)', 'Sous-tab "Mes annonces" rendu visible dans l\'annuaire concierge (etait deja code mais absent du HTML statique)'] },
   { v: '9.40', changes: ['Bouton "Message" sur chaque fiche annuaire : popup pour envoyer un message in-app (avec push notification) au prestataire / proprietaire / conciergerie'] },
   { v: '9.39', changes: ['Section "Mes annonces" dans l\'annuaire : liste des annonces publiees avec statut (ouverte / acceptee / annulee / expiree) et bouton pour retirer une annonce'] },
   { v: '9.38', changes: ['Bouton "Choisir dans l\'annuaire" dans la popup Selectionner prestataire (etat vide + liste) pour parcourir les prestataires publics et en ajouter un a son equipe'] },
