@@ -84,7 +84,7 @@
 <script src="marketplace.js?v=5"></script>
 <script src="properties.js?v=3"></script>
 <script src="dashboard.js?v=1"></script>
-<script src="admin-prestations.js?v=8"></script>
+<script src="admin-prestations.js?v=9"></script>
 <script src="account.js?v=2"></script>
 <!-- Lazy-loaded: Leaflet, Chart.js, jsPDF (loaded on demand to improve startup) -->
 <script>
@@ -143,7 +143,7 @@ async function loadPDF() {
 </script>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v9.37</div>
+<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v9.38</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -153,7 +153,7 @@ async function loadPDF() {
     <!-- Broom that sweeps -->
     <div id="splashBroom" style="position:absolute;top:50%;left:-60px;font-size:48px;transform:translateY(-50%) rotate(-30deg);opacity:0;transition:all 0.8s cubic-bezier(0.25,0.46,0.45,0.94);">✨</div>
   </div>
-  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v9.37</span></div>
+  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v9.38</span></div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie pour locations</div>
   <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou</div>
   <!-- Loading bar -->
@@ -1591,6 +1591,13 @@ function getStatusLabel(s) { return (STATUS_CONFIG[s] || {}).label || s || ''; }
 // ── Splash Changelog (update this with each significant version) ──
 // Full versioned changelog — add new entries at TOP
 const VERSION_CHANGELOG = [
+  { v: '9.38', changes: ['Bouton "Choisir dans l\'annuaire" dans la popup Selectionner prestataire (etat vide + liste) pour parcourir les prestataires publics et en ajouter un a son equipe'] },
+  { v: '9.37', changes: ['"Inviter par email" reutilise la popup de parrainage (WhatsApp / SMS / Email / Telegram)'] },
+  { v: '9.36', changes: ['Confirmation visuelle apres publication d\'une mission sur l\'annuaire (animation + recap)', 'Table marketplace_jobs en prod pour stocker les annonces publiques'] },
+  { v: '9.35', changes: ['Bouton "Selectionner prestataire" et alerte "Aucun prestataire" disponibles aussi dans la modale detail de prestation'] },
+  { v: '9.34', changes: ['Popup "Selectionner prestataire" reorganisee : section Mon equipe + section Diffuser', 'Boutons "Ajouter manuellement" / "Envoyer une invitation" dans l\'annuaire'] },
+  { v: '9.33', changes: ['Comptes de test multi-roles (concierge / owner / provider / tenant)'] },
+  { v: '9.32', changes: ['Texte du badge "aucun prestataire" plus lisible (blanc plein avec halo rouge clignotant)'] },
   { v: '9.31', changes: ['Bouton "Envoyer aux prestataires" sur les prestations sans assignation (notification push aux prestataires de l\'org)', 'Detection elargie : iCal-derived cleanings sans provider declenchent aussi l\'alerte clignotante'] },
   { v: '9.30', changes: ['Bouton Creer mon profil ouvre directement l\'annuaire + active la visibilite', 'Etape onboarding annuaire (concierge + provider) avec opt-in profil public'] },
   { v: '9.29', changes: ['Alerte clignotante (rouge + glow + badge) sur les prestations sans prestataire assigne'] },

@@ -538,8 +538,11 @@ async function showAssignProviderPopup(reqId, dateStr, svcType, propertyName) {
   if (orgProviders.length === 0) {
     html += '<div style="padding:18px 14px;text-align:center;background:var(--surface2);border-radius:12px;border:1px dashed var(--border2);margin-bottom:22px;">';
     html += '<div style="font-size:24px;opacity:0.5;margin-bottom:6px;">&#129529;</div>';
-    html += '<div style="font-size:12px;color:var(--text3);line-height:1.5;margin-bottom:10px;">Aucun prestataire dans votre equipe pour le moment.</div>';
-    html += '<button onclick="document.getElementById(\'assignProviderOverlay\').remove();showAddManualContact()" style="padding:8px 16px;background:rgba(108,99,255,0.15);color:#a5a0ff;border:1px solid rgba(108,99,255,0.35);border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;">+ Ajouter un prestataire</button>';
+    html += '<div style="font-size:12px;color:var(--text3);line-height:1.5;margin-bottom:12px;">Aucun prestataire dans votre equipe pour le moment.</div>';
+    html += '<div style="display:flex;flex-direction:column;gap:8px;">';
+    html += '<button onclick="pickProviderFromAnnuaire()" style="padding:10px 16px;background:linear-gradient(135deg,#6c63ff,#5a54e0);color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;">&#127760; Choisir dans l\'annuaire</button>';
+    html += '<button onclick="document.getElementById(\'assignProviderOverlay\').remove();showAddManualContact()" style="padding:8px 16px;background:rgba(108,99,255,0.15);color:#a5a0ff;border:1px solid rgba(108,99,255,0.35);border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;">+ Ajouter manuellement</button>';
+    html += '</div>';
     html += '</div>';
   } else {
     html += '<div style="display:flex;flex-direction:column;gap:6px;margin-bottom:22px;">';
@@ -554,6 +557,7 @@ async function showAssignProviderPopup(reqId, dateStr, svcType, propertyName) {
       html += '<span style="color:#6c63ff;font-size:20px;flex-shrink:0;">&rsaquo;</span>';
       html += '</button>';
     });
+    html += '<button onclick="pickProviderFromAnnuaire()" style="margin-top:4px;padding:10px 12px;background:transparent;color:#a5a0ff;border:1px dashed rgba(108,99,255,0.45);border-radius:10px;font-size:12px;font-weight:600;cursor:pointer;text-align:center;">&#127760; Choisir un autre prestataire dans l\'annuaire</button>';
     html += '</div>';
   }
 
@@ -671,6 +675,34 @@ async function postToAnnuaire(reqId, dateStr, svcType, propertyName) {
   }
 }
 window.postToAnnuaire = postToAnnuaire;
+
+// Close the assign popup and open the marketplace annuaire pre-filtered on
+// providers, so the user can browse and connect with a new prestataire.
+function pickProviderFromAnnuaire() {
+  document.getElementById('assignProviderOverlay')?.remove();
+  if (typeof showMarketplace !== 'function') {
+    showToast('Annuaire indisponible');
+    return;
+  }
+  showMarketplace();
+  // After marketplace is opened, switch to annuaire > search tab and filter on providers
+  setTimeout(() => {
+    try {
+      // Some builds expose a tab switcher for the marketplace top-level tabs;
+      // the annuaire tab is rendered inline so we just scroll to it and tweak filters.
+      if (typeof switchAnnuaireSubTab === 'function') switchAnnuaireSubTab('search');
+      const roleEl = document.getElementById('annRoleFilter');
+      if (roleEl) {
+        roleEl.value = 'provider';
+        roleEl.dispatchEvent(new Event('change'));
+      }
+      if (typeof filterAnnuaire === 'function') filterAnnuaire();
+      const annPanel = document.getElementById('annuairePanel_search') || document.getElementById('annuaireResults');
+      if (annPanel && annPanel.scrollIntoView) annPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } catch (e) { /* best-effort UX, ignore */ }
+  }, 250);
+}
+window.pickProviderFromAnnuaire = pickProviderFromAnnuaire;
 
 // Visual confirmation overlay shown after a successful annuaire posting.
 function _showAnnuaireConfirmation(jobId, svcLabel, propertyName, dateStr, expiresIso) {
