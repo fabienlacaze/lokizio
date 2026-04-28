@@ -78,10 +78,10 @@
 <script src="auto-billing.js?v=1"></script>
 <script src="invoices.js?v=1"></script>
 <script src="invoice-create.js?v=2"></script>
-<script src="auth.js?v=1"></script>
+<script src="auth.js?v=2"></script>
 <script src="provider.js?v=3"></script>
 <script src="owner.js?v=3"></script>
-<script src="marketplace.js?v=10"></script>
+<script src="marketplace.js?v=11"></script>
 <script src="properties.js?v=3"></script>
 <script src="dashboard.js?v=1"></script>
 <script src="admin-prestations.js?v=9"></script>
@@ -143,7 +143,7 @@ async function loadPDF() {
 </script>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v9.45</div>
+<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v9.46</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -153,7 +153,7 @@ async function loadPDF() {
     <!-- Broom that sweeps -->
     <div id="splashBroom" style="position:absolute;top:50%;left:-60px;font-size:48px;transform:translateY(-50%) rotate(-30deg);opacity:0;transition:all 0.8s cubic-bezier(0.25,0.46,0.45,0.94);">✨</div>
   </div>
-  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v9.45</span></div>
+  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v9.46</span></div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie pour locations</div>
   <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou</div>
   <!-- Loading bar -->
@@ -1597,6 +1597,7 @@ function getStatusLabel(s) { return (STATUS_CONFIG[s] || {}).label || s || ''; }
 // ── Splash Changelog (update this with each significant version) ──
 // Full versioned changelog — add new entries at TOP
 const VERSION_CHANGELOG = [
+  { v: '9.46', changes: ['Audit complet + nettoyage : signature Stripe webhook verifiee (HMAC SHA256 + protection rejeu 5min), CORS prod restreint a fabienlacaze.github.io (localhost autorise uniquement si ENV=dev), 14 catch silencieux remplaces par console.warn explicites, cleanup des intervals au logout, nettoyage console.log debug, fix label aria-label sur input wizard'] },
   { v: '9.45', changes: ['Clic sur une bulle "Mon equipe" dans l\'annuaire : popup detail (nom, role, email, telephone, adresse, SIRET, notes) avec actions Appeler / Email / Message / Supprimer'] },
   { v: '9.44', changes: ['Fix definitif "Enregistrer contact" : passage par une RPC SECURITY DEFINER (add_manual_contact) qui contourne un bug PostgREST sur l\'evaluation de auth.uid() dans le WITH CHECK de la policy members.insert'] },
   { v: '9.43', changes: ['Fix RLS members.insert : la policy bloquait les concierges/admins/managers qui voulaient ajouter un contact manuel a leur org. Policy elargie aux roles admin/manager/concierge'] },
@@ -2235,10 +2236,10 @@ function switchTabProperty(propId) {
   // Reload prestations (uses cached data, just re-filters)
   loadAdminPrestations();
   // Re-render calendar/stats/revenue if visible
-  if (document.getElementById('calView')) { try { renderCalendar(); } catch(e){} }
-  if (document.getElementById('statsDiv')) { try { renderStats(); } catch(e){} }
-  if (typeof renderRevenueContent === 'function') { try { renderRevenueContent(); } catch(e){} }
-  if (typeof renderDashboardContent === 'function') { try { renderDashboardContent(); } catch(e){} }
+  if (document.getElementById('calView')) { try { renderCalendar(); } catch(e) { console.warn('renderCalendar failed:', e); } }
+  if (document.getElementById('statsDiv')) { try { renderStats(); } catch(e) { console.warn('renderStats failed:', e); } }
+  if (typeof renderRevenueContent === 'function') { try { renderRevenueContent(); } catch(e) { console.warn('renderRevenueContent failed:', e); } }
+  if (typeof renderDashboardContent === 'function') { try { renderDashboardContent(); } catch(e) { console.warn('renderDashboardContent failed:', e); } }
   // If switching to a specific property, also update team/planning in background
   if (propId) {
     API.setActiveProperty(propId);
@@ -2969,7 +2970,7 @@ async function shareProviderProfile() {
     try {
       await navigator.share({ title: 'Profil prestataire — ' + name, text: shareText });
       return;
-    } catch(e) {}
+    } catch(e) { /* user cancelled the share dialog — fall through to clipboard fallback */ }
   }
   // Fallback: copy to clipboard
   try {
@@ -6713,7 +6714,7 @@ function wizardStep_Annuaire(onContinue) {
   html += '<label style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;gap:10px;">';
   html += '<div><div style="font-size:13px;font-weight:600;color:var(--text);">&#128065;&#65039; Profil visible publiquement</div>';
   html += '<div style="font-size:11px;color:var(--text3);margin-top:2px;">Vous pourrez le modifier plus tard a tout moment.</div></div>';
-  html += '<input type="checkbox" id="wizAnnuaireVisible" checked style="width:44px;height:24px;cursor:pointer;">';
+  html += '<input type="checkbox" id="wizAnnuaireVisible" aria-label="Profil visible dans l\'annuaire public" checked style="width:44px;height:24px;cursor:pointer;">';
   html += '</label>';
   html += '</div>';
 
@@ -8426,7 +8427,7 @@ function switchMainTab(tabId, fromPopState) {
   window.scrollTo(0, 0);
   // Push to browser history for back button support
   if (!fromPopState) {
-    try { window.history.pushState({ tab: tabId }, '', '#' + tabId); } catch(e) {}
+    try { window.history.pushState({ tab: tabId }, '', '#' + tabId); } catch(e) { /* SecurityError on file:// or sandboxed iframe — silently skip */ }
   }
   // Refresh content when switching tabs
   if (tabId === 'dashboard') renderDashboardContent();
@@ -9295,7 +9296,7 @@ function _focusTrapHandler(e) {
 }
 function releaseFocusTrap() {
   if (_focusTrapEl) _focusTrapEl.removeEventListener('keydown', _focusTrapHandler);
-  if (_focusTrapPrev) try { _focusTrapPrev.focus(); } catch(e) {}
+  if (_focusTrapPrev) try { _focusTrapPrev.focus(); } catch(e) { /* element no longer in DOM — focus restoration optional */ }
   _focusTrapEl = null; _focusTrapPrev = null;
 }
 // Auto-trap focus when modals open
@@ -9465,7 +9466,7 @@ async function showServiceRequestModal() {
   try {
     const { data } = await sb.from('properties').select('id,name').eq('org_id', org.id).order('name');
     properties = data || [];
-  } catch(e) {}
+  } catch(e) { console.warn('load properties for selector failed:', e); }
   const activeProp = API.getActiveProperty ? API.getActiveProperty(fullConfig) : null;
   if (properties.length === 0) return showToast('Aucune propriete');
   let html = '<div style="padding:10px;">';
@@ -10431,7 +10432,7 @@ async function updateUnreadBadge() {
     } else if (badge) {
       badge.style.display = 'none';
     }
-  } catch(e) {}
+  } catch(e) { console.warn('updateUnreadBadge failed:', e); }
 }
 
 // Check unread after app loads
@@ -10555,7 +10556,7 @@ async function forceUpdate() {
     const t = await r.text();
     const m = t.match(/APP_VERSION\s*=\s*'([^']+)'/);
     if (m) remoteVer = m[1];
-  } catch(e) {}
+  } catch(e) { console.warn('forceUpdate: fetch sw.js failed:', e); }
   // 2. Store it
   if (remoteVer) localStorage.setItem('lokizio_seen_version', remoteVer);
   // 3. Clear SW and caches
@@ -10564,7 +10565,7 @@ async function forceUpdate() {
     await Promise.all(regs.map(r => r.unregister()));
     const keys = await caches.keys();
     await Promise.all(keys.map(k => caches.delete(k)));
-  } catch(e) {}
+  } catch(e) { console.warn('forceUpdate: SW/cache cleanup failed:', e); }
   // 4. Reload
   window.location.href = window.location.pathname + '?_v=' + Date.now();
 }
@@ -10587,7 +10588,7 @@ function showUpdateBanner(version) {
       await Promise.all(regs.map(r => r.unregister()));
       const keys = await caches.keys();
       await Promise.all(keys.map(k => caches.delete(k)));
-    } catch(e) {}
+    } catch(e) { console.warn('update banner: SW/cache cleanup failed:', e); }
     // Force hard reload
     window.location.href = window.location.pathname + '?_v=' + Date.now();
   });
@@ -10617,7 +10618,7 @@ async function _checkUpdate() {
     if (toNum(remoteVersion) <= toNum(currentVersion)) return;
     // Always show banner when remote is newer (no "seen" gate)
     showUpdateBanner(remoteVersion);
-  } catch(e) {}
+  } catch(e) { console.warn('_checkUpdate failed:', e); }
 }
 setTimeout(_checkUpdate, 5000);
 let _checkUpdateInterval = setInterval(_checkUpdate, 30000);
@@ -10649,7 +10650,7 @@ if('serviceWorker' in navigator){
               if (seenVersion && seenVersion >= m[1]) return;
               showUpdateBanner(m[1]);
             }
-          } catch(e) {}
+          } catch(e) { console.warn('SW updatefound: version probe failed:', e); }
         }
       });
     });

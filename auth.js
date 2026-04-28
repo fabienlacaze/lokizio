@@ -187,6 +187,18 @@ async function forgotPassword() {
   }
 }
 async function authLogout() {
+  // Stop background timers that pollute the next session if not cleared
+  // (marketplace auto-refresh, connection badge poll, etc.)
+  try {
+    if (typeof _mkRefreshInterval !== 'undefined' && _mkRefreshInterval) { clearInterval(_mkRefreshInterval); _mkRefreshInterval = null; }
+  } catch (_) { /* timer not declared in this context */ }
+  try {
+    if (typeof _connectionBadgeInterval !== 'undefined' && _connectionBadgeInterval) { clearInterval(_connectionBadgeInterval); _connectionBadgeInterval = null; }
+  } catch (_) { /* timer not declared in this context */ }
+  try {
+    if (typeof _autoRefreshInterval !== 'undefined' && _autoRefreshInterval) { clearInterval(_autoRefreshInterval); _autoRefreshInterval = null; }
+  } catch (_) { /* timer not declared in this context */ }
+
   await sb.auth.signOut();
   // Keep persistent settings, clear session data
   const keep = ['mm_onboarded', 'mm_lang', 'mm_theme', 'mm_remember_email'];

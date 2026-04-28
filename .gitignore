@@ -5,7 +5,8 @@ test-results/
 .vitest-cache/
 audit-report.html
 .env
-.env.test
-.env.local
+.env.*
+!.env.test.example
+!.env.example
 .DS_Store
 *.log

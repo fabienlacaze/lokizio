@@ -1329,7 +1329,6 @@ async function saveManualContact() {
       notes: notes || null,
       accepted: false,
     };
-    console.log('[saveManualContact] rpc payload:', payload);
     // Use the SECURITY DEFINER RPC to bypass the RLS quirk on members.insert
     // (PostgREST evaluates auth.uid() differently in the policy WITH CHECK).
     // The RPC re-checks membership server-side, so security is preserved.
@@ -1351,7 +1350,6 @@ async function saveManualContact() {
       tell('Erreur: ' + (error.message || error.details || error.code || 'inconnue'), 'error');
       return;
     }
-    console.log('[saveManualContact] insert ok:', data);
     document.getElementById('manualContactOverlay')?.remove();
     tell('Contact ajoute : ' + name);
     if (typeof renderAnnuaireTab === 'function') setTimeout(() => renderAnnuaireTab(), 200);
