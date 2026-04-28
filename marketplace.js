@@ -431,15 +431,18 @@ async function renderAnnuaireTab() {
       const { data: members } = await sb.from('members').select('*').eq('org_id', org.id);
       if (members) memberCount = members.length;
       if (members && members.length > 1) {
+        // Index members by id so the detail popup can look them up by id
+        window._teamMembersById = {};
+        members.forEach(m => { if (m && m.id) window._teamMembersById[m.id] = m; });
         tHtml += '<div style="margin-bottom:12px;">';
         tHtml += '<div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:8px;">&#128101; Mon equipe (' + members.length + ')</div>';
         tHtml += '<div style="display:flex;gap:8px;overflow-x:auto;padding-bottom:6px;">';
         members.forEach(m => {
           const mColor = roleColors[m.role] || '#6c63ff';
-          tHtml += '<div style="flex-shrink:0;text-align:center;width:60px;">';
+          tHtml += '<button onclick="showTeamMemberDetail(\'' + m.id + '\')" style="flex-shrink:0;text-align:center;width:64px;background:transparent;border:none;padding:4px;border-radius:10px;cursor:pointer;transition:background 0.15s;" onmouseover="this.style.background=\'var(--surface2)\'" onmouseout="this.style.background=\'transparent\'">';
           tHtml += '<div style="width:40px;height:40px;border-radius:50%;background:' + mColor + ';display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;color:#fff;margin:0 auto 4px;">' + esc((m.display_name || '?').charAt(0).toUpperCase()) + '</div>';
           tHtml += '<div style="font-size:10px;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + esc(m.display_name || 'Sans nom') + '</div>';
-          tHtml += '</div>';
+          tHtml += '</button>';
         });
         tHtml += '</div></div>';
       }
@@ -995,6 +998,73 @@ async function renderMarketplaceResults(profiles) {
   });
   container.innerHTML = html;
 }
+
+// Detail popup for a team member (clicked from the "Mon equipe" bubbles
+// in the annuaire). Shows name, role, email, phone, notes + actions.
+function showTeamMemberDetail(memberId) {
+  const m = (window._teamMembersById || {})[memberId];
+  if (!m) { showToast('Contact introuvable'); return; }
+  document.getElementById('teamMemberDetailOverlay')?.remove();
+  const overlay = document.createElement('div');
+  overlay.id = 'teamMemberDetailOverlay';
+  overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px;';
+  overlay.onclick = (e) => { if (e.target === overlay) overlay.remove(); };
+  const roleLabels = { owner: 'Proprietaire', provider: 'Prestataire', concierge: 'Conciergerie', admin: 'Admin', manager: 'Manager', tenant: 'Locataire' };
+  const roleColors = { owner: '#f59e0b', provider: '#34d399', concierge: '#6c63ff', admin: '#e94560', manager: '#a78bfa', tenant: '#06b6d4' };
+  const roleLbl = roleLabels[m.role] || m.role || '';
+  const roleColor = roleColors[m.role] || '#6c63ff';
+  const name = m.display_name || m.invited_email || 'Sans nom';
+  const initial = (name.charAt(0) || '?').toUpperCase();
+  const safeName = name.replace(/'/g, "\\'");
+  let html = '<div style="max-width:440px;width:100%;background:var(--surface);border-radius:14px;border:1px solid var(--border);overflow:hidden;">';
+  html += '<div style="padding:18px 18px 14px;display:flex;align-items:center;gap:14px;border-bottom:1px solid var(--border);">';
+  html += '<div style="width:54px;height:54px;border-radius:50%;background:' + roleColor + ';display:inline-flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:22px;flex-shrink:0;">' + esc(initial) + '</div>';
+  html += '<div style="flex:1;min-width:0;">';
+  html += '<div style="font-size:16px;font-weight:700;color:var(--text);">' + esc(name) + '</div>';
+  html += '<div style="font-size:12px;color:' + roleColor + ';margin-top:3px;">' + esc(roleLbl) + (m.accepted ? '' : ' &middot; <span style="color:var(--text3);">contact manuel</span>') + '</div>';
+  html += '</div>';
+  html += '<button aria-label="Fermer" onclick="document.getElementById(\'teamMemberDetailOverlay\').remove()" style="background:transparent;border:none;color:var(--text3);font-size:22px;cursor:pointer;line-height:1;">&times;</button>';
+  html += '</div>';
+  html += '<div style="padding:16px 18px;display:flex;flex-direction:column;gap:10px;">';
+  if (m.invited_email) html += '<div style="font-size:13px;color:var(--text2);"><span style="color:var(--text3);">&#9993; Email :</span> ' + esc(m.invited_email) + '</div>';
+  if (m.phone) html += '<div style="font-size:13px;color:var(--text2);"><span style="color:var(--text3);">&#128222; Telephone :</span> ' + esc(m.phone) + '</div>';
+  if (m.address) html += '<div style="font-size:13px;color:var(--text2);"><span style="color:var(--text3);">&#128205; Adresse :</span> ' + esc(m.address) + '</div>';
+  if (m.company_name) html += '<div style="font-size:13px;color:var(--text2);"><span style="color:var(--text3);">&#127970; Entreprise :</span> ' + esc(m.company_name) + '</div>';
+  if (m.siret) html += '<div style="font-size:13px;color:var(--text2);"><span style="color:var(--text3);">SIRET :</span> ' + esc(m.siret) + '</div>';
+  if (m.notes) html += '<div style="font-size:13px;color:var(--text2);background:var(--surface2);padding:10px 12px;border-radius:8px;border-left:3px solid ' + roleColor + ';"><span style="color:var(--text3);font-size:11px;text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:4px;">Notes</span>' + esc(m.notes) + '</div>';
+  if (!m.invited_email && !m.phone && !m.address && !m.notes) {
+    html += '<div style="font-size:12px;color:var(--text3);text-align:center;padding:18px 0;">Aucune information supplementaire.</div>';
+  }
+  // Actions
+  html += '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px;">';
+  if (m.phone) html += '<a href="tel:' + esc(m.phone) + '" style="flex:1;min-width:90px;padding:9px;text-align:center;background:rgba(52,211,153,0.12);color:#34d399;text-decoration:none;border:1px solid rgba(52,211,153,0.3);border-radius:8px;font-size:12px;font-weight:600;">&#128222; Appeler</a>';
+  if (m.invited_email) html += '<a href="mailto:' + esc(m.invited_email) + '" style="flex:1;min-width:90px;padding:9px;text-align:center;background:rgba(108,99,255,0.12);color:#a5a0ff;text-decoration:none;border:1px solid rgba(108,99,255,0.3);border-radius:8px;font-size:12px;font-weight:600;">&#9993; Email</a>';
+  if (m.user_id) html += '<button onclick="openAnnuaireMessage(\'' + esc(m.user_id) + '\',\'' + safeName + '\')" style="flex:1;min-width:90px;padding:9px;background:rgba(245,158,11,0.12);color:#f59e0b;border:1px solid rgba(245,158,11,0.3);border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;">&#128172; Message</button>';
+  html += '</div>';
+  // Delete option for manual contacts (no auth user)
+  if (!m.user_id) {
+    html += '<button onclick="deleteTeamMember(\'' + esc(m.id) + '\',\'' + safeName + '\')" style="margin-top:10px;padding:9px;background:transparent;color:#ef4444;border:1px dashed rgba(239,68,68,0.4);border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;">&#128465; Supprimer ce contact</button>';
+  }
+  html += '</div></div>';
+  overlay.innerHTML = html;
+  document.body.appendChild(overlay);
+}
+window.showTeamMemberDetail = showTeamMemberDetail;
+
+async function deleteTeamMember(memberId, memberName) {
+  const ok = await customConfirm('Supprimer le contact "' + memberName + '" ?', 'Supprimer');
+  if (!ok) return;
+  try {
+    const { error } = await sb.from('members').delete().eq('id', memberId);
+    if (error) { showToast('Erreur: ' + error.message); return; }
+    document.getElementById('teamMemberDetailOverlay')?.remove();
+    showToast('Contact supprime');
+    if (typeof renderAnnuaireTab === 'function') setTimeout(() => renderAnnuaireTab(), 200);
+  } catch (e) {
+    showToast('Erreur lors de la suppression');
+  }
+}
+window.deleteTeamMember = deleteTeamMember;
 
 // In-app message popup from an annuaire card. Sends a row in `messages`
 // addressed to the recipient's user_id and triggers a push notification.
