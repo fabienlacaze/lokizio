@@ -84,7 +84,7 @@
 <script src="marketplace.js?v=3"></script>
 <script src="properties.js?v=3"></script>
 <script src="dashboard.js?v=1"></script>
-<script src="admin-prestations.js?v=3"></script>
+<script src="admin-prestations.js?v=4"></script>
 <script src="account.js?v=2"></script>
 <!-- Lazy-loaded: Leaflet, Chart.js, jsPDF (loaded on demand to improve startup) -->
 <script>
@@ -143,7 +143,7 @@ async function loadPDF() {
 </script>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v9.30</div>
+<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v9.31</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -153,7 +153,7 @@ async function loadPDF() {
     <!-- Broom that sweeps -->
     <div id="splashBroom" style="position:absolute;top:50%;left:-60px;font-size:48px;transform:translateY(-50%) rotate(-30deg);opacity:0;transition:all 0.8s cubic-bezier(0.25,0.46,0.45,0.94);">✨</div>
   </div>
-  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v9.30</span></div>
+  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v9.31</span></div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie pour locations</div>
   <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou</div>
   <!-- Loading bar -->
@@ -1591,6 +1591,20 @@ function getStatusLabel(s) { return (STATUS_CONFIG[s] || {}).label || s || ''; }
 // ── Splash Changelog (update this with each significant version) ──
 // Full versioned changelog — add new entries at TOP
 const VERSION_CHANGELOG = [
+  { v: '9.31', changes: ['Bouton "Envoyer aux prestataires" sur les prestations sans assignation (notification push aux prestataires de l\'org)', 'Detection elargie : iCal-derived cleanings sans provider declenchent aussi l\'alerte clignotante'] },
+  { v: '9.30', changes: ['Bouton Creer mon profil ouvre directement l\'annuaire + active la visibilite', 'Etape onboarding annuaire (concierge + provider) avec opt-in profil public'] },
+  { v: '9.29', changes: ['Alerte clignotante (rouge + glow + badge) sur les prestations sans prestataire assigne'] },
+  { v: '9.28', changes: ['Adresse cliquable dans le detail prestation', 'Popup navigation : Google Maps / Waze / Apple Maps / Copier (avec mini-carte si GPS)'] },
+  { v: '9.27', changes: ['Sauvegarde des services et iCal dans la DB prod (colonnes service_config + required_services)', 'Rappels locations cliquables (ouvre la prestation au clic)'] },
+  { v: '9.26', changes: ['Flux iCal nettoye : pas de popup intermediaire vide quand aucun calendrier', 'Bouton Reservation manuelle retire de la modale Calendriers'] },
+  { v: '9.25', changes: ['Synchronisation calendriers liee au service de menage (visible quand declencheur Fin/Debut de location)'] },
+  { v: '9.24', changes: ['Section Services au wizard d\'onboarding etape 3 (creation rapide de Menage standard)'] },
+  { v: '9.23', changes: ['Bulles d\'aide ? placees directement sous chaque champ du wizard'] },
+  { v: '9.22', changes: ['Fermer l\'onboarding (X) deconnecte et ramene a l\'ecran de login'] },
+  { v: '9.21', changes: ['Bulles d\'aide en dessous des champs (au lieu de cote)'] },
+  { v: '9.20', changes: ['Fix freeze application au clic sur le bouton ? du wizard (boucle infinie corrigee)'] },
+  { v: '9.19', changes: ['Bouton ? dans l\'onboarding pour afficher des explications', 'Preservation des valeurs lors du Retour dans le wizard'] },
+  { v: '9.18', changes: ['Tarif menage et duree retires du wizard (configurable dans la fiche du bien)'] },
   { v: '9.17', changes: ['Module helpers.js partage avec la suite de tests (137 tests automatiques)', 'Fix bug fuseau horaire dans la facturation periodique (UTC cote serveur)', 'CI GitHub Actions: tests unitaires executes a chaque push'] },
   { v: '9.16', changes: ['Securite: auth JWT + CORS restreint sur toutes les Edge Functions sensibles', 'Chat locataire filtre par reservation (fuite de donnees corrigee)', 'Calcul TVA correct dans la facturation automatique', 'Accessibilite: labels + autocomplete sur inputs critiques', 'Mobile: modales et tableaux optimises <480px'] },
   { v: '9.15', changes: ['Refactoring: CSS extrait dans app.css (~1000 lignes)', 'Module admin-prestations.js (~460 lignes)', 'Module account.js avec gestion de role + team (~830 lignes)'] },

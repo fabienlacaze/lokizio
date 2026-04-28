@@ -185,9 +185,12 @@ async function loadAdminPrestations(forceReload) {
       dowStr = days[d.getDay()];
     }
 
-    // Pre-compute actions for pending status (inline in card)
+    // Pre-compute actions for pending status (inline in card).
+    // Now also covers iCal-derived cleanings without a provider.
     let pendingProviders = null;
-    if (u._source === 'service_request' && u.status === 'pending') {
+    const _isPendingNoProv = (!u.provider || u.provider.trim() === '')
+      && ['pending', 'assigned'].includes(u.status);
+    if (_isPendingNoProv) {
       pendingProviders = [];
       props.forEach(p => { (p.providers || []).forEach(pv => { if (!pendingProviders.find(x => x.name === pv.name)) pendingProviders.push(pv); }); });
     }
@@ -202,11 +205,13 @@ async function loadAdminPrestations(forceReload) {
     }));
     const isPast = u.date && u.date < today;
     const pastStyle = isPast ? 'opacity:0.5;filter:grayscale(0.6);position:relative;' : '';
-    // CRITICAL: prestation in upcoming/today/pending state without an assigned provider
+    // CRITICAL: prestation upcoming/today without any assigned provider.
+    // Applies to BOTH iCal-derived cleanings (_source='cleaning') and
+    // service requests (_source='service_request') in pending state.
+    const _provStr = (u.provider || '').trim();
     const noProvider = !isPast
-      && u._source === 'service_request'
-      && (!u.provider || u.provider.trim() === '')
-      && ['pending', 'pending_validation'].includes(u.status);
+      && _provStr === ''
+      && ['pending', 'pending_validation', 'assigned'].includes(u.status);
     const cardClass = 'adminPrestCard' + (noProvider ? ' prestNoProvider' : '');
     const cardTitle = noProvider ? 'PRESTATAIRE NON ASSIGNE - Action requise' : (isPast ? 'Date passee' : '');
     html += '<div class="' + cardClass + '" data-category="' + cat + '" data-status="' + u.status + '" data-date="' + (u.date||'') + '" data-type="' + (u.type||'') + '" data-provider="' + esc(u.provider||'') + '" data-owner="' + esc(u.propertyName||'') + '" onclick="showPrestationDetail(\'' + prestPayload + '\', event)" style="border-left:4px solid ' + (noProvider ? '#ef4444' : color) + ';cursor:pointer;' + pastStyle + (isToday ? 'box-shadow:0 0 0 1px rgba(233,69,96,0.3);' : '') + '" title="' + cardTitle + '">';
@@ -236,6 +241,11 @@ async function loadAdminPrestations(forceReload) {
     html += metaParts.join(' &middot; ');
     if (noProvider) {
       html += '<span class="prestNoProvider-badge">&#9888;&#65039; Aucun prestataire</span>';
+      // CTA: broadcast a request to all providers of the org
+      const broadcastDate = (u.date || '').replace(/'/g, '');
+      const broadcastSvc = (u.type || '').replace(/'/g, '');
+      const broadcastProp = esc(u.propertyName || '').replace(/'/g, "\\'");
+      html += '<button onclick="event.stopPropagation();broadcastToProviders(\'' + broadcastDate + '\',\'' + broadcastSvc + '\',\'' + broadcastProp + '\')" style="margin-left:6px;padding:4px 10px;font-size:10px;font-weight:700;border:none;border-radius:5px;cursor:pointer;background:#ef4444;color:#fff;animation:criticalText 1.1s ease-in-out infinite;">&#128228; Envoyer aux prestataires</button>';
     }
     html += '</div>';
     if (u.description) html += '<div style="font-size:10px;color:var(--text3);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + esc(u.description) + '</div>';
@@ -481,3 +491,44 @@ window.filterAdminPrest = filterAdminPrest;
 window.filterAdminPrestStatus = filterAdminPrestStatus;
 window.applyAdminPrestFilters = applyAdminPrestFilters;
 window.toggleAdminHidePast = toggleAdminHidePast;
+
+// Broadcast a service request to all providers of the org via push notification.
+// Used when a prestation has no assigned provider yet — the concierge can
+// send it to everyone available.
+async function broadcastToProviders(dateStr, svcType, propertyName) {
+  const ok = await customConfirm(
+    'Envoyer une notification a tous vos prestataires pour le menage du ' + dateStr + ' a "' + propertyName + '" ?',
+    'Envoyer'
+  );
+  if (!ok) return;
+  try {
+    const org = API.getOrg();
+    if (!org) { showToast('Organisation introuvable'); return; }
+    // Get all providers of the org (members table)
+    const { data: members, error: memErr } = await sb.from('members')
+      .select('user_id, display_name')
+      .eq('org_id', org.id)
+      .eq('role', 'provider')
+      .eq('accepted', true);
+    if (memErr || !members || members.length === 0) {
+      showToast('Aucun prestataire dans votre equipe');
+      return;
+    }
+    // Build push payload
+    const svcLabel = (typeof getServiceLabel === 'function') ? getServiceLabel(svcType) : 'Menage';
+    const dateLabel = dateStr ? new Date(dateStr + 'T12:00:00').toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' }) : '';
+    let sentCount = 0;
+    for (const m of members) {
+      if (!m.user_id) continue;
+      try {
+        await sendPushToUser(m.user_id, '🚨 Mission disponible', svcLabel + ' - ' + propertyName + ' - ' + dateLabel, { tag: 'broadcast-' + dateStr });
+        sentCount++;
+      } catch (e) { /* skip individual failures */ }
+    }
+    showToast(sentCount + ' prestataire' + (sentCount > 1 ? 's' : '') + ' notifie' + (sentCount > 1 ? 's' : ''));
+  } catch (e) {
+    if (typeof notifyError === 'function') notifyError('Envoi aux prestataires', e);
+    else showToast('Erreur: ' + (e.message || e));
+  }
+}
+window.broadcastToProviders = broadcastToProviders;
