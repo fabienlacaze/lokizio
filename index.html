@@ -143,7 +143,7 @@ async function loadPDF() {
 </script>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v9.19</div>
+<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v9.20</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -153,7 +153,7 @@ async function loadPDF() {
     <!-- Broom that sweeps -->
     <div id="splashBroom" style="position:absolute;top:50%;left:-60px;font-size:48px;transform:translateY(-50%) rotate(-30deg);opacity:0;transition:all 0.8s cubic-bezier(0.25,0.46,0.45,0.94);">✨</div>
   </div>
-  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v9.19</span></div>
+  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v9.20</span></div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie pour locations</div>
   <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou</div>
   <!-- Loading bar -->
@@ -5691,41 +5691,54 @@ function toggleWizardHelp() {
   applyWizardHelp();
 }
 
+// Guard flag to prevent the MutationObserver from re-triggering applyWizardHelp
+// while we're inserting the bubbles ourselves.
+let _wizardHelpApplying = false;
+
 function applyWizardHelp() {
   const body = document.getElementById('msgBody');
   if (!body) return;
-  // Remove existing help bubbles
-  body.querySelectorAll('.wizardHelpBubble').forEach(el => el.remove());
-  if (!_wizardHelpVisible) return;
-  // Insert bubble before each input/select/textarea that has a help entry
-  const fields = body.querySelectorAll('input[id], select[id], textarea[id]');
-  fields.forEach(el => {
-    const help = WIZARD_HELP[el.id];
-    if (!help) return;
-    const bubble = document.createElement('div');
-    bubble.className = 'wizardHelpBubble';
-    bubble.style.cssText = 'background:rgba(108,99,255,0.08);border:1px solid rgba(108,99,255,0.25);border-left:3px solid #6c63ff;border-radius:6px;padding:8px 10px;margin-bottom:6px;font-size:12px;color:#cbd5e1;line-height:1.4;';
-    bubble.textContent = '💡 ' + help;
-    // Insert just before the field's parent <div> if simple, else before the field itself
-    const target = el.closest('div') || el;
-    target.parentNode.insertBefore(bubble, target);
-  });
+  _wizardHelpApplying = true;
+  try {
+    // Remove existing help bubbles
+    body.querySelectorAll('.wizardHelpBubble').forEach(el => el.remove());
+    if (!_wizardHelpVisible) return;
+    // Insert bubble before each input/select/textarea that has a help entry
+    const fields = body.querySelectorAll('input[id], select[id], textarea[id]');
+    const seen = new Set();
+    fields.forEach(el => {
+      const help = WIZARD_HELP[el.id];
+      if (!help) return;
+      const target = el.closest('div') || el;
+      // Avoid inserting twice if multiple fields share the same parent div
+      if (seen.has(target)) return;
+      seen.add(target);
+      const bubble = document.createElement('div');
+      bubble.className = 'wizardHelpBubble';
+      bubble.style.cssText = 'background:rgba(108,99,255,0.08);border:1px solid rgba(108,99,255,0.25);border-left:3px solid #6c63ff;border-radius:6px;padding:8px 10px;margin:6px 0;font-size:12px;color:#cbd5e1;line-height:1.4;';
+      bubble.textContent = '💡 ' + help;
+      target.parentNode.insertBefore(bubble, target);
+    });
+  } finally {
+    // Release guard on next tick to ignore mutations from our own DOM writes
+    setTimeout(() => { _wizardHelpApplying = false; }, 50);
+  }
 }
 
 // Auto-show help button when a wizard step is rendered.
-// Detects via mutation observer so we don't have to modify each step function.
 (function setupWizardHelpAutohide() {
   const body = document.getElementById('msgBody');
   if (!body) return;
   const helpBtn = document.getElementById('msgHelpBtn');
   if (!helpBtn) return;
   new MutationObserver(() => {
-    // Check if any field with help entry is now visible
+    // Skip mutations triggered by applyWizardHelp itself (avoid infinite loop)
+    if (_wizardHelpApplying) return;
     const hasHelpableField = !!body.querySelector('input[id], select[id], textarea[id]');
     helpBtn.style.display = hasHelpableField ? 'inline-flex' : 'none';
     helpBtn.style.alignItems = 'center';
     helpBtn.style.justifyContent = 'center';
-    // Re-apply help if it was active (in case of step change)
+    // Re-apply help when a new step renders (only if user has it active)
     if (_wizardHelpVisible) applyWizardHelp();
   }).observe(body, { childList: true, subtree: true });
 })();
