@@ -64,28 +64,28 @@
 }
 </script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.101.0/dist/umd/supabase.min.js" integrity="sha384-HS/sUFZexXk91zcjy7zGIBg3tNDxgxF8YbcifixByxxtxQoF2o8GBBT9p6DdGlAR" crossorigin="anonymous"></script>
-<script src="supabase_config.js?v=731"></script>
-<script src="i18n.js?v=889"></script>
-<script src="ical_parser.js?v=726"></script>
-<script src="helpers.js?v=1"></script>
-<script src="api_bridge.js?v=919"></script>
-<script src="vacation.js?v=1"></script>
-<script src="push.js?v=2"></script>
-<script src="legal.js?v=1"></script>
-<script src="quotes.js?v=1"></script>
-<script src="search.js?v=1"></script>
-<script src="tenant.js?v=2"></script>
-<script src="auto-billing.js?v=1"></script>
-<script src="invoices.js?v=1"></script>
-<script src="invoice-create.js?v=2"></script>
-<script src="auth.js?v=2"></script>
-<script src="provider.js?v=3"></script>
-<script src="owner.js?v=3"></script>
-<script src="marketplace.js?v=11"></script>
-<script src="properties.js?v=3"></script>
-<script src="dashboard.js?v=1"></script>
-<script src="admin-prestations.js?v=9"></script>
-<script src="account.js?v=2"></script>
+<script src="supabase_config.js?v=76fd30b"></script>
+<script src="i18n.js?v=86736d8"></script>
+<script src="ical_parser.js?v=e2bdc4d"></script>
+<script src="helpers.js?v=ae41dca"></script>
+<script src="api_bridge.js?v=d0cced9"></script>
+<script src="vacation.js?v=a66e314"></script>
+<script src="push.js?v=28a3ca5"></script>
+<script src="legal.js?v=bf4906b"></script>
+<script src="quotes.js?v=dc94c04"></script>
+<script src="search.js?v=a7f53bd"></script>
+<script src="tenant.js?v=2f88fa5"></script>
+<script src="auto-billing.js?v=58151d3"></script>
+<script src="invoices.js?v=2c4fcfb"></script>
+<script src="invoice-create.js?v=b8d8fed"></script>
+<script src="auth.js?v=0e681f8"></script>
+<script src="provider.js?v=98e36d2"></script>
+<script src="owner.js?v=37e7c9d"></script>
+<script src="marketplace.js?v=f0bd1ec"></script>
+<script src="properties.js?v=24f7383"></script>
+<script src="dashboard.js?v=fa05725"></script>
+<script src="admin-prestations.js?v=ed8ddb3"></script>
+<script src="account.js?v=c2306e4"></script>
 <!-- Lazy-loaded: Leaflet, Chart.js, jsPDF (loaded on demand to improve startup) -->
 <script>
 function lazyLoad(url, type) {
@@ -143,7 +143,7 @@ async function loadPDF() {
 </script>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v9.46</div>
+<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v9.47</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -153,7 +153,7 @@ async function loadPDF() {
     <!-- Broom that sweeps -->
     <div id="splashBroom" style="position:absolute;top:50%;left:-60px;font-size:48px;transform:translateY(-50%) rotate(-30deg);opacity:0;transition:all 0.8s cubic-bezier(0.25,0.46,0.45,0.94);">✨</div>
   </div>
-  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v9.46</span></div>
+  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v9.47</span></div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie pour locations</div>
   <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou</div>
   <!-- Loading bar -->
@@ -1597,6 +1597,13 @@ function getStatusLabel(s) { return (STATUS_CONFIG[s] || {}).label || s || ''; }
 // ── Splash Changelog (update this with each significant version) ──
 // Full versioned changelog — add new entries at TOP
 const VERSION_CHANGELOG = [
+  { v: '9.47', changes: [
+    'Cache busters automatises (npm run bump) : hash SHA-1 du contenu de chaque .js, plus besoin d\'incrementer manuellement les ?v=N',
+    'Workflow acceptation devis : boutons Accepter / Refuser dans la modale + statut "Expire" si quote_valid_until depasse + bouton "Convertir en facture" apres acceptation',
+    'Notifications push automatiques aux locataires quand un service est programme pendant leur reservation active',
+    'Dashboard d\'accueil : KPI Factures en attente + Factures en retard (chargement async, clic = onglet finance)',
+    '3 nouveaux specs E2E : signature Stripe webhook (rejet sans/mauvaise signature), delete-account RGPD (auth required + suppression user.users), create-portal/change-subscription (auth required)'
+  ] },
   { v: '9.46', changes: ['Audit complet + nettoyage : signature Stripe webhook verifiee (HMAC SHA256 + protection rejeu 5min), CORS prod restreint a fabienlacaze.github.io (localhost autorise uniquement si ENV=dev), 14 catch silencieux remplaces par console.warn explicites, cleanup des intervals au logout, nettoyage console.log debug, fix label aria-label sur input wizard'] },
   { v: '9.45', changes: ['Clic sur une bulle "Mon equipe" dans l\'annuaire : popup detail (nom, role, email, telephone, adresse, SIRET, notes) avec actions Appeler / Email / Message / Supprimer'] },
   { v: '9.44', changes: ['Fix definitif "Enregistrer contact" : passage par une RPC SECURITY DEFINER (add_manual_contact) qui contourne un bug PostgREST sur l\'evaluation de auth.uid() dans le WITH CHECK de la policy members.insert'] },
@@ -9622,6 +9629,26 @@ async function submitServiceRequest() {
         '📋 Mission assignee: ' + svcLabel + ' pour ' + propName + ' le ' + date);
     }
   }
+  // Notify the tenant if a reservation is active on the requested date
+  // (so guests on-site know a provider will visit them)
+  try {
+    if (date && propertyId) {
+      const { data: activeRes } = await sb.from('reservations')
+        .select('tenant_user_id, start_date, end_date')
+        .eq('property_id', propertyId)
+        .eq('status', 'active')
+        .lte('start_date', date)
+        .gte('end_date', date)
+        .maybeSingle();
+      if (activeRes && activeRes.tenant_user_id && typeof sendPushToUser === 'function') {
+        const dateLabel = new Date(date + 'T12:00:00').toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
+        await sendPushToUser(activeRes.tenant_user_id,
+          '🛎️ Intervention prevue',
+          svcLabel + ' a ' + propName + ' le ' + dateLabel,
+          { tag: 'tenant-svc-' + (date || '') });
+      }
+    }
+  } catch (e) { console.warn('tenant notification skipped:', e); }
   loadServiceRequests();
   loadAdminPrestations(true);
   // Refresh owner mode if applicable

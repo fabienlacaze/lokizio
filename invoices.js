@@ -158,7 +158,7 @@ function renderInvoicesView() {
 }
 
 function _renderInvoiceCard(inv, today) {
-  const statusColors = { draft: '#888', sent: '#6c63ff', paid: '#34d399', overdue: '#e94560', accepted: '#34d399', refused: '#ef4444' };
+  const statusColors = { draft: '#888', sent: '#6c63ff', paid: '#34d399', overdue: '#e94560', accepted: '#34d399', refused: '#ef4444', expired: '#f59e0b' };
   const statusLabels = { draft: 'Brouillon', sent: 'Envoyee', paid: 'Payee', accepted: 'Accepte', refused: 'Refuse' };
   const isOverdue = inv.status === 'sent' && inv.due_date && inv.due_date < today;
   const displayStatus = isOverdue ? 'overdue' : inv.status;
@@ -373,7 +373,7 @@ async function showInvoiceFullView(id) {
   try {
     const { data: inv } = await sb.from('invoices').select('*').eq('id', id).single();
     if (!inv) { showToast('Facture introuvable'); return; }
-    const statusColors = { draft: '#888', sent: '#6c63ff', paid: '#34d399', overdue: '#e94560', accepted: '#34d399', refused: '#ef4444' };
+    const statusColors = { draft: '#888', sent: '#6c63ff', paid: '#34d399', overdue: '#e94560', accepted: '#34d399', refused: '#ef4444', expired: '#f59e0b' };
     const statusLabels = { draft: 'Brouillon', sent: 'Envoyee', paid: 'Payee', accepted: 'Accepte', refused: 'Refuse' };
     const isOverdue = inv.status === 'sent' && inv.due_date && inv.due_date < new Date().toISOString().split('T')[0];
     const color = statusColors[isOverdue ? 'overdue' : inv.status] || '#888';
@@ -458,11 +458,13 @@ async function showInvoiceDetail(id) {
     const { data: inv } = await sb.from('invoices').select('*').eq('id', id).single();
     if (!inv) { showToast('Facture introuvable'); return; }
 
-    const statusColors = { draft: '#888', sent: '#6c63ff', paid: '#34d399', overdue: '#e94560', accepted: '#34d399', refused: '#ef4444' };
-    const statusLabels = { draft: 'Brouillon', sent: 'Envoyee', paid: 'Payee', accepted: 'Accepte', refused: 'Refuse' };
-    const isOverdue = inv.status === 'sent' && inv.due_date && inv.due_date < new Date().toISOString().split('T')[0];
-    const color = statusColors[isOverdue ? 'overdue' : inv.status] || '#888';
-    const label = isOverdue ? 'En retard' : (statusLabels[inv.status] || inv.status);
+    const statusLabels = { draft: 'Brouillon', sent: 'Envoyee', paid: 'Payee', accepted: 'Accepte', refused: 'Refuse', expired: 'Expire' };
+    const todayIso = new Date().toISOString().split('T')[0];
+    const isOverdue = !inv.is_quote && inv.status === 'sent' && inv.due_date && inv.due_date < todayIso;
+    const isExpired = inv.is_quote && inv.status === 'sent' && inv.quote_valid_until && inv.quote_valid_until < todayIso;
+    const stateKey = isOverdue ? 'overdue' : (isExpired ? 'expired' : inv.status);
+    const color = statusColors[stateKey] || '#888';
+    const label = isOverdue ? 'En retard' : (isExpired ? 'Expire' : (statusLabels[inv.status] || inv.status));
 
     // Pick first item as main prestation summary
     const firstItem = (inv.items && inv.items.length) ? inv.items[0] : null;
@@ -563,10 +565,18 @@ async function showInvoiceDetail(id) {
     // Actions
     html += '<div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;">';
     html += '<button class="btn btnOutline" style="flex:1;padding:10px;" onclick="closeMsg()">Fermer</button>';
-    html += '<button class="btn" style="padding:10px;background:#6c63ff;color:#fff;border:none;font-weight:600;" onclick="closeMsg();setTimeout(()=>showInvoiceFullView(\'' + inv.id + '\'),150)">&#128196; Voir la facture</button>';
+    html += '<button class="btn" style="padding:10px;background:#6c63ff;color:#fff;border:none;font-weight:600;" onclick="closeMsg();setTimeout(()=>showInvoiceFullView(\'' + inv.id + '\'),150)">&#128196; ' + (inv.is_quote ? 'Voir le devis' : 'Voir la facture') + '</button>';
     html += '<button class="btn btnSmall btnOutline" style="padding:10px;" onclick="closeMsg();downloadInvoicePDF(\'' + inv.id + '\')">PDF</button>';
     if (inv.status === 'draft') html += '<button class="btn" style="padding:10px;background:#34d399;color:#fff;border:none;font-weight:600;" onclick="closeMsg();updateInvoiceStatus(\'' + inv.id + '\',\'sent\')">Envoyer</button>';
-    if (inv.status === 'sent') html += '<button class="btn btnSuccess" style="padding:10px;font-weight:600;" onclick="closeMsg();updateInvoiceStatus(\'' + inv.id + '\',\'paid\')">&#9989; Marquer payee</button>';
+    if (inv.is_quote && inv.status === 'sent' && !isExpired) {
+      // Quote acceptance / refusal workflow (also pushes a notification)
+      html += '<button class="btn btnSuccess" style="padding:10px;font-weight:600;" onclick="closeMsg();acceptQuote(\'' + inv.id + '\')">&#10003; Accepter</button>';
+      html += '<button class="btn btnDanger" style="padding:10px;font-weight:600;" onclick="closeMsg();refuseQuote(\'' + inv.id + '\')">&#10007; Refuser</button>';
+    } else if (inv.is_quote && inv.status === 'accepted') {
+      html += '<button class="btn" style="padding:10px;background:#6c63ff;color:#fff;border:none;font-weight:600;" onclick="closeMsg();convertQuoteToInvoice(\'' + inv.id + '\')">&#128196; Convertir en facture</button>';
+    } else if (!inv.is_quote && inv.status === 'sent') {
+      html += '<button class="btn btnSuccess" style="padding:10px;font-weight:600;" onclick="closeMsg();updateInvoiceStatus(\'' + inv.id + '\',\'paid\')">&#9989; Marquer payee</button>';
+    }
     html += '</div>';
 
     html += '</div>';

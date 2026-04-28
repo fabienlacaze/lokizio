@@ -18,6 +18,8 @@
     "audit:quick": "node scripts/audit.js --quick",
     "audit:ci": "node scripts/audit.js --ci --quick",
     "audit:strict": "node scripts/audit.js --strict",
+    "bump": "node scripts/bump-cache-busters.js",
+    "bump:check": "node scripts/bump-cache-busters.js --check",
     "serve": "npx --yes http-server . -p 8000 -c-1 --cors"
   },
   "devDependencies": {

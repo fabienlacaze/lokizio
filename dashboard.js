@@ -139,8 +139,40 @@ function renderDashboardContent() {
     html += '<div ' + tileHover + ' onclick="goToAnalyticTile(\'revenue\')" style="' + tileStyle + '"><div style="font-size:22px;font-weight:800;color:#f59e0b;">' + thisMonthRevenue + '&euro;</div><div style="font-size:10px;color:var(--text3);">CA du mois</div></div>';
     html += '<div ' + tileHover + ' onclick="goToAnalyticTile(\'pending\')" style="' + tileStyle + '"><div style="font-size:22px;font-weight:800;color:#f59e0b;">' + pending + '</div><div style="font-size:10px;color:var(--text3);">En attente</div></div>';
     html += '<div ' + tileHover + ' onclick="goToAnalyticTile(\'disputed\')" style="' + tileStyle + '"><div style="font-size:22px;font-weight:800;color:' + (disputed > 0 ? '#ef4444' : 'var(--text)') + ';">' + disputed + '</div><div style="font-size:10px;color:var(--text3);">Litiges</div></div>';
+    html += '<div id="dashKpiInvoices" style="' + tileStyle + 'grid-column:span 2;"><div style="font-size:11px;color:var(--text3);">Chargement factures...</div></div>';
     html += '</div></details>';
     div3.innerHTML = html;
+    // Async-load invoice KPIs without blocking the dashboard render
+    _loadDashInvoiceKpi();
+  }
+}
+
+// Fetch invoice KPIs (unpaid + overdue) and inject them in the dashboard tile
+async function _loadDashInvoiceKpi() {
+  const tile = document.getElementById('dashKpiInvoices');
+  if (!tile || typeof sb === 'undefined') return;
+  try {
+    const org = (typeof API !== 'undefined' && API.getOrg) ? API.getOrg() : null;
+    if (!org) return;
+    const today = new Date().toISOString().split('T')[0];
+    const { data: invs } = await sb.from('invoices')
+      .select('total_ttc,status,due_date,is_quote')
+      .eq('org_id', org.id)
+      .eq('is_quote', false)
+      .in('status', ['sent', 'overdue']);
+    const sent = (invs || []).filter(i => i.status === 'sent');
+    const overdue = sent.filter(i => i.due_date && i.due_date < today);
+    const totalPending = sent.reduce((s, i) => s + (i.total_ttc || 0), 0);
+    const totalOverdue = overdue.reduce((s, i) => s + (i.total_ttc || 0), 0);
+    const overdueColor = overdue.length > 0 ? '#ef4444' : '#34d399';
+    let html = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">';
+    html += '<div onclick="switchMainTab(\'finance\')" style="cursor:pointer;"><div style="font-size:18px;font-weight:800;color:#f59e0b;">' + totalPending.toFixed(0) + '&euro;</div><div style="font-size:10px;color:var(--text3);">Factures en attente (' + sent.length + ')</div></div>';
+    html += '<div onclick="switchMainTab(\'finance\')" style="cursor:pointer;"><div style="font-size:18px;font-weight:800;color:' + overdueColor + ';">' + (overdue.length > 0 ? totalOverdue.toFixed(0) + '&euro;' : '0&euro;') + '</div><div style="font-size:10px;color:var(--text3);">En retard (' + overdue.length + ')</div></div>';
+    html += '</div>';
+    tile.innerHTML = html;
+  } catch (e) {
+    console.warn('_loadDashInvoiceKpi failed:', e);
+    tile.innerHTML = '<div style="font-size:11px;color:var(--text3);">Factures: indisponible</div>';
   }
 }
 
