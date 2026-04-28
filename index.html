@@ -143,7 +143,7 @@ async function loadPDF() {
 </script>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v9.17</div>
+<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v9.18</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -153,7 +153,7 @@ async function loadPDF() {
     <!-- Broom that sweeps -->
     <div id="splashBroom" style="position:absolute;top:50%;left:-60px;font-size:48px;transform:translateY(-50%) rotate(-30deg);opacity:0;transition:all 0.8s cubic-bezier(0.25,0.46,0.45,0.94);">✨</div>
   </div>
-  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v9.17</span></div>
+  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v9.18</span></div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie pour locations</div>
   <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou</div>
   <!-- Loading bar -->
@@ -6083,16 +6083,7 @@ function wizardStep_PropertyDetails() {
   html += '<input aria-label="65" id="wizPropSurface" type="number" min="1" placeholder="65" required style="width:100%;padding:10px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:13px;box-sizing:border-box;"></div>';
   html += '</div>';
 
-  // Tarif + Duration (auto-estimated)
-  html += '<div id="wizEstimation" style="display:none;background:rgba(52,211,153,0.1);border:1px solid rgba(52,211,153,0.2);border-radius:8px;padding:8px 12px;margin-bottom:10px;font-size:12px;color:#34d399;">&#9889; Estimation automatique basee sur ' + '<span id="wizEstRooms">0</span> pieces et <span id="wizEstSurface">0</span>m²</div>';
-  html += '<div style="display:flex;gap:8px;margin-bottom:10px;">';
-  html += '<div style="flex:1;"><label style="display:block;font-size:11px;color:var(--text3);margin-bottom:4px;text-transform:uppercase;">Tarif menage (€)</label>';
-  html += '<input aria-label="65" id="wizPropTarif" type="number" min="0" placeholder="65" style="width:100%;padding:10px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:13px;box-sizing:border-box;"></div>';
-  html += '<div style="flex:1;"><label style="display:block;font-size:11px;color:var(--text3);margin-bottom:4px;text-transform:uppercase;">Duree estimee</label>';
-  html += '<select id="wizPropDuration" style="width:100%;padding:10px;background:#1a1a2e;color:#f0f0f5;border:1px solid var(--border2);border-radius:8px;font-size:13px;box-sizing:border-box;">';
-  html += '<option value="" style="background:#1a1a2e;color:#f0f0f5;">--</option><option value="0h30" style="background:#1a1a2e;color:#f0f0f5;">30 min</option><option value="1h" style="background:#1a1a2e;color:#f0f0f5;">1h</option><option value="1h30" style="background:#1a1a2e;color:#f0f0f5;">1h30</option><option value="2h" style="background:#1a1a2e;color:#f0f0f5;">2h</option><option value="2h30" style="background:#1a1a2e;color:#f0f0f5;">2h30</option><option value="3h" style="background:#1a1a2e;color:#f0f0f5;">3h</option><option value="3h30" style="background:#1a1a2e;color:#f0f0f5;">3h30</option><option value="4h" style="background:#1a1a2e;color:#f0f0f5;">4h</option>';
-  html += '</select></div>';
-  html += '</div>';
+  // (Tarif menage + duree retires du wizard - configurables plus tard via fiche bien)
 
   // Check-in / Check-out
   html += '<div style="display:flex;gap:8px;margin-bottom:10px;">';
@@ -6117,51 +6108,10 @@ function wizardStep_PropertyDetails() {
   html += '</div>';
   document.getElementById('msgBody').innerHTML = html;
 
-  // Auto-estimate tarif and duration when rooms/surface change
+  // Validate Next button when type/rooms/surface filled
   setTimeout(() => {
     const roomsEl = document.getElementById('wizPropRooms');
     const surfaceEl = document.getElementById('wizPropSurface');
-    const tarifEl = document.getElementById('wizPropTarif');
-    const durationEl = document.getElementById('wizPropDuration');
-    const estDiv = document.getElementById('wizEstimation');
-    const estRooms = document.getElementById('wizEstRooms');
-    const estSurface = document.getElementById('wizEstSurface');
-
-    function autoEstimate() {
-      const rooms = parseInt(roomsEl?.value) || 0;
-      const surface = parseInt(surfaceEl?.value) || 0;
-      if (rooms < 1 || surface < 1) { if(estDiv) estDiv.style.display = 'none'; return; }
-
-      // Tarif: base 25€ + 8€/pièce + 0.3€/m²
-      let tarif = 25 + rooms * 8 + Math.round(surface * 0.3);
-
-      // Duration: base 20min + 15min/pièce + 0.5min/m²
-      let minutes = 20 + rooms * 15 + Math.round(surface * 0.5);
-
-      // Round to nearest 30min
-      minutes = Math.round(minutes / 30) * 30;
-      if (minutes < 30) minutes = 30;
-
-      const hours = Math.floor(minutes / 60);
-      const mins = minutes % 60;
-      const durationStr = hours > 0 ? (hours + 'h' + (mins > 0 ? mins.toString().padStart(2,'0') : '')) : (mins + 'min');
-
-      // Set values if user hasn't manually edited
-      if (!tarifEl._userEdited) tarifEl.value = tarif;
-      // Find matching option in duration select
-      if (!durationEl._userEdited) {
-        const opts = durationEl.options;
-        for (let i = 0; i < opts.length; i++) {
-          if (opts[i].value === durationStr) { durationEl.selectedIndex = i; break; }
-        }
-      }
-
-      // Show estimation badge
-      if (estDiv) { estDiv.style.display = 'block'; }
-      if (estRooms) estRooms.textContent = rooms;
-      if (estSurface) estSurface.textContent = surface;
-    }
-
     const typeEl = document.getElementById('wizPropType');
     const btnNext = document.getElementById('wizBtnNext2');
 
@@ -6176,12 +6126,9 @@ function wizardStep_PropertyDetails() {
       }
     }
 
-    if (roomsEl) roomsEl.addEventListener('input', () => { autoEstimate(); checkWizStep2(); });
-    if (surfaceEl) surfaceEl.addEventListener('input', () => { autoEstimate(); checkWizStep2(); });
+    if (roomsEl) roomsEl.addEventListener('input', checkWizStep2);
+    if (surfaceEl) surfaceEl.addEventListener('input', checkWizStep2);
     if (typeEl) typeEl.addEventListener('change', checkWizStep2);
-    // Mark as user-edited if manually changed
-    if (tarifEl) tarifEl.addEventListener('input', () => { tarifEl._userEdited = true; });
-    if (durationEl) durationEl.addEventListener('change', () => { durationEl._userEdited = true; });
     checkWizStep2();
   }, 200);
 }
@@ -6192,8 +6139,6 @@ async function wizardSavePropertyDetails() {
     type: document.getElementById('wizPropType')?.value || '',
     rooms: parseInt(document.getElementById('wizPropRooms')?.value) || null,
     surface: parseInt(document.getElementById('wizPropSurface')?.value) || null,
-    tarif: parseFloat(document.getElementById('wizPropTarif')?.value) || null,
-    duration: document.getElementById('wizPropDuration')?.value || '',
     notes: document.getElementById('wizPropNotes')?.value?.trim() || '',
     checklist: [],
   };
