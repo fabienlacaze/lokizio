@@ -451,9 +451,9 @@ async function renderAnnuaireTab() {
       // 1. Search marketplace
       tHtml += '<button onclick="switchAnnuaireSubTab(\'search\')" style="display:flex;align-items:center;gap:10px;padding:12px 14px;background:linear-gradient(135deg,#6c63ff,#5a54e0);color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;text-align:left;">';
       tHtml += '<span style="font-size:20px;">&#128269;</span><div style="flex:1;">Rechercher dans l\'annuaire<div style="font-size:11px;font-weight:400;opacity:0.85;">Trouver des contacts deja inscrits</div></div></button>';
-      // 2. Invite by email
-      tHtml += '<button onclick="showInviteContactByEmail()" style="display:flex;align-items:center;gap:10px;padding:12px 14px;background:var(--surface);color:var(--text);border:1px solid var(--accent2);border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;text-align:left;">';
-      tHtml += '<span style="font-size:20px;">&#9993;&#65039;</span><div style="flex:1;">Inviter par email<div style="font-size:11px;font-weight:400;color:var(--text3);">Envoyer un lien d\'invitation a un email</div></div></button>';
+      // 2. Invite via the existing referral modal (WhatsApp / SMS / Email / Telegram)
+      tHtml += '<button onclick="showInviteModal()" style="display:flex;align-items:center;gap:10px;padding:12px 14px;background:var(--surface);color:var(--text);border:1px solid var(--accent2);border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;text-align:left;">';
+      tHtml += '<span style="font-size:20px;">&#127873;</span><div style="flex:1;">Envoyer une invitation<div style="font-size:11px;font-weight:400;color:var(--text3);">WhatsApp, SMS, email, Telegram</div></div></button>';
       // 3. Manual add
       tHtml += '<button onclick="showAddManualContact()" style="display:flex;align-items:center;gap:10px;padding:12px 14px;background:var(--surface);color:var(--text);border:1px solid var(--border2);border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;text-align:left;">';
       tHtml += '<span style="font-size:20px;">&#128221;</span><div style="flex:1;">Ajouter manuellement<div style="font-size:11px;font-weight:400;color:var(--text3);">Saisir un contact (sans email obligatoire)</div></div></button>';
