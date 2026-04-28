@@ -621,6 +621,21 @@ function renderServiceEditorBody(selectedSvc, current, editing) {
     html += `<input type="date" id="svcEditorDate" value="${esc(scheduledDate)}" style="width:100%;padding:10px 12px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;box-sizing:border-box;">`;
     html += `</div>`;
 
+    // iCal sync block - only relevant when the trigger is tied to bookings
+    // (booking_end/start). Lets the user attach calendars to this service.
+    const icalsRelevant = (freqVal === 'booking_end' || freqVal === 'booking_start');
+    html += `<div id="svcEditorIcalRow" style="display:${icalsRelevant ? 'block' : 'none'};margin-bottom:16px;">`;
+    html += `<label style="display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--text3);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.5px;">`;
+    html += `<span>&#128197; Calendriers de reservation</span>`;
+    const icalsCount = (prop.icals || []).filter(i => i && i.url).length;
+    html += `<span style="text-transform:none;color:${icalsCount > 0 ? '#34d399' : 'var(--text3)'};font-size:11px;font-weight:500;">${icalsCount > 0 ? '✓ ' + icalsCount + ' connecte' + (icalsCount > 1 ? 's' : '') : 'aucun'}</span>`;
+    html += `</label>`;
+    html += `<div style="background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:10px;">`;
+    html += `<div style="font-size:11px;color:var(--text3);line-height:1.5;margin-bottom:8px;">Liez les calendriers iCal Airbnb / Booking pour declencher automatiquement ce service a la fin (ou au debut) de chaque reservation.</div>`;
+    html += `<button type="button" onclick="document.getElementById('serviceEditorOverlay').remove();showIcalModal();" style="width:100%;padding:8px;background:rgba(108,99,255,0.15);color:#a5a0ff;border:1px solid rgba(108,99,255,0.3);border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;">${icalsCount > 0 ? '&#9881;&#65039; Modifier les calendriers' : '+ Ajouter un calendrier'}</button>`;
+    html += `</div>`;
+    html += `</div>`;
+
     const formula = SERVICE_PRICING[selectedSvc];
     const currentParams = (current && current.params) || {};
     if (formula) {
@@ -688,9 +703,14 @@ function renderServiceEditorBody(selectedSvc, current, editing) {
 
 function onSvcEditorFreqChange() {
   const sel = document.getElementById('svcEditorFreq');
-  const row = document.getElementById('svcEditorDateRow');
-  if (!sel || !row) return;
-  row.style.display = sel.value === 'one_time' ? 'block' : 'none';
+  if (!sel) return;
+  const dateRow = document.getElementById('svcEditorDateRow');
+  if (dateRow) dateRow.style.display = sel.value === 'one_time' ? 'block' : 'none';
+  // Show iCal block only when the trigger depends on a booking calendar
+  const icalRow = document.getElementById('svcEditorIcalRow');
+  if (icalRow) {
+    icalRow.style.display = (sel.value === 'booking_end' || sel.value === 'booking_start') ? 'block' : 'none';
+  }
 }
 
 function onServiceTypeChange(svcId) {
