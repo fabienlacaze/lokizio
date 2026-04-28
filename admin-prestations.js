@@ -508,46 +508,72 @@ async function showAssignProviderPopup(reqId, dateStr, svcType, propertyName) {
   const svcLabel = (typeof getServiceLabel === 'function') ? getServiceLabel(svcType) : svcType;
   const dateLabel = dateStr ? new Date(dateStr + 'T12:00:00').toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' }) : '';
 
-  let html = '<div style="max-width:440px;width:100%;background:var(--surface);border-radius:14px;border:1px solid var(--border);max-height:90vh;display:flex;flex-direction:column;">';
-  html += '<div style="display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border-bottom:1px solid var(--border);">';
-  html += '<div style="font-size:14px;font-weight:700;color:var(--text);">&#128100; Selectionner prestataire</div>';
-  html += '<button aria-label="Fermer" onclick="document.getElementById(\'assignProviderOverlay\').remove()" style="background:transparent;border:none;color:var(--text3);font-size:20px;cursor:pointer;">&times;</button>';
+  let html = '<div style="max-width:480px;width:100%;background:var(--surface);border-radius:16px;border:1px solid var(--border);max-height:92vh;display:flex;flex-direction:column;box-shadow:0 20px 40px rgba(0,0,0,0.5);">';
+
+  // ── Header ──
+  html += '<div style="display:flex;justify-content:space-between;align-items:center;padding:18px 20px 14px;">';
+  html += '<div style="display:flex;align-items:center;gap:10px;">';
+  html += '<span style="width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#6c63ff,#5a54e0);display:inline-flex;align-items:center;justify-content:center;font-size:18px;">&#128100;</span>';
+  html += '<div style="font-size:16px;font-weight:700;color:var(--text);">Selectionner un prestataire</div>';
   html += '</div>';
-  html += '<div style="padding:12px 16px;background:var(--surface2);font-size:12px;color:var(--text2);">';
-  html += '<div><b>' + esc(svcLabel) + '</b> &middot; ' + esc(propertyName) + '</div>';
-  if (dateLabel) html += '<div style="font-size:11px;color:var(--text3);text-transform:capitalize;margin-top:2px;">' + esc(dateLabel) + '</div>';
+  html += '<button aria-label="Fermer" onclick="document.getElementById(\'assignProviderOverlay\').remove()" style="background:var(--surface2);border:1px solid var(--border2);color:var(--text2);width:30px;height:30px;border-radius:8px;cursor:pointer;font-size:16px;">&times;</button>';
   html += '</div>';
 
-  html += '<div style="padding:14px 16px;overflow-y:auto;flex:1;">';
+  // ── Mission context card ──
+  html += '<div style="margin:0 20px 18px;padding:14px 16px;background:linear-gradient(135deg,rgba(108,99,255,0.10),rgba(108,99,255,0.04));border:1px solid rgba(108,99,255,0.25);border-radius:12px;">';
+  html += '<div style="font-size:10px;font-weight:700;color:#a5a0ff;text-transform:uppercase;letter-spacing:0.6px;margin-bottom:6px;">Mission a assigner</div>';
+  html += '<div style="font-size:15px;font-weight:700;color:var(--text);margin-bottom:2px;">' + esc(svcLabel) + '</div>';
+  html += '<div style="font-size:12px;color:var(--text2);">&#127968; ' + esc(propertyName) + '</div>';
+  if (dateLabel) html += '<div style="font-size:12px;color:var(--text3);text-transform:capitalize;margin-top:4px;">&#128197; ' + esc(dateLabel) + '</div>';
+  html += '</div>';
 
-  // SECTION 1: Existing providers
-  html += '<div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">&#127969;&#65039; Mes prestataires (' + orgProviders.length + ')</div>';
+  html += '<div style="padding:0 20px 20px;overflow-y:auto;flex:1;">';
+
+  // ─── SECTION 1: Mon equipe ───
+  html += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">';
+  html += '<div style="font-size:12px;font-weight:700;color:var(--text);text-transform:uppercase;letter-spacing:0.5px;">&#129529; Mon equipe</div>';
+  html += '<span style="font-size:11px;color:var(--text3);background:var(--surface2);padding:2px 8px;border-radius:10px;">' + orgProviders.length + (orgProviders.length > 1 ? ' prestataires' : ' prestataire') + '</span>';
+  html += '</div>';
+
   if (orgProviders.length === 0) {
-    html += '<div style="padding:12px;text-align:center;color:var(--text3);font-size:12px;background:var(--surface2);border-radius:8px;border:1px dashed var(--border2);margin-bottom:14px;">Aucun prestataire dans votre equipe.</div>';
+    html += '<div style="padding:18px 14px;text-align:center;background:var(--surface2);border-radius:12px;border:1px dashed var(--border2);margin-bottom:22px;">';
+    html += '<div style="font-size:24px;opacity:0.5;margin-bottom:6px;">&#129529;</div>';
+    html += '<div style="font-size:12px;color:var(--text3);line-height:1.5;margin-bottom:10px;">Aucun prestataire dans votre equipe pour le moment.</div>';
+    html += '<button onclick="document.getElementById(\'assignProviderOverlay\').remove();showAddManualContact()" style="padding:8px 16px;background:rgba(108,99,255,0.15);color:#a5a0ff;border:1px solid rgba(108,99,255,0.35);border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;">+ Ajouter un prestataire</button>';
+    html += '</div>';
   } else {
-    html += '<div style="display:flex;flex-direction:column;gap:6px;margin-bottom:14px;">';
+    html += '<div style="display:flex;flex-direction:column;gap:6px;margin-bottom:22px;">';
     orgProviders.forEach(p => {
       const name = esc(p.display_name || p.invited_email || 'Prestataire');
       const nameJsEsc = name.replace(/'/g, "\\'");
-      html += '<button onclick="assignToOrgProvider(\'' + reqId + '\',\'' + nameJsEsc + '\',\'' + (p.user_id || '') + '\',\'' + svcType + '\',\'' + dateStr + '\',\'' + propertyName + '\')" style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;font-size:13px;color:var(--text);cursor:pointer;text-align:left;transition:all 0.15s;" onmouseover="this.style.borderColor=\'#6c63ff\'" onmouseout="this.style.borderColor=\'var(--border2)\'">';
-      html += '<span style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#6c63ff,#5a54e0);display:inline-flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:13px;">' + name.charAt(0).toUpperCase() + '</span>';
-      html += '<div style="flex:1;min-width:0;"><div style="font-weight:600;">' + name + '</div>';
-      if (p.invited_email) html += '<div style="font-size:11px;color:var(--text3);">' + esc(p.invited_email) + '</div>';
+      html += '<button onclick="assignToOrgProvider(\'' + reqId + '\',\'' + nameJsEsc + '\',\'' + (p.user_id || '') + '\',\'' + svcType + '\',\'' + dateStr + '\',\'' + propertyName + '\')" style="display:flex;align-items:center;gap:12px;padding:12px 14px;background:var(--surface2);border:1px solid var(--border2);border-radius:10px;font-size:13px;color:var(--text);cursor:pointer;text-align:left;transition:all 0.15s;" onmouseover="this.style.borderColor=\'#6c63ff\';this.style.background=\'rgba(108,99,255,0.05)\'" onmouseout="this.style.borderColor=\'var(--border2)\';this.style.background=\'var(--surface2)\'">';
+      html += '<span style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#6c63ff,#5a54e0);display:inline-flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:14px;flex-shrink:0;">' + name.charAt(0).toUpperCase() + '</span>';
+      html += '<div style="flex:1;min-width:0;"><div style="font-weight:600;font-size:13px;color:var(--text);">' + name + '</div>';
+      if (p.invited_email) html += '<div style="font-size:11px;color:var(--text3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + esc(p.invited_email) + '</div>';
       html += '</div>';
-      html += '<span style="color:#6c63ff;font-size:18px;">&rsaquo;</span>';
+      html += '<span style="color:#6c63ff;font-size:20px;flex-shrink:0;">&rsaquo;</span>';
       html += '</button>';
     });
     html += '</div>';
   }
 
-  // SECTION 2: Broadcast on annuaire / push to all
-  html += '<div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">&#127758; Diffuser plus largement</div>';
-  html += '<button onclick="broadcastToProvidersFromPopup(\'' + reqId + '\',\'' + dateStr + '\',\'' + svcType + '\',\'' + propertyName + '\')" style="width:100%;display:flex;align-items:center;gap:10px;padding:12px;background:linear-gradient(135deg,#ef4444,#dc2626);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;margin-bottom:8px;">';
-  html += '<span style="font-size:20px;">&#128228;</span><div style="flex:1;text-align:left;"><div>Notifier tous mes prestataires</div><div style="font-size:11px;font-weight:400;opacity:0.9;">Envoie une notification push a votre equipe</div></div>';
-  html += '</button>';
+  // ─── SECTION 2: Diffuser ───
+  html += '<div style="font-size:12px;font-weight:700;color:var(--text);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px;">&#128228; Diffuser plus largement</div>';
 
-  html += '<button onclick="postToAnnuaire(\'' + reqId + '\',\'' + dateStr + '\',\'' + svcType + '\',\'' + propertyName + '\')" style="width:100%;display:flex;align-items:center;gap:10px;padding:12px;background:var(--surface2);color:var(--text);border:1px solid var(--accent2);border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">';
-  html += '<span style="font-size:20px;">&#127758;</span><div style="flex:1;text-align:left;"><div>Publier sur l\'annuaire</div><div style="font-size:11px;font-weight:400;color:var(--text3);">Visible par tous les prestataires de la marketplace</div></div>';
+  // Primary: notify the org's team (more direct than annuaire)
+  if (orgProviders.length > 0) {
+    html += '<button onclick="broadcastToProvidersFromPopup(\'' + reqId + '\',\'' + dateStr + '\',\'' + svcType + '\',\'' + propertyName + '\')" style="width:100%;display:flex;align-items:center;gap:12px;padding:14px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:10px;font-size:13px;cursor:pointer;text-align:left;margin-bottom:8px;transition:all 0.15s;" onmouseover="this.style.borderColor=\'#ef4444\'" onmouseout="this.style.borderColor=\'var(--border2)\'">';
+    html += '<span style="width:36px;height:36px;border-radius:8px;background:rgba(239,68,68,0.15);color:#ef4444;display:inline-flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">&#128276;</span>';
+    html += '<div style="flex:1;min-width:0;"><div style="font-weight:600;color:var(--text);">Notifier tout mon equipe</div><div style="font-size:11px;color:var(--text3);margin-top:2px;">Envoie un push a vos ' + orgProviders.length + ' prestataire' + (orgProviders.length > 1 ? 's' : '') + ' simultanement</div></div>';
+    html += '<span style="color:var(--text3);font-size:18px;flex-shrink:0;">&rsaquo;</span>';
+    html += '</button>';
+  }
+
+  // Public marketplace
+  html += '<button onclick="postToAnnuaire(\'' + reqId + '\',\'' + dateStr + '\',\'' + svcType + '\',\'' + propertyName + '\')" style="width:100%;display:flex;align-items:center;gap:12px;padding:14px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:10px;font-size:13px;cursor:pointer;text-align:left;transition:all 0.15s;" onmouseover="this.style.borderColor=\'#34d399\'" onmouseout="this.style.borderColor=\'var(--border2)\'">';
+  html += '<span style="width:36px;height:36px;border-radius:8px;background:rgba(52,211,153,0.15);color:#34d399;display:inline-flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">&#127758;</span>';
+  html += '<div style="flex:1;min-width:0;"><div style="font-weight:600;color:var(--text);">Publier sur l\'annuaire</div><div style="font-size:11px;color:var(--text3);margin-top:2px;">Tous les prestataires de la marketplace peuvent postuler</div></div>';
+  html += '<span style="color:var(--text3);font-size:18px;flex-shrink:0;">&rsaquo;</span>';
   html += '</button>';
 
   html += '</div>'; // end body
