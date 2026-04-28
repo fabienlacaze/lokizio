@@ -143,7 +143,7 @@ async function loadPDF() {
 </script>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v9.27</div>
+<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v9.28</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -153,7 +153,7 @@ async function loadPDF() {
     <!-- Broom that sweeps -->
     <div id="splashBroom" style="position:absolute;top:50%;left:-60px;font-size:48px;transform:translateY(-50%) rotate(-30deg);opacity:0;transition:all 0.8s cubic-bezier(0.25,0.46,0.45,0.94);">✨</div>
   </div>
-  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v9.27</span></div>
+  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v9.28</span></div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie pour locations</div>
   <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou</div>
   <!-- Loading bar -->
@@ -9880,7 +9880,16 @@ function showPrestationDetail(payload, event) {
 
   // Info grid
   html += `<div style="display:grid;gap:8px;margin-bottom:16px;">`;
-  if (u.propertyName) html += `<div style="display:flex;gap:10px;padding:10px;background:var(--surface2);border-radius:8px;"><span style="font-size:18px;">&#127968;</span><div><div style="font-size:10px;color:var(--text3);text-transform:uppercase;">Propriete</div><div style="font-size:13px;color:var(--text);font-weight:600;">${esc(u.propertyName)}</div>${prop && prop.address ? `<div style="font-size:11px;color:var(--text3);margin-top:2px;">${esc(prop.address)}</div>` : ''}</div></div>`;
+  if (u.propertyName) {
+    let addrLine = '';
+    if (prop && prop.address) {
+      const addrEsc = esc(prop.address).replace(/'/g, "\\'");
+      const lat = prop.lat || 'null';
+      const lng = prop.lng || 'null';
+      addrLine = `<div onclick="event.stopPropagation();showAddressNav('${addrEsc}', ${lat}, ${lng})" style="font-size:11px;color:#a5a0ff;margin-top:2px;cursor:pointer;text-decoration:underline;text-underline-offset:2px;" title="Ouvrir dans Maps / Waze">&#128205; ${esc(prop.address)}</div>`;
+    }
+    html += `<div style="display:flex;gap:10px;padding:10px;background:var(--surface2);border-radius:8px;"><span style="font-size:18px;">&#127968;</span><div><div style="font-size:10px;color:var(--text3);text-transform:uppercase;">Propriete</div><div style="font-size:13px;color:var(--text);font-weight:600;">${esc(u.propertyName)}</div>${addrLine}</div></div>`;
+  }
   if (u.provider) html += `<div style="display:flex;gap:10px;padding:10px;background:var(--surface2);border-radius:8px;"><span style="font-size:18px;">&#128100;</span><div><div style="font-size:10px;color:var(--text3);text-transform:uppercase;">Prestataire</div><div style="font-size:13px;color:var(--text);font-weight:600;">${esc(u.provider)}</div></div></div>`;
   if (u.source) html += `<div style="display:flex;gap:10px;padding:10px;background:var(--surface2);border-radius:8px;"><span style="font-size:18px;">&#128197;</span><div><div style="font-size:10px;color:var(--text3);text-transform:uppercase;">Source</div><div style="font-size:13px;color:var(--text);font-weight:600;">${esc(u.source)}</div></div></div>`;
   if (u.priority === 'high') html += `<div style="display:flex;gap:10px;padding:10px;background:rgba(239,68,68,0.1);border-radius:8px;border:1px solid #ef4444;"><span style="font-size:18px;">&#9888;</span><div style="color:#ef4444;font-weight:700;font-size:13px;">URGENT</div></div>`;
@@ -9920,6 +9929,62 @@ function showPrestationDetail(payload, event) {
   showMsg(html, true);
 }
 
+// Open a small address picker overlay with Google Maps / Waze / Apple Maps / Copy buttons.
+function showAddressNav(address, lat, lng) {
+  const addrEnc = encodeURIComponent(address || '');
+  const hasCoords = (typeof lat === 'number' && typeof lng === 'number' && !isNaN(lat) && !isNaN(lng));
+  const coordsEnc = hasCoords ? (lat + ',' + lng) : null;
+
+  // Build URLs
+  const googleUrl = hasCoords
+    ? 'https://www.google.com/maps/search/?api=1&query=' + coordsEnc
+    : 'https://www.google.com/maps/search/?api=1&query=' + addrEnc;
+  const wazeUrl = hasCoords
+    ? 'https://waze.com/ul?ll=' + coordsEnc + '&navigate=yes'
+    : 'https://waze.com/ul?q=' + addrEnc + '&navigate=yes';
+  const appleUrl = hasCoords
+    ? 'https://maps.apple.com/?ll=' + coordsEnc + '&q=' + addrEnc
+    : 'https://maps.apple.com/?q=' + addrEnc;
+
+  const overlay = document.createElement('div');
+  overlay.id = 'addressNavOverlay';
+  overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px;';
+  overlay.onclick = (e) => { if (e.target === overlay) overlay.remove(); };
+
+  let html = '<div style="max-width:380px;width:100%;background:var(--surface);border-radius:14px;border:1px solid var(--border);overflow:hidden;">';
+  html += '<div style="display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border-bottom:1px solid var(--border);">';
+  html += '<div style="font-size:14px;font-weight:700;color:var(--text);">&#128205; Y aller</div>';
+  html += '<button aria-label="Fermer" onclick="document.getElementById(\'addressNavOverlay\').remove()" style="background:transparent;border:none;color:var(--text3);font-size:20px;cursor:pointer;">&times;</button>';
+  html += '</div>';
+  html += '<div style="padding:14px 16px;font-size:12px;color:var(--text2);background:var(--surface2);">' + esc(address || '') + '</div>';
+
+  // Mini map preview (Leaflet) when coordinates are known
+  if (hasCoords) {
+    html += '<div id="addressNavMap" style="width:100%;height:180px;background:var(--surface2);"></div>';
+  }
+
+  html += '<div style="padding:14px 16px;display:flex;flex-direction:column;gap:8px;">';
+  html += '<a href="' + googleUrl + '" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:10px;padding:12px;background:#4285f4;color:#fff;text-decoration:none;border-radius:8px;font-size:14px;font-weight:600;"><span style="font-size:18px;">&#128506;</span><span>Ouvrir dans Google Maps</span></a>';
+  html += '<a href="' + wazeUrl + '" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:10px;padding:12px;background:#33ccff;color:#fff;text-decoration:none;border-radius:8px;font-size:14px;font-weight:600;"><span style="font-size:18px;">&#128666;</span><span>Ouvrir dans Waze</span></a>';
+  html += '<a href="' + appleUrl + '" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:10px;padding:12px;background:#1a1a2e;color:var(--text);border:1px solid var(--border2);text-decoration:none;border-radius:8px;font-size:14px;font-weight:600;"><span style="font-size:18px;">&#127757;</span><span>Apple Maps</span></a>';
+  html += '<button onclick="navigator.clipboard.writeText(\'' + esc(address || '').replace(/'/g, "\\'") + '\').then(()=>showToast(\'Adresse copiee\'))" style="display:flex;align-items:center;gap:10px;padding:12px;background:var(--surface2);color:var(--text2);border:1px solid var(--border2);border-radius:8px;font-size:13px;cursor:pointer;"><span style="font-size:16px;">&#128203;</span><span>Copier l\'adresse</span></button>';
+  html += '</div>';
+  html += '</div>';
+
+  overlay.innerHTML = html;
+  document.body.appendChild(overlay);
+
+  // Initialize Leaflet preview map if coords + Leaflet loaded
+  if (hasCoords && typeof L !== 'undefined') {
+    setTimeout(() => {
+      try {
+        const map = L.map('addressNavMap', { zoomControl: false, attributionControl: false, dragging: false, scrollWheelZoom: false }).setView([lat, lng], 14);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+        L.marker([lat, lng]).addTo(map);
+      } catch (e) { /* map unavailable, ignore */ }
+    }, 50);
+  }
+}
 
 function closeMsgThreadAndGoToDate(isoDate) {
   // Navigate to prestations list and highlight by date
