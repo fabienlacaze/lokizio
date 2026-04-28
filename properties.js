@@ -632,7 +632,9 @@ function renderServiceEditorBody(selectedSvc, current, editing) {
     html += `</label>`;
     html += `<div style="background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:10px;">`;
     html += `<div style="font-size:11px;color:var(--text3);line-height:1.5;margin-bottom:8px;">Liez les calendriers iCal Airbnb / Booking pour declencher automatiquement ce service a la fin (ou au debut) de chaque reservation.</div>`;
-    html += `<button type="button" onclick="document.getElementById('serviceEditorOverlay').remove();showIcalModal();" style="width:100%;padding:8px;background:rgba(108,99,255,0.15);color:#a5a0ff;border:1px solid rgba(108,99,255,0.3);border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;">${icalsCount > 0 ? '&#9881;&#65039; Modifier les calendriers' : '+ Ajouter un calendrier'}</button>`;
+    // No iCal yet → directly open the platform picker; otherwise → list/edit them
+    const icalAction = icalsCount > 0 ? 'showIcalModal()' : 'showAddIcalModal()';
+    html += `<button type="button" onclick="document.getElementById('serviceEditorOverlay').remove();${icalAction};" style="width:100%;padding:8px;background:rgba(108,99,255,0.15);color:#a5a0ff;border:1px solid rgba(108,99,255,0.3);border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;">${icalsCount > 0 ? '&#9881;&#65039; Modifier les calendriers' : '+ Ajouter un calendrier'}</button>`;
     html += `</div>`;
     html += `</div>`;
 
