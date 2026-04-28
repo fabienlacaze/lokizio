@@ -614,17 +614,99 @@ window.broadcastToProvidersFromPopup = broadcastToProvidersFromPopup;
 
 // Action: post the request to the public marketplace
 async function postToAnnuaire(reqId, dateStr, svcType, propertyName) {
-  document.getElementById('assignProviderOverlay')?.remove();
-  // For now, mark the service_request as 'broadcast' (public) and show toast.
-  // Future: a dedicated marketplace_jobs table could track open jobs.
-  if (reqId && reqId !== '') {
-    try {
-      await sb.from('service_requests').update({ status: 'pending', notes: 'Diffusee sur l\'annuaire le ' + new Date().toLocaleDateString('fr-FR') }).eq('id', reqId);
-    } catch (e) { /* ignore */ }
+  // Get the property to enrich the job posting
+  const org = (typeof API !== 'undefined' && API.getOrg) ? API.getOrg() : null;
+  if (!org) { showToast('Organisation introuvable'); return; }
+  const { data: { user } } = await sb.auth.getUser();
+
+  // Try to find the matching property for richer details (city, address)
+  let propAddress = '', propCity = '';
+  try {
+    const { data: props } = await sb.from('properties')
+      .select('address, city')
+      .eq('org_id', org.id)
+      .eq('name', propertyName)
+      .maybeSingle();
+    if (props) {
+      propAddress = props.address || '';
+      propCity = props.city || (props.address ? (props.address.match(/\d{5}\s+([^,]+)/) || [])[1] || '' : '');
+    }
+  } catch (e) { /* best-effort */ }
+
+  // Expire after 7 days by default
+  const expiresAt = new Date(Date.now() + 7 * 86400000).toISOString();
+  const svcLabel = (typeof getServiceLabel === 'function') ? getServiceLabel(svcType) : svcType;
+
+  const jobPayload = {
+    org_id: org.id,
+    posted_by: user?.id || null,
+    service_request_id: (reqId && reqId !== '') ? reqId : null,
+    service_type: svcType,
+    requested_date: dateStr || null,
+    property_name: propertyName,
+    property_address: propAddress,
+    property_city: propCity,
+    description: svcLabel + ' - ' + propertyName + (dateStr ? ' (' + dateStr + ')' : ''),
+    status: 'open',
+    expires_at: expiresAt,
+  };
+
+  try {
+    const { data, error } = await sb.from('marketplace_jobs').insert(jobPayload).select().single();
+    if (error) throw error;
+
+    // Tag the service_request as broadcast (if applicable)
+    if (reqId && reqId !== '') {
+      await sb.from('service_requests').update({
+        notes: 'Annonce publique posted_id=' + data.id,
+      }).eq('id', reqId);
+    }
+
+    // Close the assign popup and show a confirmation overlay
+    document.getElementById('assignProviderOverlay')?.remove();
+    _showAnnuaireConfirmation(data.id, svcLabel, propertyName, dateStr, expiresAt);
+  } catch (e) {
+    if (typeof notifyError === 'function') notifyError('Publication annuaire', e);
+    else showToast('Erreur publication: ' + (e?.message || e));
   }
-  showToast('Annonce diffusee sur l\'annuaire (les prestataires inscrits peuvent postuler)');
 }
 window.postToAnnuaire = postToAnnuaire;
+
+// Visual confirmation overlay shown after a successful annuaire posting.
+function _showAnnuaireConfirmation(jobId, svcLabel, propertyName, dateStr, expiresIso) {
+  const overlay = document.createElement('div');
+  overlay.id = 'annuaireConfirmOverlay';
+  overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px;';
+  overlay.onclick = (e) => { if (e.target === overlay) overlay.remove(); };
+  const expDate = new Date(expiresIso).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' });
+  let html = '<div style="max-width:420px;width:100%;background:var(--surface);border-radius:16px;border:1px solid var(--border);overflow:hidden;animation:bounceIn 0.4s ease-out;">';
+  html += '<div style="padding:24px 24px 16px;text-align:center;background:linear-gradient(135deg,rgba(52,211,153,0.15),rgba(52,211,153,0.05));border-bottom:1px solid rgba(52,211,153,0.2);">';
+  html += '<div style="width:60px;height:60px;border-radius:50%;background:#34d399;display:inline-flex;align-items:center;justify-content:center;font-size:32px;margin-bottom:10px;">&#10003;</div>';
+  html += '<div style="font-size:18px;font-weight:700;color:var(--text);">Annonce publiee !</div>';
+  html += '<div style="font-size:12px;color:var(--text3);margin-top:4px;">Votre demande est visible sur l\'annuaire.</div>';
+  html += '</div>';
+  html += '<div style="padding:18px 24px;">';
+  html += '<div style="background:var(--surface2);border-radius:10px;padding:12px;margin-bottom:14px;">';
+  html += '<div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">Recapitulatif</div>';
+  html += '<div style="font-size:13px;color:var(--text);font-weight:600;margin-bottom:2px;">&#129529; ' + esc(svcLabel) + '</div>';
+  html += '<div style="font-size:12px;color:var(--text2);">&#127968; ' + esc(propertyName) + '</div>';
+  if (dateStr) {
+    const d = new Date(dateStr + 'T12:00:00').toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
+    html += '<div style="font-size:12px;color:var(--text2);text-transform:capitalize;">&#128197; ' + esc(d) + '</div>';
+  }
+  html += '<div style="font-size:11px;color:#f59e0b;margin-top:6px;">&#9203; Expire le ' + esc(expDate) + '</div>';
+  html += '</div>';
+  html += '<div style="font-size:12px;color:var(--text3);line-height:1.5;margin-bottom:16px;">';
+  html += '&#128161; <b>Et apres ?</b><br>';
+  html += '&middot; Les prestataires de la marketplace verront cette annonce<br>';
+  html += '&middot; Vous serez notifie quand l\'un d\'eux postule<br>';
+  html += '&middot; Vous pourrez retirer l\'annonce a tout moment dans <i>Annuaire &gt; Mes annonces</i>';
+  html += '</div>';
+  html += '<button onclick="document.getElementById(\'annuaireConfirmOverlay\').remove();loadAdminPrestations(true)" style="width:100%;padding:12px;background:linear-gradient(135deg,#34d399,#059669);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;">Compris &#10003;</button>';
+  html += '</div></div>';
+  overlay.innerHTML = html;
+  document.body.appendChild(overlay);
+}
 
 // Broadcast a service request to all providers of the org via push notification.
 // Used when a prestation has no assigned provider yet — the concierge can
