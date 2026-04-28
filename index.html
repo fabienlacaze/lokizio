@@ -5664,8 +5664,8 @@ const WIZARD_HELP = {
   wizPropCheckout: 'Heure de depart des voyageurs (ex: 11:00). Le menage commence apres.',
   wizPropCode: 'Code de la boite a cles ou du digicode. Visible uniquement par vos prestataires.',
   wizPropNotes: 'Instructions specifiques: parking, wifi, particularites du bien.',
-  // iCal sync (step 4)
-  wizPropIcal: 'URL iCal recuperee depuis Airbnb/Booking pour synchroniser automatiquement les reservations.',
+  // iCal sync (step 4) - matches dynamic ids ical_0, ical_1...
+  ical_: 'URL iCal recuperee depuis ta plateforme de location (Airbnb, Booking, etc.). Permet de synchroniser automatiquement les dates de reservation.',
   // Provider
   wizProvName: 'Votre nom commercial ou raison sociale (ex: "Marie Dupont Cleaning").',
   wizProvPhone: 'Telephone professionnel. Visible par les conciergeries qui vous engagent.',
@@ -5705,7 +5705,12 @@ function applyWizardHelp() {
     if (!_wizardHelpVisible) return;
     const fields = body.querySelectorAll('input[id], select[id], textarea[id]');
     fields.forEach(el => {
-      const help = WIZARD_HELP[el.id];
+      // Match exact id, or id-prefix patterns (e.g. ical_0, ical_1...)
+      let help = WIZARD_HELP[el.id];
+      if (!help) {
+        if (/^ical_\d+/.test(el.id)) help = WIZARD_HELP['ical_'];
+        else if (/^icalModal_\d+/.test(el.id)) help = WIZARD_HELP['ical_'];
+      }
       if (!help) return;
       const bubble = document.createElement('div');
       bubble.className = 'wizardHelpBubble';
