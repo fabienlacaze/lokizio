@@ -143,7 +143,7 @@ async function loadPDF() {
 </script>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v9.18</div>
+<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v9.19</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -153,7 +153,7 @@ async function loadPDF() {
     <!-- Broom that sweeps -->
     <div id="splashBroom" style="position:absolute;top:50%;left:-60px;font-size:48px;transform:translateY(-50%) rotate(-30deg);opacity:0;transition:all 0.8s cubic-bezier(0.25,0.46,0.45,0.94);">✨</div>
   </div>
-  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v9.18</span></div>
+  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v9.19</span></div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie pour locations</div>
   <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou</div>
   <!-- Loading bar -->
@@ -904,8 +904,9 @@ async function loadPDF() {
   </div>
 </div>
 <div class="modal" id="msgModal" role="dialog" aria-modal="true">
-  <div class="modalHeader" style="display:flex;justify-content:space-between;align-items:center;">
-    <span id="msgTitle">Lokizio</span>
+  <div class="modalHeader" style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
+    <button aria-label="Aide" id="msgHelpBtn" onclick="toggleWizardHelp()" title="Aide" style="display:none;background:rgba(108,99,255,0.15);color:#a5a0ff;border:1px solid rgba(108,99,255,0.4);width:28px;height:28px;border-radius:50%;cursor:pointer;font-weight:700;font-size:14px;flex-shrink:0;">?</button>
+    <span id="msgTitle" style="flex:1;text-align:center;">Lokizio</span>
     <button aria-label="Fermer" class="modalClose" onclick="closeMsg()">&times;</button>
   </div>
   <div class="modalBody" id="msgBody"></div>
@@ -5647,6 +5648,88 @@ function updateLangButton() {
 }
 
 /* ── Onboarding ── */
+
+// Help text for each wizard field. Keyed by element id (or [data-help-key] attribute).
+const WIZARD_HELP = {
+  // Concierge
+  wizOrgName: 'Le nom commercial de votre conciergerie. Visible par vos proprietaires et prestataires.',
+  // Property name (step 2)
+  wizPropName: 'Nom court pour identifier le bien (ex: "Studio Marais", "Villa Cap Ferret").',
+  wizPropAddress: 'Adresse complete du bien. Sert au calcul de distance pour les prestataires.',
+  // Property details (step 3)
+  wizPropType: 'Type de logement. Sert a personnaliser les services proposes.',
+  wizPropRooms: 'Nombre total de pieces (chambres + salon). Influence l\'estimation du tarif menage.',
+  wizPropSurface: 'Surface en m². Sert a estimer la duree et le tarif d\'un menage standard.',
+  wizPropCheckin: 'Heure habituelle d\'arrivee des voyageurs (ex: 15:00).',
+  wizPropCheckout: 'Heure de depart des voyageurs (ex: 11:00). Le menage commence apres.',
+  wizPropCode: 'Code de la boite a cles ou du digicode. Visible uniquement par vos prestataires.',
+  wizPropNotes: 'Instructions specifiques: parking, wifi, particularites du bien.',
+  // iCal sync (step 4)
+  wizPropIcal: 'URL iCal recuperee depuis Airbnb/Booking pour synchroniser automatiquement les reservations.',
+  // Provider
+  wizProvName: 'Votre nom commercial ou raison sociale (ex: "Marie Dupont Cleaning").',
+  wizProvPhone: 'Telephone professionnel. Visible par les conciergeries qui vous engagent.',
+  wizProvEmail: 'Email professionnel pour recevoir les missions et factures.',
+  wizProvAddress: 'Adresse de votre activite. Sert a calculer la distance avec les biens.',
+  wizProvPct: 'Pourcentage de repartition des missions entre vos prestataires (total = 100%).',
+  wizProvPrice: 'Tarif de base pour un menage standard (peut etre ajuste par bien).',
+  wizProvMax: 'Nombre maximum de missions par jour. Au-dela, vous serez automatiquement marque indisponible.',
+  wizProvSelfName: 'Votre nom personnel.',
+  wizProvSelfPhone: 'Votre telephone personnel.',
+  wizRadius: 'Distance maximale (km) que vous etes pret a parcourir pour une mission.',
+};
+
+let _wizardHelpVisible = false;
+
+function toggleWizardHelp() {
+  _wizardHelpVisible = !_wizardHelpVisible;
+  const btn = document.getElementById('msgHelpBtn');
+  if (btn) {
+    btn.style.background = _wizardHelpVisible ? '#a5a0ff' : 'rgba(108,99,255,0.15)';
+    btn.style.color = _wizardHelpVisible ? '#fff' : '#a5a0ff';
+  }
+  applyWizardHelp();
+}
+
+function applyWizardHelp() {
+  const body = document.getElementById('msgBody');
+  if (!body) return;
+  // Remove existing help bubbles
+  body.querySelectorAll('.wizardHelpBubble').forEach(el => el.remove());
+  if (!_wizardHelpVisible) return;
+  // Insert bubble before each input/select/textarea that has a help entry
+  const fields = body.querySelectorAll('input[id], select[id], textarea[id]');
+  fields.forEach(el => {
+    const help = WIZARD_HELP[el.id];
+    if (!help) return;
+    const bubble = document.createElement('div');
+    bubble.className = 'wizardHelpBubble';
+    bubble.style.cssText = 'background:rgba(108,99,255,0.08);border:1px solid rgba(108,99,255,0.25);border-left:3px solid #6c63ff;border-radius:6px;padding:8px 10px;margin-bottom:6px;font-size:12px;color:#cbd5e1;line-height:1.4;';
+    bubble.textContent = '💡 ' + help;
+    // Insert just before the field's parent <div> if simple, else before the field itself
+    const target = el.closest('div') || el;
+    target.parentNode.insertBefore(bubble, target);
+  });
+}
+
+// Auto-show help button when a wizard step is rendered.
+// Detects via mutation observer so we don't have to modify each step function.
+(function setupWizardHelpAutohide() {
+  const body = document.getElementById('msgBody');
+  if (!body) return;
+  const helpBtn = document.getElementById('msgHelpBtn');
+  if (!helpBtn) return;
+  new MutationObserver(() => {
+    // Check if any field with help entry is now visible
+    const hasHelpableField = !!body.querySelector('input[id], select[id], textarea[id]');
+    helpBtn.style.display = hasHelpableField ? 'inline-flex' : 'none';
+    helpBtn.style.alignItems = 'center';
+    helpBtn.style.justifyContent = 'center';
+    // Re-apply help if it was active (in case of step change)
+    if (_wizardHelpVisible) applyWizardHelp();
+  }).observe(body, { childList: true, subtree: true });
+})();
+
 function showOnboarding() {
   window._wizardActive = true;
   // Step 1: Language selection
@@ -5818,8 +5901,14 @@ window._wizardActive = false;
 
 // Reusable address autocomplete + map widget for wizards
 function wizAddressFieldHTML(inputId, mapId) {
+  // Preserve previously entered address based on inputId
+  const dataMap = {
+    wizPropAddress: wizardData.propAddress,
+    wizProvAddress: wizardData.provAddress,
+  };
+  const prefill = (dataMap[inputId] || '').replace(/"/g, '&quot;');
   return `<div style="position:relative;z-index:10000;">
-    <input aria-label="Tapez votre adresse..." id="${inputId}" type="text" placeholder="Tapez votre adresse..." autocomplete="off" style="width:100%;padding:12px 14px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;font-family:'Inter',sans-serif;box-sizing:border-box;">
+    <input aria-label="Tapez votre adresse..." id="${inputId}" type="text" placeholder="Tapez votre adresse..." autocomplete="off" value="${prefill}" style="width:100%;padding:12px 14px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;font-family:'Inter',sans-serif;box-sizing:border-box;">
     <div id="${inputId}_suggestions" style="display:none;position:absolute;top:100%;left:0;right:0;background:#1a1a2e;border:1px solid rgba(255,255,255,0.15);border-radius:0 0 10px 10px;max-height:180px;overflow-y:auto;z-index:10001;box-shadow:0 12px 32px rgba(0,0,0,0.7);"></div>
   </div>
   <div id="${mapId}" style="width:100%;height:180px;border-radius:8px;overflow:hidden;margin-top:8px;background:var(--surface2);position:relative;z-index:1;"></div>`;
@@ -5976,7 +6065,7 @@ function wizardStep_ConciergeName() {
   html += '<div style="font-size:32px;margin-bottom:8px;">&#127970;</div>';
   html += '<div style="font-size:16px;font-weight:700;color:#6c63ff;margin-bottom:4px;">Etape 1/4</div>';
   html += '<div style="font-size:14px;color:var(--text2);margin-bottom:16px;">Comment s\'appelle votre conciergerie ?</div>';
-  html += '<input aria-label="Ex: Conciergerie Cote d\'Azur" id="wizOrgName" type="text" placeholder="Ex: Conciergerie Cote d\'Azur" value="" style="width:100%;padding:12px 14px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;font-family:\'Inter\',sans-serif;box-sizing:border-box;margin-bottom:16px;">';
+  html += '<input aria-label="Ex: Conciergerie Cote d\'Azur" id="wizOrgName" type="text" placeholder="Ex: Conciergerie Cote d\'Azur" value="' + (wizardData.orgName || '').replace(/"/g, '&quot;') + '" style="width:100%;padding:12px 14px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;font-family:\'Inter\',sans-serif;box-sizing:border-box;margin-bottom:16px;">';
   html += '<div style="display:flex;gap:10px;">';
   html += '<button class="btn btnOutline" style="flex:1;padding:12px;font-size:13px;" onclick="showOnboardingStep2()">&#10094; Retour</button>';
   html += '<button class="btn btnPrimary" style="flex:1;padding:14px;font-size:14px;" onclick="wizardSaveConciergeName()">Suivant &#10140;</button>';
@@ -6004,12 +6093,12 @@ function wizardStep_PropertyName() {
   html += '<div style="font-size:16px;font-weight:700;color:var(--accent);margin-bottom:4px;">Etape ' + step + '</div>';
   html += '<div style="font-size:14px;color:var(--text2);margin-bottom:16px;">' + (wizardData.roleId === 'concierge' ? 'Ajoutez votre premiere propriete' : 'Configurez votre propriete') + '</div>';
   html += '<label style="display:block;font-size:11px;color:var(--text3);margin-bottom:4px;text-transform:uppercase;">Nom du logement</label>';
-  html += '<input aria-label="Ex: Appartement Nice Centre" id="wizPropName" type="text" placeholder="Ex: Appartement Nice Centre" value="" style="width:100%;padding:12px 14px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;font-family:\'Inter\',sans-serif;box-sizing:border-box;margin-bottom:10px;">';
+  html += '<input aria-label="Ex: Appartement Nice Centre" id="wizPropName" type="text" placeholder="Ex: Appartement Nice Centre" value="' + (wizardData.propName || '').replace(/"/g, '&quot;') + '" style="width:100%;padding:12px 14px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:14px;font-family:\'Inter\',sans-serif;box-sizing:border-box;margin-bottom:10px;">';
   html += '<label style="display:block;font-size:11px;color:var(--text3);margin-bottom:4px;text-transform:uppercase;">Adresse</label>';
   html += wizAddressFieldHTML('wizPropAddress', 'wizPropMap');
   html += '<div style="height:16px;"></div>';
   html += '<div style="display:flex;gap:10px;">';
-  html += '<button class="btn btnOutline" style="flex:1;padding:12px;font-size:13px;" onclick="' + (wizardData.roleId === 'concierge' ? 'wizardStep_ConciergeName()' : 'showOnboardingStep2()') + '">&#10094; Retour</button>';
+  html += '<button class="btn btnOutline" style="flex:1;padding:12px;font-size:13px;" onclick="wizardSnapshotPropertyName();' + (wizardData.roleId === 'concierge' ? 'wizardStep_ConciergeName()' : 'showOnboardingStep2()') + '">&#10094; Retour</button>';
   html += '<button class="btn btnPrimary" id="wizPropNext" style="flex:1;padding:14px;font-size:14px;opacity:0.4;pointer-events:none;" onclick="wizardSaveProperty()">Suivant &#10140;</button>';
   html += '</div>';
   html += '</div>';
@@ -6071,38 +6160,44 @@ function wizardStep_PropertyDetails() {
   html += '<div style="font-size:14px;color:var(--text2);margin-bottom:16px;">Details de la propriete</div>';
   html += '</div>';
 
+  // Helper to keep value across "Retour" navigation
+  const _t = (wizardData.propType || '');
+  const _opt = (val, label) => '<option value="' + val + '"' + (_t === val ? ' selected' : '') + ' style="background:#1a1a2e;color:#f0f0f5;">' + label + '</option>';
+
   // Type + Rooms + Surface
   html += '<div style="display:flex;gap:8px;margin-bottom:10px;">';
   html += '<div style="flex:2;"><label style="display:block;font-size:11px;color:var(--text3);margin-bottom:4px;text-transform:uppercase;">Type</label>';
   html += '<select id="wizPropType" style="width:100%;padding:10px;background:#1a1a2e;color:#f0f0f5;border:1px solid var(--border2);border-radius:8px;font-size:13px;box-sizing:border-box;">';
-  html += '<option value="" style="background:#1a1a2e;color:#f0f0f5;">--</option><option value="apartment" style="background:#1a1a2e;color:#f0f0f5;">Appartement</option><option value="house" style="background:#1a1a2e;color:#f0f0f5;">Maison</option><option value="studio" style="background:#1a1a2e;color:#f0f0f5;">Studio</option><option value="villa" style="background:#1a1a2e;color:#f0f0f5;">Villa</option><option value="chalet" style="background:#1a1a2e;color:#f0f0f5;">Chalet</option><option value="other" style="background:#1a1a2e;color:#f0f0f5;">Autre</option>';
+  html += _opt('', '--') + _opt('apartment', 'Appartement') + _opt('house', 'Maison') + _opt('studio', 'Studio') + _opt('villa', 'Villa') + _opt('chalet', 'Chalet') + _opt('other', 'Autre');
   html += '</select></div>';
   html += '<div style="flex:1;"><label style="display:block;font-size:11px;color:var(--text3);margin-bottom:4px;text-transform:uppercase;">Pieces</label>';
-  html += '<input aria-label="3" id="wizPropRooms" type="number" min="1" max="20" placeholder="3" style="width:100%;padding:10px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:13px;box-sizing:border-box;"></div>';
+  html += '<input aria-label="3" id="wizPropRooms" type="number" min="1" max="20" placeholder="3" value="' + (wizardData.propRooms || '') + '" style="width:100%;padding:10px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:13px;box-sizing:border-box;"></div>';
   html += '<div style="flex:1;"><label style="display:block;font-size:11px;color:var(--text3);margin-bottom:4px;text-transform:uppercase;">Total m²</label>';
-  html += '<input aria-label="65" id="wizPropSurface" type="number" min="1" placeholder="65" required style="width:100%;padding:10px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:13px;box-sizing:border-box;"></div>';
+  html += '<input aria-label="65" id="wizPropSurface" type="number" min="1" placeholder="65" required value="' + (wizardData.propSurface || '') + '" style="width:100%;padding:10px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:13px;box-sizing:border-box;"></div>';
   html += '</div>';
 
   // (Tarif menage + duree retires du wizard - configurables plus tard via fiche bien)
 
-  // Check-in / Check-out
+  // Check-in / Check-out (preserve previous values, fallback to defaults)
+  const _ci = wizardData.propCheckin || '15:00';
+  const _co = wizardData.propCheckout || '11:00';
   html += '<div style="display:flex;gap:8px;margin-bottom:10px;">';
   html += '<div style="flex:1;"><label style="display:block;font-size:11px;color:var(--text3);margin-bottom:4px;text-transform:uppercase;">Check-in</label>';
-  html += '<input aria-label="Heure check-in" id="wizPropCheckin" type="time" value="15:00" style="width:100%;padding:10px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:13px;box-sizing:border-box;"></div>';
+  html += '<input aria-label="Heure check-in" id="wizPropCheckin" type="time" value="' + _ci + '" style="width:100%;padding:10px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:13px;box-sizing:border-box;"></div>';
   html += '<div style="flex:1;"><label style="display:block;font-size:11px;color:var(--text3);margin-bottom:4px;text-transform:uppercase;">Check-out</label>';
-  html += '<input aria-label="Heure check-out" id="wizPropCheckout" type="time" value="11:00" style="width:100%;padding:10px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:13px;box-sizing:border-box;"></div>';
+  html += '<input aria-label="Heure check-out" id="wizPropCheckout" type="time" value="' + _co + '" style="width:100%;padding:10px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:13px;box-sizing:border-box;"></div>';
   html += '</div>';
 
   // Access code
   html += '<label style="display:block;font-size:11px;color:var(--text3);margin-bottom:4px;text-transform:uppercase;">Code d\'acces / Digicode</label>';
-  html += '<input aria-label="Ex: 1234B, boite a cles..." id="wizPropCode" type="text" placeholder="Ex: 1234B, boite a cles..." style="width:100%;padding:10px 14px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:13px;box-sizing:border-box;margin-bottom:10px;">';
+  html += '<input aria-label="Ex: 1234B, boite a cles..." id="wizPropCode" type="text" placeholder="Ex: 1234B, boite a cles..." value="' + (wizardData.propCode || '').replace(/"/g, '&quot;') + '" style="width:100%;padding:10px 14px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:13px;box-sizing:border-box;margin-bottom:10px;">';
 
   // Instructions
   html += '<label style="display:block;font-size:11px;color:var(--text3);margin-bottom:4px;text-transform:uppercase;">Consignes / Notes</label>';
-  html += '<textarea aria-label="Instructions specifiques pour acceder au bien..." id="wizPropNotes" placeholder="Instructions specifiques pour acceder au bien..." rows="3" style="width:100%;padding:10px 14px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:13px;font-family:\'Inter\',sans-serif;box-sizing:border-box;resize:vertical;margin-bottom:12px;"></textarea>';
+  html += '<textarea aria-label="Instructions specifiques pour acceder au bien..." id="wizPropNotes" placeholder="Instructions specifiques pour acceder au bien..." rows="3" style="width:100%;padding:10px 14px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:13px;font-family:\'Inter\',sans-serif;box-sizing:border-box;resize:vertical;margin-bottom:12px;">' + (wizardData.propNotes || '').replace(/</g, '&lt;') + '</textarea>';
 
   html += '<div style="display:flex;gap:10px;">';
-  html += '<button class="btn btnOutline" style="flex:1;padding:12px;font-size:13px;" onclick="wizardStep_PropertyName()">&#10094; Retour</button>';
+  html += '<button class="btn btnOutline" style="flex:1;padding:12px;font-size:13px;" onclick="wizardSnapshotPropertyDetails();wizardStep_PropertyName()">&#10094; Retour</button>';
   html += '<button id="wizBtnNext2" class="btn btnPrimary" style="flex:1;padding:14px;font-size:14px;opacity:0.4;pointer-events:none;" onclick="wizardSavePropertyDetails()">Suivant &#10140;</button>';
   html += '</div>';
   html += '</div>';
@@ -6133,6 +6228,31 @@ function wizardStep_PropertyDetails() {
   }, 200);
 }
 
+// Snapshot helpers: persist current input values to wizardData WITHOUT advancing.
+// Called when user clicks "Retour" so re-rendering the previous step doesn't wipe entries.
+function wizardSnapshotPropertyName() {
+  const name = (document.getElementById('wizPropName') || {}).value?.trim() || '';
+  const addr = (document.getElementById('wizPropAddress') || {}).value?.trim() || '';
+  if (name) wizardData.propName = name;
+  if (addr) wizardData.propAddress = addr;
+}
+function wizardSnapshotPropertyDetails() {
+  const type = (document.getElementById('wizPropType') || {}).value || '';
+  const rooms = parseInt((document.getElementById('wizPropRooms') || {}).value) || null;
+  const surface = parseInt((document.getElementById('wizPropSurface') || {}).value) || null;
+  const checkin = (document.getElementById('wizPropCheckin') || {}).value || '';
+  const checkout = (document.getElementById('wizPropCheckout') || {}).value || '';
+  const code = ((document.getElementById('wizPropCode') || {}).value || '').trim();
+  const notes = ((document.getElementById('wizPropNotes') || {}).value || '').trim();
+  wizardData.propType = type;
+  wizardData.propRooms = rooms;
+  wizardData.propSurface = surface;
+  if (checkin) wizardData.propCheckin = checkin;
+  if (checkout) wizardData.propCheckout = checkout;
+  wizardData.propCode = code;
+  wizardData.propNotes = notes;
+}
+
 async function wizardSavePropertyDetails() {
   if (!wizardData.propId) { showToast('Erreur: propriete non trouvee. Recommencez.'); return; }
   const updateData = {
@@ -6146,6 +6266,14 @@ async function wizardSavePropertyDetails() {
   const checkin = document.getElementById('wizPropCheckin')?.value || '15:00';
   const checkout = document.getElementById('wizPropCheckout')?.value || '11:00';
   const code = document.getElementById('wizPropCode')?.value?.trim() || '';
+  // Persist in wizardData so a "Retour" preserves the entered values
+  wizardData.propType = updateData.type;
+  wizardData.propRooms = updateData.rooms;
+  wizardData.propSurface = updateData.surface;
+  wizardData.propNotes = updateData.notes;
+  wizardData.propCheckin = checkin;
+  wizardData.propCheckout = checkout;
+  wizardData.propCode = code;
   if (checkin || checkout || code) {
     const items = [];
     if (code) items.push('Code acces: ' + code);
