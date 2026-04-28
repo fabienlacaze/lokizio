@@ -986,6 +986,7 @@ async function renderMarketplaceResults(profiles) {
           <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
             ${p.phone ? `<a href="tel:${_escHtml(p.phone)}" style="display:inline-flex;align-items:center;gap:4px;font-size:12px;color:#34d399;text-decoration:none;padding:5px 10px;background:rgba(52,211,153,0.1);border-radius:8px;border:1px solid rgba(52,211,153,0.2);transition:background 0.2s;" onmouseenter="this.style.background='rgba(52,211,153,0.2)'" onmouseleave="this.style.background='rgba(52,211,153,0.1)'">&#128222; Appeler</a>` : ''}
             ${p.email ? `<a href="mailto:${_escHtml(p.email)}" style="display:inline-flex;align-items:center;gap:4px;font-size:12px;color:var(--accent);text-decoration:none;padding:5px 10px;background:rgba(108,99,255,0.1);border-radius:8px;border:1px solid rgba(108,99,255,0.2);transition:background 0.2s;" onmouseenter="this.style.background='rgba(108,99,255,0.2)'" onmouseleave="this.style.background='rgba(108,99,255,0.1)'">&#9993; Email</a>` : ''}
+            ${p.user_id && p.user_id !== _mkMyUserId ? `<button onclick="openAnnuaireMessage('${_escHtml(p.user_id)}','${_escHtml(p.display_name || '').replace(/'/g, "\\'")}')" style="display:inline-flex;align-items:center;gap:4px;font-size:12px;color:#f59e0b;background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.2);border-radius:8px;padding:5px 10px;cursor:pointer;transition:background 0.2s;" onmouseenter="this.style.background='rgba(245,158,11,0.2)'" onmouseleave="this.style.background='rgba(245,158,11,0.1)'">&#128172; Message</button>` : ''}
             ${p.user_id !== _mkMyUserId ? (_mkConnected.has(p.user_id) ? `<span style="margin-left:auto;display:inline-flex;align-items:center;gap:4px;padding:6px 10px;background:rgba(52,211,153,0.1);border:1px solid rgba(52,211,153,0.3);border-radius:8px;font-size:11px;color:#34d399;font-weight:600;">&#10003; Connecte</span><button onclick="disconnectUser('${_escHtml(p.user_id)}','${_escHtml(p.display_name)}')" style="padding:6px 10px;background:none;color:var(--text3);border:1px solid var(--border2);border-radius:8px;font-size:10px;cursor:pointer;">Retirer</button>` : _mkPending.has(p.user_id) ? `<span style="margin-left:auto;padding:6px 14px;background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.3);border-radius:8px;font-size:11px;color:#f59e0b;font-weight:600;">&#9203; En attente</span>` : API.isPremium() ? `<button onclick="sendConnectionRequest('${_escHtml(p.user_id)}','${_escHtml(p.display_name)}','${_escHtml(p.role)}')" style="margin-left:auto;padding:7px 16px;background:linear-gradient(135deg,#6c63ff,#5a54e0);color:#fff;border:none;border-radius:8px;font-size:11px;font-weight:600;cursor:pointer;">&#128279; Se connecter</button>` : `<button onclick="showPremiumModal(t('marketplace.premium_required_connect'))" style="margin-left:auto;padding:7px 16px;background:var(--surface);color:var(--text3);border:1px solid var(--border2);border-radius:8px;font-size:11px;cursor:pointer;">&#128274; Premium</button>`) : ''}
           </div>
         </div>
@@ -994,6 +995,73 @@ async function renderMarketplaceResults(profiles) {
   });
   container.innerHTML = html;
 }
+
+// In-app message popup from an annuaire card. Sends a row in `messages`
+// addressed to the recipient's user_id and triggers a push notification.
+function openAnnuaireMessage(recipientUserId, recipientName) {
+  if (!recipientUserId) return;
+  const existing = document.getElementById('annMsgOverlay');
+  if (existing) existing.remove();
+  const overlay = document.createElement('div');
+  overlay.id = 'annMsgOverlay';
+  overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);z-index:99998;display:flex;align-items:center;justify-content:center;padding:20px;';
+  overlay.onclick = (e) => { if (e.target === overlay) overlay.remove(); };
+  const safeName = (recipientName || 'cet utilisateur').replace(/'/g, "\\'");
+  let html = '<div style="max-width:440px;width:100%;background:var(--surface);border-radius:14px;border:1px solid var(--border);overflow:hidden;">';
+  html += '<div style="padding:16px 18px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);">';
+  html += '<div style="font-size:15px;font-weight:700;color:var(--text);">&#128172; Message a ' + _escHtml(recipientName || 'utilisateur') + '</div>';
+  html += '<button onclick="document.getElementById(\'annMsgOverlay\').remove()" style="background:transparent;border:none;color:var(--text3);font-size:20px;cursor:pointer;line-height:1;">&times;</button>';
+  html += '</div>';
+  html += '<div style="padding:16px 18px;">';
+  html += '<textarea id="annMsgBody" rows="5" placeholder="Bonjour, je vous contacte depuis l\'annuaire Lokizio..." style="width:100%;padding:10px 12px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:10px;font-size:13px;font-family:inherit;resize:vertical;box-sizing:border-box;"></textarea>';
+  html += '<div style="display:flex;gap:8px;margin-top:12px;">';
+  html += '<button onclick="document.getElementById(\'annMsgOverlay\').remove()" style="flex:1;padding:10px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">Annuler</button>';
+  html += '<button onclick="sendAnnuaireMessage(\'' + recipientUserId + '\',\'' + safeName + '\')" style="flex:2;padding:10px;background:linear-gradient(135deg,#6c63ff,#5a54e0);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">&#128231; Envoyer</button>';
+  html += '</div>';
+  html += '</div>';
+  html += '</div>';
+  overlay.innerHTML = html;
+  document.body.appendChild(overlay);
+  setTimeout(() => { const ta = document.getElementById('annMsgBody'); if (ta) ta.focus(); }, 80);
+}
+window.openAnnuaireMessage = openAnnuaireMessage;
+
+async function sendAnnuaireMessage(recipientUserId, recipientName) {
+  const ta = document.getElementById('annMsgBody');
+  const body = (ta?.value || '').trim();
+  if (!body) { showToast('Message vide'); return; }
+  try {
+    const { data: { user } } = await sb.auth.getUser();
+    if (!user) { showToast('Non connecte'); return; }
+    const org = (typeof API !== 'undefined' && API.getOrg) ? API.getOrg() : null;
+    let senderName = user.email || 'Utilisateur';
+    let senderRole = 'concierge';
+    try {
+      const { data: m } = await sb.from('members').select('display_name,role').eq('user_id', user.id).maybeSingle();
+      if (m) { senderName = m.display_name || senderName; senderRole = m.role || senderRole; }
+    } catch(_) { /* best-effort sender info */ }
+    const payload = {
+      sender_id: user.id,
+      sender_name: senderName,
+      sender_role: senderRole,
+      recipient_user_id: recipientUserId,
+      recipient_name: recipientName || '',
+      body: body,
+    };
+    if (org && org.id) payload.org_id = org.id;
+    const { error } = await sb.from('messages').insert(payload);
+    if (error) { showToast('Erreur: ' + error.message); return; }
+    if (typeof sendPushToUser === 'function') {
+      try { await sendPushToUser(recipientUserId, '&#128172; Nouveau message', senderName + ' vous a envoye un message', { tag: 'msg-' + user.id }); } catch(_) { /* push optional */ }
+    }
+    showToast('Message envoye');
+    document.getElementById('annMsgOverlay')?.remove();
+  } catch (e) {
+    console.error('sendAnnuaireMessage error:', e);
+    showToast('Erreur envoi');
+  }
+}
+window.sendAnnuaireMessage = sendAnnuaireMessage;
 
 window.showMarketplace = showMarketplace;
 window.closeMarketplace = closeMarketplace;
