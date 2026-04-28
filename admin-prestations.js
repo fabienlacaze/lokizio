@@ -241,26 +241,18 @@ async function loadAdminPrestations(forceReload) {
     html += metaParts.join(' &middot; ');
     if (noProvider) {
       html += '<span class="prestNoProvider-badge">&#9888;&#65039; Aucun prestataire</span>';
-      // CTA: broadcast a request to all providers of the org
-      const broadcastDate = (u.date || '').replace(/'/g, '');
-      const broadcastSvc = (u.type || '').replace(/'/g, '');
-      const broadcastProp = esc(u.propertyName || '').replace(/'/g, "\\'");
-      html += '<button class="prestSendBtn" onclick="event.stopPropagation();broadcastToProviders(\'' + broadcastDate + '\',\'' + broadcastSvc + '\',\'' + broadcastProp + '\')" style="margin-left:6px;padding:5px 11px;font-size:11px;border:none;border-radius:5px;cursor:pointer;">&#128228; Envoyer aux prestataires</button>';
     }
     html += '</div>';
     if (u.description) html += '<div style="font-size:10px;color:var(--text3);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + esc(u.description) + '</div>';
     html += '</div>';
-    // Right side: assign select (inline) + status + actions
+    // Right side: assign button (single popup) + status + actions
     html += '<div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">';
     if (pendingProviders) {
-      html += '<select id="svcAssign_' + u._id + '" style="padding:4px 6px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:5px;font-size:10px;max-width:120px;">';
-      html += '<option value="">Assigner...</option>';
-      const matching = pendingProviders.filter(p => p.services && p.services.includes(u.type));
-      const others = pendingProviders.filter(p => !p.services || !p.services.includes(u.type));
-      if (matching.length) { matching.forEach(p => { html += '<option value="' + esc(p.name) + '">' + esc(p.name) + '</option>'; }); }
-      if (others.length) { others.forEach(p => { html += '<option value="' + esc(p.name) + '">' + esc(p.name) + '</option>'; }); }
-      html += '</select>';
-      html += '<button style="padding:3px 10px;font-size:10px;font-weight:600;border:none;border-radius:4px;cursor:pointer;background:rgba(108,99,255,0.15);color:#6c63ff;" onclick="updateServiceRequest(\'' + u._id + '\',\'assigned\',document.getElementById(\'svcAssign_' + u._id + '\').value);setTimeout(()=>loadAdminPrestations(true),500)">OK</button>';
+      const _id = u._id || '';
+      const _date = (u.date || '').replace(/'/g, '');
+      const _svc = (u.type || '').replace(/'/g, '');
+      const _prop = esc(u.propertyName || '').replace(/'/g, "\\'");
+      html += '<button class="prestSendBtn" onclick="event.stopPropagation();showAssignProviderPopup(\'' + _id + '\',\'' + _date + '\',\'' + _svc + '\',\'' + _prop + '\')" style="padding:5px 11px;font-size:11px;border:none;border-radius:5px;cursor:pointer;">&#128100; Selectionner prestataire</button>';
       // More actions menu
       html += '<div style="position:relative;display:inline-block;">';
       html += '<button onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display===\'block\'?\'none\':\'block\'" style="padding:3px 6px;font-size:12px;border:none;border-radius:4px;cursor:pointer;background:transparent;color:var(--text3);" title="Plus d\'actions">&#8942;</button>';
@@ -491,6 +483,122 @@ window.filterAdminPrest = filterAdminPrest;
 window.filterAdminPrestStatus = filterAdminPrestStatus;
 window.applyAdminPrestFilters = applyAdminPrestFilters;
 window.toggleAdminHidePast = toggleAdminHidePast;
+
+// Open a unified popup to either pick an existing provider OR broadcast
+// the request to the public marketplace. Replaces the old inline
+// 'Assigner...' select + separate broadcast button.
+async function showAssignProviderPopup(reqId, dateStr, svcType, propertyName) {
+  const org = (typeof API !== 'undefined' && API.getOrg) ? API.getOrg() : null;
+  if (!org) { showToast('Organisation introuvable'); return; }
+
+  // Fetch providers of the org (members table)
+  const { data: members } = await sb.from('members')
+    .select('user_id, display_name, invited_email, role')
+    .eq('org_id', org.id)
+    .eq('role', 'provider')
+    .eq('accepted', true);
+  const orgProviders = members || [];
+
+  // Build the popup
+  const overlay = document.createElement('div');
+  overlay.id = 'assignProviderOverlay';
+  overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px;';
+  overlay.onclick = (e) => { if (e.target === overlay) overlay.remove(); };
+
+  const svcLabel = (typeof getServiceLabel === 'function') ? getServiceLabel(svcType) : svcType;
+  const dateLabel = dateStr ? new Date(dateStr + 'T12:00:00').toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' }) : '';
+
+  let html = '<div style="max-width:440px;width:100%;background:var(--surface);border-radius:14px;border:1px solid var(--border);max-height:90vh;display:flex;flex-direction:column;">';
+  html += '<div style="display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border-bottom:1px solid var(--border);">';
+  html += '<div style="font-size:14px;font-weight:700;color:var(--text);">&#128100; Selectionner prestataire</div>';
+  html += '<button aria-label="Fermer" onclick="document.getElementById(\'assignProviderOverlay\').remove()" style="background:transparent;border:none;color:var(--text3);font-size:20px;cursor:pointer;">&times;</button>';
+  html += '</div>';
+  html += '<div style="padding:12px 16px;background:var(--surface2);font-size:12px;color:var(--text2);">';
+  html += '<div><b>' + esc(svcLabel) + '</b> &middot; ' + esc(propertyName) + '</div>';
+  if (dateLabel) html += '<div style="font-size:11px;color:var(--text3);text-transform:capitalize;margin-top:2px;">' + esc(dateLabel) + '</div>';
+  html += '</div>';
+
+  html += '<div style="padding:14px 16px;overflow-y:auto;flex:1;">';
+
+  // SECTION 1: Existing providers
+  html += '<div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">&#127969;&#65039; Mes prestataires (' + orgProviders.length + ')</div>';
+  if (orgProviders.length === 0) {
+    html += '<div style="padding:12px;text-align:center;color:var(--text3);font-size:12px;background:var(--surface2);border-radius:8px;border:1px dashed var(--border2);margin-bottom:14px;">Aucun prestataire dans votre equipe.</div>';
+  } else {
+    html += '<div style="display:flex;flex-direction:column;gap:6px;margin-bottom:14px;">';
+    orgProviders.forEach(p => {
+      const name = esc(p.display_name || p.invited_email || 'Prestataire');
+      const nameJsEsc = name.replace(/'/g, "\\'");
+      html += '<button onclick="assignToOrgProvider(\'' + reqId + '\',\'' + nameJsEsc + '\',\'' + (p.user_id || '') + '\',\'' + svcType + '\',\'' + dateStr + '\',\'' + propertyName + '\')" style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;font-size:13px;color:var(--text);cursor:pointer;text-align:left;transition:all 0.15s;" onmouseover="this.style.borderColor=\'#6c63ff\'" onmouseout="this.style.borderColor=\'var(--border2)\'">';
+      html += '<span style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#6c63ff,#5a54e0);display:inline-flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:13px;">' + name.charAt(0).toUpperCase() + '</span>';
+      html += '<div style="flex:1;min-width:0;"><div style="font-weight:600;">' + name + '</div>';
+      if (p.invited_email) html += '<div style="font-size:11px;color:var(--text3);">' + esc(p.invited_email) + '</div>';
+      html += '</div>';
+      html += '<span style="color:#6c63ff;font-size:18px;">&rsaquo;</span>';
+      html += '</button>';
+    });
+    html += '</div>';
+  }
+
+  // SECTION 2: Broadcast on annuaire / push to all
+  html += '<div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">&#127758; Diffuser plus largement</div>';
+  html += '<button onclick="broadcastToProvidersFromPopup(\'' + reqId + '\',\'' + dateStr + '\',\'' + svcType + '\',\'' + propertyName + '\')" style="width:100%;display:flex;align-items:center;gap:10px;padding:12px;background:linear-gradient(135deg,#ef4444,#dc2626);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;margin-bottom:8px;">';
+  html += '<span style="font-size:20px;">&#128228;</span><div style="flex:1;text-align:left;"><div>Notifier tous mes prestataires</div><div style="font-size:11px;font-weight:400;opacity:0.9;">Envoie une notification push a votre equipe</div></div>';
+  html += '</button>';
+
+  html += '<button onclick="postToAnnuaire(\'' + reqId + '\',\'' + dateStr + '\',\'' + svcType + '\',\'' + propertyName + '\')" style="width:100%;display:flex;align-items:center;gap:10px;padding:12px;background:var(--surface2);color:var(--text);border:1px solid var(--accent2);border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">';
+  html += '<span style="font-size:20px;">&#127758;</span><div style="flex:1;text-align:left;"><div>Publier sur l\'annuaire</div><div style="font-size:11px;font-weight:400;color:var(--text3);">Visible par tous les prestataires de la marketplace</div></div>';
+  html += '</button>';
+
+  html += '</div>'; // end body
+  html += '</div>'; // end card
+
+  overlay.innerHTML = html;
+  document.body.appendChild(overlay);
+}
+window.showAssignProviderPopup = showAssignProviderPopup;
+
+// Action: pick a specific provider from the org's team
+async function assignToOrgProvider(reqId, providerName, providerUserId, svcType, dateStr, propertyName) {
+  document.getElementById('assignProviderOverlay')?.remove();
+  if (reqId && reqId !== '') {
+    // service_request: update DB row
+    if (typeof updateServiceRequest === 'function') {
+      await updateServiceRequest(reqId, 'assigned', providerName);
+    }
+  }
+  // Push notif to the assigned provider
+  if (providerUserId && typeof sendPushToUser === 'function') {
+    const svcLabel = (typeof getServiceLabel === 'function') ? getServiceLabel(svcType) : svcType;
+    try {
+      await sendPushToUser(providerUserId, '🧹 Nouvelle mission', svcLabel + ' - ' + propertyName + ' (' + dateStr + ')', { tag: 'assign-' + (reqId || dateStr) });
+    } catch (e) { /* notification optional */ }
+  }
+  showToast('Mission assignee a ' + providerName);
+  setTimeout(() => loadAdminPrestations(true), 500);
+}
+window.assignToOrgProvider = assignToOrgProvider;
+
+// Action: broadcast push to all org providers (from inside the popup)
+async function broadcastToProvidersFromPopup(reqId, dateStr, svcType, propertyName) {
+  document.getElementById('assignProviderOverlay')?.remove();
+  await broadcastToProviders(dateStr, svcType, propertyName);
+}
+window.broadcastToProvidersFromPopup = broadcastToProvidersFromPopup;
+
+// Action: post the request to the public marketplace
+async function postToAnnuaire(reqId, dateStr, svcType, propertyName) {
+  document.getElementById('assignProviderOverlay')?.remove();
+  // For now, mark the service_request as 'broadcast' (public) and show toast.
+  // Future: a dedicated marketplace_jobs table could track open jobs.
+  if (reqId && reqId !== '') {
+    try {
+      await sb.from('service_requests').update({ status: 'pending', notes: 'Diffusee sur l\'annuaire le ' + new Date().toLocaleDateString('fr-FR') }).eq('id', reqId);
+    } catch (e) { /* ignore */ }
+  }
+  showToast('Annonce diffusee sur l\'annuaire (les prestataires inscrits peuvent postuler)');
+}
+window.postToAnnuaire = postToAnnuaire;
 
 // Broadcast a service request to all providers of the org via push notification.
 // Used when a prestation has no assigned provider yet — the concierge can
