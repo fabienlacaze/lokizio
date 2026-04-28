@@ -1259,12 +1259,21 @@ async function saveManualContact() {
       notes: notes || null,
       accepted: false,
     };
-    console.log('[saveManualContact] insert payload:', payload);
-    let { data, error } = await sb.from('members').insert(payload).select().maybeSingle();
-    // Fallback: if the `notes` column doesn't exist yet in DB, retry without it
-    if (error && /column.*notes|notes.*column|notes.*does not exist/i.test(error.message || '')) {
-      console.warn('[saveManualContact] retry without notes (column missing in DB)');
-      delete payload.notes;
+    console.log('[saveManualContact] rpc payload:', payload);
+    // Use the SECURITY DEFINER RPC to bypass the RLS quirk on members.insert
+    // (PostgREST evaluates auth.uid() differently in the policy WITH CHECK).
+    // The RPC re-checks membership server-side, so security is preserved.
+    let { data, error } = await sb.rpc('add_manual_contact', {
+      p_org_id: payload.org_id,
+      p_role: payload.role,
+      p_name: payload.display_name,
+      p_email: payload.invited_email,
+      p_phone: payload.phone,
+      p_notes: payload.notes,
+    });
+    // Fallback to direct insert if RPC isn't deployed yet
+    if (error && /function.*add_manual_contact|does not exist/i.test(error.message || '')) {
+      console.warn('[saveManualContact] RPC not found, fallback to direct insert');
       ({ data, error } = await sb.from('members').insert(payload).select().maybeSingle());
     }
     if (error) {
