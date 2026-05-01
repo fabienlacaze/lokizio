@@ -507,10 +507,10 @@ const API = (function() {
       return [];
     },
     async save_reservations(reservations) {
+      // No-op on the new schema: reservations live in a dedicated `reservations` table
+      // populated by iCal sync (Edge Function) and tenant invites, not in plannings.reservations.
+      // Kept as a function so callers don't need to know.
       if (!activePropertyId || !reservations) return;
-      if (currentOrg) {
-        await savePlanningData(activePropertyId, 'reservations', reservations);
-      }
     },
 
     // ─── Transmitted ───

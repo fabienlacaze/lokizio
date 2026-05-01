@@ -9,7 +9,7 @@
   window.__isPasswordRecovery = h.indexOf('type=recovery') !== -1;
   window.__recoveryHash = h;
 })();
-window.APP_VERSION = '9.51';
+window.APP_VERSION = '9.52';
 </script>
 <script src="sentry-init.js?v=c697763"></script>
 <script
@@ -74,7 +74,7 @@ window.APP_VERSION = '9.51';
 <script src="i18n.js?v=86736d8"></script>
 <script src="ical_parser.js?v=e2bdc4d"></script>
 <script src="helpers.js?v=ae41dca"></script>
-<script src="api_bridge.js?v=27772c4"></script>
+<script src="api_bridge.js?v=cc80960"></script>
 <script src="vacation.js?v=a66e314"></script>
 <script src="push.js?v=28a3ca5"></script>
 <script src="legal.js?v=bf4906b"></script>
@@ -149,7 +149,7 @@ async function loadPDF() {
 </script>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v9.51</div>
+<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v9.52</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -159,7 +159,7 @@ async function loadPDF() {
     <!-- Broom that sweeps -->
     <div id="splashBroom" style="position:absolute;top:50%;left:-60px;font-size:48px;transform:translateY(-50%) rotate(-30deg);opacity:0;transition:all 0.8s cubic-bezier(0.25,0.46,0.45,0.94);">✨</div>
   </div>
-  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v9.51</span></div>
+  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v9.52</span></div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie pour locations</div>
   <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou</div>
   <!-- Loading bar -->
@@ -1603,6 +1603,15 @@ function getStatusLabel(s) { return (STATUS_CONFIG[s] || {}).label || s || ''; }
 // ── Splash Changelog (update this with each significant version) ──
 // Full versioned changelog — add new entries at TOP
 const VERSION_CHANGELOG = [
+  { v: '9.52', changes: [
+    'Fix 400 PATCH plannings : suppression de save_reservations qui essayait d\'ecrire dans plannings.reservations (colonne inexistante, les reservations vivent dans la table reservations dediee). Bug detecte automatiquement par probe Playwright.'
+  ] },
+  { v: '9.51', changes: [
+    'Tests E2E etendus : crawler exhaustif (21 modals) + monkey testing (clics aleatoires) sous npm run test:crawler / test:monkey',
+    'Fix bug #1+2 : suppression de showPersonalProfileModal et showBillingProfileModal (code mort qui plantait : modals jamais ajoutes au DOM)',
+    'Fix bug #3 : colonne marketplace_profiles.visible alignee entre prod et test (schema drift resolu)',
+    'Fix tests Stripe : assertions acceptent maintenant 404 (Edge Functions non deployees sur lokizio-test)'
+  ] },
   { v: '9.50', changes: [
     'Sentry integration : capture automatique des erreurs JS, filtres RGPD (passwords/tokens scrubes), Session Replay sur erreurs. Lecture via npm run sentry depuis le terminal (token .env.local gitignored)',
     'Fix push_subscriptions 409 Conflict : remplacement contrainte UNIQUE user_id par UNIQUE endpoint, multi-device support',
