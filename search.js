@@ -45,13 +45,15 @@ async function runGlobalSearch(q) {
   if (kwInvoices) queries.push(sb.from('invoices').select('id, invoice_number, client_name, total_ttc, type, status').order('created_at', { ascending: false }).limit(20));
   else queries.push(sb.from('invoices').select('id, invoice_number, client_name, total_ttc, type, status').or('invoice_number.ilike.' + like + ',client_name.ilike.' + like).limit(10));
 
+  // owner_name was a legacy free-text column on properties; the owner now lives
+  // on the members table (joined via owner_member_id). Search by name+address only.
   const propQ = (filter) => {
-    let q2 = sb.from('properties').select('id, name, owner_name, address');
+    let q2 = sb.from('properties').select('id, name, address');
     if (orgId) q2 = q2.eq('org_id', orgId);
     return filter ? filter(q2) : q2;
   };
   if (kwProperties) queries.push(propQ(q2 => q2.limit(20)));
-  else queries.push(propQ(q2 => q2.or('name.ilike.' + like + ',owner_name.ilike.' + like + ',address.ilike.' + like).limit(10)));
+  else queries.push(propQ(q2 => q2.or('name.ilike.' + like + ',address.ilike.' + like).limit(10)));
 
   if (orgId) {
     if (kwMembers) queries.push(sb.from('members').select('id, display_name, invited_email, role').eq('org_id', orgId).limit(20));

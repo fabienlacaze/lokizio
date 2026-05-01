@@ -16,13 +16,10 @@ async function showCreateInvoiceModal(type, isQuote) {
   const clients = [];
   try {
     if (type === 'concierge_to_owner') {
-      // Owners: from properties (owner_name / owner_email) + members with role owner
-      const { data: props } = await sb.from('properties').select('id,name,owner_name,owner_email,owner_member_id').eq('org_id', org?.id || '');
-      (props || []).forEach(p => {
-        if (p.owner_name || p.owner_email) {
-          clients.push({ id: p.id, label: (p.owner_name || p.owner_email) + (p.name ? ' (' + p.name + ')' : ''), name: p.owner_name || p.owner_email, email: p.owner_email, propertyId: p.id, propertyName: p.name });
-        }
-      });
+      // Owners come from members (role=owner) joined to properties via owner_member_id.
+      // Legacy free-text owner_name/owner_email columns were dropped; we now read the
+      // owner from the members table directly.
+      const { data: props } = await sb.from('properties').select('id,name,owner_member_id').eq('org_id', org?.id || '');
       const { data: owners } = await sb.from('members').select('id,user_id,display_name,invited_email').eq('org_id', org?.id || '').eq('role', 'owner');
       (owners || []).forEach(o => {
         const label = (o.display_name || o.invited_email);
@@ -36,13 +33,7 @@ async function showCreateInvoiceModal(type, isQuote) {
         if (label) clients.push({ id: a.user_id, label, name: label, email: a.invited_email });
       });
     } else if (type === 'provider_to_owner') {
-      // Clients = owners (from properties the provider has worked on or from members with role owner)
-      const { data: props } = await sb.from('properties').select('id,name,owner_name,owner_email').eq('org_id', org?.id || '');
-      (props || []).forEach(p => {
-        if (p.owner_name || p.owner_email) {
-          clients.push({ id: p.id, label: (p.owner_name || p.owner_email) + (p.name ? ' (' + p.name + ')' : ''), name: p.owner_name || p.owner_email, email: p.owner_email, propertyId: p.id, propertyName: p.name });
-        }
-      });
+      // Clients = owners from members (role=owner). owner_name/owner_email are legacy.
       const { data: owners } = await sb.from('members').select('id,user_id,display_name,invited_email').eq('org_id', org?.id || '').eq('role', 'owner');
       (owners || []).forEach(o => {
         const label = (o.display_name || o.invited_email);

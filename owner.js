@@ -797,10 +797,9 @@ async function loadOwnerInvoices() {
       const { data: p1 } = await sb.from('properties').select('name').eq('org_id', org.id).eq('owner_member_id', member.id);
       (p1 || []).forEach(p => { if (p.name && !myPropNames.includes(p.name)) myPropNames.push(p.name); });
     }
-    if (user?.email) {
-      const { data: p2 } = await sb.from('properties').select('name').eq('org_id', org.id).eq('owner_email', user.email);
-      (p2 || []).forEach(p => { if (p.name && !myPropNames.includes(p.name)) myPropNames.push(p.name); });
-    }
+    // Legacy: properties.owner_email was a free-text column. It's been removed in
+    // favor of owner_member_id (FK to members). The lookup above by owner_member_id
+    // already covers this case, so no fallback query is needed.
     _ownerInvoicesCache = (allInvoices || []).filter(inv => {
       if (inv.client_name && ownerName && inv.client_name.toLowerCase().includes(ownerName.toLowerCase())) return true;
       if (inv.property_name && myPropNames.includes(inv.property_name)) return true;

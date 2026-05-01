@@ -9,7 +9,7 @@
   window.__isPasswordRecovery = h.indexOf('type=recovery') !== -1;
   window.__recoveryHash = h;
 })();
-window.APP_VERSION = '9.55';
+window.APP_VERSION = '9.56';
 </script>
 <script src="sentry-init.js?v=c697763"></script>
 <script
@@ -79,14 +79,14 @@ window.APP_VERSION = '9.55';
 <script src="push.js?v=28a3ca5"></script>
 <script src="legal.js?v=bf4906b"></script>
 <script src="quotes.js?v=dc94c04"></script>
-<script src="search.js?v=a7f53bd"></script>
+<script src="search.js?v=9c4c5c8"></script>
 <script src="tenant.js?v=2f88fa5"></script>
 <script src="auto-billing.js?v=58151d3"></script>
 <script src="invoices.js?v=2c4fcfb"></script>
-<script src="invoice-create.js?v=b8d8fed"></script>
+<script src="invoice-create.js?v=75cab4d"></script>
 <script src="auth.js?v=0e681f8"></script>
 <script src="provider.js?v=9fde05c"></script>
-<script src="owner.js?v=1f4120e"></script>
+<script src="owner.js?v=de93669"></script>
 <script src="marketplace.js?v=f63d05b"></script>
 <script src="properties.js?v=24f7383"></script>
 <script src="dashboard.js?v=fa05725"></script>
@@ -1603,6 +1603,9 @@ function getStatusLabel(s) { return (STATUS_CONFIG[s] || {}).label || s || ''; }
 // ── Splash Changelog (update this with each significant version) ──
 // Full versioned changelog — add new entries at TOP
 const VERSION_CHANGELOG = [
+  { v: '9.56', changes: [
+    'Fix 400 (Bad Request) sur queries properties : retire les references aux colonnes legacy owner_name et owner_email (supprimees en prod, remplacees par owner_member_id qui est une FK vers members). Affecte invoice-create.js (clients owner), search.js (recherche globale), owner.js (filtre proprietes proprio).'
+  ] },
   { v: '9.55', changes: [
     'Fix 406 (Not Acceptable) sur GET /rest/v1/plannings : remplacement de .single() par .maybeSingle() dans api_bridge.loadPlanning(), owner.js et provider.js. Le 406 apparaissait quand une propriete n\'avait pas encore de planning row (etat valide pour une propriete fraichement creee).'
   ] },
