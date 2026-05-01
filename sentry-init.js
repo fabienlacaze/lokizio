@@ -12,9 +12,14 @@ window.sentryOnLoad = function () {
     replaysOnErrorSampleRate: 1,
     beforeSend: function (event) {
       try {
-        var msg = (event.message || '').toLowerCase();
-        if (msg.indexOf('beforeinstallpromptevent') !== -1) return null;
-        if (msg.indexOf('non-error promise rejection captured') !== -1) return null;
+        // Build a single string that covers message + exception value to filter on
+        var noiseTxt = ((event.message || '') + ' ' +
+          ((((event.exception || {}).values || [])[0] || {}).value || '')).toLowerCase();
+        if (noiseTxt.indexOf('beforeinstallpromptevent') !== -1) return null;
+        if (noiseTxt.indexOf('non-error promise rejection captured') !== -1) return null;
+        // SW update race during devtools clear-site-data — benign, dev only
+        if (noiseTxt.indexOf('failed to update a serviceworker') !== -1) return null;
+        if (noiseTxt.indexOf('the object is in an invalid state') !== -1) return null;
         if (event.request && event.request.url) {
           event.request.url = String(event.request.url).split('?')[0];
         }

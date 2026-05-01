@@ -55,10 +55,19 @@ function fmtDate(s) {
 }
 
 // ── Single issue mode ──
-async function showIssue(id) {
-  const issue = await api(`/issues/${id}/`);
-  const events = await api(`/issues/${id}/events/?limit=1`);
-  const last = events[0];
+async function showIssue(idOrShortId) {
+  // Resolve shortId (LOKIZIO-1) to numeric id by looking up the project list
+  let id = idOrShortId;
+  if (/^[A-Z]+-\d+$/.test(idOrShortId)) {
+    const list = await api(`/projects/${ORG}/${PROJECT}/issues/?limit=100&query=`);
+    const match = list.find((i) => i.shortId === idOrShortId);
+    if (!match) throw new Error('shortId not found in last 100 issues: ' + idOrShortId);
+    id = match.id;
+  }
+  const issue = await api(`/organizations/${ORG}/issues/${id}/`);
+  // Get latest event via the project events endpoint (filter on issue.id)
+  const events = await api(`/projects/${ORG}/${PROJECT}/events/?limit=10`);
+  const last = events.find((e) => e.groupID === String(id)) || events[0];
   console.log('═'.repeat(70));
   console.log(`ISSUE ${issue.shortId}  [${issue.level.toUpperCase()}]  ${issue.status}`);
   console.log(`Title: ${issue.title}`);
