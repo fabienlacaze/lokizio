@@ -68,7 +68,7 @@
 <script src="i18n.js?v=86736d8"></script>
 <script src="ical_parser.js?v=e2bdc4d"></script>
 <script src="helpers.js?v=ae41dca"></script>
-<script src="api_bridge.js?v=eb9e36d"></script>
+<script src="api_bridge.js?v=d0cced9"></script>
 <script src="vacation.js?v=a66e314"></script>
 <script src="push.js?v=28a3ca5"></script>
 <script src="legal.js?v=bf4906b"></script>
@@ -1598,7 +1598,7 @@ function getStatusLabel(s) { return (STATUS_CONFIG[s] || {}).label || s || ''; }
 // Full versioned changelog — add new entries at TOP
 const VERSION_CHANGELOG = [
   { v: '9.49', changes: [
-    'Audit Sprint 1 : fix N+1 query au login (members + organizations en 1 requete au lieu de N+1), CSS au cache du Service Worker (network-first comme JS pour stale-while-revalidate)'
+    'Audit Sprint 1 : CSS au cache du Service Worker (network-first comme JS pour stale-while-revalidate). Note: tentative de fix N+1 au login annulee — le join organizations(*) renvoie null a cause des regles RLS, le pattern N requetes separees reste necessaire'
   ] },
   { v: '9.48', changes: [
     'Fix 400 sur PATCH properties : ajout des colonnes manquantes en prod (cleaning_price, pricing)',

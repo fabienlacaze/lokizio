@@ -32,10 +32,18 @@ const API = (function() {
   async function loadOrg() {
     try {
       const userId = await getUserId();
+      // Always use separate queries to avoid RLS join issues
       let { data: members, error } = await sb
         .from('members')
-        .select('*, organizations(*)')
+        .select('*')
         .eq('user_id', userId);
+      if (members && members.length) {
+        // Load organizations separately for each membership
+        for (const m of members) {
+          const { data: org } = await sb.from('organizations').select('*').eq('id', m.org_id).single();
+          m.organizations = org;
+        }
+      }
       if (error || !members || !members.length) {
         // Auto-create org + member + trial subscription
         const user = (await sb.auth.getUser()).data.user;
