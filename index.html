@@ -9,10 +9,16 @@
   window.__isPasswordRecovery = h.indexOf('type=recovery') !== -1;
   window.__recoveryHash = h;
 })();
+window.APP_VERSION = '9.50';
 </script>
+<script
+  src="https://js-de.sentry-cdn.com/31e75ef323023d261664bb70d163fdb1.min.js"
+  crossorigin="anonymous"
+></script>
+<script src="sentry-init.js?v=823ef12"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://js.stripe.com https://unpkg.com; connect-src 'self' https://cdn.jsdelivr.net https://*.supabase.co wss://*.supabase.co https://api.stripe.com https://nominatim.openstreetmap.org https://*.tile.openstreetmap.org; img-src 'self' data: blob: https:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net https://unpkg.com; font-src 'self' data: https://fonts.gstatic.com; frame-src https://js.stripe.com https://hooks.stripe.com; object-src 'none'; base-uri 'self'; form-action 'self';">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://js.stripe.com https://unpkg.com https://js-de.sentry-cdn.com https://browser.sentry-cdn.com; connect-src 'self' https://cdn.jsdelivr.net https://*.supabase.co wss://*.supabase.co https://api.stripe.com https://nominatim.openstreetmap.org https://*.tile.openstreetmap.org https://*.ingest.de.sentry.io https://*.ingest.sentry.io; img-src 'self' data: blob: https:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net https://unpkg.com; font-src 'self' data: https://fonts.gstatic.com; frame-src https://js.stripe.com https://hooks.stripe.com; object-src 'none'; base-uri 'self'; form-action 'self'; worker-src 'self' blob:;">
 <meta name="theme-color" content="#1a1a2e">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
@@ -68,7 +74,7 @@
 <script src="i18n.js?v=86736d8"></script>
 <script src="ical_parser.js?v=e2bdc4d"></script>
 <script src="helpers.js?v=ae41dca"></script>
-<script src="api_bridge.js?v=d0cced9"></script>
+<script src="api_bridge.js?v=27772c4"></script>
 <script src="vacation.js?v=a66e314"></script>
 <script src="push.js?v=28a3ca5"></script>
 <script src="legal.js?v=bf4906b"></script>
@@ -143,7 +149,7 @@ async function loadPDF() {
 </script>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v9.49</div>
+<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v9.50</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -153,7 +159,7 @@ async function loadPDF() {
     <!-- Broom that sweeps -->
     <div id="splashBroom" style="position:absolute;top:50%;left:-60px;font-size:48px;transform:translateY(-50%) rotate(-30deg);opacity:0;transition:all 0.8s cubic-bezier(0.25,0.46,0.45,0.94);">✨</div>
   </div>
-  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v9.49</span></div>
+  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v9.50</span></div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie pour locations</div>
   <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou</div>
   <!-- Loading bar -->
@@ -1597,6 +1603,12 @@ function getStatusLabel(s) { return (STATUS_CONFIG[s] || {}).label || s || ''; }
 // ── Splash Changelog (update this with each significant version) ──
 // Full versioned changelog — add new entries at TOP
 const VERSION_CHANGELOG = [
+  { v: '9.50', changes: [
+    'Sentry integration : capture automatique des erreurs JS, filtres RGPD (passwords/tokens scrubes), Session Replay sur erreurs. Lecture via npm run sentry depuis le terminal (token .env.local gitignored)',
+    'Fix push_subscriptions 409 Conflict : remplacement contrainte UNIQUE user_id par UNIQUE endpoint, multi-device support',
+    'Fix recursion RLS organizations : nouvelle fonction SECURITY DEFINER user_org_ids() qui contourne la recursion sans casser la securite',
+    'Fix defensif api_bridge save_config : guard contre config.properties undefined'
+  ] },
   { v: '9.49', changes: [
     'Audit Sprint 1 : CSS au cache du Service Worker (network-first comme JS pour stale-while-revalidate). Note: tentative de fix N+1 au login annulee — le join organizations(*) renvoie null a cause des regles RLS, le pattern N requetes separees reste necessaire'
   ] },

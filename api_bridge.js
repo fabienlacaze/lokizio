@@ -418,7 +418,8 @@ const API = (function() {
       if ((config.properties || []).length > limits.maxProperties) {
         return { ok: false, error: 'limit_properties', max: limits.maxProperties };
       }
-      const activeProp = config.properties.find(p => p.id === activePropertyId) || config.properties[0];
+      const props = config.properties || [];
+      const activeProp = props.find(p => p.id === activePropertyId) || props[0];
       if (activeProp && (activeProp.providers || []).length > limits.maxProviders) {
         return { ok: false, error: 'limit_providers', max: limits.maxProviders };
       }

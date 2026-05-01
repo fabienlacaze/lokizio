@@ -20,7 +20,8 @@
     "audit:strict": "node scripts/audit.js --strict",
     "bump": "node scripts/bump-cache-busters.js",
     "bump:check": "node scripts/bump-cache-busters.js --check",
-    "serve": "npx --yes http-server . -p 8000 -c-1 --cors"
+    "serve": "npx --yes http-server . -p 8000 -c-1 --cors",
+    "sentry": "node scripts/fetch-sentry-issues.js"
   },
   "devDependencies": {
     "@playwright/test": "^1.48.0",

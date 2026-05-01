@@ -1,4 +1,4 @@
-const APP_VERSION = '9.49';
+const APP_VERSION = '9.50';
 const CACHE_NAME = 'lokizio-v' + APP_VERSION;
 
 // App shell files to cache for offline support
@@ -6,6 +6,7 @@ const APP_SHELL = [
   './',
   './index.html',
   './app.css',
+  './sentry-init.js',
   './supabase_config.js',
   './helpers.js',
   './i18n.js',
