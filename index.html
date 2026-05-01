@@ -9,7 +9,7 @@
   window.__isPasswordRecovery = h.indexOf('type=recovery') !== -1;
   window.__recoveryHash = h;
 })();
-window.APP_VERSION = '9.57';
+window.APP_VERSION = '9.58';
 </script>
 <script src="sentry-init.js?v=c697763"></script>
 <script
@@ -1603,6 +1603,11 @@ function getStatusLabel(s) { return (STATUS_CONFIG[s] || {}).label || s || ''; }
 // ── Splash Changelog (update this with each significant version) ──
 // Full versioned changelog — add new entries at TOP
 const VERSION_CHANGELOG = [
+  { v: '9.58', changes: [
+    'Page de reset jetable /clear.html : unregister le SW, vide tous les caches, conserve la session Supabase, redirige vers l\'app. A utiliser quand un SW obsolete reste bloque.',
+    'SW register: ?v=APP_VERSION + updateViaCache:none + reg.update() immediat au load → garantit que le browser detecte tout de suite une nouvelle version (au lieu d\'attendre 24h ou un check manuel)',
+    'Kill-switch automatique: au load, compare la version du SW actif a window.APP_VERSION. Si SW < page → unregister + clear caches + reload. Recovery automatique pour les futurs blocages.'
+  ] },
   { v: '9.57', changes: [
     'Fix Service Worker : "Failed to convert value to Response" quand fetch reseau echoue ET que le fallback cache.match retournait undefined. Le SW renvoie maintenant un 503 synthetique au pire cas. Cache aussi tolerant aux query strings (?v=hash) via ignoreSearch:true.'
   ] },
@@ -10704,8 +10709,44 @@ window.addEventListener('beforeunload', () => {
 });
 
 if('serviceWorker' in navigator){
-  navigator.serviceWorker.register('sw.js').then(reg => {
-    // Check for SW updates every 5 minutes
+  // ── Kill-switch: if a stale SW is running with an older version than the page,
+  // unregister it + clear caches + reload. This recovers from cases where the
+  // user got stuck on an old SW that was network-firsting a CDN-cached HTML.
+  (async () => {
+    try {
+      const pageVersion = window.APP_VERSION || '';
+      // Read the version of the active SW (if any) by fetching sw.js bypassing cache.
+      const reg = await navigator.serviceWorker.getRegistration();
+      if (reg && reg.active && pageVersion) {
+        const r = await fetch('sw.js?_kc=' + Date.now(), { cache: 'no-store' });
+        const t = await r.text();
+        const m = t.match(/APP_VERSION\s*=\s*'([^']+)'/);
+        const swVersion = m ? m[1] : '';
+        if (swVersion && swVersion !== pageVersion && !sessionStorage.getItem('mm_sw_killed')) {
+          // Compare semver-ish: if SW's version < page's version, kill it.
+          const [a1, b1] = swVersion.split('.').map(Number);
+          const [a2, b2] = pageVersion.split('.').map(Number);
+          if (a1 < a2 || (a1 === a2 && b1 < b2)) {
+            console.warn('[SW] Stale SW v' + swVersion + ' detected, page is v' + pageVersion + ' — unregistering and reloading');
+            sessionStorage.setItem('mm_sw_killed', '1');
+            await reg.unregister();
+            const keys = await caches.keys();
+            await Promise.all(keys.map(k => caches.delete(k)));
+            location.reload();
+            return;
+          }
+        }
+      }
+    } catch(e) { /* best-effort, never block app boot */ }
+  })();
+
+  // Pass APP_VERSION as query param so the browser treats sw.js as a different
+  // resource on each version bump — forces install of the new SW even when the
+  // cached sw.js is still being served by a CDN.
+  navigator.serviceWorker.register('sw.js?v=' + (window.APP_VERSION || 'unknown'), { updateViaCache: 'none' }).then(reg => {
+    // Force an immediate update check on every page load
+    reg.update().catch(() => {});
+    // Then poll every 5 minutes
     const _swInterval = setInterval(() => reg.update(), 5 * 60 * 1000);
     window.addEventListener('beforeunload', () => clearInterval(_swInterval));
     reg.addEventListener('updatefound', () => {
