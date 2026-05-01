@@ -313,7 +313,7 @@ async function showOwnerMode() {
   let totalCost = 0;
 
   for (const prop of properties) {
-    const { data: planning } = await sb.from('plannings').select('cleanings').eq('property_id', prop.id).single();
+    const { data: planning } = await sb.from('plannings').select('cleanings').eq('property_id', prop.id).maybeSingle();
     if (planning && planning.cleanings) {
       planning.cleanings.forEach(c => {
         allCleanings.push({ ...c, propertyId: prop.id, propertyName: prop.name });

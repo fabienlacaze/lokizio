@@ -9,7 +9,7 @@
   window.__isPasswordRecovery = h.indexOf('type=recovery') !== -1;
   window.__recoveryHash = h;
 })();
-window.APP_VERSION = '9.53';
+window.APP_VERSION = '9.55';
 </script>
 <script src="sentry-init.js?v=c697763"></script>
 <script
@@ -74,7 +74,7 @@ window.APP_VERSION = '9.53';
 <script src="i18n.js?v=86736d8"></script>
 <script src="ical_parser.js?v=e2bdc4d"></script>
 <script src="helpers.js?v=ae41dca"></script>
-<script src="api_bridge.js?v=cc80960"></script>
+<script src="api_bridge.js?v=8ae7511"></script>
 <script src="vacation.js?v=3aa5cf4"></script>
 <script src="push.js?v=28a3ca5"></script>
 <script src="legal.js?v=bf4906b"></script>
@@ -85,8 +85,8 @@ window.APP_VERSION = '9.53';
 <script src="invoices.js?v=2c4fcfb"></script>
 <script src="invoice-create.js?v=b8d8fed"></script>
 <script src="auth.js?v=0e681f8"></script>
-<script src="provider.js?v=98e36d2"></script>
-<script src="owner.js?v=37e7c9d"></script>
+<script src="provider.js?v=9fde05c"></script>
+<script src="owner.js?v=1f4120e"></script>
 <script src="marketplace.js?v=f63d05b"></script>
 <script src="properties.js?v=24f7383"></script>
 <script src="dashboard.js?v=fa05725"></script>
@@ -149,7 +149,7 @@ async function loadPDF() {
 </script>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v9.53</div>
+<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v9.55</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -159,7 +159,7 @@ async function loadPDF() {
     <!-- Broom that sweeps -->
     <div id="splashBroom" style="position:absolute;top:50%;left:-60px;font-size:48px;transform:translateY(-50%) rotate(-30deg);opacity:0;transition:all 0.8s cubic-bezier(0.25,0.46,0.45,0.94);">✨</div>
   </div>
-  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v9.53</span></div>
+  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v9.55</span></div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie pour locations</div>
   <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou</div>
   <!-- Loading bar -->
@@ -1603,6 +1603,13 @@ function getStatusLabel(s) { return (STATUS_CONFIG[s] || {}).label || s || ''; }
 // ── Splash Changelog (update this with each significant version) ──
 // Full versioned changelog — add new entries at TOP
 const VERSION_CHANGELOG = [
+  { v: '9.55', changes: [
+    'Fix 406 (Not Acceptable) sur GET /rest/v1/plannings : remplacement de .single() par .maybeSingle() dans api_bridge.loadPlanning(), owner.js et provider.js. Le 406 apparaissait quand une propriete n\'avait pas encore de planning row (etat valide pour une propriete fraichement creee).'
+  ] },
+  { v: '9.54', changes: [
+    'Massive expansion test coverage (#2 a #12) : RLS invariants 33 tests, Edge Functions logic 17 tests, role coverage 7 tests, edge cases 38 tests, property-based 11 proprietes (~1500 cas/run), CI coverage gates, crawler-forms, monkey reproductible, Stripe checkout 4 tests, load test (196 req/s), a11y axe-core (4 tests + 2 issues identifiees)',
+    'Fuite RLS reelle detectee + corrigee : msg_insert sur lokizio-test n\'imposait que sender_id, permettant a un user d\'inserer des messages dans n\'importe quelle org. Aligne sur msg_insert_scoped de prod.'
+  ] },
   { v: '9.53', changes: [
     'Fix 400 sur marketplace_profiles : ajout de DEFAULT \'concierge\' et DEFAULT \'\' sur les colonnes NOT NULL (role, display_name) pour que les upserts minimaux (saveNotifPref, saveProfileCountry) ne plantent plus quand le user n\'a pas encore de profil annuaire',
     'saveNotifPref et saveProfileCountry passent maintenant role=API.getRole() en fallback (defense en profondeur)'

@@ -481,7 +481,7 @@ async function showProviderMode() {
 
   for (const prop of properties) {
     propMap[prop.id] = prop;
-    const { data: planning, error: planErr } = await sb.from('plannings').select('cleanings').eq('property_id', prop.id).single();
+    const { data: planning, error: planErr } = await sb.from('plannings').select('cleanings').eq('property_id', prop.id).maybeSingle();
     if (planErr) continue;
     if (planning && planning.cleanings) {
       planning.cleanings

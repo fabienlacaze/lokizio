@@ -74,14 +74,24 @@ page.on('response', (resp) => {
   }
 });
 
-// Inject test Supabase URLs BEFORE page loads
-await ctx.addInitScript(({ url, anon }) => {
-  try {
-    localStorage.setItem('__lokizio_test_url', url);
-    localStorage.setItem('__lokizio_test_anon', anon);
-    localStorage.setItem('mm_lang', 'fr');
-  } catch (_) {}
-}, { url: TEST_URL, anon: TEST_ANON });
+// Inject test Supabase URLs ONLY when probing localhost.
+// Against prod, we'd be seeding a test user that doesn't exist there.
+const isLocal = /^https?:\/\/(localhost|127\.0\.0\.1)/.test(URL);
+if (isLocal) {
+  await ctx.addInitScript(({ url, anon }) => {
+    try {
+      localStorage.setItem('__lokizio_test_url', url);
+      localStorage.setItem('__lokizio_test_anon', anon);
+      localStorage.setItem('mm_lang', 'fr');
+    } catch (_) {}
+  }, { url: TEST_URL, anon: TEST_ANON });
+} else {
+  console.log('[probe] Targeting prod — seeded test user is for lokizio-test only.');
+  console.log('[probe] Will not be able to log in to prod. Reading anonymous-only state.');
+  await ctx.addInitScript(() => {
+    try { localStorage.setItem('mm_lang', 'fr'); } catch (_) {}
+  });
+}
 
 await page.goto(URL, { waitUntil: 'domcontentloaded' });
 

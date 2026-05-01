@@ -186,11 +186,13 @@ const API = (function() {
   }
 
   async function loadPlanning(propId) {
+    // .maybeSingle() avoids HTTP 406 when no row exists (vs .single()).
+    // A property with no planning row is a valid state (newly created property).
     const { data, error } = await sb
       .from('plannings')
       .select('*')
       .eq('property_id', propId)
-      .single();
+      .maybeSingle();
     if (error || !data) return { cleanings: [], transmitted: [], history: [] };
     return data;
   }
