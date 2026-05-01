@@ -1,4 +1,4 @@
-const APP_VERSION = '9.58';
+const APP_VERSION = '9.59';
 const CACHE_NAME = 'lokizio-v' + APP_VERSION;
 
 // App shell files to cache for offline support
@@ -46,12 +46,18 @@ self.addEventListener('install', event => {
 });
 
 self.addEventListener('activate', event => {
-  event.waitUntil(
-    caches.keys().then(keys =>
-      Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)))
-    )
-  );
-  self.clients.claim();
+  event.waitUntil((async () => {
+    // Wipe ALL old caches (not just non-current — full reset).
+    // Recovers users stuck on stale SW caches that were serving outdated HTML.
+    const keys = await caches.keys();
+    await Promise.all(keys.map(k => caches.delete(k)));
+    await self.clients.claim();
+    // Force every controlled tab to reload with the fresh network resources.
+    const clients = await self.clients.matchAll({ type: 'window' });
+    for (const client of clients) {
+      try { client.postMessage({ type: 'SW_FORCE_RELOAD', version: APP_VERSION }); } catch (_) {}
+    }
+  })());
 });
 
 self.addEventListener('fetch', event => {

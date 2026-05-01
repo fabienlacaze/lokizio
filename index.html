@@ -9,7 +9,7 @@
   window.__isPasswordRecovery = h.indexOf('type=recovery') !== -1;
   window.__recoveryHash = h;
 })();
-window.APP_VERSION = '9.58';
+window.APP_VERSION = '9.59';
 </script>
 <script src="sentry-init.js?v=c697763"></script>
 <script
@@ -149,7 +149,7 @@ async function loadPDF() {
 </script>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v9.58</div>
+<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v9.59</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -159,7 +159,7 @@ async function loadPDF() {
     <!-- Broom that sweeps -->
     <div id="splashBroom" style="position:absolute;top:50%;left:-60px;font-size:48px;transform:translateY(-50%) rotate(-30deg);opacity:0;transition:all 0.8s cubic-bezier(0.25,0.46,0.45,0.94);">✨</div>
   </div>
-  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v9.58</span></div>
+  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v9.59</span></div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie pour locations</div>
   <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou</div>
   <!-- Loading bar -->
@@ -1603,6 +1603,10 @@ function getStatusLabel(s) { return (STATUS_CONFIG[s] || {}).label || s || ''; }
 // ── Splash Changelog (update this with each significant version) ──
 // Full versioned changelog — add new entries at TOP
 const VERSION_CHANGELOG = [
+  { v: '9.59', changes: [
+    'SW activate handler : wipe TOUS les caches (pas seulement les anciens) + postMessage SW_FORCE_RELOAD a tous les clients connectes. Combine avec un listener dans index.html qui auto-reload, ca force les users bloques sur un vieux SW a passer a la nouvelle version sans intervention manuelle.',
+    'Fix bug operator: les badges v9.55 hardcodes lignes 152 et 162 etaient restes pendant 3 versions a cause de conflits Edit. Tous les badges affichent maintenant la bonne version.'
+  ] },
   { v: '9.58', changes: [
     'Page de reset jetable /clear.html : unregister le SW, vide tous les caches, conserve la session Supabase, redirige vers l\'app. A utiliser quand un SW obsolete reste bloque.',
     'SW register: ?v=APP_VERSION + updateViaCache:none + reg.update() immediat au load → garantit que le browser detecte tout de suite une nouvelle version (au lieu d\'attendre 24h ou un check manuel)',
@@ -10709,6 +10713,18 @@ window.addEventListener('beforeunload', () => {
 });
 
 if('serviceWorker' in navigator){
+  // Auto-reload when SW signals a force-reload (e.g. after a major version cleanup).
+  navigator.serviceWorker.addEventListener('message', (event) => {
+    if (event.data && event.data.type === 'SW_FORCE_RELOAD') {
+      console.log('[SW] Force reload triggered (new version', event.data.version + ')');
+      // Avoid infinite reloads
+      if (!sessionStorage.getItem('mm_sw_force_reloaded')) {
+        sessionStorage.setItem('mm_sw_force_reloaded', '1');
+        location.reload();
+      }
+    }
+  });
+
   // ── Kill-switch: if a stale SW is running with an older version than the page,
   // unregister it + clear caches + reload. This recovers from cases where the
   // user got stuck on an old SW that was network-firsting a CDN-cached HTML.
