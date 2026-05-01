@@ -88,11 +88,28 @@ async function loadUserCountry() {
   if (sel) sel.value = _userCountry;
 }
 
+// Get a default role for the marketplace_profiles upsert (NOT NULL constraint).
+// If the user has no marketplace profile yet and clicks a notif toggle, we need to
+// satisfy the NOT NULL by reading the role from their members entry.
+async function _getMpRole() {
+  try {
+    if (typeof API !== 'undefined' && API.getRole) {
+      const r = API.getRole();
+      if (r) return r;
+    }
+    const user = (await sb.auth.getUser()).data.user;
+    if (!user) return 'concierge';
+    const { data } = await sb.from('members').select('role').eq('user_id', user.id).maybeSingle();
+    return (data && data.role) || 'concierge';
+  } catch (_) { return 'concierge'; }
+}
+
 async function saveNotifPref(field, value) {
   try {
     const user = (await sb.auth.getUser()).data.user;
     if (!user) return;
-    const payload = { user_id: user.id };
+    const role = await _getMpRole();
+    const payload = { user_id: user.id, role };
     payload[field] = value;
     await sb.from('marketplace_profiles').upsert(payload, { onConflict: 'user_id' });
     showToast((field === 'notif_email' ? 'Emails' : 'Push') + (value ? ' actives' : ' desactives'));
@@ -104,7 +121,8 @@ async function saveProfileCountry(code) {
   try {
     const user = (await sb.auth.getUser()).data.user;
     if (!user) return;
-    await sb.from('marketplace_profiles').upsert({ user_id: user.id, country: code }, { onConflict: 'user_id' });
+    const role = await _getMpRole();
+    await sb.from('marketplace_profiles').upsert({ user_id: user.id, role, country: code }, { onConflict: 'user_id' });
     showToast('Pays enregistre');
   } catch(e) { console.error('save country:', e); showToast('Erreur: ' + e.message); }
 }
