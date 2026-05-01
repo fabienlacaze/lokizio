@@ -1,4 +1,4 @@
-const APP_VERSION = '9.48';
+const APP_VERSION = '9.49';
 const CACHE_NAME = 'lokizio-v' + APP_VERSION;
 
 // App shell files to cache for offline support
@@ -65,7 +65,7 @@ self.addEventListener('fetch', event => {
   }
 
   // App shell files: network-first, fallback to cache (stale-while-revalidate)
-  if (url.pathname.endsWith('.html') || url.pathname.endsWith('.js') || url.pathname === '/' || url.pathname.endsWith('/')) {
+  if (url.pathname.endsWith('.html') || url.pathname.endsWith('.js') || url.pathname.endsWith('.css') || url.pathname === '/' || url.pathname.endsWith('/')) {
     event.respondWith(
       fetch(event.request).then(resp => {
         if (resp.ok) {
