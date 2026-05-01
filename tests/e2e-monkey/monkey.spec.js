@@ -1,10 +1,17 @@
-// Niveau 3 — Monkey testing
-// Cliquer aleatoirement sur tout ce qui est cliquable pendant N actions et capturer toutes les erreurs.
+// Niveau 3 — Monkey testing (REPRODUCIBLE)
+// Random clicks/types/navs with a SEEDABLE PRNG. When the monkey finds a crash,
+// the seed + action log is saved to monkey-crash-<timestamp>.json so you can
+// replay the exact sequence with MONKEY_SEED=<seed> npm run test:monkey.
 //
-// Lancer : npx playwright test tests/e2e-monkey/monkey.spec.js --project=flows
-// Configurer la duree : MONKEY_ACTIONS=200 npx playwright ...
+// Lancer : npm run test:monkey
+//          MONKEY_ACTIONS=200 MONKEY_SEED=12345 npm run test:monkey  # replay
 
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { test, expect, seedUser, loginUI, cleanupUser, hasTestEnv, adminClient } from '../e2e-flows/_helpers.js';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 test.skip(!hasTestEnv(), '.env.test missing — monkey needs Supabase test creds');
 
@@ -31,6 +38,7 @@ test('monkey clicks the app randomly', async ({ page }) => {
   const rng = makeRng(MONKEY_SEED);
   const errors = [];
   const consoleErrors = [];
+  const actionLog = []; // record every action so we can replay on crash
 
   page.on('pageerror', (err) => {
     errors.push({ name: err.name, message: err.message, stack: (err.stack || '').slice(0, 500), at: new Date().toISOString() });
@@ -76,26 +84,32 @@ test('monkey clicks the app randomly', async ({ page }) => {
         const sel = selectors[Math.floor(rng() * selectors.length)];
         const elements = await page.$$(sel);
         if (elements.length === 0) continue;
-        const el = elements[Math.floor(rng() * elements.length)];
-        // Scroll into view + click with short timeout (ignore if not actionable)
+        const idx = Math.floor(rng() * elements.length);
+        const el = elements[idx];
+        actionLog.push({ i, kind: 'click', selector: sel, idx });
         await el.click({ timeout: 1500, force: false }).catch(() => {});
         clicks++;
       } else if (action < 0.85) {
         // 15% : type random text in a visible input
         const inputs = await page.$$('input:visible:not([type="checkbox"]):not([type="radio"]), textarea:visible');
         if (inputs.length > 0) {
-          const inp = inputs[Math.floor(rng() * inputs.length)];
-          await inp.fill('test' + Math.floor(rng() * 9999), { timeout: 1000 }).catch(() => {});
+          const idx = Math.floor(rng() * inputs.length);
+          const text = 'test' + Math.floor(rng() * 9999);
+          actionLog.push({ i, kind: 'type', idx, text });
+          await inputs[idx].fill(text, { timeout: 1000 }).catch(() => {});
           types++;
         }
       } else if (action < 0.95) {
         // 10% : press Escape (close modals)
+        actionLog.push({ i, kind: 'escape' });
         await page.keyboard.press('Escape').catch(() => {});
         escapes++;
       } else {
         // 5% : navigate to a hash route
         const hashes = ['#planning', '#finance', '#admin', '#config', '#comm', '#'];
-        await page.evaluate((h) => { window.location.hash = h; }, hashes[Math.floor(rng() * hashes.length)]).catch(() => {});
+        const h = hashes[Math.floor(rng() * hashes.length)];
+        actionLog.push({ i, kind: 'nav', hash: h });
+        await page.evaluate((hh) => { window.location.hash = hh; }, h).catch(() => {});
         navs++;
       }
 
@@ -127,5 +141,20 @@ test('monkey clicks the app randomly', async ({ page }) => {
     console.log('\n═══ CONSOLE ERRORS ═══');
     const unique = [...new Set(consoleErrors.map((e) => e.text))];
     unique.slice(0, 10).forEach((t, i) => console.log(`#${i + 1} ${t}`));
+  }
+
+  // ── Persist crash report so we can replay ──
+  if (errors.length > 0) {
+    const crashFile = path.join(__dirname, `monkey-crash-${Date.now()}.json`);
+    fs.writeFileSync(crashFile, JSON.stringify({
+      seed: MONKEY_SEED,
+      actions: MONKEY_ACTIONS,
+      timestamp: new Date().toISOString(),
+      errors,
+      consoleErrors,
+      actionLog,
+    }, null, 2));
+    console.log(`\n[monkey] CRASH REPORT saved to ${crashFile}`);
+    console.log(`[monkey] Replay with: MONKEY_SEED=${MONKEY_SEED} MONKEY_ACTIONS=${MONKEY_ACTIONS} npm run test:monkey`);
   }
 });

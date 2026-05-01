@@ -23,13 +23,16 @@
     "bump": "node scripts/bump-cache-busters.js",
     "bump:check": "node scripts/bump-cache-busters.js --check",
     "serve": "npx --yes http-server . -p 8000 -c-1 --cors",
-    "sentry": "node scripts/fetch-sentry-issues.js"
+    "sentry": "node scripts/fetch-sentry-issues.js",
+    "loadtest": "node scripts/load-test.js"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.11.3",
     "@playwright/test": "^1.48.0",
     "@supabase/supabase-js": "^2.104.0",
     "@vitest/coverage-v8": "^2.1.0",
     "dotenv": "^17.4.2",
+    "fast-check": "^4.7.0",
     "jsdom": "^25.0.0",
     "vitest": "^2.1.0"
   }

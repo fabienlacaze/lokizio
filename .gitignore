@@ -11,3 +11,4 @@ audit-report.html
 .DS_Store
 *.log
 e2e-errors.json
+tests/e2e-monkey/monkey-crash-*.json
