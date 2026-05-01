@@ -9,7 +9,7 @@
   window.__isPasswordRecovery = h.indexOf('type=recovery') !== -1;
   window.__recoveryHash = h;
 })();
-window.APP_VERSION = '9.56';
+window.APP_VERSION = '9.57';
 </script>
 <script src="sentry-init.js?v=c697763"></script>
 <script
@@ -1603,6 +1603,9 @@ function getStatusLabel(s) { return (STATUS_CONFIG[s] || {}).label || s || ''; }
 // ── Splash Changelog (update this with each significant version) ──
 // Full versioned changelog — add new entries at TOP
 const VERSION_CHANGELOG = [
+  { v: '9.57', changes: [
+    'Fix Service Worker : "Failed to convert value to Response" quand fetch reseau echoue ET que le fallback cache.match retournait undefined. Le SW renvoie maintenant un 503 synthetique au pire cas. Cache aussi tolerant aux query strings (?v=hash) via ignoreSearch:true.'
+  ] },
   { v: '9.56', changes: [
     'Fix 400 (Bad Request) sur queries properties : retire les references aux colonnes legacy owner_name et owner_email (supprimees en prod, remplacees par owner_member_id qui est une FK vers members). Affecte invoice-create.js (clients owner), search.js (recherche globale), owner.js (filtre proprietes proprio).'
   ] },

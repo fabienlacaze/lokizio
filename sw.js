@@ -1,4 +1,4 @@
-const APP_VERSION = '9.56';
+const APP_VERSION = '9.57';
 const CACHE_NAME = 'lokizio-v' + APP_VERSION;
 
 // App shell files to cache for offline support
@@ -65,32 +65,52 @@ self.addEventListener('fetch', event => {
     return;
   }
 
-  // App shell files: network-first, fallback to cache (stale-while-revalidate)
+  // App shell files: network-first, fallback to cache (stale-while-revalidate).
+  // IMPORTANT: respondWith MUST receive a Response — never undefined. Otherwise
+  // the browser throws "Failed to convert value to 'Response'".
   if (url.pathname.endsWith('.html') || url.pathname.endsWith('.js') || url.pathname.endsWith('.css') || url.pathname === '/' || url.pathname.endsWith('/')) {
     event.respondWith(
-      fetch(event.request).then(resp => {
-        if (resp.ok) {
-          const clone = resp.clone();
-          caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
-        }
-        return resp;
-      }).catch(() => caches.match(event.request))
-    );
-    return;
-  }
-
-  // Static assets: cache-first
-  if (CACHEABLE_STATIC.test(url.pathname)) {
-    event.respondWith(
-      caches.match(event.request).then(cached => {
-        if (cached) return cached;
-        return fetch(event.request).then(resp => {
+      fetch(event.request)
+        .then(resp => {
           if (resp.ok) {
             const clone = resp.clone();
             caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
           }
           return resp;
-        });
+        })
+        .catch(async () => {
+          // Network failed — try cache (with ignoreSearch so ?v=hash variants match).
+          const cached = await caches.match(event.request, { ignoreSearch: true });
+          if (cached) return cached;
+          // Last resort: synthesize a 503 so the browser doesn't throw.
+          return new Response('Offline and not cached', {
+            status: 503,
+            statusText: 'Service Unavailable',
+            headers: { 'Content-Type': 'text/plain' },
+          });
+        })
+    );
+    return;
+  }
+
+  // Static assets: cache-first (also tolerant to query strings).
+  if (CACHEABLE_STATIC.test(url.pathname)) {
+    event.respondWith(
+      caches.match(event.request, { ignoreSearch: true }).then(cached => {
+        if (cached) return cached;
+        return fetch(event.request)
+          .then(resp => {
+            if (resp.ok) {
+              const clone = resp.clone();
+              caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
+            }
+            return resp;
+          })
+          .catch(() => new Response('Asset unavailable', {
+            status: 503,
+            statusText: 'Service Unavailable',
+            headers: { 'Content-Type': 'text/plain' },
+          }));
       })
     );
     return;
