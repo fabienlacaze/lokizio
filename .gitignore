@@ -10,3 +10,4 @@ audit-report.html
 !.env.example
 .DS_Store
 *.log
+e2e-errors.json

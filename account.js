@@ -417,42 +417,6 @@ function closeOverlayPopup(id) {
   if (!anyVisible) document.body.classList.remove('hasStackedOverlay');
 }
 
-async function showPersonalProfileModal() {
-  const { data: { user } } = await sb.auth.getUser();
-  if (!user) return;
-  const member = API.getMember();
-  if (member) {
-    document.getElementById('profileName').value = member.display_name || '';
-    document.getElementById('profileEmail').value = user.email || member.invited_email || '';
-    document.getElementById('profilePhone').value = member.phone || '';
-    document.getElementById('profileAddress').value = member.address || '';
-  }
-  document.getElementById('overlay').style.display = 'block';
-  document.getElementById('personalProfileModal').style.display = 'block';
-}
-
-function closePersonalProfileModal() {
-  document.getElementById('overlay').style.display = 'none';
-  document.getElementById('personalProfileModal').style.display = 'none';
-}
-
-async function showBillingProfileModal() {
-  const member = API.getMember();
-  if (member) {
-    document.getElementById('billingCompany').value = member.company_name || '';
-    document.getElementById('billingSiret').value = member.siret || '';
-    document.getElementById('billingVat').value = member.vat_number || '';
-    document.getElementById('billingAddress').value = member.billing_address || '';
-    document.getElementById('billingVatRegime').value = member.vat_regime || 'micro';
-  }
-  document.getElementById('overlay').style.display = 'block';
-  document.getElementById('billingProfileModal').style.display = 'block';
-}
-
-function closeBillingProfileModal() {
-  document.getElementById('overlay').style.display = 'none';
-  document.getElementById('billingProfileModal').style.display = 'none';
-}
 /* ── Team Management ── */
 async function showTeamModal() {
   const org = API.getOrg();
@@ -839,10 +803,6 @@ window.showAccountModal = showAccountModal;
 window.closeAccountModal = closeAccountModal;
 window.closeProfileModal = closeProfileModal;
 window.showProfileModal = showProfileModal;
-window.closePersonalProfileModal = closePersonalProfileModal;
-window.showPersonalProfileModal = showPersonalProfileModal;
-window.closeBillingProfileModal = closeBillingProfileModal;
-window.showBillingProfileModal = showBillingProfileModal;
 window.closeTeamModal = closeTeamModal;
 window.showTeamModal = showTeamModal;
 window.removeTeamMember = removeTeamMember;

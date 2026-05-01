@@ -12,6 +12,8 @@
     "test:integration": "vitest run --config vitest.integration.config.js",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
+    "test:crawler": "playwright test --project=crawler",
+    "test:monkey": "playwright test --project=monkey",
     "test:all": "npm run test && npm run test:e2e",
     "coverage": "vitest run --coverage",
     "audit": "node scripts/audit.js",
