@@ -24,6 +24,15 @@ function _invErr(label, e) {
 let _invoicePeriod = 'all';
 let _invoiceStatus = 'all';
 let _invoicesCache = [];
+// Hoisted: renderInvoicesView() below reads these BEFORE the later declarations
+// at line ~785 would execute. In source-mode, function calls happen post-load so
+// it's fine — but after esbuild minify, the use-before-decl became a TDZ error
+// surfacing as "Property description must be an object: undefined" (esbuild's
+// keepNames wrapper choking on undefined). Moved here to fix LOKIZIO-5.
+let _invoiceSelection = new Set();
+let _invoiceCompactMode = (typeof localStorage !== 'undefined' && localStorage.getItem('mm_invoice_compact') === '1');
+let _invoiceClientFilter = '';
+let _invoiceSort = 'date_desc';
 
 async function loadInvoices() {
   const org = API.getOrg();
@@ -782,11 +791,8 @@ async function duplicateInvoice(id) {
   } catch(e) { console.error('duplicateInvoice:', e); showToast('Erreur: ' + e.message); }
 }
 
-// Bulk selection state
-let _invoiceSelection = new Set();
-let _invoiceCompactMode = localStorage.getItem('mm_invoice_compact') === '1';
-let _invoiceClientFilter = '';
-let _invoiceSort = 'date_desc';
+// Bulk selection state — declarations moved to the top of the file (see comment
+// above _invoiceSelection) to fix LOKIZIO-5 TDZ-after-minify.
 
 function toggleInvoiceSelect(id) {
   if (_invoiceSelection.has(id)) _invoiceSelection.delete(id);
