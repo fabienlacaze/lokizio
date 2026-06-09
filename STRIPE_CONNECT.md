@@ -1,6 +1,6 @@
 # Stripe Connect — Architecture Lokizio
 
-État : **Phase 1 (Foundations) complète v9.66**. Pas encore exposé en UI.
+État : **Phase 2 (UI Embedded) en cours v9.67**. Approche choisie : **Stripe Connect Embedded Components** (formulaire Stripe affiché dans une iframe Lokizio — l'utilisateur ne quitte jamais le domaine de l'app).
 
 ## TL;DR
 
@@ -66,23 +66,30 @@ Stocke la configuration Stripe Connect (commission, pays, etc.) en DB pour pouvo
 
 | Fonction | Description |
 |---|---|
-| `stripe-connect-onboard` | Crée un compte Stripe Express + renvoie une URL d'onboarding (5 min de validité). Idempotent. |
-| `stripe-connect-link` | Régénère une URL d'onboarding si l'utilisateur a déjà un compte. |
+| `stripe-connect-onboard` | Crée un compte Stripe Express (idempotent) + retourne un **Account Session `client_secret`** pour Embedded Components. |
+| `stripe-connect-link` | Régénère un Account Session si le précédent a expiré (5 min). |
 | `stripe-connect-status` | Refresh KYC status depuis Stripe + sync `members`. |
-| `stripe-invoice-payment-create` | Crée une Checkout Session pour une facture, avec 3% application_fee + transfert au compte destinataire. |
+| `stripe-invoice-payment-create` | Crée une Checkout Session pour une facture, avec 3% application_fee + transfert au compte destinataire. Filtre cross-org sécurisé (audit fix v9.67). |
 | `stripe-webhook` (étendu) | Écoute `account.updated`, `payment_intent.succeeded`, `payment_intent.payment_failed`, `payment_intent.canceled` en plus des events subscriptions existants. |
+
+## Module browser (Embedded)
+
+`menage-manager-app/stripe-connect-embed.js` expose :
+
+- `window.showStripeConnectOnboarding(country?)` — ouvre une modale Lokizio contenant le formulaire d'onboarding Stripe (CNI, IBAN, etc.) en iframe brandée Lokizio.
+- `window.showStripeConnectDashboard()` — ouvre une modale Lokizio avec balance + payments + payouts du prestataire.
+
+Charge `https://connect-js.stripe.com/v1.0/connect.js` à la demande.
 
 ## Flow utilisateur (prévu Phase 2-3)
 
-### Onboarding prestataire
+### Onboarding prestataire (Embedded)
 
-1. Le user clique **« Activer les paiements en ligne »** dans son profil.
-2. Le browser appelle `stripe-connect-onboard` qui :
-   - Crée un compte Express (idempotent — si déjà créé, skip).
-   - Génère une URL d'onboarding Stripe.
-3. Le user est redirigé vers Stripe pour remplir : identité (CNI), IBAN, infos fiscales.
-4. Stripe redirige vers Lokizio (`return_url`).
-5. L'app appelle `stripe-connect-status` pour synchroniser.
+1. Le user clique **« Activer les paiements en ligne »** dans son profil (Mon compte → Mon profil personnel → Paiements en ligne).
+2. Le browser charge `connect.js` (lazy) puis appelle `stripe-connect-onboard` pour récupérer un Account Session `client_secret`.
+3. Le browser instancie `StripeConnect.init({publishableKey, clientSecret})` et mount un `account-onboarding` component dans une **iframe Lokizio**.
+4. Le user remplit identité (CNI), IBAN, infos fiscales — **dans une modale Lokizio**, sans quitter l'app.
+5. Au clic « Terminé », Stripe envoie un event `onExit` au browser, qui appelle `stripe-connect-status` pour synchroniser puis ferme la modale.
 6. Si `charges_enabled = true` → badge **« ✓ Paiements en ligne actifs »** affiché.
 7. Webhook `account.updated` sync à chaque changement Stripe ultérieur.
 

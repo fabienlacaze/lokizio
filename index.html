@@ -9,7 +9,7 @@
   window.__isPasswordRecovery = h.indexOf('type=recovery') !== -1;
   window.__recoveryHash = h;
 })();
-window.APP_VERSION = '9.66';
+window.APP_VERSION = '9.67';
 </script>
 <script src="sentry-init.min.js?v=759d31d"></script>
 <script
@@ -18,7 +18,7 @@ window.APP_VERSION = '9.66';
 ></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://js.stripe.com https://unpkg.com https://js-de.sentry-cdn.com https://browser.sentry-cdn.com; connect-src 'self' https://cdn.jsdelivr.net https://*.supabase.co wss://*.supabase.co https://api.stripe.com https://nominatim.openstreetmap.org https://*.tile.openstreetmap.org https://*.ingest.de.sentry.io https://*.ingest.sentry.io; img-src 'self' data: blob: https:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net https://unpkg.com; font-src 'self' data: https://fonts.gstatic.com; frame-src https://js.stripe.com https://hooks.stripe.com; object-src 'none'; base-uri 'self'; form-action 'self'; worker-src 'self' blob:;">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://js.stripe.com https://connect-js.stripe.com https://unpkg.com https://js-de.sentry-cdn.com https://browser.sentry-cdn.com; connect-src 'self' https://cdn.jsdelivr.net https://*.supabase.co wss://*.supabase.co https://api.stripe.com https://nominatim.openstreetmap.org https://*.tile.openstreetmap.org https://*.ingest.de.sentry.io https://*.ingest.sentry.io; img-src 'self' data: blob: https:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net https://unpkg.com; font-src 'self' data: https://fonts.gstatic.com; frame-src https://js.stripe.com https://hooks.stripe.com https://connect-js.stripe.com; object-src 'none'; base-uri 'self'; form-action 'self'; worker-src 'self' blob:;">
 <meta name="theme-color" content="#1a1a2e">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
@@ -93,6 +93,7 @@ window.APP_VERSION = '9.66';
 <script src="admin-prestations.min.js?v=3446dc3"></script>
 <script src="account.min.js?v=a9dc308"></script>
 <script src="admin-sentry.min.js?v=2302bea"></script>
+<script src="stripe-connect-embed.min.js?v=273e2c3"></script>
 <!-- Lazy-loaded: Leaflet, Chart.js, jsPDF (loaded on demand to improve startup) -->
 <script>
 function lazyLoad(url, type) {
@@ -150,7 +151,7 @@ async function loadPDF() {
 </script>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v9.66</div>
+<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v9.67</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -160,7 +161,7 @@ async function loadPDF() {
     <!-- Broom that sweeps -->
     <div id="splashBroom" style="position:absolute;top:50%;left:-60px;font-size:48px;transform:translateY(-50%) rotate(-30deg);opacity:0;transition:all 0.8s cubic-bezier(0.25,0.46,0.45,0.94);">✨</div>
   </div>
-  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v9.66</span></div>
+  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v9.67</span></div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie pour locations</div>
   <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou</div>
   <!-- Loading bar -->
@@ -1100,6 +1101,13 @@ async function loadPDF() {
         <button class="btn btnOutline" style="width:100%;padding:12px;font-size:13px;" onclick="showVacationPlanner()">&#127796; Gerer mes conges</button>
       </div>
 
+      <!-- Stripe Connect Embedded Components (Phase 2 Beta) -->
+      <div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border);">
+        <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">&#128179; Paiements en ligne <span style="color:var(--accent2);font-size:9px;background:rgba(108,99,255,0.15);padding:2px 6px;border-radius:4px;margin-left:4px;">BETA</span></div>
+        <div style="font-size:11px;color:var(--text3);margin-bottom:10px;line-height:1.5;">Active les paiements par carte sur tes factures. Stripe gere securite et identite. Lokizio prend 3% de commission.</div>
+        <button class="btn btnPrimary" style="width:100%;padding:12px;font-size:13px;" onclick="showStripeConnectOnboarding()">&#128190; Activer / Gerer les paiements</button>
+      </div>
+
     </div>
   </div>
 </div>
@@ -1613,6 +1621,14 @@ function getStatusLabel(s) { return (STATUS_CONFIG[s] || {}).label || s || ''; }
 // ── Splash Changelog (update this with each significant version) ──
 // Full versioned changelog — add new entries at TOP
 const VERSION_CHANGELOG = [
+  { v: '9.67', changes: [
+    'Stripe Connect Phase 2 (UI Embedded Components) : pivot vers Stripe Connect Embedded au lieu de redirection. Le formulaire d\'onboarding Stripe (CNI, IBAN, etc.) s\'affiche maintenant dans une iframe brandee Lokizio au lieu d\'envoyer l\'utilisateur sur un domaine externe. Plus integre, moins de friction.',
+    'Nouveau module stripe-connect-embed.js (lazy load connect.js Stripe SDK, mount account-onboarding + payments + payouts components).',
+    'Bouton "Activer les paiements en ligne" dans Mon profil personnel (BETA, visible pour tous les roles).',
+    'Edge Functions stripe-connect-onboard et stripe-connect-link refactor: generent un Account Session client_secret au lieu d\'un Account Link URL.',
+    'Fix securite (audit workflow): stripe-invoice-payment-create filtre maintenant beneficiaryMember par .eq(org_id, invoice.org_id) pour empecher le cross-org payment routing.',
+    'CSP: ajout https://connect-js.stripe.com dans script-src et frame-src.'
+  ] },
   { v: '9.66', changes: [
     'Stripe Connect Phase 1 (Foundations) : schema DB (members + invoices + table platform_config avec commission 3% par defaut), 4 nouvelles Edge Functions (stripe-connect-onboard, stripe-connect-link, stripe-connect-status, stripe-invoice-payment-create), extension du stripe-webhook pour ecouter account.updated + payment_intent.* events Connect. Pas encore expose en UI — Phase 2 a venir.',
     'Documentation: STRIPE_CONNECT.md a la racine du repo (architecture, schema, flows, test cards, action utilisateur requise pour activer Connect dashboard).'

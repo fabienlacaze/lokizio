@@ -49,6 +49,7 @@ const SOURCES = [
   'vacation.js',
   'sentry-init.js',
   'admin-sentry.js',
+  'stripe-connect-embed.js',
 ];
 
 let totalSrcBytes = 0;

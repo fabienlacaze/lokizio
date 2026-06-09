@@ -78,13 +78,17 @@ Deno.serve(async (req) => {
     if (!invoice.created_by) {
       return Response.json({ error: 'Invoice has no created_by — cannot determine beneficiary' }, { status: 400, headers: cors });
     }
+    // SECURITY: lookup beneficiary BY org_id + user_id to prevent cross-org
+    // payment routing. Otherwise an invoice created by a user who's a member
+    // of multiple orgs could route payment to a Stripe account from a
+    // different org than the invoice's own (audit finding wz3hcekr9).
     const { data: beneficiaryMember } = await admin
       .from('members')
-      .select('stripe_account_id, stripe_charges_enabled')
+      .select('stripe_account_id, stripe_charges_enabled, accepted')
       .eq('user_id', invoice.created_by)
+      .eq('org_id', invoice.org_id)
       .eq('accepted', true)
       .not('stripe_account_id', 'is', null)
-      .limit(1)
       .maybeSingle();
     if (!beneficiaryMember?.stripe_account_id) {
       return Response.json({ error: 'Beneficiary has not enabled Stripe Connect' }, { status: 400, headers: cors });

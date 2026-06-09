@@ -1,14 +1,19 @@
 // Edge Function: stripe-connect-onboard
 //
 // Creates a Stripe Express account for the authenticated user (if not already)
-// and returns a one-time onboarding URL where they fill KYC (identity, bank).
+// and returns an **Account Session client_secret** for use with Stripe Connect
+// Embedded Components (account-onboarding component).
 //
-// Body: { country?: "FR" | "BE" | ... (default "FR"), return_url, refresh_url }
+// This is the EMBEDDED flow: the form is rendered in an iframe INSIDE Lokizio,
+// not as a redirect. See connect.stripe.com/docs/connect/embedded-components/quickstart
+//
+// Body: { country?: "FR" | "BE" | ... (default "FR") }
 // Auth: Bearer JWT (member of an org)
-// Returns: { account_id, onboarding_url, expires_at }
+// Returns: { account_id, client_secret, expires_at, charges_enabled,
+//            payouts_enabled, details_submitted }
 //
-// Idempotent: if member already has stripe_account_id, fetches a new onboarding
-// link without recreating the account.
+// Idempotent: if member already has stripe_account_id, just creates a new
+// account_session for the existing account.
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { corsHeaders, requireAuth } from '../_shared/cors.ts';
@@ -51,8 +56,6 @@ Deno.serve(async (req) => {
     const { userId } = await requireAuth(req, SUPABASE_URL, SUPABASE_ANON_KEY);
     const body = await req.json().catch(() => ({}));
     const country = (body.country || 'FR').toUpperCase();
-    const returnUrl = body.return_url || `${APP_URL}#stripe-onboard-return`;
-    const refreshUrl = body.refresh_url || `${APP_URL}#stripe-onboard-refresh`;
 
     const admin = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
 
@@ -105,18 +108,35 @@ Deno.serve(async (req) => {
         .eq('user_id', userId);
     }
 
-    // Generate a one-time account link (onboarding flow)
-    const link = await stripeApi('/account_links', {
+    // Generate an Account Session for Embedded Components.
+    // The client_secret is short-lived (5 min); the browser uses it to
+    // initialize StripeConnect.init() and mount components like
+    // <stripe-connect-account-onboarding>.
+    // See https://docs.stripe.com/api/account_sessions/create
+    const session = await stripeApi('/account_sessions', {
       account: accountId!,
-      refresh_url: refreshUrl,
-      return_url: returnUrl,
-      type: 'account_onboarding',
+      'components[account_onboarding][enabled]': 'true',
+      // Also enable the dashboard for users who already onboarded — they can
+      // see their balance, payouts, etc. from within Lokizio.
+      'components[payments][enabled]': 'true',
+      'components[payouts][enabled]': 'true',
+      'components[notification_banner][enabled]': 'true',
     });
+
+    // Fetch fresh account state so the client knows whether to render
+    // onboarding (incomplete) or the dashboard (complete).
+    const accountFetch = await fetch(`https://api.stripe.com/v1/accounts/${accountId}`, {
+      headers: { Authorization: `Bearer ${STRIPE_SECRET_KEY}` },
+    });
+    const account = await accountFetch.json();
 
     return Response.json({
       account_id: accountId,
-      onboarding_url: link.url,
-      expires_at: link.expires_at,
+      client_secret: session.client_secret,
+      expires_at: session.expires_at,
+      charges_enabled: !!account.charges_enabled,
+      payouts_enabled: !!account.payouts_enabled,
+      details_submitted: !!account.details_submitted,
     }, { headers: cors });
   } catch (e) {
     console.error('stripe-connect-onboard error:', e);
