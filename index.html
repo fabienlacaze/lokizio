@@ -9,7 +9,7 @@
   window.__isPasswordRecovery = h.indexOf('type=recovery') !== -1;
   window.__recoveryHash = h;
 })();
-window.APP_VERSION = '9.73';
+window.APP_VERSION = '9.74';
 </script>
 <script src="sentry-init.min.js?v=759d31d"></script>
 <script
@@ -18,7 +18,7 @@ window.APP_VERSION = '9.73';
 ></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://js.stripe.com https://connect-js.stripe.com https://unpkg.com https://js-de.sentry-cdn.com https://browser.sentry-cdn.com; connect-src 'self' https://cdn.jsdelivr.net https://*.supabase.co wss://*.supabase.co https://api.stripe.com https://connect-js.stripe.com https://nominatim.openstreetmap.org https://*.tile.openstreetmap.org https://*.ingest.de.sentry.io https://*.ingest.sentry.io; img-src 'self' data: blob: https:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net https://unpkg.com; font-src 'self' data: https://fonts.gstatic.com; frame-src https://js.stripe.com https://hooks.stripe.com https://connect-js.stripe.com; object-src 'none'; base-uri 'self'; form-action 'self'; worker-src 'self' blob:;">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://js.stripe.com https://connect-js.stripe.com https://unpkg.com https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://www.clarity.ms https://eu.posthog.com; connect-src 'self' https://cdn.jsdelivr.net https://*.supabase.co wss://*.supabase.co https://api.stripe.com https://connect-js.stripe.com https://nominatim.openstreetmap.org https://*.tile.openstreetmap.org https://*.ingest.de.sentry.io https://*.ingest.sentry.io https://www.clarity.ms https://*.clarity.ms https://eu.posthog.com https://eu-assets.posthog.com; img-src 'self' data: blob: https:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net https://unpkg.com; font-src 'self' data: https://fonts.gstatic.com; frame-src https://js.stripe.com https://hooks.stripe.com https://connect-js.stripe.com; object-src 'none'; base-uri 'self'; form-action 'self'; worker-src 'self' blob:;">
 <meta name="theme-color" content="#1a1a2e">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
@@ -95,6 +95,9 @@ window.APP_VERSION = '9.73';
 <script src="admin-sentry.min.js?v=2302bea"></script>
 <script src="stripe-connect-embed.min.js?v=ab215b2"></script>
 <script src="admin-stripe.min.js?v=de579c5"></script>
+<script src="feedback-widget.min.js?v=216011f"></script>
+<script src="admin-dev-tools.min.js?v=a12579e"></script>
+<script src="analytics-init.min.js?v=45f7d2a"></script>
 <!-- Lazy-loaded: Leaflet, Chart.js, jsPDF (loaded on demand to improve startup) -->
 <script>
 function lazyLoad(url, type) {
@@ -152,7 +155,7 @@ async function loadPDF() {
 </script>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v9.73</div>
+<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v9.74</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -162,7 +165,7 @@ async function loadPDF() {
     <!-- Broom that sweeps -->
     <div id="splashBroom" style="position:absolute;top:50%;left:-60px;font-size:48px;transform:translateY(-50%) rotate(-30deg);opacity:0;transition:all 0.8s cubic-bezier(0.25,0.46,0.45,0.94);">✨</div>
   </div>
-  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v9.73</span></div>
+  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v9.74</span></div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie pour locations</div>
   <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou</div>
   <!-- Loading bar -->
@@ -998,6 +1001,10 @@ async function loadPDF() {
         <span>&#128202; Stripe Connect — Revenus Lokizio</span>
         <span style="color:var(--text3);">&#8250;</span>
       </button>
+      <button class="btn btnOutline" style="padding:12px 14px;font-size:13px;text-align:left;display:flex;justify-content:space-between;align-items:center;width:100%;margin-top:6px;" onclick="closeAccountModal();showDevToolsDashboard()">
+        <span>&#129529; Dev Tools — Seed / Reset / Audit log</span>
+        <span style="color:var(--text3);">&#8250;</span>
+      </button>
     </div>
     <label style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:1px;display:block;margin-top:8px;margin-bottom:4px;">APP</label>
     <!-- Theme + Language -->
@@ -1630,6 +1637,15 @@ function getStatusLabel(s) { return (STATUS_CONFIG[s] || {}).label || s || ''; }
 // ── Splash Changelog (update this with each significant version) ──
 // Full versioned changelog — add new entries at TOP
 const VERSION_CHANGELOG = [
+  { v: '9.74', changes: [
+    'Sprint outils de test reel — 3 outils integres pour faciliter alpha/beta testing.',
+    'Outil #1: Feedback widget flottant (bouton 💬 bas-gauche pour users connectes). Modal avec note 1-5 etoiles + textarea + capture d\'ecran optionnelle (html2canvas lazy). EF feedback-submit stocke dans user_feedback + envoie email a Fabien. Rate limit 10/h.',
+    'Outil #2: Dev Tools dashboard (super_admin only, via Mon compte > ADMIN). Boutons "Seed complet" (3 biens + plannings + 10 factures), "10 factures only", "3 biens + plannings", "Reset mon org" (suppression destructive avec confirmation). Apercu live des 50 dernieres entrees audit_log.',
+    'Outil #3: Microsoft Clarity + PostHog snippet conditionnels. Loaded uniquement si window.LOKIZIO_CLARITY_ID / LOKIZIO_POSTHOG_KEY ou localStorage equivalent. Respect DNT + opt-out via window.analyticsOptOut(). PostHog identify avec user.id + app_version.',
+    'CSP: ajout www.clarity.ms, *.clarity.ms, eu.posthog.com, eu-assets.posthog.com pour les analytics.',
+    'DB: tables user_feedback (super_admin manage, user read own), demo_org_state (super_admin read).',
+    'window.trackEvent(name, props) expose pour tracker des evenements custom.'
+  ] },
   { v: '9.73', changes: [
     'Sprint 1 audit securite business — 8 Quick Wins implementes (workflow wd8q97c3a).',
     'DB: tables audit_log (RLS super_admin read, service_role insert only), rate_limits (no SELECT policy), profile_reports (DSA art. 16). Champs signature_received_at + method ajoutes a cleaning_validations.',
@@ -1657,7 +1673,7 @@ const VERSION_CHANGELOG = [
     'Ready pour test utilisateur end-to-end Stripe Connect Embedded.'
   ] },
   { v: '9.70', changes: [
-    'Fix 3 findings serieux issus du workflow d\'adversarial review du sprint Stripe Connect v9.73 (workflow wmlemqp4r).',
+    'Fix 3 findings serieux issus du workflow d\'adversarial review du sprint Stripe Connect v9.74 (workflow wmlemqp4r).',
     'Fix CORS cors.ts: retire le hack sk_test_ auto-allow (CORS doit dependre de ENV explicite, pas d\'un prefixe de cle Stripe). Set ENV=dev sur Supabase prod tant qu\'on est en mode test. A retirer quand on passera en live.',
     'Fix stripe-admin-stats: ajout error handling sur le check super_admin (sinon une erreur DB silencieuse bypasse l\'authorization).',
     'Fix stripe-connect-embed.js: fetchClientSecret appelle maintenant stripe-connect-link pour refresh le client_secret apres expiration de 5 min. Avant, le formulaire devenait silencieusement mort apres 5 min.',

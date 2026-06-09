@@ -51,6 +51,9 @@ const SOURCES = [
   'admin-sentry.js',
   'stripe-connect-embed.js',
   'admin-stripe.js',
+  'feedback-widget.js',
+  'admin-dev-tools.js',
+  'analytics-init.js',
 ];
 
 let totalSrcBytes = 0;
