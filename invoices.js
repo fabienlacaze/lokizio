@@ -24,15 +24,23 @@ function _invErr(label, e) {
 let _invoicePeriod = 'all';
 let _invoiceStatus = 'all';
 let _invoicesCache = [];
-// Hoisted: renderInvoicesView() below reads these BEFORE the later declarations
-// at line ~785 would execute. In source-mode, function calls happen post-load so
-// it's fine — but after esbuild minify, the use-before-decl became a TDZ error
-// surfacing as "Property description must be an object: undefined" (esbuild's
-// keepNames wrapper choking on undefined). Moved here to fix LOKIZIO-5.
 let _invoiceSelection = new Set();
 let _invoiceCompactMode = (typeof localStorage !== 'undefined' && localStorage.getItem('mm_invoice_compact') === '1');
 let _invoiceClientFilter = '';
 let _invoiceSort = 'date_desc';
+
+// Status dicts shared across _renderInvoiceCard, showInvoiceFullView, showInvoiceDetail.
+// Previously redeclared as local consts in each function — except showInvoiceDetail
+// where statusColors was forgotten (ReferenceError at L484, surfaced post-v9.62
+// once _invErr exposed the real error instead of a bare "Erreur" toast).
+const STATUS_COLORS = {
+  draft: '#888', sent: '#6c63ff', paid: '#34d399', overdue: '#e94560',
+  accepted: '#34d399', refused: '#ef4444', expired: '#f59e0b',
+};
+const STATUS_LABELS = {
+  draft: 'Brouillon', sent: 'Envoyee', paid: 'Payee',
+  accepted: 'Accepte', refused: 'Refuse', expired: 'Expire',
+};
 
 async function loadInvoices() {
   const org = API.getOrg();
@@ -176,12 +184,10 @@ function renderInvoicesView() {
 }
 
 function _renderInvoiceCard(inv, today) {
-  const statusColors = { draft: '#888', sent: '#6c63ff', paid: '#34d399', overdue: '#e94560', accepted: '#34d399', refused: '#ef4444', expired: '#f59e0b' };
-  const statusLabels = { draft: 'Brouillon', sent: 'Envoyee', paid: 'Payee', accepted: 'Accepte', refused: 'Refuse' };
   const isOverdue = inv.status === 'sent' && inv.due_date && inv.due_date < today;
   const displayStatus = isOverdue ? 'overdue' : inv.status;
-  const color = statusColors[displayStatus] || '#888';
-  const label = isOverdue ? 'En retard' : (statusLabels[inv.status] || inv.status);
+  const color = STATUS_COLORS[displayStatus] || '#888';
+  const label = isOverdue ? 'En retard' : (STATUS_LABELS[inv.status] || inv.status);
   const dateStr = new Date(inv.created_at).toLocaleDateString('fr-FR');
   const typeIcon = inv.type === 'concierge_to_owner' ? '\ud83c\udfe0' : '\ud83e\uddf9';
   const typeLabel = inv.type === 'concierge_to_owner' ? 'Proprietaire' : 'Concierge';
@@ -391,11 +397,9 @@ async function showInvoiceFullView(id) {
   try {
     const { data: inv } = await sb.from('invoices').select('*').eq('id', id).single();
     if (!inv) { showToast('Facture introuvable'); return; }
-    const statusColors = { draft: '#888', sent: '#6c63ff', paid: '#34d399', overdue: '#e94560', accepted: '#34d399', refused: '#ef4444', expired: '#f59e0b' };
-    const statusLabels = { draft: 'Brouillon', sent: 'Envoyee', paid: 'Payee', accepted: 'Accepte', refused: 'Refuse' };
     const isOverdue = inv.status === 'sent' && inv.due_date && inv.due_date < new Date().toISOString().split('T')[0];
-    const color = statusColors[isOverdue ? 'overdue' : inv.status] || '#888';
-    const label = isOverdue ? 'En retard' : (statusLabels[inv.status] || inv.status);
+    const color = STATUS_COLORS[isOverdue ? 'overdue' : inv.status] || '#888';
+    const label = isOverdue ? 'En retard' : (STATUS_LABELS[inv.status] || inv.status);
     const fmtD = (d) => d ? new Date(d).toLocaleDateString('fr-FR') : '—';
 
     let h = '<div style="background:#fff;color:#222;padding:20px;border-radius:8px;font-family:Arial,sans-serif;max-width:100%;box-sizing:border-box;">';
@@ -476,13 +480,12 @@ async function showInvoiceDetail(id) {
     const { data: inv } = await sb.from('invoices').select('*').eq('id', id).single();
     if (!inv) { showToast('Facture introuvable'); return; }
 
-    const statusLabels = { draft: 'Brouillon', sent: 'Envoyee', paid: 'Payee', accepted: 'Accepte', refused: 'Refuse', expired: 'Expire' };
     const todayIso = new Date().toISOString().split('T')[0];
     const isOverdue = !inv.is_quote && inv.status === 'sent' && inv.due_date && inv.due_date < todayIso;
     const isExpired = inv.is_quote && inv.status === 'sent' && inv.quote_valid_until && inv.quote_valid_until < todayIso;
     const stateKey = isOverdue ? 'overdue' : (isExpired ? 'expired' : inv.status);
-    const color = statusColors[stateKey] || '#888';
-    const label = isOverdue ? 'En retard' : (isExpired ? 'Expire' : (statusLabels[inv.status] || inv.status));
+    const color = STATUS_COLORS[stateKey] || '#888';
+    const label = isOverdue ? 'En retard' : (isExpired ? 'Expire' : (STATUS_LABELS[inv.status] || inv.status));
 
     // Pick first item as main prestation summary
     const firstItem = (inv.items && inv.items.length) ? inv.items[0] : null;
