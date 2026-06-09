@@ -840,15 +840,13 @@ async function ensureInvoiceNumber(inv) {
   return inv;
 }
 
-async function downloadInvoicePDF(invoiceId) {
-  try {
-  const org = API.getOrg();
-  let { data: inv, error: invErr } = await sb.from('invoices').select('*').eq('id', invoiceId).single();
-  if (!inv) return showToast('Facture introuvable');
+// Build a jsPDF doc for a given invoice row. Used by:
+// - downloadInvoicePDF (saves directly to disk)
+// - exportInvoicesZipFiscalYear (gets the blob to bundle in a ZIP)
+async function _buildInvoicePDF(inv) {
   inv = await ensureInvoiceNumber(inv);
-
   await loadPDF();
-  if (!window.jspdf) return showToast('Erreur chargement librairie PDF');
+  if (!window.jspdf) throw new Error('Librairie PDF indisponible');
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF();
   const pageW = doc.internal.pageSize.getWidth();
@@ -974,8 +972,127 @@ async function downloadInvoicePDF(invoiceId) {
   doc.text('Facture generee par Lokizio - fabienlacaze.github.io/lokizio', 14, pageH - 8);
   doc.text((inv.invoice_number || 'Facture') + ' - Page 1/1', pageW - 14, pageH - 8, { align: 'right' });
 
-  doc.save((inv.invoice_number || 'Facture') + '.pdf');
+  return doc;
+}
+
+// Save a single invoice PDF to disk (UI button "PDF" / "Telecharger").
+async function downloadInvoicePDF(invoiceId) {
+  try {
+    const { data: inv } = await sb.from('invoices').select('*').eq('id', invoiceId).single();
+    if (!inv) return showToast('Facture introuvable');
+    const doc = await _buildInvoicePDF(inv);
+    doc.save((inv.invoice_number || 'Facture') + '.pdf');
   } catch(e) { console.error('downloadInvoicePDF error:', e); showToast('Erreur generation PDF: ' + (e.message || 'Verifiez votre connexion')); }
+}
+
+// Lazy-load JSZip from jsDelivr CDN. Same pattern as loadPDF.
+async function loadZip() {
+  if (window.JSZip) return;
+  await new Promise((resolve, reject) => {
+    const s = document.createElement('script');
+    s.src = 'https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js';
+    s.onload = resolve;
+    s.onerror = () => reject(new Error('Echec chargement JSZip'));
+    document.head.appendChild(s);
+  });
+}
+
+// Build a ZIP of all invoices for a given fiscal year (Jan 1 -> Dec 31 of `year`).
+// Includes: 1 PDF per invoice + a recap CSV.
+async function exportInvoicesZipFiscalYear(year) {
+  const org = API.getOrg();
+  if (!org) return showToast('Pas d\'organisation');
+  if (!year) year = new Date().getFullYear() - 1; // default: previous calendar year (fiscal year for FR)
+
+  try {
+    showToast('Recuperation des factures ' + year + '...');
+    const start = year + '-01-01T00:00:00Z';
+    const end = (year + 1) + '-01-01T00:00:00Z';
+    const { data: invoices, error } = await sb.from('invoices')
+      .select('*')
+      .eq('org_id', org.id)
+      .eq('is_quote', false)            // factures uniquement, pas les devis
+      .gte('created_at', start)
+      .lt('created_at', end)
+      .order('created_at');
+    if (error) throw error;
+    if (!invoices || !invoices.length) {
+      showToast('Aucune facture trouvee pour l\'annee ' + year);
+      return;
+    }
+
+    showToast('Chargement librairies (PDF + ZIP)...');
+    await Promise.all([loadPDF(), loadZip()]);
+    if (!window.JSZip) throw new Error('JSZip indisponible');
+
+    const zip = new window.JSZip();
+    const folder = zip.folder('factures-' + year);
+
+    // CSV recap header
+    const csvRows = [
+      ['Numero', 'Date', 'Client', 'Propriete', 'Type', 'Total HT', 'TVA', 'Total TTC', 'Statut'].join(';'),
+    ];
+
+    showToast('Generation de ' + invoices.length + ' PDF...');
+    let done = 0;
+    for (const inv of invoices) {
+      try {
+        const doc = await _buildInvoicePDF(inv);
+        const blob = doc.output('blob');
+        const filename = (inv.invoice_number || 'sans-numero-' + inv.id.slice(0, 8)) + '.pdf';
+        folder.file(filename, blob);
+        // CSV line — match the same format as exportComptableCSV
+        csvRows.push([
+          inv.invoice_number || '',
+          (inv.created_at || '').substring(0, 10),
+          (inv.client_name || '').replace(/[;\r\n]/g, ' '),
+          (inv.property_name || '').replace(/[;\r\n]/g, ' '),
+          (inv.type || '').replace(/[;\r\n]/g, ' '),
+          (inv.subtotal_ht || inv.total_ht || 0).toFixed(2),
+          (inv.total_tva || inv.vat_amount || 0).toFixed(2),
+          (inv.total_ttc || 0).toFixed(2),
+          inv.status || '',
+        ].join(';'));
+        done++;
+      } catch (e) {
+        console.warn('PDF generation failed for', inv.invoice_number, e);
+      }
+    }
+
+    // CSV recap (UTF-8 BOM so Excel French opens correctly)
+    folder.file('recapitulatif-' + year + '.csv', '﻿' + csvRows.join('\n'));
+
+    showToast('Compression du ZIP...');
+    const blob = await zip.generateAsync({ type: 'blob', compression: 'DEFLATE', compressionOptions: { level: 6 } });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'factures-' + year + '.zip';
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 100);
+    showToast('Archive ' + year + ' telechargee (' + done + ' factures)');
+  } catch (e) {
+    _invErr('export ZIP ' + year, e);
+  }
+}
+
+// Helper: prompt user to pick a fiscal year, then export
+async function showExportZipFiscalYearModal() {
+  const thisYear = new Date().getFullYear();
+  const lastYear = thisYear - 1;
+  const yearBefore = thisYear - 2;
+
+  let html = '<div style="padding:10px;max-width:380px;">';
+  html += '<div style="font-size:16px;font-weight:700;color:var(--accent);margin-bottom:6px;">&#128190; Export ZIP — Annee fiscale</div>';
+  html += '<div style="font-size:12px;color:var(--text3);margin-bottom:14px;line-height:1.4;">Telecharge un ZIP avec tous les PDFs des factures de l\'annee + un CSV recapitulatif. Ideal pour l\'archivage comptable.</div>';
+  html += '<div style="display:flex;flex-direction:column;gap:8px;">';
+  html += '<button class="btn btnPrimary" style="padding:14px;font-size:13px;font-weight:700;" onclick="closeMsg();exportInvoicesZipFiscalYear(' + lastYear + ')">&#128194; Annee ' + lastYear + ' (annee fiscale ecoulee)</button>';
+  html += '<button class="btn btnOutline" style="padding:12px;font-size:12px;" onclick="closeMsg();exportInvoicesZipFiscalYear(' + thisYear + ')">&#128194; Annee ' + thisYear + ' (en cours)</button>';
+  html += '<button class="btn btnOutline" style="padding:12px;font-size:12px;" onclick="closeMsg();exportInvoicesZipFiscalYear(' + yearBefore + ')">&#128194; Annee ' + yearBefore + '</button>';
+  html += '</div>';
+  html += '<div style="margin-top:10px;text-align:center;"><button class="btn btnSmall btnOutline" style="padding:6px 14px;font-size:11px;" onclick="closeMsg()">Annuler</button></div>';
+  html += '</div>';
+  showMsg(html, true);
 }
 
 // ── Exports ──
@@ -1001,3 +1118,7 @@ window.setInvoiceClientFilter = setInvoiceClientFilter;
 window.setInvoiceSort = setInvoiceSort;
 window.ensureInvoiceNumber = ensureInvoiceNumber;
 window.downloadInvoicePDF = downloadInvoicePDF;
+window._buildInvoicePDF = _buildInvoicePDF;
+window.exportInvoicesZipFiscalYear = exportInvoicesZipFiscalYear;
+window.showExportZipFiscalYearModal = showExportZipFiscalYearModal;
+window.exportComptableCSV = exportComptableCSV;
