@@ -9,12 +9,18 @@ async function showAccountModal() {
   const { data: { user } } = await sb.auth.getUser();
   if (!user) return;
   document.getElementById('accountEmail').textContent = user.email;
-  // Super-admin only (Fabien): show legal settings button
+  // Super-admin only (Fabien): show legal settings button + Sentry dashboard
   const legalBtn = document.getElementById('accLegalBtn');
-  if (legalBtn) {
-    legalBtn.style.display = 'none';
-    try { const sa = await API.isSuperAdmin(); if (sa && legalBtn) legalBtn.style.display = ''; } catch {}
-  }
+  const adminSection = document.getElementById('accountAdminSection');
+  if (legalBtn) legalBtn.style.display = 'none';
+  if (adminSection) adminSection.style.display = 'none';
+  try {
+    const sa = await API.isSuperAdmin();
+    if (sa) {
+      if (legalBtn) legalBtn.style.display = '';
+      if (adminSection) adminSection.style.display = '';
+    }
+  } catch {}
   // Update theme toggle state
   const themeToggle = document.getElementById('themeToggleAccount');
   if (themeToggle) {

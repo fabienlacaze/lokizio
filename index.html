@@ -9,9 +9,9 @@
   window.__isPasswordRecovery = h.indexOf('type=recovery') !== -1;
   window.__recoveryHash = h;
 })();
-window.APP_VERSION = '9.59';
+window.APP_VERSION = '9.60';
 </script>
-<script src="sentry-init.js?v=c697763"></script>
+<script src="sentry-init.min.js?v=b80eaed"></script>
 <script
   src="https://js-de.sentry-cdn.com/31e75ef323023d261664bb70d163fdb1.min.js"
   crossorigin="anonymous"
@@ -71,27 +71,28 @@ window.APP_VERSION = '9.59';
 </script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.101.0/dist/umd/supabase.min.js" integrity="sha384-HS/sUFZexXk91zcjy7zGIBg3tNDxgxF8YbcifixByxxtxQoF2o8GBBT9p6DdGlAR" crossorigin="anonymous"></script>
 <script src="supabase_config.js?v=76fd30b"></script>
-<script src="i18n.js?v=86736d8"></script>
-<script src="ical_parser.js?v=e2bdc4d"></script>
-<script src="helpers.js?v=ae41dca"></script>
-<script src="api_bridge.js?v=8ae7511"></script>
-<script src="vacation.js?v=3aa5cf4"></script>
-<script src="push.js?v=28a3ca5"></script>
-<script src="legal.js?v=bf4906b"></script>
-<script src="quotes.js?v=dc94c04"></script>
-<script src="search.js?v=9c4c5c8"></script>
-<script src="tenant.js?v=2f88fa5"></script>
-<script src="auto-billing.js?v=58151d3"></script>
-<script src="invoices.js?v=2c4fcfb"></script>
-<script src="invoice-create.js?v=75cab4d"></script>
-<script src="auth.js?v=0e681f8"></script>
-<script src="provider.js?v=9fde05c"></script>
-<script src="owner.js?v=de93669"></script>
-<script src="marketplace.js?v=f63d05b"></script>
-<script src="properties.js?v=24f7383"></script>
-<script src="dashboard.js?v=fa05725"></script>
-<script src="admin-prestations.js?v=ed8ddb3"></script>
-<script src="account.js?v=dde9dfc"></script>
+<script src="i18n.min.js?v=744e6cc"></script>
+<script src="ical_parser.min.js?v=5a5a0cc"></script>
+<script src="helpers.min.js?v=d5bc757"></script>
+<script src="api_bridge.min.js?v=05bceb8"></script>
+<script src="vacation.min.js?v=89f6e44"></script>
+<script src="push.min.js?v=38964ab"></script>
+<script src="legal.min.js?v=9f12514"></script>
+<script src="quotes.min.js?v=1dbc197"></script>
+<script src="search.min.js?v=aa036e8"></script>
+<script src="tenant.min.js?v=437170f"></script>
+<script src="auto-billing.min.js?v=d7846d8"></script>
+<script src="invoices.min.js?v=91406fe"></script>
+<script src="invoice-create.min.js?v=251c555"></script>
+<script src="auth.min.js?v=4408b58"></script>
+<script src="provider.min.js?v=c9ac690"></script>
+<script src="owner.min.js?v=7cd624b"></script>
+<script src="marketplace.min.js?v=ebdcd47"></script>
+<script src="properties.min.js?v=ecbc58a"></script>
+<script src="dashboard.min.js?v=8962c60"></script>
+<script src="admin-prestations.min.js?v=127c146"></script>
+<script src="account.min.js?v=7bc5b6b"></script>
+<script src="admin-sentry.min.js?v=5528aaf"></script>
 <!-- Lazy-loaded: Leaflet, Chart.js, jsPDF (loaded on demand to improve startup) -->
 <script>
 function lazyLoad(url, type) {
@@ -149,7 +150,7 @@ async function loadPDF() {
 </script>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v9.59</div>
+<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v9.60</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -159,7 +160,7 @@ async function loadPDF() {
     <!-- Broom that sweeps -->
     <div id="splashBroom" style="position:absolute;top:50%;left:-60px;font-size:48px;transform:translateY(-50%) rotate(-30deg);opacity:0;transition:all 0.8s cubic-bezier(0.25,0.46,0.45,0.94);">✨</div>
   </div>
-  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v9.59</span></div>
+  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v9.60</span></div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie pour locations</div>
   <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou</div>
   <!-- Loading bar -->
@@ -980,6 +981,14 @@ async function loadPDF() {
     <!-- Placeholders kept for legacy references -->
     <span id="profileSection" style="display:none;"></span>
     <span id="billingSection" style="display:none;"></span>
+    <!-- Admin section: only visible to super_admins (revealed by account.js after API.isSuperAdmin()) -->
+    <div id="accountAdminSection" style="display:none;margin-bottom:8px;">
+      <label style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:1px;display:block;margin-top:8px;margin-bottom:4px;">ADMIN</label>
+      <button class="btn btnOutline" style="padding:12px 14px;font-size:13px;text-align:left;display:flex;justify-content:space-between;align-items:center;width:100%;" onclick="closeAccountModal();showSentryDashboard()">
+        <span>&#128270; Sentry — Erreurs prod</span>
+        <span style="color:var(--text3);">&#8250;</span>
+      </button>
+    </div>
     <label style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:1px;display:block;margin-top:8px;margin-bottom:4px;">APP</label>
     <!-- Theme + Language -->
     <div style="padding:14px;background:var(--surface2);border-radius:10px;margin-bottom:8px;">
@@ -1603,6 +1612,10 @@ function getStatusLabel(s) { return (STATUS_CONFIG[s] || {}).label || s || ''; }
 // ── Splash Changelog (update this with each significant version) ──
 // Full versioned changelog — add new entries at TOP
 const VERSION_CHANGELOG = [
+  { v: '9.60', changes: [
+    'Build pipeline esbuild : minification de 23 modules JS (helpers, marketplace, owner, provider, etc). Payload total -23.6% (722 KB -> 552 KB). Source maps pour Sentry. Bundle preserve l\'ordre des scripts (pas de risque sur les globals window). npm run build pour rebuilder.',
+    'Dashboard Sentry integre (admin only) : nouvelle Edge Function sentry-issues qui proxy l\'API Sentry avec auth super_admin (token jamais expose au browser). Bouton "Sentry — Erreurs prod" dans Mon compte (visible uniquement pour Fabien). Liste les 20 dernieres issues + detail (stack trace + breadcrumbs) avec lien direct vers Sentry web.'
+  ] },
   { v: '9.59', changes: [
     'SW activate handler : wipe TOUS les caches (pas seulement les anciens) + postMessage SW_FORCE_RELOAD a tous les clients connectes. Combine avec un listener dans index.html qui auto-reload, ca force les users bloques sur un vieux SW a passer a la nouvelle version sans intervention manuelle.',
     'Fix bug operator: les badges v9.55 hardcodes lignes 152 et 162 etaient restes pendant 3 versions a cause de conflits Edit. Tous les badges affichent maintenant la bonne version.'
