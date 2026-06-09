@@ -23,12 +23,18 @@ Deno.serve(async (req) => {
     const { userId } = await requireAuth(req, SUPABASE_URL, SUPABASE_ANON_KEY);
     const admin = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
 
-    // Verify super_admin
-    const { data: superAdmin } = await admin
+    // Verify super_admin. If the DB lookup errors (connection issue, schema
+    // drift, RLS misconfig), FAIL CLOSED — never let a silent error bypass
+    // the auth check. Cf. audit finding wmlemqp4r.
+    const { data: superAdmin, error: adminErr } = await admin
       .from('super_admins')
       .select('user_id')
       .eq('user_id', userId)
       .maybeSingle();
+    if (adminErr) {
+      console.error('super_admin lookup failed:', adminErr);
+      return Response.json({ error: 'Authorization check failed' }, { status: 500, headers: cors });
+    }
     if (!superAdmin) {
       return Response.json({ error: 'Forbidden: super_admin only' }, { status: 403, headers: cors });
     }

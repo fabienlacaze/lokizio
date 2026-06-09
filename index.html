@@ -9,7 +9,7 @@
   window.__isPasswordRecovery = h.indexOf('type=recovery') !== -1;
   window.__recoveryHash = h;
 })();
-window.APP_VERSION = '9.69';
+window.APP_VERSION = '9.70';
 </script>
 <script src="sentry-init.min.js?v=759d31d"></script>
 <script
@@ -82,18 +82,18 @@ window.APP_VERSION = '9.69';
 <script src="search.min.js?v=a7bd25c"></script>
 <script src="tenant.min.js?v=efbc744"></script>
 <script src="auto-billing.min.js?v=1ad593f"></script>
-<script src="invoices.min.js?v=407da38"></script>
+<script src="invoices.min.js?v=5ca195a"></script>
 <script src="invoice-create.min.js?v=d9a943d"></script>
 <script src="auth.min.js?v=e652953"></script>
 <script src="provider.min.js?v=1884be9"></script>
 <script src="owner.min.js?v=f805e62"></script>
 <script src="marketplace.min.js?v=2dc3107"></script>
 <script src="properties.min.js?v=26d7caf"></script>
-<script src="dashboard.min.js?v=7e3b7e9"></script>
+<script src="dashboard.min.js?v=786f765"></script>
 <script src="admin-prestations.min.js?v=3446dc3"></script>
 <script src="account.min.js?v=4b4a831"></script>
 <script src="admin-sentry.min.js?v=2302bea"></script>
-<script src="stripe-connect-embed.min.js?v=51c24cd"></script>
+<script src="stripe-connect-embed.min.js?v=ab215b2"></script>
 <script src="admin-stripe.min.js?v=de579c5"></script>
 <!-- Lazy-loaded: Leaflet, Chart.js, jsPDF (loaded on demand to improve startup) -->
 <script>
@@ -466,6 +466,9 @@ async function loadPDF() {
   </details>
 
   <!-- Dashboard content rendered by renderDashboardContent() -->
+
+  <!-- Stripe Connect activation banner (rendered by stripe-connect-embed.js if eligible) -->
+  <div id="dashStripeBanner" style="margin-top:12px;"></div>
 
   <div id="dashTodayCleanings" style="margin-top:16px;"></div>
   <div id="dashPendingRequests" style="margin-top:16px;"></div>
@@ -1627,6 +1630,14 @@ function getStatusLabel(s) { return (STATUS_CONFIG[s] || {}).label || s || ''; }
 // ── Splash Changelog (update this with each significant version) ──
 // Full versioned changelog — add new entries at TOP
 const VERSION_CHANGELOG = [
+  { v: '9.70', changes: [
+    'Fix 3 findings serieux issus du workflow d\'adversarial review du sprint Stripe Connect v9.69 (workflow wmlemqp4r).',
+    'Fix CORS cors.ts: retire le hack sk_test_ auto-allow (CORS doit dependre de ENV explicite, pas d\'un prefixe de cle Stripe). Set ENV=dev sur Supabase prod tant qu\'on est en mode test. A retirer quand on passera en live.',
+    'Fix stripe-admin-stats: ajout error handling sur le check super_admin (sinon une erreur DB silencieuse bypasse l\'authorization).',
+    'Fix stripe-connect-embed.js: fetchClientSecret appelle maintenant stripe-connect-link pour refresh le client_secret apres expiration de 5 min. Avant, le formulaire devenait silencieusement mort apres 5 min.',
+    'Trigger #4 - CTA contextuel: si l\'utilisateur clique "Activer paiement en ligne" sur une facture mais n\'a pas encore de Stripe Connect, modale qui propose d\'activer Stripe en 2 min (au lieu d\'afficher une erreur). Apres onboarding, re-lance automatiquement l\'activation paiement.',
+    'Trigger #3 - Banniere dashboard: pour provider/concierge/owner qui ont au moins 1 facture envoyee mais pas de Stripe Connect actif. Discrete, dismissable, persistee dans localStorage.'
+  ] },
   { v: '9.69', changes: [
     'Stripe Connect — sprint complet Phases 2.5 / 3 / 4 / 5 / 6 (mode test).',
     'Phase 2.5: Badge KYC dans Mon profil personnel — affiche dynamiquement le statut (active / verification en cours / a terminer) + bouton "Mon tableau de bord paiements" si compte actif.',

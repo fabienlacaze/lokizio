@@ -787,10 +787,53 @@ function _buildInvoiceEmailHtml(inv, customMessage) {
 
 // ── Stripe Connect invoice payment ──
 //
+// Pre-flight check: does the caller have a working Stripe Connect account?
+// If not, we intercept and propose the embedded onboarding flow before trying
+// the payment-create EF (which would fail with a generic "Beneficiary has not
+// enabled Stripe Connect" error). Trigger #4 from the activation strategy.
+async function _userHasActiveStripeConnect() {
+  try {
+    const { data: { user } } = await sb.auth.getUser();
+    if (!user) return false;
+    const { data: m } = await sb.from('members')
+      .select('stripe_charges_enabled')
+      .eq('user_id', user.id)
+      .eq('accepted', true)
+      .not('stripe_account_id', 'is', null)
+      .limit(1)
+      .maybeSingle();
+    return !!(m && m.stripe_charges_enabled);
+  } catch (_) { return false; }
+}
+
 // enableStripePayment(invoiceId) : calls stripe-invoice-payment-create Edge Function
 // to generate a Checkout Session, stores payment_link on the invoice, refreshes UI.
 async function enableStripePayment(invoiceId) {
   try {
+    // Pre-flight: if no Stripe Connect, redirect to onboarding instead of failing.
+    const hasConnect = await _userHasActiveStripeConnect();
+    if (!hasConnect) {
+      const goOnboard = await customConfirm(
+        'Pour activer le paiement en ligne, tu dois d\'abord activer ton compte de paiement Stripe (gratuit, 2 minutes).\n\n' +
+        'Lokizio gere tout pour toi : identite, RIB, securite. Tu n\'as qu\'a remplir le formulaire.\n\n' +
+        'Tu veux le faire maintenant ?',
+        'Activer mon compte'
+      );
+      if (!goOnboard) return;
+      // After onboarding completion, the user will need to re-trigger
+      // enableStripePayment manually — register a one-shot callback.
+      window._stripeOnboardingDone = function() {
+        window._stripeOnboardingDone = null;
+        // Re-render the profile badge AND re-attempt the payment activation
+        if (typeof renderStripeConnectProfile === 'function') renderStripeConnectProfile();
+        setTimeout(() => enableStripePayment(invoiceId), 800);
+      };
+      if (typeof showStripeConnectOnboarding === 'function') {
+        showStripeConnectOnboarding();
+      }
+      return;
+    }
+
     const ok = await customConfirm(
       'Activer le paiement en ligne pour cette facture ?\n\n' +
       'Le client recevra un bouton "Payer en ligne" dans son email.\n' +

@@ -11,15 +11,12 @@ const DEV_ORIGINS = [
 ];
 
 function getAllowedOrigins(): string[] {
+  // localhost is only allowed when ENV=dev is EXPLICITLY set on the Supabase
+  // project. Never auto-derive from secrets (e.g. STRIPE_SECRET_KEY prefix):
+  // CORS is a defense boundary and must be configured at the env layer, not
+  // inferred from app secrets. Cf. audit finding wmlemqp4r.
   const env = (Deno.env.get('ENV') || '').toLowerCase();
   if (env === 'dev' || env === 'development' || env === 'test') {
-    return [...PROD_ORIGINS, ...DEV_ORIGINS];
-  }
-  // Auto-detect Stripe test mode: if STRIPE_SECRET_KEY starts with sk_test_,
-  // localhost is fine — we're not handling real money. requireAuth still gates
-  // every call by JWT, so this isn't an open door.
-  const stripeKey = Deno.env.get('STRIPE_SECRET_KEY') || '';
-  if (stripeKey.startsWith('sk_test_')) {
     return [...PROD_ORIGINS, ...DEV_ORIGINS];
   }
   return PROD_ORIGINS;

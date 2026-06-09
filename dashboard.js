@@ -6,6 +6,11 @@ function renderDashboardContent() {
   const today = new Date();
   const todayStr = today.toISOString().split('T')[0];
 
+  // Render the Stripe Connect activation banner (no-op if user not eligible).
+  if (typeof renderStripeConnectDashboardBanner === 'function') {
+    renderStripeConnectDashboardBanner();
+  }
+
   // Use unified data from admin prestations cache (same source as Liste tab)
   const allUpcoming = [];
   if (_adminPrestCache && _adminPrestCache.svcRequests) {

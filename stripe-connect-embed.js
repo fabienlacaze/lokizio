@@ -46,17 +46,40 @@
     return r.json();
   }
 
-  // Get or create a StripeConnect instance bound to a fresh client_secret.
-  // Returns null if anything fails (toast displayed).
+  // Get or create a StripeConnect instance.
+  //
+  // IMPORTANT: fetchClientSecret() is invoked by the Stripe SDK to refresh the
+  // session token (default lifetime 5 min). It MUST return a freshly minted
+  // client_secret each time — otherwise the embedded form silently breaks
+  // after 5 min (audit finding wmlemqp4r serious #3).
+  //
+  // Strategy: on first call we use the secret from the onboard EF; subsequent
+  // calls (refresh) hit stripe-connect-link which generates a new account_session
+  // for the existing account.
   async function _ensureConnectInstance(body) {
     try {
       await loadStripeConnectJs();
-      const { client_secret, account_id, charges_enabled, details_submitted } =
-        await callEdgeFunction('stripe-connect-onboard', body || {});
+      const initial = await callEdgeFunction('stripe-connect-onboard', body || {});
       if (!window.StripeConnect) throw new Error('StripeConnect SDK manquant');
+      let secret = initial.client_secret;
       _stripeConnectInstance = window.StripeConnect.init({
         publishableKey: STRIPE_PK,
-        fetchClientSecret: () => Promise.resolve(client_secret),
+        fetchClientSecret: async () => {
+          // First call: return the secret we just minted.
+          if (secret) {
+            const s = secret;
+            secret = null; // single-use; next call will hit stripe-connect-link
+            return s;
+          }
+          // Subsequent calls (refresh after 5 min): mint a new one.
+          try {
+            const refreshed = await callEdgeFunction('stripe-connect-link', {});
+            return refreshed.client_secret;
+          } catch (e) {
+            console.error('stripe-connect-link refresh failed:', e);
+            throw e;
+          }
+        },
         appearance: {
           overlays: 'dialog',
           variables: {
@@ -71,9 +94,9 @@
       });
       return {
         instance: _stripeConnectInstance,
-        accountId: account_id,
-        chargesEnabled: charges_enabled,
-        detailsSubmitted: details_submitted,
+        accountId: initial.account_id,
+        chargesEnabled: initial.charges_enabled,
+        detailsSubmitted: initial.details_submitted,
       };
     } catch (e) {
       showToast('Erreur Stripe Connect: ' + (e.message || e));
@@ -208,11 +231,86 @@
     }
   }
 
+  // Dashboard banner: discreet CTA for provider/concierge who haven't activated
+  // Stripe Connect yet, ONLY IF they have at least one sent invoice (= signal
+  // of a real client) AND they're a role that benefits (provider/concierge/owner).
+  // Banner can be dismissed; dismissal is stored in localStorage.
+  async function renderStripeConnectDashboardBanner() {
+    const container = document.getElementById('dashStripeBanner');
+    if (!container) return;
+    // Skip if dismissed
+    if (localStorage.getItem('mm_stripe_banner_dismissed') === '1') {
+      container.innerHTML = '';
+      return;
+    }
+    try {
+      const role = (typeof API !== 'undefined' && API.getRole) ? API.getRole() : '';
+      if (!['provider', 'concierge', 'owner'].includes(role)) {
+        container.innerHTML = '';
+        return;
+      }
+      const { data: { user } } = await sb.auth.getUser();
+      if (!user) { container.innerHTML = ''; return; }
+      // Check if user already has an active Stripe Connect account
+      const { data: m } = await sb.from('members')
+        .select('stripe_account_id, stripe_charges_enabled')
+        .eq('user_id', user.id)
+        .eq('accepted', true)
+        .limit(1)
+        .maybeSingle();
+      if (m && m.stripe_charges_enabled) {
+        container.innerHTML = ''; // already active, nothing to do
+        return;
+      }
+      // Check if user has at least one sent invoice (signals a real use case)
+      const org = (typeof API !== 'undefined' && API.getOrg) ? API.getOrg() : null;
+      if (!org) { container.innerHTML = ''; return; }
+      const { count: invoiceCount } = await sb.from('invoices')
+        .select('id', { count: 'exact', head: true })
+        .eq('org_id', org.id)
+        .eq('created_by', user.id)
+        .eq('is_quote', false)
+        .in('status', ['sent', 'paid']);
+      if (!invoiceCount || invoiceCount === 0) {
+        container.innerHTML = ''; // not enough engagement yet
+        return;
+      }
+      // Render the banner
+      const startedMsg = m && m.stripe_account_id
+        ? 'Termine la configuration de tes paiements en ligne'
+        : 'Active les paiements en ligne pour facturer plus vite';
+      const ctaLabel = m && m.stripe_account_id ? 'Terminer' : 'Activer';
+      let html = '<div style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:linear-gradient(135deg,rgba(99,91,255,0.10),rgba(108,99,255,0.05));border:1px solid rgba(108,99,255,0.30);border-radius:10px;">';
+      html += '<span style="font-size:20px;">&#128179;</span>';
+      html += '<div style="flex:1;">';
+      html += '<div style="font-size:13px;font-weight:700;color:var(--accent2);">' + startedMsg + '</div>';
+      html += '<div style="font-size:10px;color:var(--text3);margin-top:2px;">Tes clients pourront payer par carte en 1 clic depuis leur email. 3% de commission Lokizio.</div>';
+      html += '</div>';
+      html += '<button class="btn btnSmall btnPrimary" style="padding:8px 14px;font-size:11px;font-weight:700;" onclick="showStripeConnectOnboarding()">' + ctaLabel + '</button>';
+      html += '<button title="Masquer cette suggestion" style="background:transparent;border:none;color:var(--text3);font-size:18px;cursor:pointer;padding:0 4px;" onclick="dismissStripeConnectBanner()">&times;</button>';
+      html += '</div>';
+      container.innerHTML = html;
+    } catch (e) {
+      console.error('renderStripeConnectDashboardBanner:', e);
+      container.innerHTML = '';
+    }
+  }
+
+  function dismissStripeConnectBanner() {
+    localStorage.setItem('mm_stripe_banner_dismissed', '1');
+    const el = document.getElementById('dashStripeBanner');
+    if (el) el.innerHTML = '';
+  }
+
   window.showStripeConnectOnboarding = showStripeConnectOnboarding;
   window.showStripeConnectDashboard = showStripeConnectDashboard;
   window.renderStripeConnectProfile = renderStripeConnectProfile;
+  window.renderStripeConnectDashboardBanner = renderStripeConnectDashboardBanner;
+  window.dismissStripeConnectBanner = dismissStripeConnectBanner;
   // Expose a hook so the onboarding completion auto-refreshes the profile badge
+  // AND the dashboard banner.
   window._stripeOnboardingDone = function() {
     if (document.getElementById('stripeConnectProfileSection')) renderStripeConnectProfile();
+    if (document.getElementById('dashStripeBanner')) renderStripeConnectDashboardBanner();
   };
 })();
