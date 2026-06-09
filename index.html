@@ -1613,6 +1613,13 @@ function getStatusLabel(s) { return (STATUS_CONFIG[s] || {}).label || s || ''; }
 // ── Splash Changelog (update this with each significant version) ──
 // Full versioned changelog — add new entries at TOP
 const VERSION_CHANGELOG = [
+  { v: '9.65', changes: [
+    'Nouveau bouton Export ZIP dans Finances : telecharge un ZIP avec tous les PDFs des factures de l\'annee fiscale (par defaut N-1) + un recapitulatif CSV. Modal de selection de l\'annee. Pratique pour l\'archivage comptable / declaration impots. JSZip lazy-loaded.',
+    'Refactor: extraction _buildInvoicePDF() depuis downloadInvoicePDF() pour pouvoir reutiliser la generation PDF dans le ZIP.'
+  ] },
+  { v: '9.64', changes: [
+    'Fix annuaire doublons : 3 SELECT members ne filtraient pas accepted=true. Quand un user s\'invite lui-meme sous un autre role (ex concierge invite a devenir provider), l\'invitation pending apparaissait comme un 2eme membre. Fix .eq(accepted,true) + skip user_id NULL (contacts manuels). Cleanup DB d\'1 ligne legacy.'
+  ] },
   { v: '9.63', changes: [
     'Fix ReferenceError statusColors not defined dans showInvoiceDetail (invoices.js:484). Cause: statusColors etait const locale dans _renderInvoiceCard et showInvoiceFullView, mais oubliee dans showInvoiceDetail. Le bug etait masque par le bare toast "Erreur" avant v9.61. Fix: extraction STATUS_COLORS + STATUS_LABELS au niveau module, suppression des 3 redeclarations locales.'
   ] },
