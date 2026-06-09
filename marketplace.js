@@ -7,6 +7,9 @@
 
 // ═══ MARKETPLACE / ANNUAIRE ═══
 let _mkAllProfiles = [];
+// Hoisted to avoid TDZ-after-minify (LOKIZIO-5 class of bug). Used at L370+
+// inside renderAnnuaireTab while original declaration was at L919.
+let _mkMyUserId = null;
 
 let _mkRefreshInterval = null;
 async function showMarketplace(prefillAddress) {
@@ -916,7 +919,8 @@ function _mkIsNew(createdAt) {
   return diff < 7 * 24 * 60 * 60 * 1000;
 }
 
-let _mkMyUserId = null;
+// _mkMyUserId declaration moved to top of file (see _mkMyUserId at top) to
+// avoid TDZ-after-minify (LOKIZIO-5 class of bug).
 async function _ensureMkUserId() {
   if (!_mkMyUserId) { const { data: { user } } = await sb.auth.getUser(); _mkMyUserId = user?.id; }
 }
