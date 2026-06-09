@@ -9,7 +9,7 @@
   window.__isPasswordRecovery = h.indexOf('type=recovery') !== -1;
   window.__recoveryHash = h;
 })();
-window.APP_VERSION = '9.77';
+window.APP_VERSION = '9.78';
 </script>
 <script src="sentry-init.min.js?v=759d31d"></script>
 <script
@@ -157,7 +157,7 @@ async function loadPDF() {
 </script>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v9.77</div>
+<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v9.78</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -167,7 +167,7 @@ async function loadPDF() {
     <!-- Broom that sweeps -->
     <div id="splashBroom" style="position:absolute;top:50%;left:-60px;font-size:48px;transform:translateY(-50%) rotate(-30deg);opacity:0;transition:all 0.8s cubic-bezier(0.25,0.46,0.45,0.94);">✨</div>
   </div>
-  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v9.77</span></div>
+  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v9.78</span></div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie pour locations</div>
   <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou</div>
   <!-- Loading bar -->
@@ -1655,6 +1655,14 @@ function getStatusLabel(s) { return (STATUS_CONFIG[s] || {}).label || s || ''; }
 // ── Splash Changelog (update this with each significant version) ──
 // Full versioned changelog — add new entries at TOP
 const VERSION_CHANGELOG = [
+  { v: '9.78', changes: [
+    'Fix latence ~1s sur le changement de prix dans la modale Tarifs.',
+    'Cause: updatePricing schedulait un setTimeout 800ms + save serveur + renderPricingTable() complet. La nouvelle marge n\'apparaissait qu\'apres tout ca, et le re-render faisait perdre le focus de l\'input.',
+    'Fix 1: nouvelle fonction _recomputePricingMargins(input) qui recalcule INSTANTANEMENT la marge de la ligne + le total general en haut du DOM (sans aller au serveur). Appelee a chaque oninput.',
+    'Fix 2: inputs passent de onchange (fire au blur) a oninput (fire a chaque touche). Le debounce 800ms reste pour proteger le serveur, mais l\'UI est mise a jour des qu\'on tape.',
+    'Fix 3: suppression du renderPricingTable() du callback debounce — l\'UI est deja en sync, plus de flicker du focus.',
+    'data-margin-cell sur chaque cellule MARGE + data-margin-total sur le total pour cibler le DOM sans re-render.'
+  ] },
   { v: '9.77', changes: [
     'Sprint 3A: Escrow review window 7 jours — reduit massivement le risque de dispute Stripe.',
     'Flow: payment_intent.succeeded ne marque plus la facture comme "paid" direct. A la place: status="paid_pending_review" + review_window_until = NOW + 7j + client_dispute_token (32 hex). Le client recoit un email avec un bouton "Contester" qui pointe vers /dispute.html?t=TOKEN.',
@@ -1717,7 +1725,7 @@ const VERSION_CHANGELOG = [
     'Ready pour test utilisateur end-to-end Stripe Connect Embedded.'
   ] },
   { v: '9.70', changes: [
-    'Fix 3 findings serieux issus du workflow d\'adversarial review du sprint Stripe Connect v9.77 (workflow wmlemqp4r).',
+    'Fix 3 findings serieux issus du workflow d\'adversarial review du sprint Stripe Connect v9.78 (workflow wmlemqp4r).',
     'Fix CORS cors.ts: retire le hack sk_test_ auto-allow (CORS doit dependre de ENV explicite, pas d\'un prefixe de cle Stripe). Set ENV=dev sur Supabase prod tant qu\'on est en mode test. A retirer quand on passera en live.',
     'Fix stripe-admin-stats: ajout error handling sur le check super_admin (sinon une erreur DB silencieuse bypasse l\'authorization).',
     'Fix stripe-connect-embed.js: fetchClientSecret appelle maintenant stripe-connect-link pour refresh le client_secret apres expiration de 5 min. Avant, le formulaire devenait silencieusement mort apres 5 min.',
@@ -4919,9 +4927,9 @@ function renderPricingTable() {
       html += '<tr style="border-bottom:1px solid var(--border);">';
       html += '<td style="padding:6px;">' + s.icon + ' ' + s.label + '</td>';
       const defStyle = isDefault ? 'color:var(--text3);font-style:italic;' : 'color:var(--text);';
-      html += '<td style="text-align:center;padding:6px 2px;"><input type="number" value="' + costPresta + '" min="0" step="1" placeholder="' + getDefaultPrice(s.id, 'cost_provider') + '" data-svc="' + s.id + '" data-field="cost_provider" data-prop="' + (_pricingPropertyId || '') + '" onchange="updatePricing(this)" style="width:60px;padding:3px 4px;background:var(--surface2);' + defStyle + 'border:1px solid var(--border2);border-radius:5px;font-size:11px;text-align:center;">€</td>';
-      html += '<td style="text-align:center;padding:6px 2px;"><input type="number" value="' + priceOwner + '" min="0" step="1" placeholder="' + getDefaultPrice(s.id, 'price_owner') + '" data-svc="' + s.id + '" data-field="price_owner" data-prop="' + (_pricingPropertyId || '') + '" onchange="updatePricing(this)" style="width:60px;padding:3px 4px;background:var(--surface2);' + defStyle + 'border:1px solid var(--border2);border-radius:5px;font-size:11px;text-align:center;">€</td>';
-      html += '<td style="text-align:center;padding:6px;font-weight:700;font-size:11px;color:' + (margin > 0 ? '#34d399' : margin < 0 ? '#ef4444' : 'var(--text3)') + ';">' + (margin > 0 ? '+' : '') + margin + '€</td>';
+      html += '<td style="text-align:center;padding:6px 2px;"><input type="number" value="' + costPresta + '" min="0" step="1" placeholder="' + getDefaultPrice(s.id, 'cost_provider') + '" data-svc="' + s.id + '" data-field="cost_provider" data-prop="' + (_pricingPropertyId || '') + '" oninput="updatePricing(this)" style="width:60px;padding:3px 4px;background:var(--surface2);' + defStyle + 'border:1px solid var(--border2);border-radius:5px;font-size:11px;text-align:center;">€</td>';
+      html += '<td style="text-align:center;padding:6px 2px;"><input type="number" value="' + priceOwner + '" min="0" step="1" placeholder="' + getDefaultPrice(s.id, 'price_owner') + '" data-svc="' + s.id + '" data-field="price_owner" data-prop="' + (_pricingPropertyId || '') + '" oninput="updatePricing(this)" style="width:60px;padding:3px 4px;background:var(--surface2);' + defStyle + 'border:1px solid var(--border2);border-radius:5px;font-size:11px;text-align:center;">€</td>';
+      html += '<td data-margin-cell style="text-align:center;padding:6px;font-weight:700;font-size:11px;color:' + (margin > 0 ? '#34d399' : margin < 0 ? '#ef4444' : 'var(--text3)') + ';">' + (margin > 0 ? '+' : '') + margin + '€</td>';
       if (activeProp) {
         html += '<td style="text-align:center;padding:6px;">';
         if (suggested > 0 && costPresta === 0 && priceOwner === 0) {
@@ -4943,7 +4951,7 @@ function renderPricingTable() {
     if (serviceCount > 0) {
       sumDiv.innerHTML = '<div style="display:flex;justify-content:space-between;padding:10px 14px;background:' + (totalMargin >= 0 ? 'rgba(52,211,153,0.1)' : 'rgba(239,68,68,0.1)') + ';border-radius:8px;font-size:12px;">'
         + '<span style="color:var(--text2);">Marge totale (' + serviceCount + ' services)</span>'
-        + '<span style="font-weight:700;color:' + (totalMargin >= 0 ? '#34d399' : '#ef4444') + ';">' + (totalMargin >= 0 ? '+' : '') + totalMargin + '€</span></div>';
+        + '<span data-margin-total style="font-weight:700;color:' + (totalMargin >= 0 ? '#34d399' : '#ef4444') + ';">' + (totalMargin >= 0 ? '+' : '') + totalMargin + '€</span></div>';
     } else {
       sumDiv.innerHTML = '';
     }
@@ -4967,14 +4975,58 @@ function applySuggestedPrice(svcId, suggested) {
 }
 
 let _pricingSaveTimer = null;
+// Instant-feedback margin update: recomputes the row margin + the total
+// from the DOM (without waiting for the debounced server save or a full
+// re-render). Called by updatePricing on every input/change event.
+function _recomputePricingMargins(input) {
+  // Update the margin cell of this row
+  const tr = input.closest('tr');
+  if (tr) {
+    const inputs = tr.querySelectorAll('input[data-field]');
+    let costP = 0, priceO = 0;
+    inputs.forEach(i => {
+      const v = parseFloat(i.value) || parseFloat(i.placeholder) || 0;
+      if (i.dataset.field === 'cost_provider') costP = v;
+      if (i.dataset.field === 'price_owner') priceO = v;
+    });
+    const m = priceO - costP;
+    const cell = tr.querySelector('[data-margin-cell]');
+    if (cell) {
+      cell.textContent = (m > 0 ? '+' : '') + m + '€';
+      cell.style.color = m > 0 ? '#34d399' : m < 0 ? '#ef4444' : 'var(--text3)';
+    }
+  }
+  // Recompute total margin from all row inputs (matches the source-of-truth logic)
+  let total = 0, count = 0;
+  document.querySelectorAll('tr').forEach(row => {
+    const inputs = row.querySelectorAll('input[data-field]');
+    if (inputs.length !== 2) return;
+    let c = 0, p = 0;
+    inputs.forEach(i => {
+      const v = parseFloat(i.value) || parseFloat(i.placeholder) || 0;
+      if (i.dataset.field === 'cost_provider') c = v;
+      if (i.dataset.field === 'price_owner') p = v;
+    });
+    if (c > 0 || p > 0) { total += (p - c); count++; }
+  });
+  const totalEl = document.querySelector('[data-margin-total]');
+  if (totalEl) {
+    totalEl.textContent = (total >= 0 ? '+' : '') + total + '€';
+    totalEl.style.color = total >= 0 ? '#34d399' : '#ef4444';
+  }
+}
+
 async function updatePricing(input) {
   const svc = input.dataset.svc;
   const field = input.dataset.field;
   const propId = input.dataset.prop;
   const value = parseFloat(input.value) || 0;
 
+  // INSTANT UI update — no wait for the server.
+  _recomputePricingMargins(input);
+
   if (propId) {
-    // Save to property-specific pricing
+    // Save to property-specific pricing (debounced)
     const prop = (fullConfig && fullConfig.properties || []).find(p => p.id === propId);
     if (prop) {
       if (!prop.pricing) prop.pricing = {};
@@ -4984,11 +5036,12 @@ async function updatePricing(input) {
       _pricingSaveTimer = setTimeout(async () => {
         await API.save_config(fullConfig);
         showToast('Tarifs sauvegardes pour ' + esc(prop.name));
-        renderPricingTable();
+        // NO re-render: UI is already in sync. Re-rendering would flicker the
+        // user's input focus.
       }, 800);
     }
   } else {
-    // Save to global org pricing
+    // Save to global org pricing (debounced)
     const org = API.getOrg();
     if (!org) return;
     const pricing = org.pricing || {};
@@ -4999,7 +5052,7 @@ async function updatePricing(input) {
     _pricingSaveTimer = setTimeout(async () => {
       await sb.from('organizations').update({ pricing }).eq('id', org.id);
       showToast('Tarifs globaux sauvegardes');
-      renderPricingTable();
+      // NO re-render
     }, 800);
   }
 }
