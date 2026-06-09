@@ -16,10 +16,16 @@ async function showAccountModal() {
   if (adminSection) adminSection.style.display = 'none';
   try {
     const sa = await API.isSuperAdmin();
-    if (sa) {
+    // "Hide admin UI" toggle: lets the super_admin test as a normal user
+    // without losing super_admin powers (just hides the ADMIN section).
+    const hideAdmin = (typeof localStorage !== 'undefined' && localStorage.getItem('lokizio_hide_admin') === '1');
+    if (sa && !hideAdmin) {
       if (legalBtn) legalBtn.style.display = '';
       if (adminSection) adminSection.style.display = '';
     }
+    // Sync the toggle state
+    const toggle = document.getElementById('hideAdminToggle');
+    if (toggle && sa) toggle.checked = hideAdmin;
   } catch {}
   // Update theme toggle state
   const themeToggle = document.getElementById('themeToggleAccount');
@@ -817,6 +823,23 @@ function showDeleteAnimation() {
 
 // Exports
 window.showAccountModal = showAccountModal;
+
+// Toggle to hide the ADMIN section temporarily (for super_admins who want to
+// test the UX as a normal user). Persisted via localStorage.
+window._toggleHideAdmin = function (checked) {
+  try {
+    if (checked) {
+      localStorage.setItem('lokizio_hide_admin', '1');
+    } else {
+      localStorage.removeItem('lokizio_hide_admin');
+    }
+    const adminSection = document.getElementById('accountAdminSection');
+    if (adminSection) adminSection.style.display = checked ? 'none' : '';
+    if (typeof showToast === 'function') {
+      showToast(checked ? 'ADMIN masquee. Rappel: localStorage.removeItem("lokizio_hide_admin") pour revenir.' : 'ADMIN reaffichee');
+    }
+  } catch (e) { console.warn('toggle hide admin:', e); }
+};
 window.closeAccountModal = closeAccountModal;
 window.closeProfileModal = closeProfileModal;
 window.showProfileModal = showProfileModal;
