@@ -207,19 +207,27 @@ Deno.serve(async (req: Request) => {
         // window expires (cron job), status flips to 'paid' definitively.
         const REVIEW_WINDOW_DAYS = 7;
         const reviewUntil = new Date(Date.now() + REVIEW_WINDOW_DAYS * 86400 * 1000).toISOString();
-        // Generate a one-time dispute token for the client (no auth required).
-        // 32 random hex chars = 128 bits of entropy.
-        const buf = new Uint8Array(16);
-        crypto.getRandomValues(buf);
-        const disputeToken = Array.from(buf).map(b => b.toString(16).padStart(2, '0')).join('');
+        // Generate one-time tokens for the client (no auth required).
+        // 32 random hex chars each = 128 bits of entropy.
+        const mkToken = () => {
+          const b = new Uint8Array(16);
+          crypto.getRandomValues(b);
+          return Array.from(b).map(x => x.toString(16).padStart(2, '0')).join('');
+        };
+        const disputeToken = mkToken();           // expires at review_window_until (7j)
+        const reviewToken = mkToken();             // expires at review_token_expires_at (90j)
+        const REVIEW_TOKEN_DAYS = 90;
+        const reviewTokenExpires = new Date(Date.now() + REVIEW_TOKEN_DAYS * 86400 * 1000).toISOString();
         await supabaseRequest(`invoices?id=eq.${invoiceId}`, "PATCH", {
           stripe_payment_status: "succeeded",
           stripe_paid_at: new Date().toISOString(),
           status: "paid_pending_review",
           review_window_until: reviewUntil,
           client_dispute_token: disputeToken,
+          client_review_token: reviewToken,
+          review_token_expires_at: reviewTokenExpires,
         });
-        console.log(`payment_intent.succeeded: invoice ${invoiceId} -> paid_pending_review until ${reviewUntil}`);
+        console.log(`payment_intent.succeeded: invoice ${invoiceId} -> paid_pending_review until ${reviewUntil} (review until ${reviewTokenExpires})`);
         return new Response(JSON.stringify({ received: true }), { headers: { "Content-Type": "application/json" } });
       }
     }

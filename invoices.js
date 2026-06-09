@@ -801,6 +801,15 @@ function _buildInvoiceEmailHtml(inv, customMessage) {
       h += '<a href="' + esc(disputeUrl) + '" style="display:inline-block;padding:8px 14px;background:#dc2626;color:#fff;text-decoration:none;border-radius:6px;font-size:11px;font-weight:700;">Contester ce paiement</a>';
       h += '</div>';
     }
+    // Sprint 3B: review link (90 days after paid)
+    if (inv.client_review_token) {
+      const reviewUrl = 'https://fabienlacaze.github.io/lokizio/review.html?t=' + esc(inv.client_review_token);
+      h += '<div style="margin-top:14px;padding:14px;background:#f5f3ff;border:1px solid #c4b5fd;border-radius:8px;text-align:center;">';
+      h += '<div style="font-size:13px;font-weight:700;color:#5b21b6;margin-bottom:6px;">&#11088; Comment evalueriez-vous cette prestation ?</div>';
+      h += '<div style="font-size:11px;color:#6d28d9;margin-bottom:10px;">Ton avis aide les futurs clients a faire confiance au prestataire.</div>';
+      h += '<a href="' + esc(reviewUrl) + '" style="display:inline-block;padding:10px 22px;background:#6c63ff;color:#fff;text-decoration:none;border-radius:8px;font-size:12px;font-weight:700;">Noter le prestataire</a>';
+      h += '</div>';
+    }
   }
   h += '<div style="margin-top:24px;padding-top:12px;border-top:1px solid #eee;font-size:11px;color:#888;text-align:center;">Envoye via Lokizio</div>';
   h += '</div>';

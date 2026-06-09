@@ -279,8 +279,114 @@
     }
   };
 
+  // ═══════════════════════════════════════════════════════════════
+  // 5. Reviews moderation (Sprint 3B)
+  // ═══════════════════════════════════════════════════════════════
+  async function showReviewsModeration() {
+    try {
+      const { data: rows, error } = await sb.from('reviews')
+        .select('id, invoice_id, org_id, provider_user_id, client_email, rating, comment, posted_at, status, moderation_note')
+        .order('posted_at', { ascending: false }).limit(80);
+      if (error) throw error;
+      let html = '<div style="padding:6px;max-width:680px;width:90vw;max-height:84vh;overflow:auto;">';
+      html += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">';
+      html += '<div style="font-size:16px;font-weight:700;color:var(--accent);">&#11088; Moderation des avis</div>';
+      html += '<button class="btn btnSmall btnOutline" style="padding:6px 12px;font-size:11px;" onclick="closeMsg()">Fermer</button>';
+      html += '</div>';
+      if (!rows || !rows.length) {
+        html += '<div style="text-align:center;padding:30px;color:var(--text3);">Aucun avis pour le moment.</div>';
+      } else {
+        rows.forEach(r => {
+          const stars = '⭐'.repeat(r.rating) + '☆'.repeat(5 - r.rating);
+          const sCol = r.status === 'published' ? '#34d399' : (r.status === 'hidden' ? '#6c63ff' : '#ef4444');
+          html += '<div style="padding:10px 12px;margin-bottom:8px;background:var(--surface2);border-left:3px solid ' + sCol + ';border-radius:6px;">';
+          html += '<div style="display:flex;align-items:center;gap:8px;font-size:12px;">';
+          html += '<span style="color:#fbbf24;font-size:13px;">' + stars + '</span>';
+          html += '<span style="font-size:9px;padding:2px 7px;border-radius:10px;background:' + sCol + ';color:#fff;text-transform:uppercase;">' + r.status + '</span>';
+          html += '<span style="margin-left:auto;font-size:10px;color:var(--text3);">' + new Date(r.posted_at).toLocaleString('fr-FR') + '</span>';
+          html += '</div>';
+          if (r.client_email) html += '<div style="font-size:10px;color:var(--text3);margin-top:4px;">De: ' + esc(r.client_email) + '</div>';
+          if (r.comment) html += '<div style="font-size:12px;color:var(--text2);margin-top:6px;line-height:1.4;padding:8px;background:var(--surface);border-radius:4px;">' + esc(r.comment) + '</div>';
+          if (r.status === 'published') {
+            html += '<div style="display:flex;gap:6px;margin-top:8px;">';
+            html += '<button class="btn btnSmall btnOutline" style="padding:5px 10px;font-size:10px;" onclick="window._modReview(\'' + r.id + '\',\'hidden\')">Masquer</button>';
+            html += '<button class="btn btnSmall" style="padding:5px 10px;font-size:10px;background:#ef4444;color:#fff;border:none;" onclick="window._modReview(\'' + r.id + '\',\'flagged\')">Signaler</button>';
+            html += '</div>';
+          } else if (r.status === 'hidden' || r.status === 'flagged') {
+            html += '<div style="margin-top:8px;"><button class="btn btnSmall btnSuccess" style="padding:5px 10px;font-size:10px;" onclick="window._modReview(\'' + r.id + '\',\'published\')">&#10003; Republier</button></div>';
+          }
+          html += '</div>';
+        });
+      }
+      html += '</div>';
+      showMsg(html, true);
+    } catch (e) { showToast('Erreur: ' + (e.message || e)); }
+  }
+
+  window._modReview = async function (id, newStatus) {
+    try {
+      const { error } = await sb.from('reviews').update({ status: newStatus }).eq('id', id);
+      if (error) throw error;
+      showToast('Avis: ' + newStatus);
+      setTimeout(showReviewsModeration, 400);
+    } catch (e) { showToast('Erreur: ' + (e.message || e)); }
+  };
+
+  // ═══════════════════════════════════════════════════════════════
+  // 6. Mes avis recus (for any user — provider sees own reviews)
+  // ═══════════════════════════════════════════════════════════════
+  async function showMyReviewsReceived() {
+    try {
+      const { data: { user } } = await sb.auth.getUser();
+      if (!user) { showToast('Non connecte'); return; }
+      const { data: rows, error } = await sb.from('reviews')
+        .select('id, rating, comment, posted_at, status, client_email')
+        .eq('provider_user_id', user.id)
+        .order('posted_at', { ascending: false });
+      if (error) throw error;
+      const { data: stats } = await sb.from('provider_review_stats').select('*').eq('provider_user_id', user.id).maybeSingle();
+      let html = '<div style="padding:6px;max-width:560px;width:90vw;max-height:84vh;overflow:auto;">';
+      html += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">';
+      html += '<div style="font-size:16px;font-weight:700;color:var(--accent);">&#11088; Mes avis recus</div>';
+      html += '<button class="btn btnSmall btnOutline" style="padding:6px 12px;font-size:11px;" onclick="closeMsg()">Fermer</button>';
+      html += '</div>';
+      // Summary
+      if (stats && stats.review_count > 0) {
+        const avg = parseFloat(stats.avg_rating).toFixed(1);
+        const stars = '⭐'.repeat(Math.round(parseFloat(stats.avg_rating)));
+        html += '<div style="padding:14px;background:linear-gradient(135deg,rgba(108,99,255,0.10),rgba(108,99,255,0.04));border:1px solid rgba(108,99,255,0.30);border-radius:10px;text-align:center;margin-bottom:14px;">';
+        html += '<div style="font-size:32px;font-weight:800;color:var(--accent2);">' + avg + '<span style="font-size:18px;color:var(--text3);">/5</span></div>';
+        html += '<div style="font-size:16px;color:#fbbf24;margin:4px 0;">' + stars + '</div>';
+        html += '<div style="font-size:11px;color:var(--text3);">' + stats.review_count + ' avis verifie' + (stats.review_count > 1 ? 's' : '') + '</div>';
+        html += '</div>';
+      } else {
+        html += '<div style="padding:24px;text-align:center;color:var(--text3);font-size:12px;background:var(--surface2);border-radius:10px;margin-bottom:14px;">Aucun avis pour le moment. Tes clients pourront te noter via le lien dans leur email de facture, apres paiement.</div>';
+      }
+      // Individual reviews
+      if (rows && rows.length) {
+        rows.forEach(r => {
+          const stars = '⭐'.repeat(r.rating) + '☆'.repeat(5 - r.rating);
+          html += '<div style="padding:10px 12px;margin-bottom:8px;background:var(--surface2);border-left:3px solid #fbbf24;border-radius:6px;">';
+          html += '<div style="display:flex;align-items:center;gap:8px;font-size:12px;">';
+          html += '<span style="color:#fbbf24;font-size:13px;">' + stars + '</span>';
+          if (r.status !== 'published') html += '<span style="font-size:9px;padding:2px 7px;border-radius:10px;background:#6c63ff;color:#fff;">' + r.status + '</span>';
+          html += '<span style="margin-left:auto;font-size:10px;color:var(--text3);">' + new Date(r.posted_at).toLocaleString('fr-FR') + '</span>';
+          html += '</div>';
+          if (r.comment) html += '<div style="font-size:12px;color:var(--text2);margin-top:6px;line-height:1.4;">' + esc(r.comment) + '</div>';
+          html += '</div>';
+        });
+      }
+      html += '</div>';
+      showMsg(html, true);
+    } catch (e) {
+      showToast('Erreur: ' + (e.message || e));
+    }
+  }
+
   window.showAppSettingsEditor = showAppSettingsEditor;
   window.showProcessingRegister = showProcessingRegister;
   window.showSecurityIncidentsLog = showSecurityIncidentsLog;
   window.showModerationDashboard = showModerationDashboard;
+  window.showReviewsModeration = showReviewsModeration;
+  window.showMyReviewsReceived = showMyReviewsReceived;
 })();

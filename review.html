@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Noter le prestataire — Lokizio</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+:root { --accent: #6c63ff; --success: #34d399; --warning: #f59e0b; --danger: #ef4444; --surface: #fff; --text: #2a2a2a; --text2: #555; --text3: #888; --border: #ddd; --bg: #fafafa; }
+* { box-sizing: border-box; }
+body { font-family: system-ui, -apple-system, sans-serif; max-width: 540px; margin: 40px auto; padding: 20px; line-height: 1.6; color: var(--text); background: var(--bg); }
+h1 { font-size: 22px; border-bottom: 2px solid var(--accent); padding-bottom: 8px; }
+.box { background: var(--surface); padding: 20px; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.05); margin: 16px 0; }
+.warn { border-left: 4px solid var(--warning); }
+.info { border-left: 4px solid var(--accent); }
+.success { border-left: 4px solid var(--success); }
+.danger { border-left: 4px solid var(--danger); }
+button, .btn { font-family: inherit; cursor: pointer; padding: 12px 18px; border-radius: 8px; border: none; font-weight: 700; font-size: 14px; }
+.btn-primary { background: var(--accent); color: #fff; }
+.btn-secondary { background: transparent; color: var(--text2); border: 1px solid var(--border); }
+textarea { width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 6px; font-family: inherit; font-size: 13px; resize: vertical; box-sizing: border-box; }
+.stars { display: flex; gap: 6px; font-size: 36px; cursor: pointer; user-select: none; margin: 14px 0; }
+.stars span { color: #d1d5db; transition: color 0.1s; }
+.stars span.filled { color: #fbbf24; }
+a { color: var(--accent); }
+.hidden { display: none; }
+.muted { color: var(--text3); font-size: 11px; }
+</style>
+</head>
+<body>
+
+<h1>⭐ Noter la prestation</h1>
+
+<div id="loading" class="box info">Chargement…</div>
+
+<div id="reviewForm" class="box hidden">
+<p style="font-size:14px;color:var(--text2);margin-bottom:0;">Ton avis aide les futurs clients et le prestataire à s'améliorer. Il sera publié sur Lokizio sous son nom.</p>
+
+<div style="margin-top:16px;">
+<label style="display:block;font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">Note <span style="color:var(--danger);">*</span></label>
+<div class="stars" id="starsRow">
+  <span data-star="1" onclick="setRating(1)">★</span>
+  <span data-star="2" onclick="setRating(2)">★</span>
+  <span data-star="3" onclick="setRating(3)">★</span>
+  <span data-star="4" onclick="setRating(4)">★</span>
+  <span data-star="5" onclick="setRating(5)">★</span>
+</div>
+<input type="hidden" id="rating" value="">
+<div id="ratingLabel" class="muted">Clique pour noter</div>
+</div>
+
+<div style="margin-top:16px;">
+<label style="display:block;font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">Commentaire (optionnel, max 2000 chars)</label>
+<textarea id="comment" rows="5" placeholder="Décris ton expérience. Ce qui a été bien fait, ce qui pourrait être amélioré, le sérieux du prestataire..."></textarea>
+</div>
+
+<div style="margin-top:16px;display:flex;gap:8px;">
+<button class="btn btn-primary" onclick="submit()" style="flex:1;">📩 Publier mon avis</button>
+</div>
+
+<div class="muted" style="margin-top:14px;line-height:1.5;">
+Ton avis sera publié sous <span id="clientEmailDisplay">ton email</span>. Tu peux le faire retirer à tout moment en écrivant à <a href="mailto:contact@lokizio.com">contact@lokizio.com</a>.
+</div>
+</div>
+
+<div id="successBox" class="box success hidden">
+<p style="font-size:15px;font-weight:700;">✅ Merci !</p>
+<p>Ton avis est publié et apparait maintenant sur le profil du prestataire dans l'annuaire Lokizio.</p>
+<p>Tu peux fermer cette page.</p>
+</div>
+
+<div id="errorBox" class="box danger hidden">
+<p style="font-size:15px;font-weight:700;">❌ Impossible de publier</p>
+<p id="errorMsg">—</p>
+<p>Si tu penses que c'est une erreur, contacte <a href="mailto:contact@lokizio.com">contact@lokizio.com</a> avec ce lien.</p>
+</div>
+
+<p class="muted" style="margin-top:30px;text-align:center;">Lokizio · Avis vérifié · <a href="/lokizio/">Retour</a></p>
+
+<script>
+const SUPABASE_URL = 'https://mrvejwyvhuivmipfwlzz.supabase.co';
+const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1ydmVqd3l2aHVpdm1pcGZ3bHp6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQyNjU0NTksImV4cCI6MjA4OTg0MTQ1OX0.1pi-KN5N6sNG6hIu6N0wDsR_g_G1TTf-uPecmWQ2ovU';
+
+const LABELS = ['', 'Très mauvais', 'Mauvais', 'Moyen', 'Bien', 'Excellent'];
+
+function getToken() {
+  return new URLSearchParams(location.search).get('t') || '';
+}
+
+function show(id) {
+  ['loading','reviewForm','successBox','errorBox'].forEach(x => document.getElementById(x).classList.add('hidden'));
+  document.getElementById(id).classList.remove('hidden');
+}
+
+function err(msg) {
+  document.getElementById('errorMsg').textContent = msg;
+  show('errorBox');
+}
+
+function setRating(n) {
+  document.querySelectorAll('[data-star]').forEach(s => {
+    const v = parseInt(s.dataset.star, 10);
+    s.classList.toggle('filled', v <= n);
+  });
+  document.getElementById('rating').value = String(n);
+  document.getElementById('ratingLabel').textContent = LABELS[n] || '';
+}
+
+async function init() {
+  const t = getToken();
+  if (!t || !/^[a-f0-9]{32}$/i.test(t)) {
+    return err('Lien invalide. Vérifie que tu as copié toute l\'URL.');
+  }
+  show('reviewForm');
+}
+
+async function submit() {
+  const t = getToken();
+  const rating = parseInt(document.getElementById('rating').value, 10);
+  const comment = (document.getElementById('comment').value || '').trim();
+  if (!rating || rating < 1 || rating > 5) {
+    return err('Choisis une note de 1 à 5 étoiles.');
+  }
+  show('loading');
+  try {
+    const r = await fetch(SUPABASE_URL + '/functions/v1/submit-review', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', apikey: SUPABASE_ANON, Authorization: 'Bearer ' + SUPABASE_ANON },
+      body: JSON.stringify({ review_token: t, rating, comment: comment || null }),
+    });
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.error || 'Erreur HTTP ' + r.status);
+    show('successBox');
+  } catch (e) {
+    err(e.message || String(e));
+  }
+}
+
+init();
+</script>
+</body>
+</html>

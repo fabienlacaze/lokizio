@@ -9,7 +9,7 @@
   window.__isPasswordRecovery = h.indexOf('type=recovery') !== -1;
   window.__recoveryHash = h;
 })();
-window.APP_VERSION = '9.79';
+window.APP_VERSION = '9.80';
 </script>
 <script src="sentry-init.min.js?v=759d31d"></script>
 <script
@@ -82,12 +82,12 @@ window.APP_VERSION = '9.79';
 <script src="search.min.js?v=a7bd25c"></script>
 <script src="tenant.min.js?v=efbc744"></script>
 <script src="auto-billing.min.js?v=1ad593f"></script>
-<script src="invoices.min.js?v=a6925eb"></script>
+<script src="invoices.min.js?v=621c07e"></script>
 <script src="invoice-create.min.js?v=d9a943d"></script>
 <script src="auth.min.js?v=e652953"></script>
 <script src="provider.min.js?v=1884be9"></script>
 <script src="owner.min.js?v=f805e62"></script>
-<script src="marketplace.min.js?v=b9cc682"></script>
+<script src="marketplace.min.js?v=b774707"></script>
 <script src="properties.min.js?v=26d7caf"></script>
 <script src="dashboard.min.js?v=786f765"></script>
 <script src="admin-prestations.min.js?v=37fdf8b"></script>
@@ -97,7 +97,7 @@ window.APP_VERSION = '9.79';
 <script src="admin-stripe.min.js?v=de579c5"></script>
 <script src="feedback-widget.min.js?v=216011f"></script>
 <script src="admin-dev-tools.min.js?v=a12579e"></script>
-<script src="admin-compliance.min.js?v=6a5b64c"></script>
+<script src="admin-compliance.min.js?v=7227659"></script>
 <script src="photo-consent.min.js?v=1dc9f6d"></script>
 <script src="analytics-init.min.js?v=45f7d2a"></script>
 <!-- Lazy-loaded: Leaflet, Chart.js, jsPDF (loaded on demand to improve startup) -->
@@ -157,7 +157,7 @@ async function loadPDF() {
 </script>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v9.79</div>
+<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v9.80</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -167,7 +167,7 @@ async function loadPDF() {
     <!-- Broom that sweeps -->
     <div id="splashBroom" style="position:absolute;top:50%;left:-60px;font-size:48px;transform:translateY(-50%) rotate(-30deg);opacity:0;transition:all 0.8s cubic-bezier(0.25,0.46,0.45,0.94);">✨</div>
   </div>
-  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v9.79</span></div>
+  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v9.80</span></div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie pour locations</div>
   <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou</div>
   <!-- Loading bar -->
@@ -1023,6 +1023,10 @@ async function loadPDF() {
         <span>&#9872; Moderation signalements (DSA art. 16)</span>
         <span style="color:var(--text3);">&#8250;</span>
       </button>
+      <button class="btn btnOutline" style="padding:12px 14px;font-size:13px;text-align:left;display:flex;justify-content:space-between;align-items:center;width:100%;margin-top:6px;" onclick="closeAccountModal();showReviewsModeration()">
+        <span>&#11088; Moderation des avis (Reviews)</span>
+        <span style="color:var(--text3);">&#8250;</span>
+      </button>
     </div>
     <label style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:1px;display:block;margin-top:8px;margin-bottom:4px;">APP</label>
     <!-- Theme + Language -->
@@ -1132,6 +1136,11 @@ async function loadPDF() {
       </div>
       <div style="margin-top:14px;">
         <button class="btn btnOutline" style="width:100%;padding:12px;font-size:13px;" onclick="showVacationPlanner()">&#127796; Gerer mes conges</button>
+      </div>
+
+      <!-- Mes avis recus (Sprint 3B) -->
+      <div style="margin-top:8px;">
+        <button class="btn btnOutline" style="width:100%;padding:12px;font-size:13px;" onclick="showMyReviewsReceived()">&#11088; Mes avis recus</button>
       </div>
 
       <!-- Stripe Connect Embedded Components (Phase 2 Beta) -->
@@ -1655,6 +1664,17 @@ function getStatusLabel(s) { return (STATUS_CONFIG[s] || {}).label || s || ''; }
 // ── Splash Changelog (update this with each significant version) ──
 // Full versioned changelog — add new entries at TOP
 const VERSION_CHANGELOG = [
+  { v: '9.80', changes: [
+    'Sprint 3B complet: systeme de notation/avis prestataire avec verification cryptographique.',
+    'Table reviews (rating 1-5 + comment + status published/hidden/flagged + UNIQUE par invoice) + view provider_review_stats agregate (avg + count + repartition). RLS: public read si published, provider read own, super_admin manage.',
+    'Webhook stripe payment_intent.succeeded genere maintenant 2 tokens: client_dispute_token (7j) + client_review_token (90j). Stockes sur invoice. 32 hex chars chacun.',
+    'EF submit-review: validation token + 1 review max par facture + status defaut "published" + rate limit 3/h par token. audit_log severity=info.',
+    'Page publique /review.html?t=TOKEN: form etoiles 1-5 + commentaire optionnel 2000 chars. Pas d auth requise.',
+    'Email facture: encart violet apres paiement avec bouton "Noter le prestataire". Affiche tant que client_review_token n a pas expire.',
+    'Annuaire marketplace: enrichissement des cards avec stats verifiees du view provider_review_stats. p.rating / p.rating_count override automatiquement.',
+    'UI Lokizio: bouton "Mes avis recus" dans Mon profil personnel. Affiche moyenne + nombre + liste des avis.',
+    'UI admin (super_admin): "Moderation des avis" dans section ADMIN. Actions Masquer / Signaler / Republier.'
+  ] },
   { v: '9.79', changes: [
     'Fix coherence couleur Marge: passait en vert (#34d399) dans les tableaux Detail mensuel + Detail jour + Pricing config, alors que la legende du graphique en bas l\'affiche en violet (#6c63ff). Harmonise sur le violet Lokizio (5 endroits modifies).',
     'Couleur rouge (#ef4444) conservee pour les marges negatives.',
@@ -1730,7 +1750,7 @@ const VERSION_CHANGELOG = [
     'Ready pour test utilisateur end-to-end Stripe Connect Embedded.'
   ] },
   { v: '9.70', changes: [
-    'Fix 3 findings serieux issus du workflow d\'adversarial review du sprint Stripe Connect v9.79 (workflow wmlemqp4r).',
+    'Fix 3 findings serieux issus du workflow d\'adversarial review du sprint Stripe Connect v9.80 (workflow wmlemqp4r).',
     'Fix CORS cors.ts: retire le hack sk_test_ auto-allow (CORS doit dependre de ENV explicite, pas d\'un prefixe de cle Stripe). Set ENV=dev sur Supabase prod tant qu\'on est en mode test. A retirer quand on passera en live.',
     'Fix stripe-admin-stats: ajout error handling sur le check super_admin (sinon une erreur DB silencieuse bypasse l\'authorization).',
     'Fix stripe-connect-embed.js: fetchClientSecret appelle maintenant stripe-connect-link pour refresh le client_secret apres expiration de 5 min. Avant, le formulaire devenait silencieusement mort apres 5 min.',

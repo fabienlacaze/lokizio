@@ -496,6 +496,29 @@ async function renderAnnuaireTab() {
     try { const { data: { user: _u } } = await sb.auth.getUser(); if (_u) window.__currentUserId = _u.id; } catch(_) { /* best-effort user fetch, ignore */ }
     const { data: mkData } = await sb.from('marketplace_profiles').select('*').eq('visible', true);
     _annuaireProfiles = mkData || [];
+
+    // Sprint 3B: enrich profiles with VERIFIED review stats (provider_review_stats view).
+    // We override p.rating / p.rating_count from the verified Lokizio reviews
+    // (linked to paid invoices), bypassing the legacy fields if any.
+    try {
+      const userIds = _annuaireProfiles.map(p => p.user_id).filter(Boolean);
+      if (userIds.length) {
+        const { data: stats } = await sb.from('provider_review_stats')
+          .select('provider_user_id, avg_rating, review_count')
+          .in('provider_user_id', userIds);
+        if (stats && stats.length) {
+          const byUser = {};
+          stats.forEach(s => { byUser[s.provider_user_id] = s; });
+          _annuaireProfiles.forEach(p => {
+            if (p.user_id && byUser[p.user_id]) {
+              p.rating = parseFloat(byUser[p.user_id].avg_rating) || 0;
+              p.rating_count = parseInt(byUser[p.user_id].review_count) || 0;
+              p._verified_reviews = true;
+            }
+          });
+        }
+      }
+    } catch (e) { console.warn('[marketplace] review stats load:', e); /* non-blocking */ }
     // Also add org members not on marketplace
     const org = API.getOrg();
     if (org) {
