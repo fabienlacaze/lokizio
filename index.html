@@ -9,7 +9,7 @@
   window.__isPasswordRecovery = h.indexOf('type=recovery') !== -1;
   window.__recoveryHash = h;
 })();
-window.APP_VERSION = '9.71';
+window.APP_VERSION = '9.72';
 </script>
 <script src="sentry-init.min.js?v=759d31d"></script>
 <script
@@ -87,10 +87,10 @@ window.APP_VERSION = '9.71';
 <script src="auth.min.js?v=e652953"></script>
 <script src="provider.min.js?v=1884be9"></script>
 <script src="owner.min.js?v=f805e62"></script>
-<script src="marketplace.min.js?v=2dc3107"></script>
+<script src="marketplace.min.js?v=9d2beb4"></script>
 <script src="properties.min.js?v=26d7caf"></script>
 <script src="dashboard.min.js?v=786f765"></script>
-<script src="admin-prestations.min.js?v=3446dc3"></script>
+<script src="admin-prestations.min.js?v=1324f55"></script>
 <script src="account.min.js?v=4b4a831"></script>
 <script src="admin-sentry.min.js?v=2302bea"></script>
 <script src="stripe-connect-embed.min.js?v=ab215b2"></script>
@@ -152,7 +152,7 @@ async function loadPDF() {
 </script>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v9.71</div>
+<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v9.72</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -162,7 +162,7 @@ async function loadPDF() {
     <!-- Broom that sweeps -->
     <div id="splashBroom" style="position:absolute;top:50%;left:-60px;font-size:48px;transform:translateY(-50%) rotate(-30deg);opacity:0;transition:all 0.8s cubic-bezier(0.25,0.46,0.45,0.94);">✨</div>
   </div>
-  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v9.71</span></div>
+  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v9.72</span></div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie pour locations</div>
   <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou</div>
   <!-- Loading bar -->
@@ -1630,13 +1630,18 @@ function getStatusLabel(s) { return (STATUS_CONFIG[s] || {}).label || s || ''; }
 // ── Splash Changelog (update this with each significant version) ──
 // Full versioned changelog — add new entries at TOP
 const VERSION_CHANGELOG = [
+  { v: '9.72', changes: [
+    'Fix 2 bugs UX du flow "Selectionner un prestataire" pour une mission.',
+    'Bug 1: "Ajouter manuellement" creait bien le contact mais ne l\'assignait PAS a la mission en cours. Fix: showAddManualContact accepte maintenant (reqId, svcType, dateStr, propertyName) et stocke dans window._pendingMissionAssign. Apres saveManualContact reussi, on auto-assigne via assignToOrgProvider.',
+    'Bug 2: "Choisir dans l\'annuaire" ouvrait bien l\'annuaire mais sans aucun moyen de selectionner. Fix: pickProviderFromAnnuaire stocke aussi le state. renderMarketplaceResults affiche un banner sticky "Selectionne un prestataire pour cette mission" + bouton "Selectionner pour la mission" sur chaque carte (au lieu des boutons Connect/Premium). Nouvelle fonction assignFromAnnuaireProfile + cancelPendingMissionAssign + cleanup auto dans closeMarketplace.'
+  ] },
   { v: '9.71', changes: [
     'Migration Stripe Connect: passage de "Mode test" classique a "Fabidou sandbox" (nouvelle UX de test Stripe pour Connect). STRIPE_SECRET_KEY et STRIPE_WEBHOOK_SECRET mis a jour dans Supabase prod, webhook recree via API avec 9 events (Connect + subscriptions), Edge Functions redeployees. STRIPE_PK deja compatible.',
     'A noter: STRIPE_PRICE_PRO et STRIPE_PRICE_BUSINESS pointent encore sur l\'ancien environnement Mode test. A recreer dans Fabidou sandbox quand on retournera sur les subscriptions.',
     'Ready pour test utilisateur end-to-end Stripe Connect Embedded.'
   ] },
   { v: '9.70', changes: [
-    'Fix 3 findings serieux issus du workflow d\'adversarial review du sprint Stripe Connect v9.71 (workflow wmlemqp4r).',
+    'Fix 3 findings serieux issus du workflow d\'adversarial review du sprint Stripe Connect v9.72 (workflow wmlemqp4r).',
     'Fix CORS cors.ts: retire le hack sk_test_ auto-allow (CORS doit dependre de ENV explicite, pas d\'un prefixe de cle Stripe). Set ENV=dev sur Supabase prod tant qu\'on est en mode test. A retirer quand on passera en live.',
     'Fix stripe-admin-stats: ajout error handling sur le check super_admin (sinon une erreur DB silencieuse bypasse l\'authorization).',
     'Fix stripe-connect-embed.js: fetchClientSecret appelle maintenant stripe-connect-link pour refresh le client_secret apres expiration de 5 min. Avant, le formulaire devenait silencieusement mort apres 5 min.',

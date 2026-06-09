@@ -540,8 +540,8 @@ async function showAssignProviderPopup(reqId, dateStr, svcType, propertyName) {
     html += '<div style="font-size:24px;opacity:0.5;margin-bottom:6px;">&#129529;</div>';
     html += '<div style="font-size:12px;color:var(--text3);line-height:1.5;margin-bottom:12px;">Aucun prestataire dans votre equipe pour le moment.</div>';
     html += '<div style="display:flex;flex-direction:column;gap:8px;">';
-    html += '<button onclick="pickProviderFromAnnuaire()" style="padding:10px 16px;background:linear-gradient(135deg,#6c63ff,#5a54e0);color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;">&#127760; Choisir dans l\'annuaire</button>';
-    html += '<button onclick="document.getElementById(\'assignProviderOverlay\').remove();showAddManualContact()" style="padding:8px 16px;background:rgba(108,99,255,0.15);color:#a5a0ff;border:1px solid rgba(108,99,255,0.35);border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;">+ Ajouter manuellement</button>';
+    html += '<button onclick="pickProviderFromAnnuaire(\'' + reqId + '\',\'' + svcType + '\',\'' + dateStr + '\',\'' + esc(propertyName).replace(/\'/g, "\\\'") + '\')" style="padding:10px 16px;background:linear-gradient(135deg,#6c63ff,#5a54e0);color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;">&#127760; Choisir dans l\'annuaire</button>';
+    html += '<button onclick="document.getElementById(\'assignProviderOverlay\').remove();showAddManualContact(\'' + reqId + '\',\'' + svcType + '\',\'' + dateStr + '\',\'' + esc(propertyName).replace(/\'/g, "\\\'") + '\')" style="padding:8px 16px;background:rgba(108,99,255,0.15);color:#a5a0ff;border:1px solid rgba(108,99,255,0.35);border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;">+ Ajouter manuellement</button>';
     html += '</div>';
     html += '</div>';
   } else {
@@ -557,7 +557,7 @@ async function showAssignProviderPopup(reqId, dateStr, svcType, propertyName) {
       html += '<span style="color:#6c63ff;font-size:20px;flex-shrink:0;">&rsaquo;</span>';
       html += '</button>';
     });
-    html += '<button onclick="pickProviderFromAnnuaire()" style="margin-top:4px;padding:10px 12px;background:transparent;color:#a5a0ff;border:1px dashed rgba(108,99,255,0.45);border-radius:10px;font-size:12px;font-weight:600;cursor:pointer;text-align:center;">&#127760; Choisir un autre prestataire dans l\'annuaire</button>';
+    html += '<button onclick="pickProviderFromAnnuaire(\'' + reqId + '\',\'' + svcType + '\',\'' + dateStr + '\',\'' + esc(propertyName).replace(/\'/g, "\\\'") + '\')" style="margin-top:4px;padding:10px 12px;background:transparent;color:#a5a0ff;border:1px dashed rgba(108,99,255,0.45);border-radius:10px;font-size:12px;font-weight:600;cursor:pointer;text-align:center;">&#127760; Choisir un autre prestataire dans l\'annuaire</button>';
     html += '</div>';
   }
 
@@ -678,8 +678,19 @@ window.postToAnnuaire = postToAnnuaire;
 
 // Close the assign popup and open the marketplace annuaire pre-filtered on
 // providers, so the user can browse and connect with a new prestataire.
-function pickProviderFromAnnuaire() {
+function pickProviderFromAnnuaire(reqId, svcType, dateStr, propertyName) {
   document.getElementById('assignProviderOverlay')?.remove();
+  // Stash the mission context so renderMarketplaceResults can render a
+  // "Select for mission" button on each profile card. Cleared after assign
+  // or when the marketplace closes (see closeMarketplace cleanup).
+  if (reqId !== undefined) {
+    window._pendingMissionAssign = {
+      reqId: reqId || '',
+      svcType: svcType || '',
+      dateStr: dateStr || '',
+      propertyName: propertyName || '',
+    };
+  }
   if (typeof showMarketplace !== 'function') {
     showToast('Annuaire indisponible');
     return;
@@ -688,8 +699,6 @@ function pickProviderFromAnnuaire() {
   // After marketplace is opened, switch to annuaire > search tab and filter on providers
   setTimeout(() => {
     try {
-      // Some builds expose a tab switcher for the marketplace top-level tabs;
-      // the annuaire tab is rendered inline so we just scroll to it and tweak filters.
       if (typeof switchAnnuaireSubTab === 'function') switchAnnuaireSubTab('search');
       const roleEl = document.getElementById('annRoleFilter');
       if (roleEl) {
@@ -703,6 +712,21 @@ function pickProviderFromAnnuaire() {
   }, 250);
 }
 window.pickProviderFromAnnuaire = pickProviderFromAnnuaire;
+
+// Called from the annuaire cards when in "pick for mission" mode.
+// Assigns the selected profile (whatever role) to the pending mission.
+async function assignFromAnnuaireProfile(userId, providerName) {
+  const ctx = window._pendingMissionAssign;
+  if (!ctx) { showToast('Pas de mission a assigner'); return; }
+  window._pendingMissionAssign = null;
+  if (typeof closeMarketplace === 'function') closeMarketplace();
+  setTimeout(() => {
+    if (typeof assignToOrgProvider === 'function') {
+      assignToOrgProvider(ctx.reqId, providerName, userId || '', ctx.svcType, ctx.dateStr, ctx.propertyName);
+    }
+  }, 250);
+}
+window.assignFromAnnuaireProfile = assignFromAnnuaireProfile;
 
 // Visual confirmation overlay shown after a successful annuaire posting.
 function _showAnnuaireConfirmation(jobId, svcLabel, propertyName, dateStr, expiresIso) {

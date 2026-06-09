@@ -698,12 +698,30 @@ async function renderAnnuaireResults(profiles) {
   const roleLabels = { provider: 'Prestataire', owner: 'Proprietaire', concierge: 'Conciergerie' };
   const availLabels = { available: '&#128994; Disponible', full: '&#128308; Complet', vacation: '&#127796; En vacances' };
 
+  // ── "Pick for mission" banner ──
+  // If the user entered the annuaire via "Choisir dans l'annuaire" on a
+  // mission, show a sticky banner reminding them what they're picking for,
+  // and replace the connection buttons with a "Selectionner pour mission" CTA.
+  const pendingMission = window._pendingMissionAssign;
+  let missionBanner = '';
+  if (pendingMission) {
+    const svcLabel = (typeof getServiceLabel === 'function' && pendingMission.svcType) ? getServiceLabel(pendingMission.svcType) : (pendingMission.svcType || 'prestation');
+    missionBanner += '<div style="position:sticky;top:0;z-index:5;margin:-8px -8px 12px;padding:12px 14px;background:linear-gradient(135deg,rgba(108,99,255,0.18),rgba(108,99,255,0.06));border:1px solid rgba(108,99,255,0.40);border-radius:10px;display:flex;align-items:center;gap:10px;">';
+    missionBanner += '<span style="font-size:18px;">&#128205;</span>';
+    missionBanner += '<div style="flex:1;font-size:12px;color:var(--text);line-height:1.4;">';
+    missionBanner += '<div style="font-weight:700;color:#a5a0ff;">Selectionne un prestataire pour cette mission :</div>';
+    missionBanner += '<div style="font-size:11px;color:var(--text2);margin-top:2px;">' + _escHtml(svcLabel) + ' &middot; ' + _escHtml(pendingMission.propertyName || '') + (pendingMission.dateStr ? ' &middot; ' + _escHtml(pendingMission.dateStr) : '') + '</div>';
+    missionBanner += '</div>';
+    missionBanner += '<button onclick="cancelPendingMissionAssign()" title="Annuler la selection" style="background:transparent;border:1px solid var(--border2);color:var(--text2);padding:5px 10px;border-radius:6px;font-size:11px;cursor:pointer;">Annuler</button>';
+    missionBanner += '</div>';
+  }
+
   if (!profiles.length) {
-    container.innerHTML = '<div style="text-align:center;padding:40px 20px;"><div style="font-size:48px;margin-bottom:12px;opacity:0.4;">&#128269;</div><div style="font-size:15px;font-weight:600;color:var(--text);margin-bottom:6px;">Aucun profil trouve</div><div style="font-size:12px;color:var(--text3);line-height:1.6;">Essayez d\'elargir votre recherche ou de supprimer les filtres.</div></div>';
+    container.innerHTML = missionBanner + '<div style="text-align:center;padding:40px 20px;"><div style="font-size:48px;margin-bottom:12px;opacity:0.4;">&#128269;</div><div style="font-size:15px;font-weight:600;color:var(--text);margin-bottom:6px;">Aucun profil trouve</div><div style="font-size:12px;color:var(--text3);line-height:1.6;">Essayez d\'elargir votre recherche ou de supprimer les filtres.</div></div>';
     return;
   }
 
-  let html = '<div style="font-size:12px;color:var(--text3);margin-bottom:8px;">' + profiles.length + ' profil' + (profiles.length > 1 ? 's' : '') + ' trouve' + (profiles.length > 1 ? 's' : '') + '</div>';
+  let html = missionBanner + '<div style="font-size:12px;color:var(--text3);margin-bottom:8px;">' + profiles.length + ' profil' + (profiles.length > 1 ? 's' : '') + ' trouve' + (profiles.length > 1 ? 's' : '') + '</div>';
 
   profiles.forEach(p => {
     const color = roleColors[p.role] || '#6c63ff';
@@ -800,7 +818,11 @@ async function renderAnnuaireResults(profiles) {
     html += '<div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">';
     if (p.phone) html += '<a href="tel:' + _escHtml(p.phone) + '" style="display:inline-flex;align-items:center;gap:3px;font-size:11px;color:#34d399;text-decoration:none;padding:4px 8px;background:rgba(52,211,153,0.1);border-radius:6px;">&#128222; Appeler</a>';
     if (p.email) html += '<a href="mailto:' + _escHtml(p.email) + '" style="display:inline-flex;align-items:center;gap:3px;font-size:11px;color:var(--accent);text-decoration:none;padding:4px 8px;background:rgba(108,99,255,0.1);border-radius:6px;">&#9993; Email</a>';
-    if (p.user_id !== _mkMyUserId) {
+    // Mission-pick mode: replace connection actions with a clear CTA
+    if (pendingMission && p.user_id !== _mkMyUserId) {
+      const nameJsEsc = (p.display_name || 'Prestataire').replace(/'/g, "\\'");
+      html += '<button onclick="assignFromAnnuaireProfile(\'' + _escHtml(p.user_id || '') + '\',\'' + nameJsEsc + '\')" style="margin-left:auto;padding:8px 16px;background:linear-gradient(135deg,#34d399,#10b981);color:#fff;border:none;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;">&#10003; Selectionner pour la mission</button>';
+    } else if (p.user_id !== _mkMyUserId) {
       const isConnected = connectedUserIds.has(p.user_id);
       const isPending = pendingUserIds.has(p.user_id);
       if (isConnected) {
@@ -872,9 +894,19 @@ async function loadMarketplaceData() {
 
 function closeMarketplace() {
   if (_mkRefreshInterval) { clearInterval(_mkRefreshInterval); _mkRefreshInterval = null; }
+  // Clear pending mission-pick state on close (user backed out without picking)
+  if (window._pendingMissionAssign) window._pendingMissionAssign = null;
   document.getElementById('overlay').style.display = 'none';
   document.getElementById('marketplaceModal').style.display = 'none';
 }
+
+// Called from the mission-pick banner "Annuler" button: clear state + close.
+function cancelPendingMissionAssign() {
+  window._pendingMissionAssign = null;
+  if (typeof closeMarketplace === 'function') closeMarketplace();
+  showToast('Selection annulee');
+}
+window.cancelPendingMissionAssign = cancelPendingMissionAssign;
 
 function filterMarketplace() {
   const role = document.getElementById('mkRoleFilter').value;
@@ -1277,7 +1309,17 @@ async function sendContactInvite() {
 window.sendContactInvite = sendContactInvite;
 
 // Open a popup to add a contact manually (saved as a private contact, no email required).
-async function showAddManualContact() {
+async function showAddManualContact(reqId, svcType, dateStr, propertyName) {
+  // Stash mission context (if provided) so saveManualContact can auto-assign
+  // the newly created contact to the pending mission. Cleared after assign.
+  if (reqId !== undefined) {
+    window._pendingMissionAssign = {
+      reqId: reqId || '',
+      svcType: svcType || '',
+      dateStr: dateStr || '',
+      propertyName: propertyName || '',
+    };
+  }
   const overlay = document.createElement('div');
   overlay.id = 'manualContactOverlay';
   overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px;';
@@ -1370,6 +1412,18 @@ async function saveManualContact() {
     }
     document.getElementById('manualContactOverlay')?.remove();
     tell('Contact ajoute : ' + name);
+    // If we were called from "Assigner une mission > Ajouter manuellement",
+    // auto-assign the new contact to the pending mission.
+    if (window._pendingMissionAssign) {
+      const ctx = window._pendingMissionAssign;
+      window._pendingMissionAssign = null;
+      setTimeout(() => {
+        if (typeof assignToOrgProvider === 'function') {
+          assignToOrgProvider(ctx.reqId, name, '', ctx.svcType, ctx.dateStr, ctx.propertyName);
+        }
+      }, 300);
+      return; // skip the annuaire refresh, we're going back to the prestations view
+    }
     if (typeof renderAnnuaireTab === 'function') setTimeout(() => renderAnnuaireTab(), 200);
   } catch (e) {
     console.error('[saveManualContact] exception:', e);
