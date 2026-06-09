@@ -49,6 +49,20 @@
 
       html += '<div style="font-size:11px;color:var(--text3);line-height:1.5;margin-bottom:14px;padding:10px;background:rgba(108,99,255,0.08);border-radius:8px;">Une fois ces 3 documents + la charte signes, ton profil obtient le badge <b>"Verifie"</b> dans l\'annuaire. Tes documents sont chiffres et seul un super_admin Lokizio peut les consulter pour validation.</div>';
 
+      // Sprint 4B: Auto-verif SIRET via API gouv.fr
+      html += '<div style="padding:12px;margin-bottom:8px;background:linear-gradient(135deg,rgba(52,211,153,0.10),rgba(52,211,153,0.04));border:1px solid rgba(52,211,153,0.30);border-radius:8px;">';
+      html += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">';
+      html += '<span style="font-size:18px;">&#127894;</span>';
+      html += '<div style="font-size:12px;font-weight:700;color:var(--text);">Verification rapide SIRET <span style="font-size:9px;background:#34d399;color:#fff;padding:2px 6px;border-radius:8px;margin-left:4px;">API GOUV.FR</span></div>';
+      html += '</div>';
+      html += '<div style="font-size:10px;color:var(--text3);margin-bottom:8px;line-height:1.4;">Verifie ton SIRET aupres du registre INSEE en 2 secondes. Si valide, ton document SIRET est <b>auto-valide</b> et tu n\'as plus a attendre une revue manuelle.</div>';
+      html += '<div style="display:flex;gap:6px;align-items:center;">';
+      html += '<input type="text" id="kycSiretInput" placeholder="14 chiffres" maxlength="17" style="flex:1;padding:8px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:6px;font-size:13px;font-family:monospace;">';
+      html += '<button class="btn btnSmall btnPrimary" style="padding:8px 14px;font-size:11px;font-weight:700;" onclick="window._kycVerifySiret()">Verifier</button>';
+      html += '</div>';
+      html += '<div id="kycSiretResult" style="margin-top:8px;font-size:11px;"></div>';
+      html += '</div>';
+
       // Required documents
       REQUIRED_DOCS.forEach(d => {
         const doc = docsByType[d.type];
@@ -185,6 +199,40 @@
       setTimeout(showProviderKycDashboard, 800);
     } catch (e) {
       showToast('Erreur signature: ' + (e.message || e));
+    }
+  };
+
+  window._kycVerifySiret = async function () {
+    const inp = document.getElementById('kycSiretInput');
+    const resultEl = document.getElementById('kycSiretResult');
+    const raw = (inp?.value || '').replace(/\s/g, '');
+    if (!/^\d{14}$/.test(raw)) {
+      resultEl.innerHTML = '<div style="color:#ef4444;">SIRET invalide (14 chiffres requis)</div>';
+      return;
+    }
+    resultEl.innerHTML = '<div style="color:var(--text3);">Verification en cours...</div>';
+    try {
+      const session = (await sb.auth.getSession()).data.session;
+      const r = await fetch(SUPABASE_URL + '/functions/v1/verify-siret', {
+        method: 'POST',
+        headers: { Authorization: 'Bearer ' + session.access_token, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ siret: raw }),
+      });
+      const data = await r.json();
+      if (!data.valid) {
+        resultEl.innerHTML = '<div style="color:#ef4444;">' + esc(data.error || 'SIRET non valide') + '</div>';
+        return;
+      }
+      let h = '<div style="padding:8px;background:rgba(52,211,153,0.10);border-left:3px solid #34d399;border-radius:4px;">';
+      h += '<div style="color:#065f46;font-weight:700;">&#10003; SIRET verifie</div>';
+      h += '<div style="margin-top:4px;color:var(--text2);">' + esc(data.denomination || 'Sans nom') + '</div>';
+      if (data.naf_label) h += '<div style="font-size:10px;color:var(--text3);">' + esc(data.naf_label) + ' (' + esc(data.naf_code || '') + ')</div>';
+      if (data.adresse) h += '<div style="font-size:10px;color:var(--text3);margin-top:2px;">' + esc(data.adresse) + '</div>';
+      h += '</div>';
+      resultEl.innerHTML = h;
+      setTimeout(showProviderKycDashboard, 1500); // refresh dashboard to show auto-validated doc
+    } catch (e) {
+      resultEl.innerHTML = '<div style="color:#ef4444;">Erreur: ' + esc(e.message || e) + '</div>';
     }
   };
 

@@ -90,6 +90,19 @@ Deno.serve(async (req) => {
       severity: 'info',
     }).catch(() => {});
 
+    // Sprint 4A: notify the provider (email + push, best-effort)
+    if (invoice.created_by) {
+      fetch(`${SUPABASE_URL}/functions/v1/notify-provider`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${SUPABASE_SERVICE_KEY}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          user_id: invoice.created_by,
+          event_type: 'review_received',
+          context: { rating: Math.round(rating), comment: (comment || '').slice(0, 500), invoice_id: invoice.id },
+        }),
+      }).catch(() => {});
+    }
+
     return Response.json({ review_id: inserted?.id, ok: true }, { headers: cors });
   } catch (e: any) {
     console.error('submit-review error:', e);

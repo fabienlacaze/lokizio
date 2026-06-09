@@ -9,7 +9,7 @@
   window.__isPasswordRecovery = h.indexOf('type=recovery') !== -1;
   window.__recoveryHash = h;
 })();
-window.APP_VERSION = '9.81';
+window.APP_VERSION = '9.82';
 </script>
 <script src="sentry-init.min.js?v=759d31d"></script>
 <script
@@ -157,7 +157,7 @@ async function loadPDF() {
 </script>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v9.81</div>
+<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v9.82</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -167,7 +167,7 @@ async function loadPDF() {
     <!-- Broom that sweeps -->
     <div id="splashBroom" style="position:absolute;top:50%;left:-60px;font-size:48px;transform:translateY(-50%) rotate(-30deg);opacity:0;transition:all 0.8s cubic-bezier(0.25,0.46,0.45,0.94);">✨</div>
   </div>
-  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v9.81</span></div>
+  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v9.82</span></div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie pour locations</div>
   <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou</div>
   <!-- Loading bar -->
@@ -1677,6 +1677,16 @@ function getStatusLabel(s) { return (STATUS_CONFIG[s] || {}).label || s || ''; }
 // ── Splash Changelog (update this with each significant version) ──
 // Full versioned changelog — add new entries at TOP
 const VERSION_CHANGELOG = [
+  { v: '9.82', changes: [
+    'Sprint 4A: notifications business automatiques.',
+    'EF notify-provider generique avec 5 templates: review_received (etoiles + commentaire), dispute_opened (montant + motif), kyc_validated / kyc_refused, rc_pro_expiring_soon.',
+    'Trigger auto submit-review.EF -> notify-provider review_received (email + push best-effort)',
+    'Trigger auto client-dispute-invoice.EF -> notify-provider dispute_opened',
+    'Sprint 4B: verification SIRET via API gouv.fr publique (gratuite).',
+    'EF verify-siret call api.recherche-entreprises.api.gouv.fr (rate limit 20/h/user), valide format 14 chiffres + existence INSEE + statut actif. Si OK: members.siret + tax_id_validated_at + company_name remplis auto, doc KYC type=siret passe a validated sans revue manuelle.',
+    'UI dans dashboard KYC: encart vert avec input SIRET + bouton "Verifier". Resultat avec denomination + NAF + adresse de l INSEE. Le doc passe auto a "Valide" si OK.',
+    'Pas de modif CSP requise (l\'appel gouv.fr est cote serveur dans l\'EF).'
+  ] },
   { v: '9.81', changes: [
     'Sprint 3C + 3D complet — KYC metier + AML monitoring TRACFIN.',
     'KYC metier (3C): table provider_kyc_documents (RC Pro + SIRET + identite, upload Storage bucket prive 10MB max), table provider_charter_signatures (signature electronique avec IP+UA), colonne members.lokizio_kyc_status. Storage bucket kyc-documents avec RLS user folder + super_admin read all.',
@@ -1777,7 +1787,7 @@ const VERSION_CHANGELOG = [
     'Ready pour test utilisateur end-to-end Stripe Connect Embedded.'
   ] },
   { v: '9.70', changes: [
-    'Fix 3 findings serieux issus du workflow d\'adversarial review du sprint Stripe Connect v9.81 (workflow wmlemqp4r).',
+    'Fix 3 findings serieux issus du workflow d\'adversarial review du sprint Stripe Connect v9.82 (workflow wmlemqp4r).',
     'Fix CORS cors.ts: retire le hack sk_test_ auto-allow (CORS doit dependre de ENV explicite, pas d\'un prefixe de cle Stripe). Set ENV=dev sur Supabase prod tant qu\'on est en mode test. A retirer quand on passera en live.',
     'Fix stripe-admin-stats: ajout error handling sur le check super_admin (sinon une erreur DB silencieuse bypasse l\'authorization).',
     'Fix stripe-connect-embed.js: fetchClientSecret appelle maintenant stripe-connect-link pour refresh le client_secret apres expiration de 5 min. Avant, le formulaire devenait silencieusement mort apres 5 min.',

@@ -105,6 +105,29 @@ Deno.serve(async (req) => {
       severity: 'warning',
     }).catch(() => {});
 
+    // Sprint 4A: notify the provider of the dispute (best-effort)
+    // We need to fetch created_by since the initial query doesn't include it
+    try {
+      const { data: invFull } = await admin
+        .from('invoices').select('created_by, invoice_number').eq('id', invoice.id).maybeSingle();
+      if (invFull?.created_by) {
+        fetch(`${SUPABASE_URL}/functions/v1/notify-provider`, {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${SUPABASE_SERVICE_KEY}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            user_id: invFull.created_by,
+            event_type: 'dispute_opened',
+            context: {
+              invoice_id: invoice.id,
+              invoice_number: invFull.invoice_number,
+              amount_cents: refund.amount,
+              reason: (reason || '').slice(0, 500),
+            },
+          }),
+        }).catch(() => {});
+      }
+    } catch (_) { /* best-effort */ }
+
     return Response.json({
       refunded: true,
       invoice_id: invoice.id,
