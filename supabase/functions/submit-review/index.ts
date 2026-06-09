@@ -62,13 +62,9 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Check that no review exists yet for this invoice (1 review max)
-    const { data: existing } = await admin
-      .from('reviews').select('id').eq('invoice_id', invoice.id).maybeSingle();
-    if (existing) {
-      return Response.json({ error: 'A review already exists for this invoice' }, { status: 409, headers: cors });
-    }
-
+    // Sprint 4 fix BLOCKER #5: removed the SELECT-then-INSERT TOCTOU. Now
+    // rely solely on the UNIQUE(invoice_id) constraint defined in reviews-schema.sql.
+    // PostgreSQL raises a unique_violation (23505) atomically — no race window.
     const { data: inserted, error: insErr } = await admin.from('reviews').insert({
       invoice_id: invoice.id,
       org_id: invoice.org_id,
@@ -78,7 +74,13 @@ Deno.serve(async (req) => {
       comment: (comment || '').trim() || null,
       status: 'published',
     }).select('id').maybeSingle();
-    if (insErr) throw insErr;
+    if (insErr) {
+      // 23505 = unique_violation -> a review already exists for this invoice
+      if ((insErr as any).code === '23505') {
+        return Response.json({ error: 'A review already exists for this invoice' }, { status: 409, headers: cors });
+      }
+      throw insErr;
+    }
 
     audit({
       user_id: null,

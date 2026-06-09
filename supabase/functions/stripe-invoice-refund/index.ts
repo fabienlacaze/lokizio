@@ -17,17 +17,20 @@ const SUPABASE_ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY')!;
 const SUPABASE_SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 const STRIPE_SECRET_KEY = Deno.env.get('STRIPE_SECRET_KEY')!;
 
-async function stripeApi(path: string, body: Record<string, string>): Promise<any> {
+async function stripeApi(path: string, body: Record<string, string>, idempotencyKey?: string): Promise<any> {
   const form = new URLSearchParams();
   for (const [k, v] of Object.entries(body)) {
     if (v !== undefined && v !== null) form.append(k, String(v));
   }
+  const headers: Record<string, string> = {
+    Authorization: `Bearer ${STRIPE_SECRET_KEY}`,
+    'Content-Type': 'application/x-www-form-urlencoded',
+  };
+  // Sprint 4 fix BLOCKER #1: Idempotency-Key prevents duplicate refunds on retry.
+  if (idempotencyKey) headers['Idempotency-Key'] = idempotencyKey;
   const r = await fetch(`https://api.stripe.com/v1${path}`, {
     method: 'POST',
-    headers: {
-      Authorization: `Bearer ${STRIPE_SECRET_KEY}`,
-      'Content-Type': 'application/x-www-form-urlencoded',
-    },
+    headers,
     body: form.toString(),
   });
   const json = await r.json();
@@ -93,6 +96,8 @@ Deno.serve(async (req) => {
 
     // Issue the refund. refund_application_fee=true reverses Lokizio's 3% too.
     // reverse_transfer=true is implicit for Direct Charges with destination.
+    // Idempotency-Key derived from invoice + user + day prevents double refund.
+    const idempotencyKey = `refund-${invoice.id}-${userId}-${new Date().toISOString().slice(0, 10)}`;
     const refund = await stripeApi('/refunds', {
       payment_intent: invoice.stripe_payment_intent_id,
       refund_application_fee: 'true',
@@ -100,7 +105,7 @@ Deno.serve(async (req) => {
       'metadata[lokizio_invoice_id]': invoice.id,
       'metadata[lokizio_org_id]': invoice.org_id,
       'metadata[refunded_by]': userId,
-    });
+    }, idempotencyKey);
 
     // Persist (webhook charge.refunded will also fire but we update immediately for UX)
     await admin.from('invoices').update({

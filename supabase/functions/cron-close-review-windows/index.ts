@@ -44,12 +44,17 @@ Deno.serve(async (req) => {
 
     let closed = 0;
     for (const inv of (pending || [])) {
-      const { error: updErr } = await admin.from('invoices').update({
+      // Sprint 4 fix: keep WHERE status='paid_pending_review' so we lose the
+      // race against a concurrent client-dispute-invoice and don't overwrite
+      // a refund_pending state. .select('id') returns affected row to confirm
+      // the update happened.
+      const { data: updated, error: updErr } = await admin.from('invoices').update({
         status: 'paid',
         review_auto_closed_at: nowIso,
-        client_dispute_token: null, // expire the magic link
-      }).eq('id', inv.id);
-      if (!updErr) {
+        client_dispute_token: null,
+        client_review_token: null,
+      }).eq('id', inv.id).eq('status', 'paid_pending_review').select('id').maybeSingle();
+      if (!updErr && updated) {
         closed++;
         audit({
           user_id: null,

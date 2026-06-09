@@ -9,7 +9,7 @@
   window.__isPasswordRecovery = h.indexOf('type=recovery') !== -1;
   window.__recoveryHash = h;
 })();
-window.APP_VERSION = '9.83';
+window.APP_VERSION = '9.84';
 </script>
 <script src="sentry-init.min.js?v=759d31d"></script>
 <script
@@ -157,7 +157,7 @@ async function loadPDF() {
 </script>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v9.83</div>
+<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v9.84</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -167,7 +167,7 @@ async function loadPDF() {
     <!-- Broom that sweeps -->
     <div id="splashBroom" style="position:absolute;top:50%;left:-60px;font-size:48px;transform:translateY(-50%) rotate(-30deg);opacity:0;transition:all 0.8s cubic-bezier(0.25,0.46,0.45,0.94);">✨</div>
   </div>
-  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v9.83</span></div>
+  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v9.84</span></div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie pour locations</div>
   <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou</div>
   <!-- Loading bar -->
@@ -1713,6 +1713,15 @@ function getStatusLabel(s) { return (STATUS_CONFIG[s] || {}).label || s || ''; }
 // ── Splash Changelog (update this with each significant version) ──
 // Full versioned changelog — add new entries at TOP
 const VERSION_CHANGELOG = [
+  { v: '9.84', changes: [
+    'Sprint 4 — hardening financier suite au workflow audit final whf6tcip3 (5 BLOCKERS identifies, 30 confirmes total).',
+    'BLOCKER #1 Idempotency-Key Stripe sur tous les /refunds (client-dispute-invoice + stripe-invoice-refund). Cle derivee de invoice.id + day. Stripe deduplique pendant 24h. Plus de risque de double remboursement en cas de retry reseau.',
+    'BLOCKER #2 Race condition cron vs dispute fix: client-dispute-invoice UPDATE avec WHERE status="paid_pending_review" + WHERE disputed_by_client_at IS NULL. 409 Conflict si le cron a deja flippe le status. cron-close-review-windows fait aussi le WHERE pour ne pas overwrite un refund_pending.',
+    'BLOCKER #3 audit_log atomique: state machine en 2 etapes. invoice.client_dispute_initiated avant l appel Stripe (avec montant + payment_intent_id), puis invoice.client_disputed_finalized apres succes Stripe. Si Stripe echoue, on a la trace du try.',
+    'BLOCKER #4 token dispute hardening: rate limit 5/h/IP strict via checkRateLimit (bucket dispute_ip_X). Brute force loggue en audit severity=critical.',
+    'BLOCKER #5 TOCTOU submit-review: suppression du SELECT avant INSERT. On laisse la contrainte UNIQUE(invoice_id) faire son travail. Catch error.code=23505 -> 409 Conflict explicite.',
+    'cron-close-review-windows: nettoie aussi client_review_token a la fermeture (coherence avec dispute_token).'
+  ] },
   { v: '9.83', changes: [
     'Fix UX section ADMIN du compte: 10 boutons en vrac -> 4 categories collapsibles (Operations business, Moderation, Monitoring & dev, Conformite legale). Les 2 premieres ouvertes par defaut, les 2 dernieres fermees.',
     'Clarification du label: "ADMIN - super_admin global (visible que par toi)". Plus explicite que c\'est lie au compte super_admin Fabien, pas au role concierge dans l\'org.',
@@ -1828,7 +1837,7 @@ const VERSION_CHANGELOG = [
     'Ready pour test utilisateur end-to-end Stripe Connect Embedded.'
   ] },
   { v: '9.70', changes: [
-    'Fix 3 findings serieux issus du workflow d\'adversarial review du sprint Stripe Connect v9.83 (workflow wmlemqp4r).',
+    'Fix 3 findings serieux issus du workflow d\'adversarial review du sprint Stripe Connect v9.84 (workflow wmlemqp4r).',
     'Fix CORS cors.ts: retire le hack sk_test_ auto-allow (CORS doit dependre de ENV explicite, pas d\'un prefixe de cle Stripe). Set ENV=dev sur Supabase prod tant qu\'on est en mode test. A retirer quand on passera en live.',
     'Fix stripe-admin-stats: ajout error handling sur le check super_admin (sinon une erreur DB silencieuse bypasse l\'authorization).',
     'Fix stripe-connect-embed.js: fetchClientSecret appelle maintenant stripe-connect-link pour refresh le client_secret apres expiration de 5 min. Avant, le formulaire devenait silencieusement mort apres 5 min.',
