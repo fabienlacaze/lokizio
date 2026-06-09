@@ -9,7 +9,7 @@
   window.__isPasswordRecovery = h.indexOf('type=recovery') !== -1;
   window.__recoveryHash = h;
 })();
-window.APP_VERSION = '9.74';
+window.APP_VERSION = '9.75';
 </script>
 <script src="sentry-init.min.js?v=759d31d"></script>
 <script
@@ -93,7 +93,7 @@ window.APP_VERSION = '9.74';
 <script src="admin-prestations.min.js?v=37fdf8b"></script>
 <script src="account.min.js?v=4b4a831"></script>
 <script src="admin-sentry.min.js?v=2302bea"></script>
-<script src="stripe-connect-embed.min.js?v=ab215b2"></script>
+<script src="stripe-connect-embed.min.js?v=04d3580"></script>
 <script src="admin-stripe.min.js?v=de579c5"></script>
 <script src="feedback-widget.min.js?v=216011f"></script>
 <script src="admin-dev-tools.min.js?v=a12579e"></script>
@@ -155,7 +155,7 @@ async function loadPDF() {
 </script>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v9.74</div>
+<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v9.75</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -165,7 +165,7 @@ async function loadPDF() {
     <!-- Broom that sweeps -->
     <div id="splashBroom" style="position:absolute;top:50%;left:-60px;font-size:48px;transform:translateY(-50%) rotate(-30deg);opacity:0;transition:all 0.8s cubic-bezier(0.25,0.46,0.45,0.94);">✨</div>
   </div>
-  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v9.74</span></div>
+  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v9.75</span></div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie pour locations</div>
   <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou</div>
   <!-- Loading bar -->
@@ -1637,6 +1637,11 @@ function getStatusLabel(s) { return (STATUS_CONFIG[s] || {}).label || s || ''; }
 // ── Splash Changelog (update this with each significant version) ──
 // Full versioned changelog — add new entries at TOP
 const VERSION_CHANGELOG = [
+  { v: '9.75', changes: [
+    'Fix 2 bugs observes par Fabien en test reel.',
+    'Bug #1 modale Stripe Connect Embedded tronquee: la classe globale .modal a max-width:480px (app.css) ce qui ecrasait le contenu Stripe (qui a besoin de ~720-820px). Fix: stripe-connect-embed.js force inline max-width: min(900px, 96vw) sur msgModal apres showMsg, padding ajuste, overflow auto. Le formulaire Stripe peut maintenant respirer.',
+    'Bug #2 PATCH 400 service_requests apres ajout manuel d un contact: updateServiceRequest ignorait silencieusement les erreurs Supabase (await sans capture). Maintenant: capture {error} sur SELECT et UPDATE, log details console + toast utilisateur explicite. Permettra de diagnostiquer la vraie cause au prochain test.'
+  ] },
   { v: '9.74', changes: [
     'Sprint outils de test reel — 3 outils integres pour faciliter alpha/beta testing.',
     'Outil #1: Feedback widget flottant (bouton 💬 bas-gauche pour users connectes). Modal avec note 1-5 etoiles + textarea + capture d\'ecran optionnelle (html2canvas lazy). EF feedback-submit stocke dans user_feedback + envoie email a Fabien. Rate limit 10/h.',
@@ -1673,7 +1678,7 @@ const VERSION_CHANGELOG = [
     'Ready pour test utilisateur end-to-end Stripe Connect Embedded.'
   ] },
   { v: '9.70', changes: [
-    'Fix 3 findings serieux issus du workflow d\'adversarial review du sprint Stripe Connect v9.74 (workflow wmlemqp4r).',
+    'Fix 3 findings serieux issus du workflow d\'adversarial review du sprint Stripe Connect v9.75 (workflow wmlemqp4r).',
     'Fix CORS cors.ts: retire le hack sk_test_ auto-allow (CORS doit dependre de ENV explicite, pas d\'un prefixe de cle Stripe). Set ENV=dev sur Supabase prod tant qu\'on est en mode test. A retirer quand on passera en live.',
     'Fix stripe-admin-stats: ajout error handling sur le check super_admin (sinon une erreur DB silencieuse bypasse l\'authorization).',
     'Fix stripe-connect-embed.js: fetchClientSecret appelle maintenant stripe-connect-link pour refresh le client_secret apres expiration de 5 min. Avant, le formulaire devenait silencieusement mort apres 5 min.',
@@ -10012,15 +10017,30 @@ const VALID_TRANSITIONS = {
 async function updateServiceRequest(id, status, provider) {
   try {
     // Fetch request details for auto-messages
-    const { data: req } = await sb.from('service_requests').select('*').eq('id', id).single();
+    const { data: req, error: selErr } = await sb.from('service_requests').select('*').eq('id', id).maybeSingle();
+    if (selErr) {
+      console.error('[updateServiceRequest] SELECT error:', selErr);
+      showToast('Erreur lecture demande: ' + (selErr.message || selErr.code || 'inconnue'));
+      return;
+    }
+    if (!req) {
+      console.warn('[updateServiceRequest] service_request not found:', id);
+      showToast('Demande introuvable (deja supprimee ?)');
+      return;
+    }
     // Validate transition
-    if (req && VALID_TRANSITIONS[req.status] && !VALID_TRANSITIONS[req.status].includes(status)) {
+    if (VALID_TRANSITIONS[req.status] && !VALID_TRANSITIONS[req.status].includes(status)) {
       showToast('Transition impossible: ' + getStatusLabel(req.status) + ' → ' + getStatusLabel(status));
       return;
     }
     const update = { status, updated_at: new Date().toISOString() };
     if (provider) update.assigned_provider = provider;
-    await sb.from('service_requests').update(update).eq('id', id);
+    const { error: updErr } = await sb.from('service_requests').update(update).eq('id', id);
+    if (updErr) {
+      console.error('[updateServiceRequest] UPDATE error:', updErr, 'payload:', update);
+      showToast('Erreur mise a jour: ' + (updErr.message || updErr.details || updErr.code || 'PATCH rejete'));
+      return;
+    }
     showToast('Demande mise a jour');
     // Send auto-messages based on status change
     if (req) {

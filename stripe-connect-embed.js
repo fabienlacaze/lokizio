@@ -106,15 +106,35 @@
   }
 
   function _openConnectModal(title, mountFn) {
-    let html = '<div style="padding:4px;max-width:600px;width:90vw;max-height:80vh;">';
-    html += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">';
+    // Make the modal wide enough for Stripe's embedded form content.
+    // The Stripe iframe needs ~720-820px to render its text without wrapping.
+    // We use 95vw on small screens, capped at 880px on large screens.
+    let html = '<div style="padding:0;max-width:880px;width:95vw;max-height:90vh;display:flex;flex-direction:column;">';
+    html += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;padding:0 2px;">';
     html += '<div style="font-size:16px;font-weight:700;color:var(--text);">' + title + '</div>';
     html += '<button class="btn btnSmall btnOutline" style="padding:6px 12px;font-size:11px;" onclick="closeMsg()">Fermer</button>';
     html += '</div>';
-    html += '<div id="stripeConnectContainer" style="min-height:400px;background:var(--surface2);border-radius:8px;padding:10px;"></div>';
-    html += '<div style="font-size:10px;color:var(--text3);margin-top:10px;text-align:center;">Formulaire securise affiche par Stripe directement dans Lokizio. Vos donnees ne transitent pas par nos serveurs.</div>';
+    // Container: full width, minimal padding, allow horizontal scroll if absolutely needed.
+    html += '<div id="stripeConnectContainer" style="min-height:480px;flex:1;background:var(--surface2);border-radius:8px;padding:4px;overflow:auto;"></div>';
+    html += '<div style="font-size:10px;color:var(--text3);margin-top:8px;text-align:center;line-height:1.4;padding:0 6px;">Formulaire securise affiche par Stripe directement dans Lokizio. Vos donnees ne transitent pas par nos serveurs.</div>';
     html += '</div>';
     showMsg(html, true);
+
+    // Override the global .modal max-width (480px) — Stripe's embedded form
+    // needs more horizontal space to render without truncation. We apply
+    // the override AFTER showMsg so it sticks until the next showMsg() call.
+    setTimeout(() => {
+      const m = document.getElementById('msgModal');
+      if (m) {
+        m.style.maxWidth = 'min(900px, 96vw)';
+        m.style.width = 'min(900px, 96vw)';
+      }
+      const body = document.querySelector('#msgModal .modalBody') || document.getElementById('msgBody');
+      if (body) {
+        body.style.padding = '14px';
+        body.style.overflow = 'auto';
+      }
+    }, 0);
 
     // Wait for the DOM to be ready, then mount
     setTimeout(() => {
