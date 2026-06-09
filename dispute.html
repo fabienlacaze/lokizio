@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Contester une facture — Lokizio</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+:root { --accent: #6c63ff; --danger: #ef4444; --success: #34d399; --surface: #fff; --text: #2a2a2a; --text2: #555; --text3: #888; --border: #ddd; --border2: #e5e5e5; --bg: #fafafa; }
+* { box-sizing: border-box; }
+body { font-family: system-ui, -apple-system, sans-serif; max-width: 540px; margin: 40px auto; padding: 20px; line-height: 1.6; color: var(--text); background: var(--bg); }
+h1 { font-size: 22px; border-bottom: 2px solid var(--accent); padding-bottom: 8px; }
+.box { background: var(--surface); padding: 16px; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.05); margin: 16px 0; }
+.warn { border-left: 4px solid var(--danger); }
+.info { border-left: 4px solid var(--accent); }
+.success { border-left: 4px solid var(--success); }
+button, .btn { font-family: inherit; cursor: pointer; padding: 12px 18px; border-radius: 8px; border: none; font-weight: 700; font-size: 14px; }
+.btn-danger { background: var(--danger); color: #fff; }
+.btn-secondary { background: transparent; color: var(--text2); border: 1px solid var(--border2); }
+textarea { width: 100%; padding: 10px; border: 1px solid var(--border2); border-radius: 6px; font-family: inherit; font-size: 13px; resize: vertical; box-sizing: border-box; }
+a { color: var(--accent); }
+.hidden { display: none; }
+</style>
+</head>
+<body>
+
+<h1>📋 Contester un paiement Lokizio</h1>
+
+<div id="loading" class="box info">
+<p>Chargement de la facture…</p>
+</div>
+
+<div id="confirmForm" class="box warn hidden">
+<p style="font-size:15px;font-weight:700;">⚠ Tu es sur le point de contester ce paiement.</p>
+<p>Si tu confirmes :</p>
+<ul>
+<li>Le paiement de <strong id="amountDisplay">—</strong> sera <strong>remboursé sur ta carte</strong> sous 5 à 10 jours ouvrés</li>
+<li>La commission Lokizio sera aussi reversée</li>
+<li>La facture redeviendra "à payer" côté prestataire</li>
+<li>Le prestataire sera notifié de ta contestation</li>
+</ul>
+
+<p><strong>Pourquoi contestes-tu ?</strong> (optionnel mais aide à résoudre)</p>
+<textarea id="reason" rows="4" placeholder="Ex: La prestation n'a pas été effectuée. Le résultat ne correspond pas à ce qui a été convenu."></textarea>
+
+<p style="margin-top:14px;display:flex;gap:8px;">
+<button class="btn btn-danger" onclick="doDispute()">Oui, contester et rembourser</button>
+<button class="btn btn-secondary" onclick="window.history.back()">Annuler</button>
+</p>
+</div>
+
+<div id="successBox" class="box success hidden">
+<p style="font-size:15px;font-weight:700;">✅ Contestation enregistrée</p>
+<p>Le remboursement de <strong id="refundAmount">—</strong> a été initié auprès de ta banque. Compte 5 à 10 jours ouvrés pour le voir sur ton relevé.</p>
+<p>Un email de confirmation t'a été envoyé.</p>
+<p>Tu peux fermer cette page.</p>
+</div>
+
+<div id="errorBox" class="box warn hidden">
+<p style="font-size:15px;font-weight:700;">❌ Impossible de traiter la contestation</p>
+<p id="errorMsg">—</p>
+<p>Si tu penses que c'est une erreur, contacte <a href="mailto:contact@lokizio.com">contact@lokizio.com</a> avec ce lien.</p>
+</div>
+
+<p style="font-size:11px;color:var(--text3);margin-top:30px;text-align:center;">Lokizio · Contestation sécurisée · <a href="/lokizio/">Retour</a></p>
+
+<script>
+const SUPABASE_URL = 'https://mrvejwyvhuivmipfwlzz.supabase.co';
+const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1ydmVqd3l2aHVpdm1pcGZ3bHp6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQyNjU0NTksImV4cCI6MjA4OTg0MTQ1OX0.1pi-KN5N6sNG6hIu6N0wDsR_g_G1TTf-uPecmWQ2ovU';
+
+function getToken() {
+  const params = new URLSearchParams(location.search);
+  return params.get('t') || '';
+}
+
+function show(id) {
+  ['loading','confirmForm','successBox','errorBox'].forEach(x => document.getElementById(x).classList.add('hidden'));
+  document.getElementById(id).classList.remove('hidden');
+}
+function err(msg) {
+  document.getElementById('errorMsg').textContent = msg;
+  show('errorBox');
+}
+
+async function init() {
+  const t = getToken();
+  if (!t) return err('Lien invalide (token manquant).');
+  if (!/^[a-f0-9]{32}$/i.test(t)) return err('Lien invalide (format).');
+  // We just show the confirm form; the actual server verification happens on submit.
+  document.getElementById('amountDisplay').textContent = 'le montant de la facture';
+  show('confirmForm');
+}
+
+async function doDispute() {
+  const t = getToken();
+  const reason = (document.getElementById('reason').value || '').trim();
+  show('loading');
+  try {
+    const r = await fetch(SUPABASE_URL + '/functions/v1/client-dispute-invoice', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON, Authorization: 'Bearer ' + SUPABASE_ANON },
+      body: JSON.stringify({ dispute_token: t, reason: reason || null }),
+    });
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.error || 'Erreur HTTP ' + r.status);
+    document.getElementById('refundAmount').textContent = (data.amount_cents / 100).toFixed(2) + ' €';
+    show('successBox');
+  } catch (e) {
+    err(e.message || String(e));
+  }
+}
+
+init();
+</script>
+</body>
+</html>

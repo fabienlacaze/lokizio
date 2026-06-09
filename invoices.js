@@ -36,10 +36,13 @@ let _invoiceSort = 'date_desc';
 const STATUS_COLORS = {
   draft: '#888', sent: '#6c63ff', paid: '#34d399', overdue: '#e94560',
   accepted: '#34d399', refused: '#ef4444', expired: '#f59e0b',
+  // Sprint 3A: escrow review window
+  paid_pending_review: '#f59e0b',
 };
 const STATUS_LABELS = {
   draft: 'Brouillon', sent: 'Envoyee', paid: 'Payee',
   accepted: 'Accepte', refused: 'Refuse', expired: 'Expire',
+  paid_pending_review: 'En validation',
 };
 
 async function loadInvoices() {
@@ -584,7 +587,16 @@ async function showInvoiceDetail(id) {
     html += '</div>';
 
     // Stripe payment status (if applicable)
-    if (!inv.is_quote && inv.stripe_payment_status === 'succeeded') {
+    // Sprint 3A: paid_pending_review -> show review window badge before "Payee en ligne"
+    if (!inv.is_quote && inv.status === 'paid_pending_review' && inv.review_window_until) {
+      const until = new Date(inv.review_window_until);
+      const daysLeft = Math.max(0, Math.ceil((until.getTime() - Date.now()) / 86400000));
+      html += '<div style="margin-top:12px;padding:10px 12px;background:rgba(245,158,11,0.10);border:1px solid rgba(245,158,11,0.35);border-radius:8px;display:flex;align-items:center;gap:8px;">';
+      html += '<span style="font-size:18px;">&#9201;</span><div style="flex:1;">';
+      html += '<div style="font-size:12px;font-weight:700;color:#f59e0b;">En validation — J-' + daysLeft + '</div>';
+      html += '<div style="font-size:10px;color:var(--text3);">Paiement recu le ' + new Date(inv.stripe_paid_at || inv.review_window_until).toLocaleDateString('fr-FR') + '. Le client peut contester jusqu\'au ' + until.toLocaleDateString('fr-FR') + '. Passe ce delai, le statut deviendra "Payee" definitivement.</div>';
+      html += '</div></div>';
+    } else if (!inv.is_quote && inv.stripe_payment_status === 'succeeded') {
       html += '<div style="margin-top:12px;padding:10px 12px;background:rgba(52,211,153,0.10);border:1px solid rgba(52,211,153,0.30);border-radius:8px;display:flex;align-items:center;gap:8px;">';
       html += '<span style="font-size:16px;">&#9989;</span><div style="flex:1;">';
       html += '<div style="font-size:12px;font-weight:700;color:#34d399;">Payee en ligne</div>';
@@ -779,6 +791,16 @@ function _buildInvoiceEmailHtml(inv, customMessage) {
     h += '<div style="font-size:14px;font-weight:700;">&#9989; Facture payee en ligne</div>';
     h += '<div style="font-size:11px;margin-top:4px;">Merci pour votre reglement.</div>';
     h += '</div>';
+    // Sprint 3A: dispute link during review window (7j)
+    if (inv.status === 'paid_pending_review' && inv.client_dispute_token && inv.review_window_until) {
+      const until = new Date(inv.review_window_until);
+      const disputeUrl = 'https://fabienlacaze.github.io/lokizio/dispute.html?t=' + esc(inv.client_dispute_token);
+      h += '<div style="margin-top:14px;padding:12px;background:#fff8e1;border:1px solid #fcd34d;border-radius:8px;font-size:12px;">';
+      h += '<div style="font-weight:700;color:#92400e;margin-bottom:6px;">&#9888; Periode de validation (7 jours)</div>';
+      h += '<div style="color:#78350f;margin-bottom:8px;">Si la prestation n\'est pas conforme, tu peux la contester jusqu\'au <b>' + esc(until.toLocaleDateString('fr-FR')) + '</b> et obtenir un remboursement automatique.</div>';
+      h += '<a href="' + esc(disputeUrl) + '" style="display:inline-block;padding:8px 14px;background:#dc2626;color:#fff;text-decoration:none;border-radius:6px;font-size:11px;font-weight:700;">Contester ce paiement</a>';
+      h += '</div>';
+    }
   }
   h += '<div style="margin-top:24px;padding-top:12px;border-top:1px solid #eee;font-size:11px;color:#888;text-align:center;">Envoye via Lokizio</div>';
   h += '</div>';

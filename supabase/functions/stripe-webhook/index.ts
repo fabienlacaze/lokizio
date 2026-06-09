@@ -202,12 +202,24 @@ Deno.serve(async (req: Request) => {
       // We distinguish by metadata.lokizio_invoice_id.
       const invoiceId = obj.metadata?.lokizio_invoice_id;
       if (invoiceId) {
+        // Sprint 3A: don't go straight to 'paid' — enter the review window.
+        // The client has 7 days to dispute; auto-refund if they do. After the
+        // window expires (cron job), status flips to 'paid' definitively.
+        const REVIEW_WINDOW_DAYS = 7;
+        const reviewUntil = new Date(Date.now() + REVIEW_WINDOW_DAYS * 86400 * 1000).toISOString();
+        // Generate a one-time dispute token for the client (no auth required).
+        // 32 random hex chars = 128 bits of entropy.
+        const buf = new Uint8Array(16);
+        crypto.getRandomValues(buf);
+        const disputeToken = Array.from(buf).map(b => b.toString(16).padStart(2, '0')).join('');
         await supabaseRequest(`invoices?id=eq.${invoiceId}`, "PATCH", {
           stripe_payment_status: "succeeded",
           stripe_paid_at: new Date().toISOString(),
-          status: "paid", // sync the user-facing status too
+          status: "paid_pending_review",
+          review_window_until: reviewUntil,
+          client_dispute_token: disputeToken,
         });
-        console.log(`payment_intent.succeeded: invoice ${invoiceId} marked paid`);
+        console.log(`payment_intent.succeeded: invoice ${invoiceId} -> paid_pending_review until ${reviewUntil}`);
         return new Response(JSON.stringify({ received: true }), { headers: { "Content-Type": "application/json" } });
       }
     }
