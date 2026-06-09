@@ -1,0 +1,25 @@
+Contact: mailto:security@lokizio.com
+Contact: mailto:fabien65400@hotmail.fr
+Expires: 2027-12-31T23:59:59.000Z
+Preferred-Languages: fr, en
+Canonical: https://fabienlacaze.github.io/lokizio/.well-known/security.txt
+Policy: https://fabienlacaze.github.io/lokizio/security-policy.html
+
+# Responsible disclosure
+# Please report security issues directly. Provide:
+#  - Clear reproduction steps
+#  - Expected vs actual behavior
+#  - Your environment (browser, OS, app version)
+#
+# Scope:
+#   - https://fabienlacaze.github.io/lokizio/
+#   - Supabase Edge Functions: https://mrvejwyvhuivmipfwlzz.supabase.co/functions/v1/*
+#
+# Out of scope:
+#   - Stripe (report to security@stripe.com)
+#   - Supabase platform (report to security@supabase.io)
+#
+# We do not currently run a paid bug bounty but acknowledge responsibly disclosed
+# issues publicly (with your consent) and aim to respond within 7 days.
+
+# (Optional) PGP key — none yet

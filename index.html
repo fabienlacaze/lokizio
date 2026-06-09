@@ -9,7 +9,7 @@
   window.__isPasswordRecovery = h.indexOf('type=recovery') !== -1;
   window.__recoveryHash = h;
 })();
-window.APP_VERSION = '9.72';
+window.APP_VERSION = '9.73';
 </script>
 <script src="sentry-init.min.js?v=759d31d"></script>
 <script
@@ -74,7 +74,7 @@ window.APP_VERSION = '9.72';
 <script src="i18n.min.js?v=e16c908"></script>
 <script src="ical_parser.min.js?v=2a790e6"></script>
 <script src="helpers.min.js?v=8bb5604"></script>
-<script src="api_bridge.min.js?v=88096bf"></script>
+<script src="api_bridge.min.js?v=4a3f3b8"></script>
 <script src="vacation.min.js?v=b2e3eb5"></script>
 <script src="push.min.js?v=c5f5981"></script>
 <script src="legal.min.js?v=81bb683"></script>
@@ -87,10 +87,10 @@ window.APP_VERSION = '9.72';
 <script src="auth.min.js?v=e652953"></script>
 <script src="provider.min.js?v=1884be9"></script>
 <script src="owner.min.js?v=f805e62"></script>
-<script src="marketplace.min.js?v=9d2beb4"></script>
+<script src="marketplace.min.js?v=b9cc682"></script>
 <script src="properties.min.js?v=26d7caf"></script>
 <script src="dashboard.min.js?v=786f765"></script>
-<script src="admin-prestations.min.js?v=1324f55"></script>
+<script src="admin-prestations.min.js?v=37fdf8b"></script>
 <script src="account.min.js?v=4b4a831"></script>
 <script src="admin-sentry.min.js?v=2302bea"></script>
 <script src="stripe-connect-embed.min.js?v=ab215b2"></script>
@@ -152,7 +152,7 @@ async function loadPDF() {
 </script>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v9.72</div>
+<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v9.73</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -162,7 +162,7 @@ async function loadPDF() {
     <!-- Broom that sweeps -->
     <div id="splashBroom" style="position:absolute;top:50%;left:-60px;font-size:48px;transform:translateY(-50%) rotate(-30deg);opacity:0;transition:all 0.8s cubic-bezier(0.25,0.46,0.45,0.94);">✨</div>
   </div>
-  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v9.72</span></div>
+  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v9.73</span></div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie pour locations</div>
   <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou</div>
   <!-- Loading bar -->
@@ -1630,6 +1630,22 @@ function getStatusLabel(s) { return (STATUS_CONFIG[s] || {}).label || s || ''; }
 // ── Splash Changelog (update this with each significant version) ──
 // Full versioned changelog — add new entries at TOP
 const VERSION_CHANGELOG = [
+  { v: '9.73', changes: [
+    'Sprint 1 audit securite business — 8 Quick Wins implementes (workflow wd8q97c3a).',
+    'DB: tables audit_log (RLS super_admin read, service_role insert only), rate_limits (no SELECT policy), profile_reports (DSA art. 16). Champs signature_received_at + method ajoutes a cleaning_validations.',
+    'EF infrastructure: nouveau _shared/security.ts avec audit() + enforceRateLimit() reutilisables.',
+    'QW#1: send-email audit les hits rate-limit (10/h existant) avec severity=warning.',
+    'QW#2: stripe-invoice-payment-create rate limite a 5/min/user + audit creation payment_link.',
+    'QW#3: stripe-invoice-payment-create rejette montants <0.5€ ou >50000€ (anti-fraude/typo).',
+    'QW#4: stripe-invoice-refund rate limite a 3/min + audit severity=warning sur chaque refund.',
+    'QW#5: webhook account.updated declenche maintenant push notif "Modification compte de paiement" au user + audit warning. Detecte les changements IBAN/external_account.',
+    'QW#6: nouvelle EF report-profile + UI bouton (drapeau rouge) sur chaque carte annuaire + modal categorie/description. DSA art. 16 conformity.',
+    'QW#7: validateCleaning accepte maintenant opts.signatureMethod, ecrit signature_received_at/by/method. Preuve anti-dispute Stripe.',
+    'QW#8: /.well-known/security.txt + /security-policy.html (responsible disclosure).',
+    'Fix BLOCKER XSS (audit wryeafj2k): propertyName dans onclick de broadcastToProvidersFromPopup et postToAnnuaire etait injectee raw. Maintenant esc() + JS-string escape.',
+    'Fix BLOCKER state pollution: switchMainTab clear window._pendingMissionAssign sur nav. showMarketplace clear si state stale (>50ms).',
+    'Fix SERIOUS race conditions: pickProviderFromAnnuaire et showAddManualContact warn (console) si overwrite d\'une autre mission. _setAt timestamp ajoute au state.'
+  ] },
   { v: '9.72', changes: [
     'Fix 2 bugs UX du flow "Selectionner un prestataire" pour une mission.',
     'Bug 1: "Ajouter manuellement" creait bien le contact mais ne l\'assignait PAS a la mission en cours. Fix: showAddManualContact accepte maintenant (reqId, svcType, dateStr, propertyName) et stocke dans window._pendingMissionAssign. Apres saveManualContact reussi, on auto-assigne via assignToOrgProvider.',
@@ -1641,7 +1657,7 @@ const VERSION_CHANGELOG = [
     'Ready pour test utilisateur end-to-end Stripe Connect Embedded.'
   ] },
   { v: '9.70', changes: [
-    'Fix 3 findings serieux issus du workflow d\'adversarial review du sprint Stripe Connect v9.72 (workflow wmlemqp4r).',
+    'Fix 3 findings serieux issus du workflow d\'adversarial review du sprint Stripe Connect v9.73 (workflow wmlemqp4r).',
     'Fix CORS cors.ts: retire le hack sk_test_ auto-allow (CORS doit dependre de ENV explicite, pas d\'un prefixe de cle Stripe). Set ENV=dev sur Supabase prod tant qu\'on est en mode test. A retirer quand on passera en live.',
     'Fix stripe-admin-stats: ajout error handling sur le check super_admin (sinon une erreur DB silencieuse bypasse l\'authorization).',
     'Fix stripe-connect-embed.js: fetchClientSecret appelle maintenant stripe-connect-link pour refresh le client_secret apres expiration de 5 min. Avant, le formulaire devenait silencieusement mort apres 5 min.',
@@ -8599,6 +8615,13 @@ function checkReminders() {
 
 /* ── Main Tab Navigation (bottom nav) ── */
 function switchMainTab(tabId, fromPopState) {
+  // BLOCKER FIX (audit wryeafj2k): clear pending mission-pick state on tab nav.
+  // Otherwise leaving a mission-pick flow without cancelling persists the state
+  // and pollutes any future marketplace open with a stale banner + wrong assigns.
+  if (window._pendingMissionAssign) {
+    console.log('Clearing _pendingMissionAssign on tab navigation');
+    window._pendingMissionAssign = null;
+  }
   // Show selected tab first, then hide others (avoids flash)
   const tab = document.getElementById('tab' + tabId.charAt(0).toUpperCase() + tabId.slice(1));
   if (tab) tab.classList.add('active');

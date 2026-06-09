@@ -568,9 +568,9 @@ const API = (function() {
       const { data } = await sb.from('cleaning_validations').select('*').eq('property_id', propId || activePropertyId).order('cleaning_date');
       return data || [];
     },
-    async validateCleaning(propId, cleaningDate, providerName, status, photos, notes) {
+    async validateCleaning(propId, cleaningDate, providerName, status, photos, notes, opts) {
       const userId = await getUserId();
-      const { data, error } = await sb.from('cleaning_validations').upsert({
+      const payload = {
         property_id: propId || activePropertyId,
         cleaning_date: cleaningDate,
         provider_name: providerName,
@@ -579,7 +579,19 @@ const API = (function() {
         notes: notes || '',
         validated_at: new Date().toISOString(),
         validated_by: userId,
-      }, { onConflict: 'property_id,cleaning_date,provider_name' }).select().single();
+      };
+      // Quick Win #7 — anti-dispute evidence. When the tenant or owner confirms
+      // the cleaning is OK, we record their identity + timestamp + method
+      // (touch / button click / proxy). This serves as proof of acceptance
+      // in case of a Stripe chargeback dispute later on.
+      if (opts && opts.signatureMethod) {
+        payload.signature_received_at = new Date().toISOString();
+        payload.signature_received_by_user_id = userId || null;
+        payload.signature_method = opts.signatureMethod;
+      }
+      const { data, error } = await sb.from('cleaning_validations').upsert(payload, {
+        onConflict: 'property_id,cleaning_date,provider_name',
+      }).select().single();
       if (error) console.error('validateCleaning:', error);
       return data;
     },

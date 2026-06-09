@@ -10,6 +10,7 @@
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { corsHeaders, requireAuth } from '../_shared/cors.ts';
+import { audit, enforceRateLimit } from '../_shared/security.ts';
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SUPABASE_ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY')!;
@@ -43,6 +44,15 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'STRIPE_SECRET_KEY not configured' }, { status: 500, headers: cors });
     }
     const { userId } = await requireAuth(req, SUPABASE_URL, SUPABASE_ANON_KEY);
+    // Rate limit refunds to prevent replay/spam (3/min/user)
+    const rl = await enforceRateLimit({
+      user_id: userId,
+      bucket: 'stripe_refund_min',
+      max_per_window: 3,
+      window_seconds: 60,
+    }, cors);
+    if (rl) return rl;
+
     const { invoice_id } = await req.json();
     if (!invoice_id) {
       return Response.json({ error: 'Missing invoice_id' }, { status: 400, headers: cors });
@@ -97,6 +107,21 @@ Deno.serve(async (req) => {
       stripe_payment_status: 'refunded',
       status: 'draft', // back to draft since money returned; user can decide
     }).eq('id', invoice.id);
+
+    // Audit: critical financial action — keep severity=warning for forensics
+    audit({
+      user_id: userId, org_id: invoice.org_id,
+      action: 'stripe.refund_issued',
+      resource_type: 'invoice', resource_id: invoice.id,
+      metadata: {
+        refund_id: refund.id,
+        amount_cents: refund.amount,
+        payment_intent_id: invoice.stripe_payment_intent_id,
+        caller_role: callerMember.role,
+        was_original_beneficiary: userId === invoice.created_by,
+      },
+      severity: 'warning',
+    }).catch(() => {});
 
     return Response.json({
       refund_id: refund.id,

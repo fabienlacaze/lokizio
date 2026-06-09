@@ -11,6 +11,10 @@
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { corsHeaders, requireAuth } from '../_shared/cors.ts';
+import { audit, enforceRateLimit } from '../_shared/security.ts';
+
+const MAX_INVOICE_AMOUNT_EUR = 50000; // Quick Win #3 — sanity ceiling, blocks fraud / typo
+const MIN_INVOICE_AMOUNT_EUR = 0.5;
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SUPABASE_ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY')!;
@@ -46,6 +50,15 @@ Deno.serve(async (req) => {
     }
 
     const { userId } = await requireAuth(req, SUPABASE_URL, SUPABASE_ANON_KEY);
+    // Quick Win #2: rate limit (5 payment-create calls/min/user)
+    const rl = await enforceRateLimit({
+      user_id: userId,
+      bucket: 'stripe_payment_create_min',
+      max_per_window: 5,
+      window_seconds: 60,
+    }, cors);
+    if (rl) return rl;
+
     const { invoice_id } = await req.json();
     if (!invoice_id) {
       return Response.json({ error: 'Missing invoice_id' }, { status: 400, headers: cors });
@@ -107,8 +120,18 @@ Deno.serve(async (req) => {
     const feeFixedCents = Number(config?.value?.fee_fixed_cents ?? 0);
 
     const amountCents = Math.round((invoice.total_ttc || 0) * 100);
-    if (amountCents <= 0) {
-      return Response.json({ error: 'Invoice has zero or negative amount' }, { status: 400, headers: cors });
+    // Quick Win #3: enforce sane amount bounds (anti-fraud + anti-typo)
+    if (amountCents < Math.round(MIN_INVOICE_AMOUNT_EUR * 100)) {
+      return Response.json({ error: `Invoice amount below minimum (${MIN_INVOICE_AMOUNT_EUR} EUR)` }, { status: 400, headers: cors });
+    }
+    if (amountCents > Math.round(MAX_INVOICE_AMOUNT_EUR * 100)) {
+      await audit({
+        user_id: userId, org_id: invoice.org_id,
+        action: 'invoice.amount_over_limit', resource_type: 'invoice', resource_id: invoice.id,
+        metadata: { amount_cents: amountCents, limit_cents: MAX_INVOICE_AMOUNT_EUR * 100 },
+        severity: 'warning',
+      });
+      return Response.json({ error: `Invoice amount exceeds maximum (${MAX_INVOICE_AMOUNT_EUR} EUR). Contact support to raise the limit.` }, { status: 400, headers: cors });
     }
     const applicationFee = Math.round(amountCents * (feePercent / 100)) + feeFixedCents;
 
@@ -142,6 +165,19 @@ Deno.serve(async (req) => {
         payment_link: session.url,
       })
       .eq('id', invoice.id);
+
+    // Quick Win #4: audit log
+    audit({
+      user_id: userId, org_id: invoice.org_id,
+      action: 'invoice.payment_link_created',
+      resource_type: 'invoice', resource_id: invoice.id,
+      metadata: {
+        amount_cents: amountCents,
+        application_fee_cents: applicationFee,
+        destination_account: beneficiaryMember.stripe_account_id,
+        session_id: session.id,
+      },
+    }).catch(() => {});
 
     return Response.json({
       payment_link: session.url,

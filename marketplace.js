@@ -13,6 +13,16 @@ let _mkMyUserId = null;
 
 let _mkRefreshInterval = null;
 async function showMarketplace(prefillAddress) {
+  // MODERATE FIX (audit wryeafj2k): if no pickProviderFromAnnuaire/showAddManualContact
+  // call preceded this open, clear any leftover state to prevent showing a stale
+  // mission banner. The pick functions set the state RIGHT BEFORE calling
+  // showMarketplace(), so this clear is safe only when called directly.
+  // We use a 50ms grace window: if state was set <50ms ago, it's from a pick call.
+  if (window._pendingMissionAssign && !window._pendingMissionAssign._setAt) {
+    window._pendingMissionAssign = null;
+  } else if (window._pendingMissionAssign && Date.now() - window._pendingMissionAssign._setAt > 50) {
+    window._pendingMissionAssign = null;
+  }
   document.getElementById('overlay').style.display = 'block';
   document.getElementById('marketplaceModal').style.display = 'block';
   // Auto-refresh every 15s while marketplace is open
@@ -818,6 +828,12 @@ async function renderAnnuaireResults(profiles) {
     html += '<div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">';
     if (p.phone) html += '<a href="tel:' + _escHtml(p.phone) + '" style="display:inline-flex;align-items:center;gap:3px;font-size:11px;color:#34d399;text-decoration:none;padding:4px 8px;background:rgba(52,211,153,0.1);border-radius:6px;">&#128222; Appeler</a>';
     if (p.email) html += '<a href="mailto:' + _escHtml(p.email) + '" style="display:inline-flex;align-items:center;gap:3px;font-size:11px;color:var(--accent);text-decoration:none;padding:4px 8px;background:rgba(108,99,255,0.1);border-radius:6px;">&#9993; Email</a>';
+    // Report profile button (DSA art. 16 — required notice & action mechanism).
+    // Quick Win #6. Shown discreetly on every non-owned profile in both modes.
+    if (p.user_id !== _mkMyUserId && p.id) {
+      const reportName = (p.display_name || 'ce profil').replace(/'/g, "\\'");
+      html += '<button onclick="reportProfile(\'' + _escHtml(p.id) + '\',\'' + _escHtml(p.user_id || '') + '\',\'' + reportName + '\')" title="Signaler ce profil" style="background:transparent;border:none;color:var(--text3);padding:4px 6px;border-radius:4px;font-size:14px;cursor:pointer;" onmouseover="this.style.color=\'#ef4444\'" onmouseout="this.style.color=\'var(--text3)\'">&#9888;</button>';
+    }
     // Mission-pick mode: replace connection actions with a clear CTA
     if (pendingMission && p.user_id !== _mkMyUserId) {
       const nameJsEsc = (p.display_name || 'Prestataire').replace(/'/g, "\\'");
@@ -907,6 +923,58 @@ function cancelPendingMissionAssign() {
   showToast('Selection annulee');
 }
 window.cancelPendingMissionAssign = cancelPendingMissionAssign;
+
+// DSA art. 16 "notice and action" mechanism — Quick Win #6
+// Lets any user flag a marketplace profile for review by super_admins.
+async function reportProfile(profileId, userId, name) {
+  if (!profileId) return;
+  const categories = [
+    { v: 'fake_profile', l: 'Faux profil / Usurpation d\'identite' },
+    { v: 'scam', l: 'Arnaque / Fraude' },
+    { v: 'inappropriate', l: 'Contenu inapproprie' },
+    { v: 'illegal', l: 'Contenu illegal' },
+    { v: 'spam', l: 'Spam / Doublon' },
+    { v: 'other', l: 'Autre' },
+  ];
+  let h = '<div style="padding:6px;max-width:420px;width:90vw;">';
+  h += '<div style="font-size:15px;font-weight:700;color:var(--text);margin-bottom:12px;">&#9888; Signaler ' + esc(name || 'ce profil') + '</div>';
+  h += '<div style="font-size:11px;color:var(--text3);margin-bottom:10px;line-height:1.4;">Ton signalement sera revu par l\'equipe Lokizio. Les signalements abusifs peuvent entrainer la suspension de ton compte.</div>';
+  h += '<label style="display:block;font-size:11px;color:var(--text3);text-transform:uppercase;margin-bottom:6px;">Motif</label>';
+  h += '<select id="reportCategory" style="width:100%;padding:10px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:13px;margin-bottom:10px;">';
+  categories.forEach(c => { h += '<option value="' + c.v + '">' + c.l + '</option>'; });
+  h += '</select>';
+  h += '<label style="display:block;font-size:11px;color:var(--text3);text-transform:uppercase;margin-bottom:6px;">Description (optionnelle, max 2000 chars)</label>';
+  h += '<textarea id="reportDescription" rows="3" placeholder="Decris ce qui te pose probleme..." style="width:100%;padding:10px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:12px;font-family:Inter,sans-serif;resize:vertical;box-sizing:border-box;margin-bottom:12px;"></textarea>';
+  h += '<div style="display:flex;gap:8px;">';
+  h += '<button class="btn btnOutline" style="flex:1;padding:10px;" onclick="closeMsg()">Annuler</button>';
+  h += '<button class="btn" style="flex:1;padding:10px;background:#ef4444;color:#fff;border:none;font-weight:600;" onclick="submitProfileReport(\'' + esc(profileId) + '\',\'' + esc(userId || '') + '\')">Envoyer le signalement</button>';
+  h += '</div>';
+  h += '</div>';
+  showMsg(h, true);
+}
+window.reportProfile = reportProfile;
+
+async function submitProfileReport(profileId, userId) {
+  const category = document.getElementById('reportCategory')?.value || 'other';
+  const description = (document.getElementById('reportDescription')?.value || '').trim();
+  closeMsg();
+  showToast('Envoi du signalement...');
+  try {
+    const session = (await sb.auth.getSession()).data.session;
+    if (!session) { showToast('Non connecte'); return; }
+    const r = await fetch(SUPABASE_URL + '/functions/v1/report-profile', {
+      method: 'POST',
+      headers: { Authorization: 'Bearer ' + session.access_token, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ reported_profile_id: profileId, reported_user_id: userId || null, category, description: description || null }),
+    });
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.error || 'HTTP ' + r.status);
+    showToast('Signalement envoye. Merci.');
+  } catch (e) {
+    showToast('Erreur: ' + (e.message || e));
+  }
+}
+window.submitProfileReport = submitProfileReport;
 
 function filterMarketplace() {
   const role = document.getElementById('mkRoleFilter').value;
@@ -1312,12 +1380,18 @@ window.sendContactInvite = sendContactInvite;
 async function showAddManualContact(reqId, svcType, dateStr, propertyName) {
   // Stash mission context (if provided) so saveManualContact can auto-assign
   // the newly created contact to the pending mission. Cleared after assign.
+  // SERIOUS FIX (audit wryeafj2k): warn on overwrite of a different mission.
   if (reqId !== undefined) {
+    const existing = window._pendingMissionAssign;
+    if (existing && existing.reqId !== reqId) {
+      console.warn('Overwriting stale _pendingMissionAssign:', existing.reqId, '->', reqId);
+    }
     window._pendingMissionAssign = {
       reqId: reqId || '',
       svcType: svcType || '',
       dateStr: dateStr || '',
       propertyName: propertyName || '',
+      _setAt: Date.now(),
     };
   }
   const overlay = document.createElement('div');

@@ -7,6 +7,7 @@
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { corsHeaders } from '../_shared/cors.ts'
+import { audit } from '../_shared/security.ts'
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
 const SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
@@ -46,6 +47,13 @@ Deno.serve(async (req) => {
     const { count } = await sb.from('email_log').select('*', { count: 'exact', head: true })
       .eq('sender_id', user.id).gte('created_at', hourAgo)
     if ((count || 0) >= 10) {
+      // Quick Win #1: log rate-limit hits for abuse tracking
+      audit({
+        user_id: user.id,
+        action: 'send_email.rate_limited',
+        metadata: { count, limit: 10, window_seconds: 3600, to: body?.to ? body.to.substring(0, 32) + '...' : null },
+        severity: 'warning',
+      }).catch(() => {})
       return new Response(JSON.stringify({ error: 'Rate limit exceeded (10/hour)' }), { status: 429, headers: { 'Content-Type': 'application/json', ...CORS } })
     }
 

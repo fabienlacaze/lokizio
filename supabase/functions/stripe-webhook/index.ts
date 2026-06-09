@@ -145,6 +145,55 @@ Deno.serve(async (req: Request) => {
       };
       await supabaseRequest(`members?stripe_account_id=eq.${accountId}`, "PATCH", patch);
       console.log(`account.updated: ${accountId} charges=${obj.charges_enabled} payouts=${obj.payouts_enabled}`);
+
+      // Quick Win #5 — bank account / IBAN change detection.
+      // Stripe doesn't include the previous_attributes by default unless we
+      // listen to `account.external_account.updated`. Here we check if
+      // `external_accounts.data[0].last4` is set and audit it as a critical
+      // event. We also notify the owner (push + audit) so they can react if
+      // it wasn't them.
+      try {
+        const externalAccts = obj.external_accounts?.data || [];
+        if (externalAccts.length > 0) {
+          const ext = externalAccts[0];
+          const newLast4 = ext.last4 || ext.bank_account_last4 || '';
+          // Look up the cached last4 from members metadata (if we track it).
+          // Without history, we conservatively log every update on payout-eligible accounts.
+          const r = await fetch(`${SUPABASE_URL}/rest/v1/members?stripe_account_id=eq.${accountId}&select=user_id,org_id,display_name,stripe_payouts_enabled`, {
+            headers: { apikey: SUPABASE_SERVICE_KEY, Authorization: `Bearer ${SUPABASE_SERVICE_KEY}` },
+          });
+          const members = await r.json();
+          for (const m of (members || [])) {
+            // Insert audit_log directly via REST (we cannot import the helper here without breaking the existing webhook structure)
+            await fetch(`${SUPABASE_URL}/rest/v1/audit_log`, {
+              method: 'POST',
+              headers: { apikey: SUPABASE_SERVICE_KEY, Authorization: `Bearer ${SUPABASE_SERVICE_KEY}`, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
+              body: JSON.stringify({
+                user_id: m.user_id, org_id: m.org_id,
+                action: 'stripe.account_external_account_updated',
+                resource_type: 'stripe_account', resource_id: accountId,
+                metadata: { last4: newLast4, type: ext.object || 'bank_account', charges_enabled: obj.charges_enabled, payouts_enabled: obj.payouts_enabled },
+                severity: 'warning',
+              }),
+            });
+            // Try to send a push notification to the affected user (best-effort)
+            if (m.user_id) {
+              await fetch(`${SUPABASE_URL}/functions/v1/send-push`, {
+                method: 'POST',
+                headers: { Authorization: `Bearer ${SUPABASE_SERVICE_KEY}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  user_id: m.user_id,
+                  title: '🔔 Modification de ton compte de paiement',
+                  body: 'Tes informations bancaires Stripe ont ete modifiees. Si ce n\'est pas toi, contacte le support immediatement.',
+                  tag: 'stripe-iban-' + accountId.slice(-8),
+                }),
+              }).catch(() => {});
+            }
+          }
+        }
+      } catch (e) {
+        console.error('account.updated audit/notify error:', e);
+      }
       return new Response(JSON.stringify({ received: true }), { headers: { "Content-Type": "application/json" } });
     }
 

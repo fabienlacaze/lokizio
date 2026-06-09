@@ -564,9 +564,13 @@ async function showAssignProviderPopup(reqId, dateStr, svcType, propertyName) {
   // ─── SECTION 2: Diffuser ───
   html += '<div style="font-size:12px;font-weight:700;color:var(--text);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px;">&#128228; Diffuser plus largement</div>';
 
+  // BLOCKER FIX (audit wryeafj2k): propertyName is user-controlled and was
+  // injected raw into onclick attributes, enabling XSS. Now we escape it for
+  // both HTML attr context AND embedded-JS-string context.
+  const propNameEsc = esc(propertyName || '').replace(/'/g, "\\'");
   // Primary: notify the org's team (more direct than annuaire)
   if (orgProviders.length > 0) {
-    html += '<button onclick="broadcastToProvidersFromPopup(\'' + reqId + '\',\'' + dateStr + '\',\'' + svcType + '\',\'' + propertyName + '\')" style="width:100%;display:flex;align-items:center;gap:12px;padding:14px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:10px;font-size:13px;cursor:pointer;text-align:left;margin-bottom:8px;transition:all 0.15s;" onmouseover="this.style.borderColor=\'#ef4444\'" onmouseout="this.style.borderColor=\'var(--border2)\'">';
+    html += '<button onclick="broadcastToProvidersFromPopup(\'' + reqId + '\',\'' + dateStr + '\',\'' + svcType + '\',\'' + propNameEsc + '\')" style="width:100%;display:flex;align-items:center;gap:12px;padding:14px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:10px;font-size:13px;cursor:pointer;text-align:left;margin-bottom:8px;transition:all 0.15s;" onmouseover="this.style.borderColor=\'#ef4444\'" onmouseout="this.style.borderColor=\'var(--border2)\'">';
     html += '<span style="width:36px;height:36px;border-radius:8px;background:rgba(239,68,68,0.15);color:#ef4444;display:inline-flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">&#128276;</span>';
     html += '<div style="flex:1;min-width:0;"><div style="font-weight:600;color:var(--text);">Notifier tout mon equipe</div><div style="font-size:11px;color:var(--text3);margin-top:2px;">Envoie un push a vos ' + orgProviders.length + ' prestataire' + (orgProviders.length > 1 ? 's' : '') + ' simultanement</div></div>';
     html += '<span style="color:var(--text3);font-size:18px;flex-shrink:0;">&rsaquo;</span>';
@@ -574,7 +578,7 @@ async function showAssignProviderPopup(reqId, dateStr, svcType, propertyName) {
   }
 
   // Public marketplace
-  html += '<button onclick="postToAnnuaire(\'' + reqId + '\',\'' + dateStr + '\',\'' + svcType + '\',\'' + propertyName + '\')" style="width:100%;display:flex;align-items:center;gap:12px;padding:14px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:10px;font-size:13px;cursor:pointer;text-align:left;transition:all 0.15s;" onmouseover="this.style.borderColor=\'#34d399\'" onmouseout="this.style.borderColor=\'var(--border2)\'">';
+  html += '<button onclick="postToAnnuaire(\'' + reqId + '\',\'' + dateStr + '\',\'' + svcType + '\',\'' + propNameEsc + '\')" style="width:100%;display:flex;align-items:center;gap:12px;padding:14px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:10px;font-size:13px;cursor:pointer;text-align:left;transition:all 0.15s;" onmouseover="this.style.borderColor=\'#34d399\'" onmouseout="this.style.borderColor=\'var(--border2)\'">';
   html += '<span style="width:36px;height:36px;border-radius:8px;background:rgba(52,211,153,0.15);color:#34d399;display:inline-flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">&#127758;</span>';
   html += '<div style="flex:1;min-width:0;"><div style="font-weight:600;color:var(--text);">Publier sur l\'annuaire</div><div style="font-size:11px;color:var(--text3);margin-top:2px;">Tous les prestataires de la marketplace peuvent postuler</div></div>';
   html += '<span style="color:var(--text3);font-size:18px;flex-shrink:0;">&rsaquo;</span>';
@@ -680,15 +684,20 @@ window.postToAnnuaire = postToAnnuaire;
 // providers, so the user can browse and connect with a new prestataire.
 function pickProviderFromAnnuaire(reqId, svcType, dateStr, propertyName) {
   document.getElementById('assignProviderOverlay')?.remove();
-  // Stash the mission context so renderMarketplaceResults can render a
-  // "Select for mission" button on each profile card. Cleared after assign
-  // or when the marketplace closes (see closeMarketplace cleanup).
+  // SERIOUS FIX (audit wryeafj2k): if there's already a pending mission with a
+  // DIFFERENT reqId, the user is starting a new mission flow. Clear the old
+  // first to prevent silent assignment to the wrong mission.
   if (reqId !== undefined) {
+    const existing = window._pendingMissionAssign;
+    if (existing && existing.reqId !== reqId) {
+      console.warn('Overwriting stale _pendingMissionAssign:', existing.reqId, '->', reqId);
+    }
     window._pendingMissionAssign = {
       reqId: reqId || '',
       svcType: svcType || '',
       dateStr: dateStr || '',
       propertyName: propertyName || '',
+      _setAt: Date.now(),
     };
   }
   if (typeof showMarketplace !== 'function') {

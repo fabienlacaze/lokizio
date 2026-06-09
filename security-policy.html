@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Politique de sécurité — Lokizio</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+body { font-family: system-ui, -apple-system, sans-serif; max-width: 720px; margin: 40px auto; padding: 20px; line-height: 1.6; color: #2a2a2a; background: #fafafa; }
+h1 { font-size: 28px; border-bottom: 2px solid #6c63ff; padding-bottom: 8px; }
+h2 { font-size: 20px; color: #6c63ff; margin-top: 32px; }
+code { background: #efeff5; padding: 2px 6px; border-radius: 4px; font-size: 13px; }
+a { color: #5a54e0; }
+.scope-ok { color: #15803d; }
+.scope-no { color: #b91c1c; }
+.box { background: #fff; padding: 16px; border-left: 4px solid #6c63ff; border-radius: 6px; margin: 16px 0; }
+</style>
+</head>
+<body>
+<h1>Politique de sécurité — Lokizio</h1>
+<p>Lokizio prend très au sérieux la sécurité de sa plateforme et de ses utilisateurs. Si tu identifies une vulnérabilité, ce document explique comment la signaler.</p>
+
+<h2>📩 Comment signaler</h2>
+<div class="box">
+<p>Envoie un email à <strong><a href="mailto:fabien65400@hotmail.fr">fabien65400@hotmail.fr</a></strong> (ou <code>security@lokizio.com</code> quand le domaine sera actif) avec :</p>
+<ul>
+<li>Une description claire du problème</li>
+<li>Les étapes pour reproduire</li>
+<li>L'impact potentiel (qui est touché, gravité)</li>
+<li>Ta version du navigateur + l'environnement</li>
+<li>Optionnel : ton nom/handle pour mention publique</li>
+</ul>
+</div>
+
+<h2>🟢 Périmètre (in scope)</h2>
+<ul>
+<li><span class="scope-ok">✓</span> <code>https://fabienlacaze.github.io/lokizio/</code> — l'app PWA</li>
+<li><span class="scope-ok">✓</span> Edge Functions Supabase <code>https://mrvejwyvhuivmipfwlzz.supabase.co/functions/v1/*</code></li>
+<li><span class="scope-ok">✓</span> Toutes les RLS policies de la DB Supabase Lokizio</li>
+<li><span class="scope-ok">✓</span> Le flux Stripe Connect (côté Lokizio uniquement)</li>
+</ul>
+
+<h2>🔴 Hors périmètre (out of scope)</h2>
+<ul>
+<li><span class="scope-no">✗</span> Stripe — reporter à <a href="mailto:security@stripe.com">security@stripe.com</a></li>
+<li><span class="scope-no">✗</span> Plateforme Supabase — reporter à <a href="mailto:security@supabase.io">security@supabase.io</a></li>
+<li><span class="scope-no">✗</span> Sentry, jsDelivr, autres dépendances tierces</li>
+<li><span class="scope-no">✗</span> Spam / phishing visant les utilisateurs (signaler au support)</li>
+<li><span class="scope-no">✗</span> DDoS / attaques par déni de service (ne pas tester sans accord)</li>
+</ul>
+
+<h2>⏱ Engagements Lokizio</h2>
+<ul>
+<li>Accusé de réception sous <strong>48h ouvrables</strong></li>
+<li>Première évaluation sous <strong>7 jours</strong></li>
+<li>Patch déployé selon la sévérité :
+<ul>
+<li>Critique (RCE, leak de données, compromise auth) : <strong>72h</strong></li>
+<li>Élevé (XSS, IDOR, escalation) : <strong>7 jours</strong></li>
+<li>Moyen / Bas : <strong>30 jours</strong></li>
+</ul>
+</li>
+<li>Mention publique de ton signalement (avec ton accord)</li>
+</ul>
+
+<h2>🤝 Engagements du chercheur</h2>
+<ul>
+<li>Ne PAS exploiter ni divulguer la vulnérabilité avant le patch</li>
+<li>Ne PAS dégrader le service (pas de tests destructifs en prod)</li>
+<li>Ne PAS accéder à des données d'autres utilisateurs au-delà du strict minimum pour démontrer le bug</li>
+<li>Patienter au moins 90 jours avant divulgation publique</li>
+</ul>
+
+<h2>💼 Bug bounty</h2>
+<p>Lokizio n'a pas (encore) de programme de récompenses monétaires. Les signalements responsables sont remerciés par :</p>
+<ul>
+<li>Mention dans le <strong>Hall of Fame</strong> sécurité (avec ton accord)</li>
+<li>Crédit dans les notes de version (changelog)</li>
+<li>Lokizio Premium gratuit à vie (pour vulnérabilités sérieuses)</li>
+</ul>
+
+<h2>📅 Mise à jour</h2>
+<p>Cette politique a été mise à jour le 2026-06-09. Voir aussi <a href="/.well-known/security.txt">/.well-known/security.txt</a> pour le contact machine-readable.</p>
+
+<p><a href="/lokizio/">← Retour à Lokizio</a></p>
+</body>
+</html>
