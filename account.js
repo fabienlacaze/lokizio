@@ -398,6 +398,10 @@ async function openOverlayPopup(id) {
         const roleLabels = { admin: 'Administrateur', concierge: 'Concierge', owner: 'Proprietaire', provider: 'Prestataire', tenant: 'Locataire' };
         roleDisp.textContent = roleLabels[API.getRole()] || API.getRole() || '—';
       }
+      // Render Stripe Connect status badge / buttons
+      if (typeof renderStripeConnectProfile === 'function') {
+        renderStripeConnectProfile();
+      }
     } else if (id === 'billingProfileOverlay' && member) {
       document.getElementById('billingCompany').value = member.company_name || '';
       document.getElementById('billingSiret').value = member.siret || '';

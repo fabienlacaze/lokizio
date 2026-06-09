@@ -149,6 +149,70 @@
     });
   }
 
+  // Render the Stripe Connect status block in the personal profile overlay.
+  // Reads the current member's stripe_charges_enabled / details_submitted
+  // and shows the appropriate badge + action button.
+  async function renderStripeConnectProfile() {
+    const container = document.getElementById('stripeConnectProfileSection');
+    if (!container) return;
+    try {
+      const { data: { user } } = await sb.auth.getUser();
+      if (!user) {
+        container.innerHTML = '<div style="font-size:11px;color:var(--text3);">Non connecte</div>';
+        return;
+      }
+      const { data: member } = await sb
+        .from('members')
+        .select('stripe_account_id, stripe_charges_enabled, stripe_details_submitted, stripe_payouts_enabled, stripe_account_country')
+        .eq('user_id', user.id)
+        .eq('accepted', true)
+        .not('stripe_account_id', 'is', null)
+        .limit(1)
+        .maybeSingle();
+
+      let html = '';
+      if (!member || !member.stripe_account_id) {
+        // Not started
+        html += '<div style="font-size:11px;color:var(--text3);margin-bottom:10px;line-height:1.5;">Active les paiements par carte sur tes factures. Stripe gere securite et identite. Lokizio prend 3% de commission.</div>';
+        html += '<button class="btn btnPrimary" style="width:100%;padding:12px;font-size:13px;" onclick="showStripeConnectOnboarding()">&#128190; Activer les paiements</button>';
+      } else if (member.stripe_charges_enabled && member.stripe_payouts_enabled) {
+        // Fully active
+        html += '<div style="display:flex;align-items:center;gap:8px;padding:10px 12px;background:rgba(52,211,153,0.10);border:1px solid rgba(52,211,153,0.30);border-radius:8px;margin-bottom:10px;">';
+        html += '<span style="font-size:18px;">&#9989;</span>';
+        html += '<div style="flex:1;"><div style="font-size:12px;font-weight:700;color:#34d399;">Paiements en ligne actifs</div>';
+        html += '<div style="font-size:10px;color:var(--text3);margin-top:2px;">Tu peux recevoir des paiements sur tes factures. Pays: ' + (member.stripe_account_country || 'FR') + '</div></div>';
+        html += '</div>';
+        html += '<button class="btn btnOutline" style="width:100%;padding:10px;font-size:12px;" onclick="showStripeConnectDashboard()">&#128202; Mon tableau de bord paiements</button>';
+        html += '<button class="btn btnSmall btnOutline" style="width:100%;padding:8px;font-size:11px;margin-top:6px;" onclick="showStripeConnectOnboarding()">&#9881; Modifier mes infos</button>';
+      } else if (member.stripe_details_submitted) {
+        // Submitted but not yet enabled (Stripe is reviewing)
+        html += '<div style="display:flex;align-items:center;gap:8px;padding:10px 12px;background:rgba(245,158,11,0.10);border:1px solid rgba(245,158,11,0.30);border-radius:8px;margin-bottom:10px;">';
+        html += '<span style="font-size:18px;">&#9203;</span>';
+        html += '<div style="flex:1;"><div style="font-size:12px;font-weight:700;color:#f59e0b;">Verification en cours par Stripe</div>';
+        html += '<div style="font-size:10px;color:var(--text3);margin-top:2px;">Tes infos sont en cours de revue (quelques minutes a 24h)</div></div>';
+        html += '</div>';
+        html += '<button class="btn btnOutline" style="width:100%;padding:10px;font-size:12px;" onclick="showStripeConnectOnboarding()">Verifier le statut</button>';
+      } else {
+        // Started but not finished
+        html += '<div style="display:flex;align-items:center;gap:8px;padding:10px 12px;background:rgba(108,99,255,0.10);border:1px solid rgba(108,99,255,0.30);border-radius:8px;margin-bottom:10px;">';
+        html += '<span style="font-size:18px;">&#9881;</span>';
+        html += '<div style="flex:1;"><div style="font-size:12px;font-weight:700;color:var(--accent2);">Configuration a terminer</div>';
+        html += '<div style="font-size:10px;color:var(--text3);margin-top:2px;">Il manque encore quelques infos pour activer les paiements</div></div>';
+        html += '</div>';
+        html += '<button class="btn btnPrimary" style="width:100%;padding:12px;font-size:13px;" onclick="showStripeConnectOnboarding()">&#128190; Terminer la configuration</button>';
+      }
+      container.innerHTML = html;
+    } catch (e) {
+      console.error('renderStripeConnectProfile:', e);
+      container.innerHTML = '<div style="font-size:11px;color:var(--text3);margin-bottom:10px;">Active les paiements par carte. Lokizio prend 3% de commission.</div><button class="btn btnPrimary" style="width:100%;padding:12px;font-size:13px;" onclick="showStripeConnectOnboarding()">&#128190; Activer les paiements</button>';
+    }
+  }
+
   window.showStripeConnectOnboarding = showStripeConnectOnboarding;
   window.showStripeConnectDashboard = showStripeConnectDashboard;
+  window.renderStripeConnectProfile = renderStripeConnectProfile;
+  // Expose a hook so the onboarding completion auto-refreshes the profile badge
+  window._stripeOnboardingDone = function() {
+    if (document.getElementById('stripeConnectProfileSection')) renderStripeConnectProfile();
+  };
 })();

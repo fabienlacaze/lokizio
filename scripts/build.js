@@ -50,6 +50,7 @@ const SOURCES = [
   'sentry-init.js',
   'admin-sentry.js',
   'stripe-connect-embed.js',
+  'admin-stripe.js',
 ];
 
 let totalSrcBytes = 0;

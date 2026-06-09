@@ -9,7 +9,7 @@
   window.__isPasswordRecovery = h.indexOf('type=recovery') !== -1;
   window.__recoveryHash = h;
 })();
-window.APP_VERSION = '9.68';
+window.APP_VERSION = '9.69';
 </script>
 <script src="sentry-init.min.js?v=759d31d"></script>
 <script
@@ -82,7 +82,7 @@ window.APP_VERSION = '9.68';
 <script src="search.min.js?v=a7bd25c"></script>
 <script src="tenant.min.js?v=efbc744"></script>
 <script src="auto-billing.min.js?v=1ad593f"></script>
-<script src="invoices.min.js?v=1098a68"></script>
+<script src="invoices.min.js?v=407da38"></script>
 <script src="invoice-create.min.js?v=d9a943d"></script>
 <script src="auth.min.js?v=e652953"></script>
 <script src="provider.min.js?v=1884be9"></script>
@@ -91,9 +91,10 @@ window.APP_VERSION = '9.68';
 <script src="properties.min.js?v=26d7caf"></script>
 <script src="dashboard.min.js?v=7e3b7e9"></script>
 <script src="admin-prestations.min.js?v=3446dc3"></script>
-<script src="account.min.js?v=a9dc308"></script>
+<script src="account.min.js?v=4b4a831"></script>
 <script src="admin-sentry.min.js?v=2302bea"></script>
-<script src="stripe-connect-embed.min.js?v=273e2c3"></script>
+<script src="stripe-connect-embed.min.js?v=51c24cd"></script>
+<script src="admin-stripe.min.js?v=de579c5"></script>
 <!-- Lazy-loaded: Leaflet, Chart.js, jsPDF (loaded on demand to improve startup) -->
 <script>
 function lazyLoad(url, type) {
@@ -151,7 +152,7 @@ async function loadPDF() {
 </script>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v9.68</div>
+<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v9.69</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -161,7 +162,7 @@ async function loadPDF() {
     <!-- Broom that sweeps -->
     <div id="splashBroom" style="position:absolute;top:50%;left:-60px;font-size:48px;transform:translateY(-50%) rotate(-30deg);opacity:0;transition:all 0.8s cubic-bezier(0.25,0.46,0.45,0.94);">✨</div>
   </div>
-  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v9.68</span></div>
+  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v9.69</span></div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie pour locations</div>
   <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou</div>
   <!-- Loading bar -->
@@ -990,6 +991,10 @@ async function loadPDF() {
         <span>&#128270; Sentry — Erreurs prod</span>
         <span style="color:var(--text3);">&#8250;</span>
       </button>
+      <button class="btn btnOutline" style="padding:12px 14px;font-size:13px;text-align:left;display:flex;justify-content:space-between;align-items:center;width:100%;margin-top:6px;" onclick="closeAccountModal();showStripeAdminDashboard()">
+        <span>&#128202; Stripe Connect — Revenus Lokizio</span>
+        <span style="color:var(--text3);">&#8250;</span>
+      </button>
     </div>
     <label style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:1px;display:block;margin-top:8px;margin-bottom:4px;">APP</label>
     <!-- Theme + Language -->
@@ -1104,8 +1109,9 @@ async function loadPDF() {
       <!-- Stripe Connect Embedded Components (Phase 2 Beta) -->
       <div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border);">
         <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">&#128179; Paiements en ligne <span style="color:var(--accent2);font-size:9px;background:rgba(108,99,255,0.15);padding:2px 6px;border-radius:4px;margin-left:4px;">BETA</span></div>
-        <div style="font-size:11px;color:var(--text3);margin-bottom:10px;line-height:1.5;">Active les paiements par carte sur tes factures. Stripe gere securite et identite. Lokizio prend 3% de commission.</div>
-        <button class="btn btnPrimary" style="width:100%;padding:12px;font-size:13px;" onclick="showStripeConnectOnboarding()">&#128190; Activer / Gerer les paiements</button>
+        <div id="stripeConnectProfileSection">
+          <div style="font-size:11px;color:var(--text3);margin-bottom:10px;line-height:1.5;">Chargement de votre statut paiements...</div>
+        </div>
       </div>
 
     </div>
@@ -1621,6 +1627,14 @@ function getStatusLabel(s) { return (STATUS_CONFIG[s] || {}).label || s || ''; }
 // ── Splash Changelog (update this with each significant version) ──
 // Full versioned changelog — add new entries at TOP
 const VERSION_CHANGELOG = [
+  { v: '9.69', changes: [
+    'Stripe Connect — sprint complet Phases 2.5 / 3 / 4 / 5 / 6 (mode test).',
+    'Phase 2.5: Badge KYC dans Mon profil personnel — affiche dynamiquement le statut (active / verification en cours / a terminer) + bouton "Mon tableau de bord paiements" si compte actif.',
+    'Phase 3: Bouton "Activer paiement en ligne" sur facture (visible si status=sent et compte Connect actif). Genere un Checkout Session Stripe (3% commission Lokizio + 1.4%+0.25€ Stripe), stocke payment_link. Email facture inclut automatiquement un gros bouton "Payer en ligne" si payment_link existe.',
+    'Phase 4: Dashboard admin "Stripe Connect — Revenus Lokizio" (super_admin only) avec KPIs (transactions, volume, commissions), breakdown par mois, top 5 prestataires payes, et stats Connect accounts (inscrits + KYC actifs). Nouvelle Edge Function stripe-admin-stats.',
+    'Phase 5: Bouton "Rembourser" sur facture payee via Stripe. Nouvelle Edge Function stripe-invoice-refund avec refund_application_fee=true (commission Lokizio aussi remboursee). Webhook etendu: charge.refunded marque invoices.stripe_payment_status=refunded, charge.dispute.created marque disputed.',
+    'Phase 6: Hash navigation #payment-success / #payment-cancel pour gerer le retour client apres Stripe Checkout. Toast + re-open de la facture detail au retour de succes.'
+  ] },
   { v: '9.68', changes: [
     'Fix Stripe Connect: CORS bloquait localhost:8000 + CSP bloquait connect-js.stripe.com/v1.0/connect.js.map. CORS cors.ts auto-detecte Stripe test mode (sk_test_) et autorise localhost. CSP ajoute connect-js.stripe.com a connect-src.',
     'Reflexion securite: meme avec CORS ouvert, requireAuth (JWT validation) protege chaque appel. En mode live (sk_live_), localhost reste bloque.'
@@ -5406,8 +5420,38 @@ function checkProviderLimit() {
   return true;
 }
 
+// Stripe Connect invoice payment return handler.
+// Called when the customer returns from the hosted Checkout page either via
+// success_url (#payment-success?invoice=xxx) or cancel_url (#payment-cancel?invoice=xxx).
+function handleStripeInvoicePaymentReturn() {
+  const hash = window.location.hash || '';
+  if (hash.startsWith('#payment-success')) {
+    const invMatch = hash.match(/invoice=([^&]+)/);
+    const invoiceId = invMatch ? decodeURIComponent(invMatch[1]) : null;
+    window.history.replaceState({}, '', window.location.pathname);
+    setTimeout(() => {
+      showToast('Paiement reussi ! La facture est marquee payee.');
+      if (invoiceId && typeof showInvoiceDetail === 'function') {
+        setTimeout(() => showInvoiceDetail(invoiceId), 500);
+      } else if (typeof loadInvoices === 'function') {
+        loadInvoices();
+      }
+    }, 800);
+    return true;
+  }
+  if (hash.startsWith('#payment-cancel')) {
+    window.history.replaceState({}, '', window.location.pathname);
+    setTimeout(() => showToast('Paiement annule. Vous pouvez reessayer.'), 800);
+    return true;
+  }
+  return false;
+}
+window.addEventListener('hashchange', handleStripeInvoicePaymentReturn);
+
 document.addEventListener('DOMContentLoaded', async () => {
   setLang(currentLang);
+  // Handle Stripe Connect invoice payment return (success / cancel)
+  handleStripeInvoicePaymentReturn();
   // Capture referral code from URL before it gets cleared
   const urlParams = new URLSearchParams(window.location.search);
   const refParam = urlParams.get('ref');

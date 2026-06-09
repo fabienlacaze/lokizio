@@ -174,6 +174,30 @@ Deno.serve(async (req: Request) => {
       }
     }
 
+    if (type === "charge.refunded") {
+      // Refund completed. Find invoice by payment_intent (charge.payment_intent is set).
+      const piId = obj.payment_intent;
+      if (piId) {
+        await supabaseRequest(`invoices?stripe_payment_intent_id=eq.${piId}`, "PATCH", {
+          stripe_payment_status: "refunded",
+        });
+        console.log(`charge.refunded: PI ${piId} marked refunded`);
+        return new Response(JSON.stringify({ received: true }), { headers: { "Content-Type": "application/json" } });
+      }
+    }
+
+    if (type === "charge.dispute.created") {
+      // Customer initiated a chargeback — log + mark invoice as disputed.
+      const piId = obj.payment_intent;
+      if (piId) {
+        await supabaseRequest(`invoices?stripe_payment_intent_id=eq.${piId}`, "PATCH", {
+          stripe_payment_status: "disputed",
+        });
+        console.error(`DISPUTE OPENED on PI ${piId} reason=${obj.reason} amount=${obj.amount}`);
+        return new Response(JSON.stringify({ received: true }), { headers: { "Content-Type": "application/json" } });
+      }
+    }
+
     // ─────────────────────────────────────────────────────────────
     // SUBSCRIPTION events (existing Lokizio Pro/Business plan)
     // ─────────────────────────────────────────────────────────────

@@ -583,6 +583,22 @@ async function showInvoiceDetail(id) {
     html += '<div style="font-size:16px;font-weight:800;color:var(--text);">TTC: ' + (inv.total_ttc || 0).toFixed(2) + '€</div>';
     html += '</div>';
 
+    // Stripe payment status (if applicable)
+    if (!inv.is_quote && inv.stripe_payment_status === 'succeeded') {
+      html += '<div style="margin-top:12px;padding:10px 12px;background:rgba(52,211,153,0.10);border:1px solid rgba(52,211,153,0.30);border-radius:8px;display:flex;align-items:center;gap:8px;">';
+      html += '<span style="font-size:16px;">&#9989;</span><div style="flex:1;">';
+      html += '<div style="font-size:12px;font-weight:700;color:#34d399;">Payee en ligne</div>';
+      if (inv.stripe_paid_at) html += '<div style="font-size:10px;color:var(--text3);">Le ' + new Date(inv.stripe_paid_at).toLocaleDateString('fr-FR') + ' a ' + new Date(inv.stripe_paid_at).toLocaleTimeString('fr-FR', {hour:'2-digit',minute:'2-digit'}) + '</div>';
+      html += '</div></div>';
+    } else if (!inv.is_quote && inv.payment_link) {
+      html += '<div style="margin-top:12px;padding:10px 12px;background:rgba(108,99,255,0.10);border:1px solid rgba(108,99,255,0.30);border-radius:8px;display:flex;align-items:center;gap:8px;">';
+      html += '<span style="font-size:16px;">&#128179;</span><div style="flex:1;">';
+      html += '<div style="font-size:12px;font-weight:700;color:var(--accent2);">Paiement en ligne actif</div>';
+      html += '<div style="font-size:10px;color:var(--text3);">Lien envoye au client dans son email</div></div>';
+      html += '<button class="btn btnSmall btnOutline" style="padding:5px 10px;font-size:10px;" onclick="viewStripePaymentLink(\'' + esc(inv.payment_link) + '\')">Voir lien</button>';
+      html += '</div>';
+    }
+
     // Actions
     html += '<div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;">';
     html += '<button class="btn btnOutline" style="flex:1;padding:10px;" onclick="closeMsg()">Fermer</button>';
@@ -597,6 +613,14 @@ async function showInvoiceDetail(id) {
       html += '<button class="btn" style="padding:10px;background:#6c63ff;color:#fff;border:none;font-weight:600;" onclick="closeMsg();convertQuoteToInvoice(\'' + inv.id + '\')">&#128196; Convertir en facture</button>';
     } else if (!inv.is_quote && inv.status === 'sent') {
       html += '<button class="btn btnSuccess" style="padding:10px;font-weight:600;" onclick="closeMsg();updateInvoiceStatus(\'' + inv.id + '\',\'paid\')">&#9989; Marquer payee</button>';
+    }
+    // Stripe Connect: enable online payment (only for sent invoices, not paid yet)
+    if (!inv.is_quote && inv.status === 'sent' && !inv.payment_link && inv.stripe_payment_status !== 'succeeded') {
+      html += '<button class="btn" style="padding:10px;background:linear-gradient(135deg,#635bff,#5a52e0);color:#fff;border:none;font-weight:600;" onclick="closeMsg();enableStripePayment(\'' + inv.id + '\')">&#128190; Activer paiement en ligne</button>';
+    }
+    // Stripe Connect: refund button (paid via Stripe)
+    if (!inv.is_quote && inv.stripe_payment_status === 'succeeded') {
+      html += '<button class="btn btnDanger" style="padding:10px;font-weight:600;" onclick="closeMsg();refundStripeInvoice(\'' + inv.id + '\')">&#8634; Rembourser</button>';
     }
     html += '</div>';
 
@@ -742,9 +766,96 @@ function _buildInvoiceEmailHtml(inv, customMessage) {
   h += '<tr style="background:#222;color:#fff;"><td style="padding:8px 10px;font-weight:700;">TOTAL TTC</td><td style="text-align:right;padding:8px 10px;font-weight:800;font-size:14px;">' + (inv.total_ttc || 0).toFixed(2) + '€</td></tr>';
   h += '</table></div>';
   if (!inv.vat_rate) h += '<div style="font-size:10px;color:#888;border-top:1px solid #ddd;padding-top:8px;font-style:italic;">TVA non applicable, art. 293 B du CGI</div>';
+  // Stripe payment button (visible only if payment is enabled on this invoice)
+  if (inv.payment_link && inv.stripe_payment_status !== 'succeeded') {
+    h += '<div style="margin-top:18px;padding:14px;background:#f5f7ff;border-radius:8px;text-align:center;">';
+    h += '<div style="font-size:11px;color:#666;margin-bottom:8px;">Reglement securise par carte bancaire</div>';
+    h += '<a href="' + esc(inv.payment_link) + '" style="display:inline-block;background:#6c63ff;color:#fff;padding:14px 28px;border-radius:8px;text-decoration:none;font-weight:700;font-size:14px;">&#128179; Payer en ligne</a>';
+    h += '<div style="font-size:10px;color:#888;margin-top:8px;">Paiement traite par Stripe. Vos donnees bancaires ne transitent pas par Lokizio.</div>';
+    h += '</div>';
+  }
+  if (inv.stripe_payment_status === 'succeeded') {
+    h += '<div style="margin-top:18px;padding:14px;background:#ecfdf5;border:1px solid #34d399;border-radius:8px;text-align:center;color:#065f46;">';
+    h += '<div style="font-size:14px;font-weight:700;">&#9989; Facture payee en ligne</div>';
+    h += '<div style="font-size:11px;margin-top:4px;">Merci pour votre reglement.</div>';
+    h += '</div>';
+  }
   h += '<div style="margin-top:24px;padding-top:12px;border-top:1px solid #eee;font-size:11px;color:#888;text-align:center;">Envoye via Lokizio</div>';
   h += '</div>';
   return h;
+}
+
+// ── Stripe Connect invoice payment ──
+//
+// enableStripePayment(invoiceId) : calls stripe-invoice-payment-create Edge Function
+// to generate a Checkout Session, stores payment_link on the invoice, refreshes UI.
+async function enableStripePayment(invoiceId) {
+  try {
+    const ok = await customConfirm(
+      'Activer le paiement en ligne pour cette facture ?\n\n' +
+      'Le client recevra un bouton "Payer en ligne" dans son email.\n' +
+      'Stripe prelevera 1.4% + 0.25€. Lokizio prelevera 3% de commission.',
+      'Activer'
+    );
+    if (!ok) return;
+    showToast('Generation du lien de paiement...');
+    const session = (await sb.auth.getSession()).data.session;
+    if (!session) { showToast('Non connecte'); return; }
+    const r = await fetch(SUPABASE_URL + '/functions/v1/stripe-invoice-payment-create', {
+      method: 'POST',
+      headers: {
+        Authorization: 'Bearer ' + session.access_token,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ invoice_id: invoiceId }),
+    });
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.error || 'HTTP ' + r.status);
+    showToast('Paiement en ligne active !');
+    // Refresh whatever view is open
+    if (typeof loadInvoices === 'function') await loadInvoices();
+    // If the detail modal is open, re-open it
+    closeMsg();
+    setTimeout(() => showInvoiceDetail(invoiceId), 200);
+  } catch (e) {
+    _invErr('activation paiement en ligne', e);
+  }
+}
+
+// View the payment page in a new tab
+function viewStripePaymentLink(url) {
+  if (!url) { showToast('Pas de lien de paiement'); return; }
+  window.open(url, '_blank', 'noopener');
+}
+
+// Refund a Stripe-paid invoice
+async function refundStripeInvoice(invoiceId) {
+  try {
+    const ok = await customConfirm(
+      'Rembourser ce paiement ?\n\n' +
+      'Le montant total sera renvoye au client (carte bancaire) sous 5-10 jours.\n' +
+      'La commission Lokizio (3%) sera egalement remboursee.',
+      'Rembourser'
+    );
+    if (!ok) return;
+    showToast('Traitement du remboursement...');
+    const session = (await sb.auth.getSession()).data.session;
+    const r = await fetch(SUPABASE_URL + '/functions/v1/stripe-invoice-refund', {
+      method: 'POST',
+      headers: {
+        Authorization: 'Bearer ' + session.access_token,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ invoice_id: invoiceId }),
+    });
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.error || 'HTTP ' + r.status);
+    showToast('Remboursement effectue');
+    if (typeof loadInvoices === 'function') await loadInvoices();
+    closeMsg();
+  } catch (e) {
+    _invErr('remboursement', e);
+  }
 }
 
 async function confirmSendInvoiceEmail(id) {
@@ -1122,3 +1233,6 @@ window._buildInvoicePDF = _buildInvoicePDF;
 window.exportInvoicesZipFiscalYear = exportInvoicesZipFiscalYear;
 window.showExportZipFiscalYearModal = showExportZipFiscalYearModal;
 window.exportComptableCSV = exportComptableCSV;
+window.enableStripePayment = enableStripePayment;
+window.viewStripePaymentLink = viewStripePaymentLink;
+window.refundStripeInvoice = refundStripeInvoice;
