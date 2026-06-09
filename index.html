@@ -9,9 +9,9 @@
   window.__isPasswordRecovery = h.indexOf('type=recovery') !== -1;
   window.__recoveryHash = h;
 })();
-window.APP_VERSION = '9.61';
+window.APP_VERSION = '9.62';
 </script>
-<script src="sentry-init.min.js?v=b80eaed"></script>
+<script src="sentry-init.min.js?v=759d31d"></script>
 <script
   src="https://js-de.sentry-cdn.com/31e75ef323023d261664bb70d163fdb1.min.js"
   crossorigin="anonymous"
@@ -71,28 +71,28 @@ window.APP_VERSION = '9.61';
 </script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.101.0/dist/umd/supabase.min.js" integrity="sha384-HS/sUFZexXk91zcjy7zGIBg3tNDxgxF8YbcifixByxxtxQoF2o8GBBT9p6DdGlAR" crossorigin="anonymous"></script>
 <script src="supabase_config.js?v=76fd30b"></script>
-<script src="i18n.min.js?v=50d13a7"></script>
-<script src="ical_parser.min.js?v=5a5a0cc"></script>
-<script src="helpers.min.js?v=d5bc757"></script>
-<script src="api_bridge.min.js?v=05bceb8"></script>
-<script src="vacation.min.js?v=89f6e44"></script>
-<script src="push.min.js?v=38964ab"></script>
-<script src="legal.min.js?v=9f12514"></script>
-<script src="quotes.min.js?v=1dbc197"></script>
-<script src="search.min.js?v=aa036e8"></script>
-<script src="tenant.min.js?v=437170f"></script>
-<script src="auto-billing.min.js?v=d7846d8"></script>
-<script src="invoices.min.js?v=03d6903"></script>
-<script src="invoice-create.min.js?v=251c555"></script>
-<script src="auth.min.js?v=4408b58"></script>
-<script src="provider.min.js?v=c9ac690"></script>
-<script src="owner.min.js?v=7cd624b"></script>
-<script src="marketplace.min.js?v=befe28f"></script>
-<script src="properties.min.js?v=ecbc58a"></script>
-<script src="dashboard.min.js?v=8962c60"></script>
-<script src="admin-prestations.min.js?v=127c146"></script>
-<script src="account.min.js?v=7994db4"></script>
-<script src="admin-sentry.min.js?v=5528aaf"></script>
+<script src="i18n.min.js?v=e16c908"></script>
+<script src="ical_parser.min.js?v=2a790e6"></script>
+<script src="helpers.min.js?v=8bb5604"></script>
+<script src="api_bridge.min.js?v=88096bf"></script>
+<script src="vacation.min.js?v=b2e3eb5"></script>
+<script src="push.min.js?v=c5f5981"></script>
+<script src="legal.min.js?v=81bb683"></script>
+<script src="quotes.min.js?v=1035b7b"></script>
+<script src="search.min.js?v=a7bd25c"></script>
+<script src="tenant.min.js?v=efbc744"></script>
+<script src="auto-billing.min.js?v=1ad593f"></script>
+<script src="invoices.min.js?v=1c6ac7a"></script>
+<script src="invoice-create.min.js?v=d9a943d"></script>
+<script src="auth.min.js?v=e652953"></script>
+<script src="provider.min.js?v=1884be9"></script>
+<script src="owner.min.js?v=f805e62"></script>
+<script src="marketplace.min.js?v=e9036cf"></script>
+<script src="properties.min.js?v=26d7caf"></script>
+<script src="dashboard.min.js?v=7e3b7e9"></script>
+<script src="admin-prestations.min.js?v=3446dc3"></script>
+<script src="account.min.js?v=a9dc308"></script>
+<script src="admin-sentry.min.js?v=2302bea"></script>
 <!-- Lazy-loaded: Leaflet, Chart.js, jsPDF (loaded on demand to improve startup) -->
 <script>
 function lazyLoad(url, type) {
@@ -150,7 +150,7 @@ async function loadPDF() {
 </script>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v9.61</div>
+<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v9.62</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -160,7 +160,7 @@ async function loadPDF() {
     <!-- Broom that sweeps -->
     <div id="splashBroom" style="position:absolute;top:50%;left:-60px;font-size:48px;transform:translateY(-50%) rotate(-30deg);opacity:0;transition:all 0.8s cubic-bezier(0.25,0.46,0.45,0.94);">✨</div>
   </div>
-  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v9.61</span></div>
+  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v9.62</span></div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie pour locations</div>
   <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou</div>
   <!-- Loading bar -->
@@ -1612,6 +1612,10 @@ function getStatusLabel(s) { return (STATUS_CONFIG[s] || {}).label || s || ''; }
 // ── Splash Changelog (update this with each significant version) ──
 // Full versioned changelog — add new entries at TOP
 const VERSION_CHANGELOG = [
+  { v: '9.62', changes: [
+    'Fix vrai root cause LOKIZIO-5 : retire esbuild keepNames du build pipeline. keepNames injectait un shim "var i=Object.defineProperty; var a=(o,e)=>i(o,name,{value:e,configurable:true})" en tete de chaque .min.js, qui plantait avec "Property description must be an object: undefined" quand un anti-virus (Kaspersky vu en CSP error) ou une extension Chrome monkey-patche Object.defineProperty. Suppression de keepNames = fin du shim = bug corrige. Fonctions top-level gardent quand meme leur nom (minifyIdentifiers:false), juste les fonctions anonymes ne portent plus de .name (impact cosmetique zero).',
+    'Le v9.61 fix hoist des let (invoices.js, marketplace.js) etait une fausse piste — preventif quand meme, garde a long terme.'
+  ] },
   { v: '9.61', changes: [
     'Audit Lokizio deep-code-analysis (workflow 33 agents) : 14 bugs confirmes (0 critical, 8 serious, 1 minor) fixes en sprint groupe.',
     'Fix invoices.js : 5 toasts "Erreur" muets remplaces par helper _invErr(label, e) qui prepende le contexte + log console.error. sendInvoiceReminder, showInvoiceDetail, showInvoiceFullView, showInvoicePrestationDetail, sendInvoiceByEmail.',

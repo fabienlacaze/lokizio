@@ -86,9 +86,17 @@ for (const src of SOURCES) {
     continue;
   }
 
-  // esbuild minify — keep all top-level names accessible (they're used as
-  // window-global functions and consts across files). Without keepNames,
-  // esbuild renames `function showFoo` → `function p` and breaks the app.
+  // esbuild minify — keep top-level identifiers (minifyIdentifiers:false)
+  // so window.X exports keep working without us touching them.
+  //
+  // We intentionally DO NOT use keepNames:true because it injects a
+  //   var X = (o,e) => Object.defineProperty(o, "name", {value:e,configurable:true})
+  // shim at the top of every .min.js. In some Chrome environments (AV like
+  // Kaspersky monkey-patches Object.defineProperty, or browser extensions),
+  // that shim throws "Property description must be an object: undefined" at
+  // load time, breaking the whole module (LOKIZIO-5). Anonymous function
+  // names aren't worth that risk — stack traces just show `(anonymous)`,
+  // which is fine.
   await build({
     entryPoints: [srcPath],
     outfile: minPath,
@@ -96,7 +104,7 @@ for (const src of SOURCES) {
     sourcemap: true,
     target: 'es2020',
     bundle: false,
-    keepNames: true,
+    keepNames: false,             // see comment above
     minifyIdentifiers: false,     // don't rename top-level identifiers
     legalComments: 'none',
     logLevel: 'silent',
