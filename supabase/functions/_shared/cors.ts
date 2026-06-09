@@ -15,6 +15,13 @@ function getAllowedOrigins(): string[] {
   if (env === 'dev' || env === 'development' || env === 'test') {
     return [...PROD_ORIGINS, ...DEV_ORIGINS];
   }
+  // Auto-detect Stripe test mode: if STRIPE_SECRET_KEY starts with sk_test_,
+  // localhost is fine — we're not handling real money. requireAuth still gates
+  // every call by JWT, so this isn't an open door.
+  const stripeKey = Deno.env.get('STRIPE_SECRET_KEY') || '';
+  if (stripeKey.startsWith('sk_test_')) {
+    return [...PROD_ORIGINS, ...DEV_ORIGINS];
+  }
   return PROD_ORIGINS;
 }
 
