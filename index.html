@@ -9,7 +9,7 @@
   window.__isPasswordRecovery = h.indexOf('type=recovery') !== -1;
   window.__recoveryHash = h;
 })();
-window.APP_VERSION = '9.80';
+window.APP_VERSION = '9.81';
 </script>
 <script src="sentry-init.min.js?v=759d31d"></script>
 <script
@@ -87,7 +87,7 @@ window.APP_VERSION = '9.80';
 <script src="auth.min.js?v=e652953"></script>
 <script src="provider.min.js?v=1884be9"></script>
 <script src="owner.min.js?v=f805e62"></script>
-<script src="marketplace.min.js?v=b774707"></script>
+<script src="marketplace.min.js?v=2b602a0"></script>
 <script src="properties.min.js?v=26d7caf"></script>
 <script src="dashboard.min.js?v=786f765"></script>
 <script src="admin-prestations.min.js?v=37fdf8b"></script>
@@ -97,7 +97,7 @@ window.APP_VERSION = '9.80';
 <script src="admin-stripe.min.js?v=de579c5"></script>
 <script src="feedback-widget.min.js?v=216011f"></script>
 <script src="admin-dev-tools.min.js?v=a12579e"></script>
-<script src="admin-compliance.min.js?v=7227659"></script>
+<script src="admin-compliance.min.js?v=987282f"></script>
 <script src="photo-consent.min.js?v=1dc9f6d"></script>
 <script src="analytics-init.min.js?v=45f7d2a"></script>
 <!-- Lazy-loaded: Leaflet, Chart.js, jsPDF (loaded on demand to improve startup) -->
@@ -157,7 +157,7 @@ async function loadPDF() {
 </script>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v9.80</div>
+<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v9.81</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -167,7 +167,7 @@ async function loadPDF() {
     <!-- Broom that sweeps -->
     <div id="splashBroom" style="position:absolute;top:50%;left:-60px;font-size:48px;transform:translateY(-50%) rotate(-30deg);opacity:0;transition:all 0.8s cubic-bezier(0.25,0.46,0.45,0.94);">✨</div>
   </div>
-  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v9.80</span></div>
+  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v9.81</span></div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie pour locations</div>
   <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou</div>
   <!-- Loading bar -->
@@ -1027,6 +1027,14 @@ async function loadPDF() {
         <span>&#11088; Moderation des avis (Reviews)</span>
         <span style="color:var(--text3);">&#8250;</span>
       </button>
+      <button class="btn btnOutline" style="padding:12px 14px;font-size:13px;text-align:left;display:flex;justify-content:space-between;align-items:center;width:100%;margin-top:6px;" onclick="closeAccountModal();showKycValidationQueue()">
+        <span>&#127919; Validation KYC prestataires</span>
+        <span style="color:var(--text3);">&#8250;</span>
+      </button>
+      <button class="btn btnOutline" style="padding:12px 14px;font-size:13px;text-align:left;display:flex;justify-content:space-between;align-items:center;width:100%;margin-top:6px;" onclick="closeAccountModal();showAmlAlertsDashboard()">
+        <span>&#128683; Alertes AML / TRACFIN</span>
+        <span style="color:var(--text3);">&#8250;</span>
+      </button>
     </div>
     <label style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:1px;display:block;margin-top:8px;margin-bottom:4px;">APP</label>
     <!-- Theme + Language -->
@@ -1141,6 +1149,11 @@ async function loadPDF() {
       <!-- Mes avis recus (Sprint 3B) -->
       <div style="margin-top:8px;">
         <button class="btn btnOutline" style="width:100%;padding:12px;font-size:13px;" onclick="showMyReviewsReceived()">&#11088; Mes avis recus</button>
+      </div>
+
+      <!-- Activation prestataire KYC (Sprint 3C) -->
+      <div style="margin-top:8px;">
+        <button class="btn btnOutline" style="width:100%;padding:12px;font-size:13px;" onclick="showProviderKycDashboard()">&#127919; Activation prestataire — KYC Lokizio</button>
       </div>
 
       <!-- Stripe Connect Embedded Components (Phase 2 Beta) -->
@@ -1664,6 +1677,20 @@ function getStatusLabel(s) { return (STATUS_CONFIG[s] || {}).label || s || ''; }
 // ── Splash Changelog (update this with each significant version) ──
 // Full versioned changelog — add new entries at TOP
 const VERSION_CHANGELOG = [
+  { v: '9.81', changes: [
+    'Sprint 3C + 3D complet — KYC metier + AML monitoring TRACFIN.',
+    'KYC metier (3C): table provider_kyc_documents (RC Pro + SIRET + identite, upload Storage bucket prive 10MB max), table provider_charter_signatures (signature electronique avec IP+UA), colonne members.lokizio_kyc_status. Storage bucket kyc-documents avec RLS user folder + super_admin read all.',
+    'EF submit-kyc-document: persiste meta apres upload Storage, recalcule auto le kyc_status (incomplete -> pending_review si 3 docs + charte signee).',
+    'EF sign-provider-charter: signature electronique avec IP/UA pour non-repudiation. Charter v1.0.',
+    'Module provider-kyc.js: dashboard prestataire (statut + 3 boutons upload + lecture charte + signature). Visible via Mon profil personnel > "Activation prestataire - KYC Lokizio".',
+    'admin-compliance: queue super_admin pour valider/refuser chaque doc + KYC global. Visualisation des docs via Signed URL Storage 5min.',
+    'Annuaire marketplace: badge "Verifie" (vert &check;) affiche si user.lokizio_kyc_status=validated. Tooltip: SIRET + RC Pro + identite + charte signee.',
+    'Page publique /provider-charter.html: charte complete versionnee.',
+    'AML monitoring (3D): table aml_alerts + view aml_30day_volume_per_user. EF aml-scan detecte: threshold_30d >7500EUR (seuil TRACFIN), fragmentation (10+ tx <750EUR sur 24h), self_billing (createur facture = client_email member meme org).',
+    'Cron pg_cron "aml-daily-scan" toutes les nuits a 3h avec CRON_TOKEN bearer auth. Pas de cout (free tier Supabase).',
+    'admin-compliance: dashboard "Alertes AML / TRACFIN" avec actions Rejeter / Examinee / Declarer TRACFIN (+ ref optionnelle). Bouton "Scanner maintenant" pour declenchement manuel.',
+    'Boutons UI ajoutes section ADMIN: Validation KYC prestataires + Alertes AML/TRACFIN.'
+  ] },
   { v: '9.80', changes: [
     'Sprint 3B complet: systeme de notation/avis prestataire avec verification cryptographique.',
     'Table reviews (rating 1-5 + comment + status published/hidden/flagged + UNIQUE par invoice) + view provider_review_stats agregate (avg + count + repartition). RLS: public read si published, provider read own, super_admin manage.',
@@ -1750,7 +1777,7 @@ const VERSION_CHANGELOG = [
     'Ready pour test utilisateur end-to-end Stripe Connect Embedded.'
   ] },
   { v: '9.70', changes: [
-    'Fix 3 findings serieux issus du workflow d\'adversarial review du sprint Stripe Connect v9.80 (workflow wmlemqp4r).',
+    'Fix 3 findings serieux issus du workflow d\'adversarial review du sprint Stripe Connect v9.81 (workflow wmlemqp4r).',
     'Fix CORS cors.ts: retire le hack sk_test_ auto-allow (CORS doit dependre de ENV explicite, pas d\'un prefixe de cle Stripe). Set ENV=dev sur Supabase prod tant qu\'on est en mode test. A retirer quand on passera en live.',
     'Fix stripe-admin-stats: ajout error handling sur le check super_admin (sinon une erreur DB silencieuse bypasse l\'authorization).',
     'Fix stripe-connect-embed.js: fetchClientSecret appelle maintenant stripe-connect-link pour refresh le client_secret apres expiration de 5 min. Avant, le formulaire devenait silencieusement mort apres 5 min.',

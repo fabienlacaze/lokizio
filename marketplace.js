@@ -517,8 +517,22 @@ async function renderAnnuaireTab() {
             }
           });
         }
+
+        // Sprint 3C: KYC status — flag p.kyc_verified = true if user is validated.
+        // Read from members table. Multiple members per user (cross-org) — any
+        // 'validated' row counts.
+        const { data: kycRows } = await sb.from('members')
+          .select('user_id, lokizio_kyc_status')
+          .in('user_id', userIds)
+          .eq('lokizio_kyc_status', 'validated');
+        if (kycRows && kycRows.length) {
+          const kycSet = new Set(kycRows.map(k => k.user_id));
+          _annuaireProfiles.forEach(p => {
+            if (p.user_id && kycSet.has(p.user_id)) p.kyc_verified = true;
+          });
+        }
       }
-    } catch (e) { console.warn('[marketplace] review stats load:', e); /* non-blocking */ }
+    } catch (e) { console.warn('[marketplace] enrichment load:', e); /* non-blocking */ }
     // Also add org members not on marketplace
     const org = API.getOrg();
     if (org) {
@@ -772,7 +786,7 @@ async function renderAnnuaireResults(profiles) {
     // Name + badges
     html += '<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:3px;">';
     html += '<span style="font-weight:700;font-size:14px;color:var(--text);">' + _escHtml(name) + '</span>';
-    if (p.verified) html += '<span title="Verifie" style="color:#34d399;font-size:13px;font-weight:700;">&#10003;</span>';
+    if (p.verified || p.kyc_verified) html += '<span title="' + (p.kyc_verified ? 'KYC valide par Lokizio (SIRET + RC Pro + identite + charte signee)' : 'Verifie') + '" style="color:#34d399;font-size:13px;font-weight:700;">&#10003;</span>';
     html += '<span style="font-size:10px;padding:2px 7px;border-radius:10px;background:' + color + ';color:#fff;font-weight:600;">' + label + '</span>';
     if (isNew) html += '<span style="font-size:10px;padding:2px 7px;border-radius:10px;background:linear-gradient(135deg,#6c63ff,#a855f7);color:#fff;font-weight:600;">Nouveau</span>';
     html += '</div>';

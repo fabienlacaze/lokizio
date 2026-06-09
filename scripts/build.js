@@ -55,6 +55,7 @@ const SOURCES = [
   'admin-dev-tools.js',
   'admin-compliance.js',
   'photo-consent.js',
+  'provider-kyc.js',
   'analytics-init.js',
 ];
 

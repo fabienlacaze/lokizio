@@ -383,10 +383,223 @@
     }
   }
 
+  // ═══════════════════════════════════════════════════════════════
+  // 7. KYC validation queue (Sprint 3C — super_admin)
+  // ═══════════════════════════════════════════════════════════════
+  async function showKycValidationQueue() {
+    try {
+      const { data: members, error } = await sb.from('members')
+        .select('id, user_id, display_name, invited_email, role, lokizio_kyc_status, lokizio_kyc_validated_at')
+        .in('lokizio_kyc_status', ['pending_review', 'validated', 'refused'])
+        .order('lokizio_kyc_status').limit(80);
+      if (error) throw error;
+      let html = '<div style="padding:6px;max-width:680px;width:90vw;max-height:84vh;overflow:auto;">';
+      html += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">';
+      html += '<div style="font-size:16px;font-weight:700;color:var(--accent);">&#127919; Validation KYC prestataires</div>';
+      html += '<button class="btn btnSmall btnOutline" style="padding:6px 12px;font-size:11px;" onclick="closeMsg()">Fermer</button>';
+      html += '</div>';
+      if (!members || !members.length) {
+        html += '<div style="text-align:center;padding:30px;color:var(--text3);">Aucun dossier KYC en cours.</div>';
+      } else {
+        members.forEach(m => {
+          const sCol = m.lokizio_kyc_status === 'validated' ? '#34d399' : m.lokizio_kyc_status === 'refused' ? '#ef4444' : '#f59e0b';
+          html += '<div style="padding:12px;margin-bottom:8px;background:var(--surface2);border-left:3px solid ' + sCol + ';border-radius:6px;">';
+          html += '<div style="display:flex;align-items:center;gap:10px;">';
+          html += '<div style="flex:1;">';
+          html += '<div style="font-size:13px;font-weight:700;color:var(--text);">' + esc(m.display_name || 'Sans nom') + ' <span style="font-size:10px;color:var(--text3);font-weight:400;">[' + esc(m.role || '?') + ']</span></div>';
+          html += '<div style="font-size:11px;color:var(--text3);">' + esc(m.invited_email || '') + '</div>';
+          html += '</div>';
+          html += '<span style="font-size:9px;padding:3px 8px;border-radius:10px;background:' + sCol + ';color:#fff;text-transform:uppercase;">' + m.lokizio_kyc_status + '</span>';
+          html += '</div>';
+          html += '<button class="btn btnSmall btnOutline" style="margin-top:8px;padding:5px 10px;font-size:10px;" onclick="window._kycReview(\'' + m.user_id + '\')">Examiner les documents</button>';
+          html += '</div>';
+        });
+      }
+      html += '</div>';
+      showMsg(html, true);
+    } catch (e) { showToast('Erreur: ' + (e.message || e)); }
+  }
+
+  window._kycReview = async function (userId) {
+    try {
+      const { data: docs, error } = await sb.from('provider_kyc_documents')
+        .select('*').eq('user_id', userId).order('document_type');
+      if (error) throw error;
+      const { data: sig } = await sb.from('provider_charter_signatures')
+        .select('charter_version, signed_at, ip').eq('user_id', userId).is('revoked_at', null).order('signed_at', { ascending: false }).limit(1).maybeSingle();
+      let html = '<div style="padding:6px;max-width:580px;width:90vw;max-height:84vh;overflow:auto;">';
+      html += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">';
+      html += '<div style="font-size:14px;font-weight:700;color:var(--accent);">Documents KYC de l\'utilisateur</div>';
+      html += '<button class="btn btnSmall btnOutline" style="padding:6px 12px;font-size:11px;" onclick="closeMsg()">Fermer</button>';
+      html += '</div>';
+      if (!docs || !docs.length) {
+        html += '<div style="color:var(--text3);font-size:12px;">Aucun document uploade.</div>';
+      } else {
+        for (const d of docs) {
+          html += '<div style="padding:10px;margin-bottom:6px;background:var(--surface2);border-radius:6px;">';
+          html += '<div style="font-size:11px;font-weight:700;color:var(--text);">' + esc(d.document_type) + ' <span style="font-size:9px;color:var(--text3);font-weight:400;">' + esc(d.original_filename || '') + '</span></div>';
+          html += '<div style="font-size:10px;color:var(--text3);margin-top:2px;">' + Math.round((d.file_size_bytes || 0) / 1024) + ' KB &middot; ' + new Date(d.uploaded_at).toLocaleString('fr-FR') + '</div>';
+          html += '<div style="margin-top:6px;display:flex;gap:6px;flex-wrap:wrap;">';
+          html += '<button class="btn btnSmall btnPrimary" style="padding:5px 10px;font-size:10px;" onclick="window._kycViewDoc(\'' + esc(d.storage_path) + '\')">Voir le doc</button>';
+          if (d.validation_status === 'pending') {
+            html += '<button class="btn btnSmall btnSuccess" style="padding:5px 10px;font-size:10px;" onclick="window._kycValidateDoc(\'' + d.id + '\',\'validated\')">&#10003; Valider</button>';
+            html += '<button class="btn btnSmall" style="padding:5px 10px;font-size:10px;background:#ef4444;color:#fff;border:none;" onclick="window._kycValidateDoc(\'' + d.id + '\',\'refused\')">&#10007; Refuser</button>';
+          } else {
+            html += '<span style="font-size:10px;color:' + (d.validation_status === 'validated' ? '#34d399' : '#ef4444') + ';">' + d.validation_status + '</span>';
+          }
+          html += '</div></div>';
+        }
+      }
+      if (sig) {
+        html += '<div style="margin-top:12px;padding:10px;background:rgba(52,211,153,0.10);border-radius:6px;">';
+        html += '<div style="font-size:11px;color:#065f46;font-weight:700;">&#10003; Charte ' + esc(sig.charter_version) + ' signee</div>';
+        html += '<div style="font-size:10px;color:var(--text3);">le ' + new Date(sig.signed_at).toLocaleString('fr-FR') + ' depuis IP ' + esc(sig.ip || '?') + '</div>';
+        html += '</div>';
+      } else {
+        html += '<div style="margin-top:12px;padding:10px;background:rgba(245,158,11,0.10);border-radius:6px;font-size:11px;color:#92400e;">&#9888; Charte non signee.</div>';
+      }
+      html += '<div style="display:flex;gap:8px;margin-top:14px;">';
+      html += '<button class="btn btnSuccess" style="flex:1;padding:10px;font-size:12px;" onclick="window._kycFinalize(\'' + userId + '\',\'validated\')">Valider le KYC global</button>';
+      html += '<button class="btn" style="flex:1;padding:10px;font-size:12px;background:#ef4444;color:#fff;border:none;" onclick="window._kycFinalize(\'' + userId + '\',\'refused\')">Refuser le KYC global</button>';
+      html += '</div>';
+      html += '</div>';
+      showMsg(html, true);
+    } catch (e) { showToast('Erreur: ' + (e.message || e)); }
+  };
+
+  window._kycViewDoc = async function (path) {
+    try {
+      const { data, error } = await sb.storage.from('kyc-documents').createSignedUrl(path, 300); // 5 min
+      if (error) throw error;
+      window.open(data.signedUrl, '_blank', 'noopener');
+    } catch (e) { showToast('Erreur ouverture: ' + (e.message || e)); }
+  };
+
+  window._kycValidateDoc = async function (docId, newStatus) {
+    try {
+      const { data: { user } } = await sb.auth.getUser();
+      let reason = null;
+      if (newStatus === 'refused') {
+        reason = prompt('Motif de refus (visible par le prestataire):');
+        if (!reason) return;
+      }
+      const { error } = await sb.from('provider_kyc_documents').update({
+        validation_status: newStatus,
+        validated_at: new Date().toISOString(),
+        validated_by: user?.id || null,
+        refusal_reason: reason,
+      }).eq('id', docId);
+      if (error) throw error;
+      showToast('Document ' + newStatus);
+    } catch (e) { showToast('Erreur: ' + (e.message || e)); }
+  };
+
+  window._kycFinalize = async function (userId, status) {
+    try {
+      const { data: { user } } = await sb.auth.getUser();
+      let reason = null;
+      if (status === 'refused') {
+        reason = prompt('Motif de refus global (sera visible par le prestataire):');
+        if (!reason) return;
+      }
+      const { error } = await sb.from('members').update({
+        lokizio_kyc_status: status,
+        lokizio_kyc_validated_at: new Date().toISOString(),
+        lokizio_kyc_validated_by: user?.id || null,
+        lokizio_kyc_refusal_reason: reason,
+      }).eq('user_id', userId);
+      if (error) throw error;
+      showToast('KYC ' + status);
+      setTimeout(showKycValidationQueue, 600);
+    } catch (e) { showToast('Erreur: ' + (e.message || e)); }
+  };
+
+  // ═══════════════════════════════════════════════════════════════
+  // 8. AML monitoring dashboard (Sprint 3D — super_admin)
+  // ═══════════════════════════════════════════════════════════════
+  async function showAmlAlertsDashboard() {
+    try {
+      const { data: rows, error } = await sb.from('aml_alerts')
+        .select('*').order('created_at', { ascending: false }).limit(80);
+      if (error) throw error;
+      let html = '<div style="padding:6px;max-width:680px;width:90vw;max-height:84vh;overflow:auto;">';
+      html += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">';
+      html += '<div style="font-size:16px;font-weight:700;color:var(--accent);">&#128683; Alertes AML / TRACFIN</div>';
+      html += '<div style="display:flex;gap:6px;">';
+      html += '<button class="btn btnSmall btnPrimary" style="padding:6px 12px;font-size:11px;" onclick="window._amlRunScan()">Scanner maintenant</button>';
+      html += '<button class="btn btnSmall btnOutline" style="padding:6px 12px;font-size:11px;" onclick="closeMsg()">Fermer</button>';
+      html += '</div></div>';
+      html += '<div style="font-size:11px;color:var(--text3);padding:10px;background:rgba(245,158,11,0.10);border-radius:8px;line-height:1.5;margin-bottom:14px;">Seuil TRACFIN : 7500 EUR cumules sur 30j. Toute alerte critique necessite une analyse + eventuelle declaration TRACFIN sous 30j.</div>';
+      if (!rows || !rows.length) {
+        html += '<div style="text-align:center;padding:30px;color:var(--text3);font-size:12px;">Aucune alerte. (C\'est bien.)</div>';
+      } else {
+        rows.forEach(r => {
+          const sevColor = r.severity === 'critical' ? '#dc2626' : (r.severity === 'high' ? '#f59e0b' : (r.severity === 'medium' ? '#6c63ff' : '#34d399'));
+          const stColor = r.status === 'open' ? '#f59e0b' : (r.status === 'tracfin_reported' ? '#dc2626' : '#34d399');
+          html += '<div style="padding:10px 12px;margin-bottom:8px;background:var(--surface2);border-left:3px solid ' + sevColor + ';border-radius:6px;">';
+          html += '<div style="display:flex;align-items:center;gap:8px;font-size:12px;flex-wrap:wrap;">';
+          html += '<span style="font-size:9px;padding:2px 7px;border-radius:10px;background:' + sevColor + ';color:#fff;text-transform:uppercase;">' + r.severity + '</span>';
+          html += '<span style="font-weight:700;color:var(--text);">' + esc(r.alert_type) + '</span>';
+          html += '<span style="font-size:9px;padding:2px 7px;border-radius:10px;background:' + stColor + ';color:#fff;">' + r.status + '</span>';
+          html += '<span style="margin-left:auto;font-size:10px;color:var(--text3);">' + new Date(r.created_at).toLocaleString('fr-FR') + '</span>';
+          html += '</div>';
+          html += '<div style="font-size:11px;color:var(--text2);margin-top:6px;font-family:monospace;">' + esc(JSON.stringify(r.details || {})).slice(0, 200) + '</div>';
+          if (r.status === 'open') {
+            html += '<div style="display:flex;gap:6px;margin-top:8px;">';
+            html += '<button class="btn btnSmall btnSuccess" style="padding:5px 10px;font-size:10px;" onclick="window._amlUpdate(\'' + r.id + '\',\'dismissed\')">Rejeter</button>';
+            html += '<button class="btn btnSmall btnOutline" style="padding:5px 10px;font-size:10px;" onclick="window._amlUpdate(\'' + r.id + '\',\'reviewed\')">Marquer examinee</button>';
+            html += '<button class="btn btnSmall" style="padding:5px 10px;font-size:10px;background:#dc2626;color:#fff;border:none;" onclick="window._amlUpdate(\'' + r.id + '\',\'tracfin_reported\')">Declarer TRACFIN</button>';
+            html += '</div>';
+          }
+          html += '</div>';
+        });
+      }
+      html += '</div>';
+      showMsg(html, true);
+    } catch (e) { showToast('Erreur: ' + (e.message || e)); }
+  }
+
+  window._amlRunScan = async function () {
+    try {
+      showToast('Scan en cours...');
+      const session = (await sb.auth.getSession()).data.session;
+      const r = await fetch(SUPABASE_URL + '/functions/v1/aml-scan', {
+        method: 'POST',
+        headers: { Authorization: 'Bearer ' + session.access_token, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ trigger: 'manual' }),
+      });
+      const data = await r.json();
+      if (!r.ok) throw new Error(data.error || 'HTTP ' + r.status);
+      showToast('Scan termine. ' + (data.new_alerts || 0) + ' nouvelle(s) alerte(s).');
+      setTimeout(showAmlAlertsDashboard, 600);
+    } catch (e) { showToast('Erreur scan: ' + (e.message || e)); }
+  };
+
+  window._amlUpdate = async function (id, newStatus) {
+    try {
+      const { data: { user } } = await sb.auth.getUser();
+      let ref = null;
+      if (newStatus === 'tracfin_reported') {
+        ref = prompt('Reference TRACFIN (optionnel):');
+      }
+      const { error } = await sb.from('aml_alerts').update({
+        status: newStatus,
+        reviewed_by: user?.id || null,
+        reviewed_at: new Date().toISOString(),
+        tracfin_reference: ref || null,
+      }).eq('id', id);
+      if (error) throw error;
+      showToast('Alerte: ' + newStatus);
+      setTimeout(showAmlAlertsDashboard, 400);
+    } catch (e) { showToast('Erreur: ' + (e.message || e)); }
+  };
+
   window.showAppSettingsEditor = showAppSettingsEditor;
   window.showProcessingRegister = showProcessingRegister;
   window.showSecurityIncidentsLog = showSecurityIncidentsLog;
   window.showModerationDashboard = showModerationDashboard;
   window.showReviewsModeration = showReviewsModeration;
   window.showMyReviewsReceived = showMyReviewsReceived;
+  window.showKycValidationQueue = showKycValidationQueue;
+  window.showAmlAlertsDashboard = showAmlAlertsDashboard;
 })();
