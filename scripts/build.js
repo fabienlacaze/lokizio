@@ -53,6 +53,8 @@ const SOURCES = [
   'admin-stripe.js',
   'feedback-widget.js',
   'admin-dev-tools.js',
+  'admin-compliance.js',
+  'photo-consent.js',
   'analytics-init.js',
 ];
 

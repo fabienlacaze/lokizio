@@ -9,7 +9,7 @@
   window.__isPasswordRecovery = h.indexOf('type=recovery') !== -1;
   window.__recoveryHash = h;
 })();
-window.APP_VERSION = '9.75';
+window.APP_VERSION = '9.76';
 </script>
 <script src="sentry-init.min.js?v=759d31d"></script>
 <script
@@ -97,6 +97,8 @@ window.APP_VERSION = '9.75';
 <script src="admin-stripe.min.js?v=de579c5"></script>
 <script src="feedback-widget.min.js?v=216011f"></script>
 <script src="admin-dev-tools.min.js?v=a12579e"></script>
+<script src="admin-compliance.min.js?v=6a5b64c"></script>
+<script src="photo-consent.min.js?v=1dc9f6d"></script>
 <script src="analytics-init.min.js?v=45f7d2a"></script>
 <!-- Lazy-loaded: Leaflet, Chart.js, jsPDF (loaded on demand to improve startup) -->
 <script>
@@ -155,7 +157,7 @@ async function loadPDF() {
 </script>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v9.75</div>
+<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v9.76</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -165,7 +167,7 @@ async function loadPDF() {
     <!-- Broom that sweeps -->
     <div id="splashBroom" style="position:absolute;top:50%;left:-60px;font-size:48px;transform:translateY(-50%) rotate(-30deg);opacity:0;transition:all 0.8s cubic-bezier(0.25,0.46,0.45,0.94);">✨</div>
   </div>
-  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v9.75</span></div>
+  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v9.76</span></div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie pour locations</div>
   <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou</div>
   <!-- Loading bar -->
@@ -1005,6 +1007,22 @@ async function loadPDF() {
         <span>&#129529; Dev Tools — Seed / Reset / Audit log</span>
         <span style="color:var(--text3);">&#8250;</span>
       </button>
+      <button class="btn btnOutline" style="padding:12px 14px;font-size:13px;text-align:left;display:flex;justify-content:space-between;align-items:center;width:100%;margin-top:6px;" onclick="closeAccountModal();showAppSettingsEditor()">
+        <span>&#9881; Parametres legaux (mentions, DPO, mediateur...)</span>
+        <span style="color:var(--text3);">&#8250;</span>
+      </button>
+      <button class="btn btnOutline" style="padding:12px 14px;font-size:13px;text-align:left;display:flex;justify-content:space-between;align-items:center;width:100%;margin-top:6px;" onclick="closeAccountModal();showProcessingRegister()">
+        <span>&#128218; Registre des traitements RGPD (art. 30)</span>
+        <span style="color:var(--text3);">&#8250;</span>
+      </button>
+      <button class="btn btnOutline" style="padding:12px 14px;font-size:13px;text-align:left;display:flex;justify-content:space-between;align-items:center;width:100%;margin-top:6px;" onclick="closeAccountModal();showSecurityIncidentsLog()">
+        <span>&#9888; Incidents securite (breach CNIL 72h)</span>
+        <span style="color:var(--text3);">&#8250;</span>
+      </button>
+      <button class="btn btnOutline" style="padding:12px 14px;font-size:13px;text-align:left;display:flex;justify-content:space-between;align-items:center;width:100%;margin-top:6px;" onclick="closeAccountModal();showModerationDashboard()">
+        <span>&#9872; Moderation signalements (DSA art. 16)</span>
+        <span style="color:var(--text3);">&#8250;</span>
+      </button>
     </div>
     <label style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:1px;display:block;margin-top:8px;margin-bottom:4px;">APP</label>
     <!-- Theme + Language -->
@@ -1637,6 +1655,16 @@ function getStatusLabel(s) { return (STATUS_CONFIG[s] || {}).label || s || ''; }
 // ── Splash Changelog (update this with each significant version) ──
 // Full versioned changelog — add new entries at TOP
 const VERSION_CHANGELOG = [
+  { v: '9.76', changes: [
+    'Sprint 2 compliance (tech-only) — 10 actions critiques implementees suite au workflow d audit weh2eytla (57 taches identifiees).',
+    'DB migration compliance-schema.sql: 4 colonnes members (tax_residence_country, tax_id_validated_at, tax_residence_proof_url, birth_date pour DAC7), 8 colonnes app_settings (dpo_email, dsa_contact_email, legal_form_short, hosting_provider, share_capital, rcs_registration, ranking_criteria, breach_process_url), 3 nouvelles tables (data_processing_register RGPD art.30 avec 10 traitements seedes, security_incidents RGPD art.33 breach CNIL 72h, photo_consents RGPD art.6 base consentement).',
+    'Module admin-compliance.js super_admin only: 4 dashboards. Parametres legaux (form editable des [A COMPLETER]: SIRET, DPO, mediateur, hebergeur, capital). Registre des traitements RGPD (10 traitements documentes avec finalite/base/donnees/conservation/transferts/securite). Incidents securite (declaration + suivi notification CNIL). Moderation signalements (DSA art.16 queue avec actions reviewed/actioned/dismissed).',
+    'Module photo-consent.js: requirePhotoConsent(context) avant tout upload photo. Modale RGPD-conforme (texte droits + retrait + duree + destinataires + politique). Persistance dans photo_consents avec policy_version + user_agent. Cache localStorage pour pas redemander a chaque upload.',
+    '4 boutons ajoutes dans Mon compte > section ADMIN: Parametres legaux, Registre traitements, Incidents securite, Moderation signalements.',
+    'Page publique /ranking-criteria.html (DSA art.27 + P2B): criteres de classement annuaire transparents avec poids (50% completude + 25% note + 15% geoloc + 10% anciennete). Garantie aucun paiement n influence le classement.',
+    'BREACH_NOTIFICATION_PROCESS.md a la racine du repo: process complet RGPD art.33 (decouverte > confinement > evaluation > CNIL 72h > notification users > remediation > post-mortem). Documente + audite + versionne.',
+    'A faire (legal, hors scope tech): rediger CGU clause intermediaire DSA, charte prestataire P2B, CGV Stripe Connect, adhesion mediateur conso, validation DPIAs. Necessitent un avocat plateforme.'
+  ] },
   { v: '9.75', changes: [
     'Fix 2 bugs observes par Fabien en test reel.',
     'Bug #1 modale Stripe Connect Embedded tronquee: la classe globale .modal a max-width:480px (app.css) ce qui ecrasait le contenu Stripe (qui a besoin de ~720-820px). Fix: stripe-connect-embed.js force inline max-width: min(900px, 96vw) sur msgModal apres showMsg, padding ajuste, overflow auto. Le formulaire Stripe peut maintenant respirer.',
@@ -1678,7 +1706,7 @@ const VERSION_CHANGELOG = [
     'Ready pour test utilisateur end-to-end Stripe Connect Embedded.'
   ] },
   { v: '9.70', changes: [
-    'Fix 3 findings serieux issus du workflow d\'adversarial review du sprint Stripe Connect v9.75 (workflow wmlemqp4r).',
+    'Fix 3 findings serieux issus du workflow d\'adversarial review du sprint Stripe Connect v9.76 (workflow wmlemqp4r).',
     'Fix CORS cors.ts: retire le hack sk_test_ auto-allow (CORS doit dependre de ENV explicite, pas d\'un prefixe de cle Stripe). Set ENV=dev sur Supabase prod tant qu\'on est en mode test. A retirer quand on passera en live.',
     'Fix stripe-admin-stats: ajout error handling sur le check super_admin (sinon une erreur DB silencieuse bypasse l\'authorization).',
     'Fix stripe-connect-embed.js: fetchClientSecret appelle maintenant stripe-connect-link pour refresh le client_secret apres expiration de 5 min. Avant, le formulaire devenait silencieusement mort apres 5 min.',
