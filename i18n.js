@@ -61,6 +61,8 @@ const I18N = {
     'config.price': 'Tarif',
     'config.add': '+ Ajouter',
     'provider.add.title': 'Ajouter un prestataire',
+    'provider.edit.title': 'Modifier le prestataire',
+    'invoice.generated': 'Facture generee',
 
     // Table headers
     'table.source': 'Source',
@@ -524,6 +526,8 @@ const I18N = {
     'config.price': 'Rate',
     'config.add': '+ Add',
     'provider.add.title': 'Add a provider',
+    'provider.edit.title': 'Edit provider',
+    'invoice.generated': 'Invoice generated',
 
     // Table headers
     'table.source': 'Source',
@@ -949,7 +953,7 @@ const I18N = {
     'header.subtitle': 'Gestion de limpieza', 'section.property': 'Propiedad', 'section.team': 'Equipo de limpieza',
     'section.history': 'Historial y Lavanderia', 'config.ical': 'Calendarios iCal',
     'config.providers': 'Proveedores', 'config.name': 'Nombre', 'config.phone': 'Telefono', 'config.price': 'Tarifa',
-    'config.add': '+ Agregar', 'provider.add.title': 'Agregar proveedor',
+    'config.add': '+ Agregar', 'provider.add.title': 'Agregar proveedor', 'provider.edit.title': 'Editar proveedor', 'invoice.generated': 'Factura generada',
     'generate.btn': 'GENERAR PLANIFICACION', 'generate.refresh': 'Actualizar',
     'generate.loading': 'Generando...', 'generate.success': 'Planificacion generada con exito',
     'results.title': 'Planificacion', 'results.tab.list': 'Lista', 'results.tab.calendar': 'Calendario', 'results.tab.stats': 'Estadisticas',
@@ -1289,7 +1293,7 @@ const I18N = {
     'header.subtitle': 'Gestao de limpeza', 'section.property': 'Propriedade', 'section.team': 'Equipe de limpeza',
     'section.history': 'Historico e Lavanderia', 'config.ical': 'Calendarios iCal',
     'config.providers': 'Fornecedores', 'config.name': 'Nome', 'config.phone': 'Telefone', 'config.price': 'Tarifa',
-    'config.add': '+ Adicionar', 'provider.add.title': 'Adicionar fornecedor',
+    'config.add': '+ Adicionar', 'provider.add.title': 'Adicionar fornecedor', 'provider.edit.title': 'Editar fornecedor', 'invoice.generated': 'Fatura gerada',
     'generate.btn': 'GERAR PLANEJAMENTO', 'generate.refresh': 'Atualizar',
     'generate.loading': 'Gerando...', 'generate.success': 'Planejamento gerado com sucesso',
     'results.title': 'Planejamento', 'results.tab.list': 'Lista', 'results.tab.calendar': 'Calendario', 'results.tab.stats': 'Estatisticas',
@@ -1629,7 +1633,7 @@ const I18N = {
     'header.subtitle': 'Gestione pulizie', 'section.property': 'Proprieta', 'section.team': 'Team pulizie',
     'section.history': 'Storico e Lavanderia', 'config.ical': 'Calendari iCal',
     'config.providers': 'Fornitori', 'config.name': 'Nome', 'config.phone': 'Telefono', 'config.price': 'Tariffa',
-    'config.add': '+ Aggiungi', 'provider.add.title': 'Aggiungi fornitore',
+    'config.add': '+ Aggiungi', 'provider.add.title': 'Aggiungi fornitore', 'provider.edit.title': 'Modifica fornitore', 'invoice.generated': 'Fattura generata',
     'generate.btn': 'GENERA PIANIFICAZIONE', 'generate.refresh': 'Aggiorna',
     'generate.loading': 'Generazione...', 'generate.success': 'Pianificazione generata con successo',
     'results.title': 'Pianificazione', 'results.tab.list': 'Lista', 'results.tab.calendar': 'Calendario', 'results.tab.stats': 'Statistiche',
@@ -1972,7 +1976,7 @@ const I18N = {
     'header.subtitle': 'Reinigungsverwaltung', 'section.property': 'Unterkunft', 'section.team': 'Reinigungsteam',
     'section.history': 'Verlauf und Waescherei', 'config.ical': 'iCal-Kalender',
     'config.providers': 'Dienstleister', 'config.name': 'Name', 'config.phone': 'Telefon', 'config.price': 'Preis',
-    'config.add': '+ Hinzufuegen', 'provider.add.title': 'Dienstleister hinzufuegen',
+    'config.add': '+ Hinzufuegen', 'provider.add.title': 'Dienstleister hinzufuegen', 'provider.edit.title': 'Dienstleister bearbeiten', 'invoice.generated': 'Rechnung generiert',
     'generate.btn': 'PLANUNG ERSTELLEN', 'generate.refresh': 'Aktualisieren',
     'generate.loading': 'Wird erstellt...', 'generate.success': 'Planung erfolgreich erstellt',
     'results.title': 'Planung', 'results.tab.list': 'Liste', 'results.tab.calendar': 'Kalender', 'results.tab.stats': 'Statistiken',
@@ -2314,16 +2318,9 @@ function t(key, params) {
   return str;
 }
 
-function setLangPremium(lang) {
-  // Premium languages require premium plan
-  if (typeof API !== 'undefined' && !API.isPremium()) {
-    if (typeof showPremiumModal === 'function') {
-      showPremiumModal('Les langues supplementaires (ES, PT, IT, DE) sont reservees aux utilisateurs Premium.');
-    }
-    return;
-  }
-  setLang(lang);
-}
+// NOTE: setLangPremium removed in v9.61 — dead code (never called, not exposed
+// on window). Premium-gated language switching is handled by selectLang() in
+// index.html.
 
 function setLang(lang) {
   currentLang = lang;

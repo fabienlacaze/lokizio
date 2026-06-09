@@ -9,7 +9,7 @@
   window.__isPasswordRecovery = h.indexOf('type=recovery') !== -1;
   window.__recoveryHash = h;
 })();
-window.APP_VERSION = '9.60';
+window.APP_VERSION = '9.61';
 </script>
 <script src="sentry-init.min.js?v=b80eaed"></script>
 <script
@@ -71,7 +71,7 @@ window.APP_VERSION = '9.60';
 </script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.101.0/dist/umd/supabase.min.js" integrity="sha384-HS/sUFZexXk91zcjy7zGIBg3tNDxgxF8YbcifixByxxtxQoF2o8GBBT9p6DdGlAR" crossorigin="anonymous"></script>
 <script src="supabase_config.js?v=76fd30b"></script>
-<script src="i18n.min.js?v=744e6cc"></script>
+<script src="i18n.min.js?v=50d13a7"></script>
 <script src="ical_parser.min.js?v=5a5a0cc"></script>
 <script src="helpers.min.js?v=d5bc757"></script>
 <script src="api_bridge.min.js?v=05bceb8"></script>
@@ -82,7 +82,7 @@ window.APP_VERSION = '9.60';
 <script src="search.min.js?v=aa036e8"></script>
 <script src="tenant.min.js?v=437170f"></script>
 <script src="auto-billing.min.js?v=d7846d8"></script>
-<script src="invoices.min.js?v=91406fe"></script>
+<script src="invoices.min.js?v=acfee8f"></script>
 <script src="invoice-create.min.js?v=251c555"></script>
 <script src="auth.min.js?v=4408b58"></script>
 <script src="provider.min.js?v=c9ac690"></script>
@@ -91,7 +91,7 @@ window.APP_VERSION = '9.60';
 <script src="properties.min.js?v=ecbc58a"></script>
 <script src="dashboard.min.js?v=8962c60"></script>
 <script src="admin-prestations.min.js?v=127c146"></script>
-<script src="account.min.js?v=7bc5b6b"></script>
+<script src="account.min.js?v=7994db4"></script>
 <script src="admin-sentry.min.js?v=5528aaf"></script>
 <!-- Lazy-loaded: Leaflet, Chart.js, jsPDF (loaded on demand to improve startup) -->
 <script>
@@ -150,7 +150,7 @@ async function loadPDF() {
 </script>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v9.60</div>
+<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v9.61</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -160,7 +160,7 @@ async function loadPDF() {
     <!-- Broom that sweeps -->
     <div id="splashBroom" style="position:absolute;top:50%;left:-60px;font-size:48px;transform:translateY(-50%) rotate(-30deg);opacity:0;transition:all 0.8s cubic-bezier(0.25,0.46,0.45,0.94);">✨</div>
   </div>
-  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v9.60</span></div>
+  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v9.61</span></div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie pour locations</div>
   <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou</div>
   <!-- Loading bar -->
@@ -1612,6 +1612,13 @@ function getStatusLabel(s) { return (STATUS_CONFIG[s] || {}).label || s || ''; }
 // ── Splash Changelog (update this with each significant version) ──
 // Full versioned changelog — add new entries at TOP
 const VERSION_CHANGELOG = [
+  { v: '9.61', changes: [
+    'Audit Lokizio deep-code-analysis (workflow 33 agents) : 14 bugs confirmes (0 critical, 8 serious, 1 minor) fixes en sprint groupe.',
+    'Fix invoices.js : 5 toasts "Erreur" muets remplaces par helper _invErr(label, e) qui prepende le contexte + log console.error. sendInvoiceReminder, showInvoiceDetail, showInvoiceFullView, showInvoicePrestationDetail, sendInvoiceByEmail.',
+    'Ajout i18n keys manquantes : invoice.generated + provider.edit.title sur 6 langues (fr, en, es, pt, it, de). Plus de cles brutes "provider.edit.title" qui s\'affichaient en UI.',
+    'Fix race clipboard account.js : navigator.clipboard.writeText() maintenant await avant le toast "Message copie", sinon le toast s\'affichait meme si la copie echouait.',
+    'Suppression setLangPremium (i18n.js) : fonction morte, jamais appelee, pas exposee window. La logique premium-gated language est dans selectLang() index.html.'
+  ] },
   { v: '9.60', changes: [
     'Build pipeline esbuild : minification de 23 modules JS (helpers, marketplace, owner, provider, etc). Payload total -23.6% (722 KB -> 552 KB). Source maps pour Sentry. Bundle preserve l\'ordre des scripts (pas de risque sur les globals window). npm run build pour rebuilder.',
     'Dashboard Sentry integre (admin only) : nouvelle Edge Function sentry-issues qui proxy l\'API Sentry avec auth super_admin (token jamais expose au browser). Bouton "Sentry — Erreurs prod" dans Mon compte (visible uniquement pour Fabien). Liste les 20 dernieres issues + detail (stack trace + breadcrumbs) avec lien direct vers Sentry web.'

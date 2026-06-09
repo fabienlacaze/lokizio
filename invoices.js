@@ -2,6 +2,15 @@
 // Depends on: sb, API, esc, fmtDate, safePhotoUrl, safeErr, customConfirm,
 //   showMsg, closeMsg, showToast, loadPDF (lazy), showCreateInvoiceModal,
 //   sendPushToUser (from push.js)
+
+// Centralized error helper: bare "Erreur" toasts give users zero context.
+// Use _invErr('action label', e) for a contextualized toast + console.error.
+function _invErr(label, e) {
+  try { console.error('[invoices]', label, e); } catch(_) {}
+  const detail = (e && (e.message || e.error_description || e.code)) || 'reessayez';
+  try { showToast('Erreur ' + label + ': ' + String(detail).slice(0, 120)); } catch(_) {}
+}
+
 // Exposes: loadInvoices, renderInvoicesView, _renderInvoiceCard,
 //   sendInvoiceReminder, showInvoiceDetail, showInvoiceFullView,
 //   showInvoicePrestationDetail, updateInvoiceStatus, notifyInvoiceStatus,
@@ -312,7 +321,7 @@ async function sendInvoiceReminder(id) {
     if (!inv) return;
     showToast('Relance envoyee a ' + (inv.client_name || 'client'));
     // Could trigger an email via edge function later
-  } catch(e) { showToast('Erreur'); }
+  } catch(e) { _invErr('envoi relance', e); }
 }
 
 async function showInvoicePrestationDetail(invoiceId) {
@@ -366,7 +375,7 @@ async function showInvoicePrestationDetail(invoiceId) {
     html += '</div>';
     closeMsg();
     setTimeout(() => showMsg(html, true), 150);
-  } catch(e) { console.error('showInvoicePrestationDetail error:', e); showToast('Erreur'); }
+  } catch(e) { _invErr('chargement details', e); }
 }
 
 async function showInvoiceFullView(id) {
@@ -450,7 +459,7 @@ async function showInvoiceFullView(id) {
     h += '</div>';
 
     showMsg(h);
-  } catch(e) { console.error('showInvoiceFullView:', e); showToast('Erreur'); }
+  } catch(e) { _invErr('affichage facture', e); }
 }
 
 async function showInvoiceDetail(id) {
@@ -581,7 +590,7 @@ async function showInvoiceDetail(id) {
 
     html += '</div>';
     showMsg(html, true);
-  } catch(e) { console.error('showInvoiceDetail error:', e); showToast('Erreur'); }
+  } catch(e) { _invErr('chargement facture', e); }
 }
 
 async function exportComptableCSV() {
@@ -676,7 +685,7 @@ async function sendInvoiceByEmail(id) {
     h += '<button class="btn btnPrimary" style="flex:1;padding:10px;" onclick="confirmSendInvoiceEmail(\'' + id + '\')">&#128231; Envoyer</button>';
     h += '</div>';
     showMsg(h, true);
-  } catch(e) { console.error('sendInvoiceByEmail:', e); showToast('Erreur'); }
+  } catch(e) { _invErr('preparation email', e); }
 }
 
 function _buildInvoiceEmailHtml(inv, customMessage) {

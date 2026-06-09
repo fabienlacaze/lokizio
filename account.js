@@ -562,8 +562,15 @@ async function inviteTenantMember() {
     document.getElementById('inviteTenantAccess').value = '';
     // Show copyable invitation message
     const msg = 'Bonjour,\n\nVous etes invite(e) comme locataire chez ' + propName + ' du ' + fmtD(start) + ' au ' + fmtD(end) + '.\n\nPour acceder a votre espace : ' + appUrl + '\nAvec l\'email : ' + email + '\n\n-- Lokizio';
-    customConfirm('Locataire invite. Email envoye.\n\nVoulez-vous aussi copier le message ?', 'Copier').then(ok => {
-      if (ok) { navigator.clipboard.writeText(msg).catch(() => {}); showToast('Message copie'); }
+    customConfirm('Locataire invite. Email envoye.\n\nVoulez-vous aussi copier le message ?', 'Copier').then(async ok => {
+      if (!ok) return;
+      try {
+        await navigator.clipboard.writeText(msg);
+        showToast('Message copie');
+      } catch (err) {
+        console.warn('clipboard.writeText failed:', err);
+        showToast('Copie impossible — sélectionnez le message manuellement');
+      }
     });
   } catch(e) { console.error('inviteTenantMember:', e); showMsg('Erreur: ' + (e.message || e)); }
 }
