@@ -437,7 +437,10 @@ async function renderAnnuaireTab() {
     let tHtml = '';
     let memberCount = 0;
     if (org) {
-      const { data: members } = await sb.from('members').select('*').eq('org_id', org.id);
+      // Only count accepted members. Pending invitations (accepted=false) used
+      // to be shown here and caused duplicates when a user invited themselves
+      // (e.g. concierge inviting self as provider — old self-test workflow).
+      const { data: members } = await sb.from('members').select('*').eq('org_id', org.id).eq('accepted', true);
       if (members) memberCount = members.length;
       if (members && members.length > 1) {
         // Index members by id so the detail popup can look them up by id
@@ -486,10 +489,14 @@ async function renderAnnuaireTab() {
     // Also add org members not on marketplace
     const org = API.getOrg();
     if (org) {
-      const { data: allMembers } = await sb.from('members').select('*').eq('org_id', org.id);
+      // Only accepted members. Pending invitations were duplicating users who
+      // had already accepted under another role.
+      const { data: allMembers } = await sb.from('members').select('*').eq('org_id', org.id).eq('accepted', true);
       if (allMembers) {
         const mkUserIds = _annuaireProfiles.map(p => p.user_id);
         allMembers.forEach(m => {
+          // Skip members without a user_id (manual contacts / pending invites)
+          if (!m.user_id) return;
           if (!mkUserIds.includes(m.user_id) && m.role !== 'concierge') {
             _annuaireProfiles.push({ user_id: m.user_id, display_name: m.display_name || '', email: m.invited_email || '', role: m.role, org_id: m.org_id, visible: true, _fromMembers: true });
           }
@@ -846,11 +853,12 @@ async function loadMarketplaceData() {
     .eq('visible', true);
   if (mkErr) throw mkErr;
   _mkAllProfiles = mkData || [];
-  // Also load org members not yet on marketplace
-  const { data: allMembers } = await sb.from('members').select('*').eq('org_id', API.getOrg()?.id);
+  // Also load org members not yet on marketplace — only accepted, with a user_id.
+  const { data: allMembers } = await sb.from('members').select('*').eq('org_id', API.getOrg()?.id).eq('accepted', true);
   if (allMembers) {
     const mkUserIds = _mkAllProfiles.map(p => p.user_id);
     allMembers.forEach(m => {
+      if (!m.user_id) return; // skip pending/manual without user_id
       if (!mkUserIds.includes(m.user_id) && m.role !== 'concierge') {
         _mkAllProfiles.push({
           user_id: m.user_id, display_name: m.display_name || m.invited_email || '',
