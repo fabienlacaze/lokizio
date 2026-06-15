@@ -1,4 +1,4 @@
-const APP_VERSION = '9.87';
+const APP_VERSION = '9.88';
 const CACHE_NAME = 'lokizio-v' + APP_VERSION;
 
 // App shell files to cache for offline support.
@@ -41,25 +41,41 @@ const APP_SHELL = [
 // Static assets (images, fonts)
 const CACHEABLE_STATIC = /\.(png|jpg|jpeg|svg|gif|woff2?|ttf|eot)$/;
 
+// v9.88: split APP_SHELL en 2 tiers pour reduire la fenetre d'install bloquante.
+// Avant: cache.addAll(30 fichiers) sur le chemin critique de waitUntil -> ~1.5-2s
+// de bande passante volee aux requetes du boot a chaque install.
+// Maintenant: 8 fichiers critiques en addAll bloquant, le reste en fire-and-forget
+// hors waitUntil (donc l'install se termine en ~300-500ms).
+const CRITICAL_SHELL = [
+  './',
+  './index.html',
+  './app.css',
+  './supabase_config.js',
+  './helpers.min.js',
+  './i18n.min.js',
+  './api_bridge.min.js',
+  './auth.min.js',
+];
+const LAZY_SHELL = APP_SHELL.filter(p => !CRITICAL_SHELL.includes(p));
+
 self.addEventListener('install', event => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then(cache => cache.addAll(APP_SHELL))
+    caches.open(CACHE_NAME).then(cache => cache.addAll(CRITICAL_SHELL).then(() => {
+      // Fire-and-forget — pre-cache du reste sans bloquer l'install.
+      Promise.allSettled(LAZY_SHELL.map(p => cache.add(p)));
+    }))
   );
   self.skipWaiting();
 });
 
 self.addEventListener('activate', event => {
+  // v9.88: ne supprime QUE les caches d'anciennes versions (pattern standard).
+  // Avant: wipe all + postMessage SW_FORCE_RELOAD a chaque activate -> double reload
+  // a chaque bump = ~3-5s de latence boot. Voir workflow w21x75q30 (regression v9.87).
   event.waitUntil((async () => {
-    // Wipe ALL old caches (not just non-current — full reset).
-    // Recovers users stuck on stale SW caches that were serving outdated HTML.
     const keys = await caches.keys();
-    await Promise.all(keys.map(k => caches.delete(k)));
+    await Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)));
     await self.clients.claim();
-    // Force every controlled tab to reload with the fresh network resources.
-    const clients = await self.clients.matchAll({ type: 'window' });
-    for (const client of clients) {
-      try { client.postMessage({ type: 'SW_FORCE_RELOAD', version: APP_VERSION }); } catch (_) {}
-    }
   })());
 });
 

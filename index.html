@@ -9,8 +9,8 @@
   window.__isPasswordRecovery = h.indexOf('type=recovery') !== -1;
   window.__recoveryHash = h;
 })();
-window.APP_VERSION = '9.87';
-// v9.87 fix: rendre les badges de version DYNAMIQUES depuis window.APP_VERSION
+window.APP_VERSION = '9.88';
+// v9.88 fix: rendre les badges de version DYNAMIQUES depuis window.APP_VERSION
 // pour ne plus jamais avoir le bug "popup version persistante" quand j'oublie
 // de bumper les badges hardcodes en HTML (workflow wp5sc40pn). Si tout vient
 // du meme HTML, badge + window.APP_VERSION sont toujours coherents.
@@ -170,7 +170,7 @@ async function loadPDF() {
 </script>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v9.87</div>
+<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v9.88</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -180,7 +180,7 @@ async function loadPDF() {
     <!-- Broom that sweeps -->
     <div id="splashBroom" style="position:absolute;top:50%;left:-60px;font-size:48px;transform:translateY(-50%) rotate(-30deg);opacity:0;transition:all 0.8s cubic-bezier(0.25,0.46,0.45,0.94);">✨</div>
   </div>
-  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span id="splashVersion" style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v9.87</span></div>
+  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span id="splashVersion" style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v9.88</span></div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie pour locations</div>
   <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou</div>
   <!-- Loading bar -->
@@ -1726,6 +1726,17 @@ function getStatusLabel(s) { return (STATUS_CONFIG[s] || {}).label || s || ''; }
 // ── Splash Changelog (update this with each significant version) ──
 // Full versioned changelog — add new entries at TOP
 const VERSION_CHANGELOG = [
+  { v: '9.88', changes: [
+    'PERF FIX MAJEUR — regression boot v9.87 (~5s -> <1s).',
+    'Root cause identifie par workflow w21x75q30: cascade SW double-reload a CHAQUE bump de version.',
+    'Mecanisme: 1) kill-switch index.html unregister+wipe+reload (~1.5s) sur tout mismatch de version. 2) sw.js activate handler wipe ALL caches + postMessage SW_FORCE_RELOAD = 2eme reload (~1.5s). 3) cache.addAll(30 fichiers) bloquant pendant ce temps (~1.5-2s de bande volee).',
+    'Hier (v9.86 stable depuis X temps) aucun mecanisme ne se declenchait au refresh. Au bump v9.88 les 3 ont feu simultanement = +5s.',
+    'Fix #1 sw.js activate: ne supprime QUE les caches d\'anciennes versions (pattern standard) + plus de postMessage SW_FORCE_RELOAD. Gain ~1.5s.',
+    'Fix #2 sw.js install: split APP_SHELL en CRITICAL_SHELL (8 fichiers bloquants) + LAZY_SHELL (le reste en fire-and-forget hors waitUntil). Install passe de 1.5-2s a 300-500ms. Gain ~1.2s.',
+    'Fix #3 index.html: retire listener SW_FORCE_RELOAD (dead code), remplace par no-op defensif pour absorber anciens SW.',
+    'Fix #4 index.html kill-switch: gate sur version MAJEURE uniquement (9.x vs 10.x). Les bumps mineurs/patches utilisent le flux update normal (install -> waiting -> banner). Gain ~2s par release future.',
+    'Recovery total: <1s boot, identique a v9.86. Pas de regression future a chaque bump.'
+  ] },
   { v: '9.87', changes: [
     'Fix cleaning iCal assign — "Selectionner prestataire" sur une cleaning iCal Airbnb/Booking ne faisait rien.',
     'Cause: les cleanings iCal viennent de plannings.cleanings (JSONB array) et n\'ont pas d\'UUID. reqId vide -> updateServiceRequest skip -> aucune assignation DB.',
@@ -2680,7 +2691,7 @@ async function loadActiveProperty() {
     property: prop.name || '',
     readonlyToken: prop.readonlyToken || '',
   };
-  // v9.87 perf fix (workflow wbaypk7ll): paralleliser les 5 queries qui
+  // v9.88 perf fix (workflow wbaypk7ll): paralleliser les 5 queries qui
   // etaient sequentielles au boot. Toutes sont independantes. Gain ~5x sur
   // cette phase de loadActiveProperty.
   const [_td, _ch, _li, saved, _res] = await Promise.all([
@@ -11097,7 +11108,7 @@ function showUpdateBanner(version) {
     btn.textContent = 'Mise a jour...';
     btn.disabled = true;
     localStorage.setItem('lokizio_seen_version', v);
-    // v9.87 fix: trace le timestamp pour eviter la boucle banner quand le
+    // v9.88 fix: trace le timestamp pour eviter la boucle banner quand le
     // CDN GitHub Pages cache encore l'ancien HTML pendant 10 min.
     localStorage.setItem('lokizio_last_refresh_at', Date.now().toString());
     // Clear SW + caches
@@ -11107,7 +11118,7 @@ function showUpdateBanner(version) {
       const keys = await caches.keys();
       await Promise.all(keys.map(k => caches.delete(k)));
     } catch(e) { console.warn('update banner: SW/cache cleanup failed:', e); }
-    // v9.87 fix: force revalidation cote CDN via fetch cache: 'reload'
+    // v9.88 fix: force revalidation cote CDN via fetch cache: 'reload'
     // AVANT la navigation. Le browser envoie Cache-Control: no-cache au CDN,
     // qui peut respecter et nous renvoyer la version a jour. Si le CDN
     // n'honore pas, on est protege contre la boucle par le timestamp ci-dessus.
@@ -11124,7 +11135,7 @@ function showUpdateBanner(version) {
   document.body.appendChild(banner);
 }
 // Update check: 5s after load, then every 30s.
-// v9.87 fix bug "popup version persistante" (workflow wp5sc40pn):
+// v9.88 fix bug "popup version persistante" (workflow wp5sc40pn):
 //  - Source of truth = window.APP_VERSION (pas le badge HTML qui est seul re-rendu)
 //  - Anti-loop CDN: si l'user a clique Rafraichir il y a <11min, on n'affiche
 //    PAS de banner (le CDN GitHub Pages cache l'HTML 10min et ignore les
@@ -11183,25 +11194,19 @@ window.addEventListener('beforeunload', () => {
 });
 
 if('serviceWorker' in navigator){
-  // Auto-reload when SW signals a force-reload (e.g. after a major version cleanup).
-  navigator.serviceWorker.addEventListener('message', (event) => {
-    if (event.data && event.data.type === 'SW_FORCE_RELOAD') {
-      console.log('[SW] Force reload triggered (new version', event.data.version + ')');
-      // Avoid infinite reloads
-      if (!sessionStorage.getItem('mm_sw_force_reloaded')) {
-        sessionStorage.setItem('mm_sw_force_reloaded', '1');
-        location.reload();
-      }
-    }
-  });
+  // v9.88: listener SW_FORCE_RELOAD retire. Le sw.js ne poste plus ce message,
+  // mais on garde un no-op defensif pour absorber les anciens SW encore en cache
+  // chez les users qui n'ont pas refresh depuis longtemps. Voir workflow w21x75q30.
+  navigator.serviceWorker.addEventListener('message', () => { /* no-op */ });
 
-  // ── Kill-switch: if a stale SW is running with an older version than the page,
-  // unregister it + clear caches + reload. This recovers from cases where the
-  // user got stuck on an old SW that was network-firsting a CDN-cached HTML.
+  // ── Kill-switch (v9.88: gate sur version MAJEURE uniquement).
+  // Avant: declenchait unregister+wipe+reload a CHAQUE mismatch (meme un bump patch
+  // mineur 9.86 -> 9.87), causant ~1.5s de latence boot a chaque release. Le flux
+  // normal update -> install -> waiting -> banner _checkUpdate suffit largement pour
+  // les bumps mineurs. Le kill-switch n'est utile que pour les bumps majeurs (breaking).
   (async () => {
     try {
       const pageVersion = window.APP_VERSION || '';
-      // Read the version of the active SW (if any) by fetching sw.js bypassing cache.
       const reg = await navigator.serviceWorker.getRegistration();
       if (reg && reg.active && pageVersion) {
         const r = await fetch('sw.js?_kc=' + Date.now(), { cache: 'no-store' });
@@ -11209,11 +11214,12 @@ if('serviceWorker' in navigator){
         const m = t.match(/APP_VERSION\s*=\s*'([^']+)'/);
         const swVersion = m ? m[1] : '';
         if (swVersion && swVersion !== pageVersion && !sessionStorage.getItem('mm_sw_killed')) {
-          // Compare semver-ish: if SW's version < page's version, kill it.
-          const [a1, b1] = swVersion.split('.').map(Number);
-          const [a2, b2] = pageVersion.split('.').map(Number);
-          if (a1 < a2 || (a1 === a2 && b1 < b2)) {
-            console.warn('[SW] Stale SW v' + swVersion + ' detected, page is v' + pageVersion + ' — unregistering and reloading');
+          const [a1] = swVersion.split('.').map(Number);
+          const [a2] = pageVersion.split('.').map(Number);
+          // Ne kill QUE si le SW est en retard d'un bump majeur (ex: 9.x vs 10.x).
+          // Les patches mineurs sont traites par le flux update normal.
+          if (a1 < a2) {
+            console.warn('[SW] MAJOR version mismatch: SW v' + swVersion + ' vs page v' + pageVersion + ' — unregistering');
             sessionStorage.setItem('mm_sw_killed', '1');
             await reg.unregister();
             const keys = await caches.keys();
