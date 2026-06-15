@@ -1,4 +1,4 @@
-const APP_VERSION = '9.93';
+const APP_VERSION = '9.94';
 const CACHE_NAME = 'lokizio-v' + APP_VERSION;
 
 // App shell files to cache for offline support.
@@ -59,13 +59,26 @@ const CRITICAL_SHELL = [
 const LAZY_SHELL = APP_SHELL.filter(p => !CRITICAL_SHELL.includes(p));
 
 self.addEventListener('install', event => {
+  // v9.94 perf: install ne pre-cache QUE CRITICAL_SHELL. LAZY_SHELL est defere
+  // au signal SW_BOOT_COMPLETE du client (apres init() done dans index.html).
+  // Avant: 22 fetch reseau de LAZY_SHELL en fire-and-forget volaient ~440ms de
+  // bande passante au critical path sur 4G.
   event.waitUntil(
-    caches.open(CACHE_NAME).then(cache => cache.addAll(CRITICAL_SHELL).then(() => {
-      // Fire-and-forget — pre-cache du reste sans bloquer l'install.
-      Promise.allSettled(LAZY_SHELL.map(p => cache.add(p)));
-    }))
+    caches.open(CACHE_NAME).then(cache => cache.addAll(CRITICAL_SHELL))
   );
   self.skipWaiting();
+});
+
+// v9.94: pre-cache LAZY_SHELL uniquement quand le client signale boot complete.
+self.addEventListener('message', event => {
+  if (event.data && event.data.type === 'SW_BOOT_COMPLETE') {
+    caches.open(CACHE_NAME).then(cache => {
+      Promise.allSettled(LAZY_SHELL.map(async p => {
+        const existing = await cache.match(p, { ignoreSearch: true });
+        if (!existing) return cache.add(p);
+      }));
+    });
+  }
 });
 
 self.addEventListener('activate', event => {
@@ -90,30 +103,48 @@ self.addEventListener('fetch', event => {
     return;
   }
 
-  // App shell files: network-first, fallback to cache (stale-while-revalidate).
-  // IMPORTANT: respondWith MUST receive a Response — never undefined. Otherwise
-  // the browser throws "Failed to convert value to 'Response'".
+  // v9.94 perf: cache-first agressif pour .min.js?v=<hash> (content-addressed, immutables
+  // par construction via bump.js). HTML/CSS non-hashes en stale-while-revalidate.
+  // Avant: network-first -> 30 round-trips reseau a chaque boot meme quand tout en cache.
+  // IMPORTANT: respondWith MUST receive a Response — never undefined.
   if (url.pathname.endsWith('.html') || url.pathname.endsWith('.js') || url.pathname.endsWith('.css') || url.pathname === '/' || url.pathname.endsWith('/')) {
+    const isHashedJs = url.pathname.endsWith('.min.js') && url.searchParams.has('v');
+    if (isHashedJs) {
+      event.respondWith(
+        caches.match(event.request, { ignoreSearch: false }).then(cached => {
+          if (cached) return cached;
+          return fetch(event.request).then(resp => {
+            if (resp.ok) {
+              const clone = resp.clone();
+              caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
+            }
+            return resp;
+          }).catch(async () => {
+            const fallback = await caches.match(event.request, { ignoreSearch: true });
+            return fallback || new Response('Offline and not cached', {
+              status: 503, statusText: 'Service Unavailable',
+              headers: { 'Content-Type': 'text/plain' },
+            });
+          });
+        })
+      );
+      return;
+    }
+    // HTML / CSS / non-hashed JS: stale-while-revalidate (cache servi instantanement).
     event.respondWith(
-      fetch(event.request)
-        .then(resp => {
+      caches.match(event.request, { ignoreSearch: true }).then(cached => {
+        const networkFetch = fetch(event.request).then(resp => {
           if (resp.ok) {
             const clone = resp.clone();
             caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
           }
           return resp;
-        })
-        .catch(async () => {
-          // Network failed — try cache (with ignoreSearch so ?v=hash variants match).
-          const cached = await caches.match(event.request, { ignoreSearch: true });
-          if (cached) return cached;
-          // Last resort: synthesize a 503 so the browser doesn't throw.
-          return new Response('Offline and not cached', {
-            status: 503,
-            statusText: 'Service Unavailable',
-            headers: { 'Content-Type': 'text/plain' },
-          });
-        })
+        }).catch(() => cached || new Response('Offline and not cached', {
+          status: 503, statusText: 'Service Unavailable',
+          headers: { 'Content-Type': 'text/plain' },
+        }));
+        return cached || networkFetch;
+      })
     );
     return;
   }

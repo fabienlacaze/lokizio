@@ -9,7 +9,7 @@
   window.__isPasswordRecovery = h.indexOf('type=recovery') !== -1;
   window.__recoveryHash = h;
 })();
-window.APP_VERSION = '9.93';
+window.APP_VERSION = '9.94';
 // v9.90 fix: rendre les badges de version DYNAMIQUES depuis window.APP_VERSION
 // pour ne plus jamais avoir le bug "popup version persistante" quand j'oublie
 // de bumper les badges hardcodes en HTML (workflow wp5sc40pn). Si tout vient
@@ -87,7 +87,7 @@ window.addEventListener('DOMContentLoaded', function() {
 <script src="i18n.min.js?v=e16c908"></script>
 <script src="ical_parser.min.js?v=cf7ad71"></script>
 <script src="helpers.min.js?v=8bb5604"></script>
-<script src="api_bridge.min.js?v=1653d20"></script>
+<script src="api_bridge.min.js?v=60ea330"></script>
 <script src="vacation.min.js?v=b2e3eb5"></script>
 <script src="push.min.js?v=c5f5981"></script>
 <script src="legal.min.js?v=81bb683"></script>
@@ -170,7 +170,7 @@ async function loadPDF() {
 </script>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v9.93</div>
+<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v9.94</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -180,7 +180,7 @@ async function loadPDF() {
     <!-- Broom that sweeps -->
     <div id="splashBroom" style="position:absolute;top:50%;left:-60px;font-size:48px;transform:translateY(-50%) rotate(-30deg);opacity:0;transition:all 0.8s cubic-bezier(0.25,0.46,0.45,0.94);">✨</div>
   </div>
-  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span id="splashVersion" style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v9.93</span></div>
+  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span id="splashVersion" style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v9.94</span></div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie pour locations</div>
   <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou</div>
   <!-- Loading bar -->
@@ -1726,6 +1726,17 @@ function getStatusLabel(s) { return (STATUS_CONFIG[s] || {}).label || s || ''; }
 // ── Splash Changelog (update this with each significant version) ──
 // Full versioned changelog — add new entries at TOP
 const VERSION_CHANGELOG = [
+  { v: '9.94', changes: [
+    'PERF FIX gros sprint 2 — workflow wy78was2m (39 agents, 7 angles, cross-verify 3 lentilles).',
+    '5 fixes confirmes. Gain estime total: ~2.3s sur le boot.',
+    'Fix 1 (safe, gain 800ms) — api_bridge.js loadPlanning in-flight dedup. loadActiveProperty fait Promise.all([load_transmitted, load_history, load_planning, load_reservations]) = 4 queries IDENTIQUES sur plannings. Cache la Promise par propId pendant son vol -> 1 seule query reseau. Purge cache 50ms apres resolution.',
+    'Fix 2 (safe, gain 400ms) — index.html load_linens sorti du Promise.all bloquant. Linens est decoratif (colonne secondaire renderResults), pas critique pour first paint. Charge en post-paint + re-render.',
+    'Fix 3 (risky, gain 700ms) — sw.js cache-first agressif sur .min.js?v=<hash>. Les hashes sont content-addressed (bump.js), donc immutables par construction. Avant: 30 round-trips network-first a chaque boot. Apres: 0 fetch reseau si cache present.',
+    'Fix 4 (risky, gain 400ms) — sw.js defer LAZY_SHELL via signal SW_BOOT_COMPLETE du client. Install ne pre-cache que les 8 fichiers CRITICAL. Les 22 LAZY sont caches APRES que init() ait fini.',
+    'Fix 5 (safe, obligatoire pour fix 4) — index.html postMessage SW_BOOT_COMPLETE apres restorePanelStates(). setTimeout 0 pour ceder au rendu avant.',
+    'Risk net: fixes 3+4 risky mais APP_VERSION bump force le cache wipe a chaque release, donc impact limite a 1 release de mauvais hash (jamais arrive selon historique, bump:check le verifie en CI).',
+    'Cible: 5s -> 2-3s. Workflow recommande validation avec window.printBootTimings() (v9.93) pour confirmer le gain reel.'
+  ] },
   { v: '9.93', changes: [
     'Instrumentation perf boot path — ajout performance.now() aux points cles pour mesurer ou sont les secondes restantes (>5s percues malgre les 6 fixes v9.90).',
     'Usage: hard refresh 2-3 fois pour stabiliser le SW, puis dans la console F12: window.printBootTimings()',
@@ -2730,17 +2741,26 @@ async function loadActiveProperty() {
   // v9.90 perf fix (workflow wbaypk7ll): paralleliser les 5 queries qui
   // etaient sequentielles au boot. Toutes sont independantes. Gain ~5x sur
   // cette phase de loadActiveProperty.
-  const [_td, _ch, _li, saved, _res] = await Promise.all([
+  // v9.94 perf: load_linens sorti du Promise.all bloquant. Linens est decoratif
+  // (colonne secondaire dans renderResults), pas critique pour first paint.
+  // Gain ~300-500ms sur le chemin critique (load_linens fait son propre getUserId).
+  const [_td, _ch, saved, _res] = await Promise.all([
     API.load_transmitted(),
     API.load_history(),
-    API.load_linens(),
     API.load_planning(),
     API.load_reservations(),
   ]);
   transmittedDates = _td;
   cleaningHistory = _ch;
-  linens = _li;
+  linens = [];
   reservations = _res;
+  // Charger linens en post-paint, re-render si la page principale est encore visible
+  API.load_linens().then(li => {
+    linens = li || [];
+    if (typeof cleanings !== 'undefined' && cleanings && cleanings.length) {
+      try { renderResults(); } catch (_) {}
+    }
+  });
   const nameInput = document.getElementById('propNameInput');
   if (nameInput) nameInput.value = prop.name || '';
   renderPropertySelector();
@@ -2766,6 +2786,14 @@ async function loadActiveProperty() {
   calYear = now.getFullYear();
   calMonth = now.getMonth();
   restorePanelStates();
+  // v9.94: signaler au SW que le boot critique est termine -> il peut pre-cacher LAZY_SHELL.
+  try {
+    if (navigator.serviceWorker && navigator.serviceWorker.controller) {
+      setTimeout(() => {
+        navigator.serviceWorker.controller.postMessage({ type: 'SW_BOOT_COMPLETE' });
+      }, 0);
+    }
+  } catch (_) {}
   renderDashboardContent();
   // v9.90: setTimeout(generatePlanning, 500) RETIRE — autoRefreshPlanning() (l.3187)
   // couvre deja ce cas. La gate 2h ne court-circuite pas si lastRefresh est null,
@@ -3094,7 +3122,7 @@ function cancelPasswordRecovery() {
   window.location.reload();
 }
 
-// v9.93 perf instrumentation — pour identifier les bottlenecks restants.
+// v9.94 perf instrumentation — pour identifier les bottlenecks restants.
 // Usage: hard refresh 2-3 fois pour stabiliser le SW, puis taper dans la console:
 //   window.printBootTimings()
 window.__bootMarks = [];

@@ -189,16 +189,27 @@ const API = (function() {
     return !error;
   }
 
+  // v9.94 perf: in-flight dedup. loadActiveProperty appelle Promise.all([load_transmitted,
+  // load_history, load_planning, load_reservations]) -> 4x cette query identique en parallele.
+  // On cache la Promise par propId pendant son vol: 1 seule query reseau au lieu de 4.
+  // Le cache est purge 50ms apres resolution pour que les saves ulterieurs voient le frais.
+  const _planningInflight = new Map();
   async function loadPlanning(propId) {
-    // .maybeSingle() avoids HTTP 406 when no row exists (vs .single()).
-    // A property with no planning row is a valid state (newly created property).
-    const { data, error } = await sb
-      .from('plannings')
-      .select('*')
-      .eq('property_id', propId)
-      .maybeSingle();
-    if (error || !data) return { cleanings: [], transmitted: [], history: [] };
-    return data;
+    if (_planningInflight.has(propId)) return _planningInflight.get(propId);
+    const p = (async () => {
+      // .maybeSingle() avoids HTTP 406 when no row exists (vs .single()).
+      // A property with no planning row is a valid state (newly created property).
+      const { data, error } = await sb
+        .from('plannings')
+        .select('*')
+        .eq('property_id', propId)
+        .maybeSingle();
+      if (error || !data) return { cleanings: [], transmitted: [], history: [], reservations: [] };
+      return data;
+    })();
+    _planningInflight.set(propId, p);
+    p.finally(() => setTimeout(() => _planningInflight.delete(propId), 50));
+    return p;
   }
 
   async function savePlanningData(propId, field, value) {
