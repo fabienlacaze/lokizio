@@ -9,7 +9,7 @@
   window.__isPasswordRecovery = h.indexOf('type=recovery') !== -1;
   window.__recoveryHash = h;
 })();
-window.APP_VERSION = '9.90';
+window.APP_VERSION = '9.92';
 // v9.90 fix: rendre les badges de version DYNAMIQUES depuis window.APP_VERSION
 // pour ne plus jamais avoir le bug "popup version persistante" quand j'oublie
 // de bumper les badges hardcodes en HTML (workflow wp5sc40pn). Si tout vient
@@ -170,7 +170,7 @@ async function loadPDF() {
 </script>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v9.90</div>
+<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v9.92</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -180,7 +180,7 @@ async function loadPDF() {
     <!-- Broom that sweeps -->
     <div id="splashBroom" style="position:absolute;top:50%;left:-60px;font-size:48px;transform:translateY(-50%) rotate(-30deg);opacity:0;transition:all 0.8s cubic-bezier(0.25,0.46,0.45,0.94);">✨</div>
   </div>
-  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span id="splashVersion" style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v9.90</span></div>
+  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span id="splashVersion" style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v9.92</span></div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie pour locations</div>
   <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou</div>
   <!-- Loading bar -->
@@ -1726,10 +1726,19 @@ function getStatusLabel(s) { return (STATUS_CONFIG[s] || {}).label || s || ''; }
 // ── Splash Changelog (update this with each significant version) ──
 // Full versioned changelog — add new entries at TOP
 const VERSION_CHANGELOG = [
+  { v: '9.92', changes: [
+    'HOTFIX CRITIQUE — ecran noir cause par SyntaxError JS ligne 1731/1732.',
+    'Cause: dans le changelog v9.90 j ai utilise \\\\\\\' (double backslash + apostrophe) au lieu de \\\\\\\' (single backslash + apostrophe) pour echapper les apostrophes dans 2 strings single-quoted. JS parse \\\\ comme un backslash litteral + termine la string a l apostrophe -> identifier inattendu "une" / "etait" -> Uncaught SyntaxError -> tout le script bloque -> ecran noir.',
+    'Le hotfix v9.91 etait correct (revert getSession) mais le SyntaxError preexistait depuis v9.90, donc v9.91 etait ecran noir aussi.',
+    'Fix: backslash simple sur 2 occurrences. Aussi: utilisation de strings sans apostrophes francaises (pas de C\\\\\\\'etait, qu\\\\\\\'une) pour eviter le piege a l avenir.'
+  ] },
+  { v: '9.91', changes: [
+    'HOTFIX — REVERT du fix v9.90 getUser() -> getSession() qui causait ecran noir (en plus du SyntaxError de v9.92).'
+  ] },
   { v: '9.90', changes: [
     'PERF FIX MAJEUR boot path — workflow wxb6wnx3t a identifie 9 causes confirmees totalisant 22.8s.',
-    'Fix #1 ical_parser.js — cascade iCal sequentielle SANS timeout. Avant: for...await sur sources (Airbnb 3-6s + Booking 2-4s = 8-10s). Apres: Promise.allSettled (max ~6s) + AbortController timeout 8s pour eviter qu\\'une source qui hang sature la connexion pool. Gain ~5-8s.',
-    'Fix #2 index.html:2746 — setTimeout(generatePlanning, 500) supprime. C\\'etait redondant avec autoRefreshPlanning() (l.3187) et causait un DOUBLE-INIT iCal (4 fetches concurrents au lieu de 2). Gain ~1.5s.',
+    'Fix #1 ical_parser.js — cascade iCal sequentielle SANS timeout. Avant: for...await sur sources (Airbnb 3-6s + Booking 2-4s = 8-10s). Apres: Promise.allSettled (max ~6s) + AbortController timeout 8s pour eviter qu\'une source qui hang sature la connexion pool. Gain ~5-8s.',
+    'Fix #2 index.html:2746 — setTimeout(generatePlanning, 500) supprime. C\'etait redondant avec autoRefreshPlanning() (l.3187) et causait un DOUBLE-INIT iCal (4 fetches concurrents au lieu de 2). Gain ~1.5s.',
     'Fix #3 api_bridge.js:386 — guard !currentOrg sur load_config. Avant: load_plan + load_config -> loadOrg() execute 2x (refait getUser + members + N+1 orgs). Apres: 2eme appel skip. Gain ~0.6s.',
     'Fix #4 api_bridge.js:42-45 — N+1 sur organizations remplace par batch .in(). Avant: 1 query members + N queries orgs sequentielles. Apres: 1 + 1. Gain ~0.3s.',
     'Fix #5 index.html loadKpiCards — Promise.all sur les 3 queries independantes apres properties (plannings + service_requests + invoices). Avant: 3 await sequentiels (~600-900ms). Apres: max(3) (~200-300ms). Gain ~0.5s.',
