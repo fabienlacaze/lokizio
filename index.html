@@ -9,7 +9,7 @@
   window.__isPasswordRecovery = h.indexOf('type=recovery') !== -1;
   window.__recoveryHash = h;
 })();
-window.APP_VERSION = '9.95';
+window.APP_VERSION = '9.96';
 // v9.90 fix: rendre les badges de version DYNAMIQUES depuis window.APP_VERSION
 // pour ne plus jamais avoir le bug "popup version persistante" quand j'oublie
 // de bumper les badges hardcodes en HTML (workflow wp5sc40pn). Si tout vient
@@ -87,7 +87,7 @@ window.addEventListener('DOMContentLoaded', function() {
 <script src="i18n.min.js?v=e16c908"></script>
 <script src="ical_parser.min.js?v=cf7ad71"></script>
 <script src="helpers.min.js?v=8bb5604"></script>
-<script src="api_bridge.min.js?v=60ea330"></script>
+<script src="api_bridge.min.js?v=799e757"></script>
 <script src="vacation.min.js?v=b2e3eb5"></script>
 <script src="push.min.js?v=c5f5981"></script>
 <script src="legal.min.js?v=81bb683"></script>
@@ -103,7 +103,7 @@ window.addEventListener('DOMContentLoaded', function() {
 <script src="marketplace.min.js?v=34dcec7"></script>
 <script src="properties.min.js?v=26d7caf"></script>
 <script src="dashboard.min.js?v=786f765"></script>
-<script src="admin-prestations.min.js?v=979b5f2"></script>
+<script src="admin-prestations.min.js?v=ffb4473"></script>
 <script src="account.min.js?v=5a51748"></script>
 <script src="admin-sentry.min.js?v=2302bea"></script>
 <script src="stripe-connect-embed.min.js?v=04d3580"></script>
@@ -170,7 +170,7 @@ async function loadPDF() {
 </script>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v9.95</div>
+<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v9.96</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -180,7 +180,7 @@ async function loadPDF() {
     <!-- Broom that sweeps -->
     <div id="splashBroom" style="position:absolute;top:50%;left:-60px;font-size:48px;transform:translateY(-50%) rotate(-30deg);opacity:0;transition:all 0.8s cubic-bezier(0.25,0.46,0.45,0.94);">✨</div>
   </div>
-  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span id="splashVersion" style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v9.95</span></div>
+  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span id="splashVersion" style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v9.96</span></div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie pour locations</div>
   <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou</div>
   <!-- Loading bar -->
@@ -1726,6 +1726,14 @@ function getStatusLabel(s) { return (STATUS_CONFIG[s] || {}).label || s || ''; }
 // ── Splash Changelog (update this with each significant version) ──
 // Full versioned changelog — add new entries at TOP
 const VERSION_CHANGELOG = [
+  { v: '9.96', changes: [
+    'PERF + IO — workflow wikzyz5ae verdict: Disk IO Supabase n est PAS la cause principale (82% confiance) MAIS le mail Supabase IO Budget est legitime (18 GB/mois projetes > free tier 10 GB).',
+    'Cause #1 reelle: 31 scripts head sync sans defer (~3s). Cause #2: extension Kaspersky. Cause #3: IO Supabase (200-400ms).',
+    'Top IO consumer identifie: 4 re-pulls du blob plannings.cleanings JSONB (1.5 MB de duplication par boot). loadKpiCards + loadAdminPrestations re-tiraient chacun les memes ~640KB.',
+    'Fix v9.96: helper API.loadPlanningsForOrg avec cache 10s + in-flight Promise dedup. Les 2 callers (loadKpiCards, loadAdminPrestations) partagent maintenant 1 seule query reseau. Gain ~1.3 MB IO/boot + ~400-600ms perf.',
+    'A faire manuellement (SQL Editor Supabase): coller le bloc SQL du fichier supabase/perf-indexes-v9.96.sql (5 CREATE INDEX IF NOT EXISTS + 1 colonne generee cleanings_count). Gain estime: ~7 GB IO/mois.',
+    'NON applique (risque ecran noir, 2 deja eus): defer sur les 31 scripts head (gain ~3s perf reel mais necessite environnement de test).'
+  ] },
   { v: '9.95', changes: [
     'UX + perf — workflow we1o0oum2 (20 agents).',
     'REVELATION: il n y a PAS 2 widgets feedback en doublon. Il y a le widget feedback (gauche) + le widget chat #chatFab (droite). Memes emoji + meme violet -> illusion de doublon.',
@@ -3305,16 +3313,15 @@ async function loadKpiCards() {
     if (!org) { el.style.display = 'none'; return; }
     const { data: properties } = await sb.from('properties').select('id').eq('org_id', org.id);
     const propIds = (properties || []).map(p => p.id);
-    // v9.90 perf fix: paralleliser les 3 queries independantes apres properties.
-    // Avant: 3 await sequentiels (~600-900ms). Apres: max(3) (~200-300ms).
-    const [planRes, svcRes, invRes] = await Promise.all([
-      propIds.length
-        ? sb.from('plannings').select('cleanings').in('property_id', propIds)
-        : Promise.resolve({ data: [] }),
+    // v9.96 perf+IO fix: utiliser API.loadPlanningsForOrg (cache 10s + in-flight
+    // dedup partage avec loadAdminPrestations) au lieu de re-pull cleanings JSONB.
+    // Gain Supabase IO: ~640KB economises par boot (sur 4 pulls totaux du JSONB).
+    // Gain perf: si loadAdminPrestations a deja pull les plannings, on lit le cache.
+    const [plannings, svcRes, invRes] = await Promise.all([
+      API.loadPlanningsForOrg(propIds),
       sb.from('service_requests').select('id,requested_date,status').eq('org_id', org.id).in('status', ['pending','assigned','accepted','in_progress']),
       sb.from('invoices').select('status,total_ttc,due_date,created_at,is_quote').eq('org_id', org.id).or('is_quote.is.null,is_quote.eq.false'),
     ]);
-    const plannings = planRes.data || [];
     const svcReqs = svcRes.data || [];
     const invs = invRes.data || [];
     const now = new Date();

@@ -48,16 +48,17 @@ async function loadAdminPrestations(forceReload) {
     props.forEach(p => { propMap[p.id] = p; });
     const propIds = props.map(p => p.id);
 
-    const [planRes, valsRes, svcRes] = await Promise.all([
-      propIds.length
-        ? sb.from('plannings').select('cleanings,property_id').in('property_id', propIds)
-        : Promise.resolve({ data: [] }),
+    // v9.96 perf+IO fix: utiliser API.loadPlanningsForOrg (cache 10s + in-flight
+    // dedup partage avec loadKpiCards) au lieu de re-pull cleanings JSONB.
+    // Gain Supabase IO: ~640KB economises par boot (sur 4 pulls totaux du JSONB).
+    const [plannings_, valsRes, svcRes] = await Promise.all([
+      API.loadPlanningsForOrg(propIds),
       propIds.length
         ? sb.from('cleaning_validations').select('*').in('property_id', propIds)
         : Promise.resolve({ data: [] }),
       svcPromise, // deja en vol depuis le debut de la fonction
     ]);
-    plannings = planRes.data || [];
+    plannings = plannings_;
     svcRequests = svcRes.data || [];
     validations = {};
     (valsRes.data || []).forEach(v => { validations[v.property_id + '_' + v.cleaning_date + '_' + v.provider_name] = v; });

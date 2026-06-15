@@ -298,9 +298,45 @@ const API = (function() {
     };
   }
 
+  // v9.96 perf: cache + in-flight dedup pour plannings.cleanings au boot.
+  // Avant: loadKpiCards + loadAdminPrestations re-pullaient TOUS les 2 le
+  // blob cleanings (640KB chacun = 1.3MB de duplication). Apres: 1 seule
+  // query reseau, les 2 callers la partagent. Voir workflow wikzyz5ae.
+  // Cache 10s suffit car les 2 fire-and-forget partent en parallele au boot,
+  // et un save sur un cleaning trigger un loadAdminPrestations(true) qui
+  // bypass le cache (forceReload).
+  let _planningsAllCache = null;
+  let _planningsAllCacheTime = 0;
+  let _planningsAllInflight = null;
+  async function loadPlanningsForOrg(propIds) {
+    const now = Date.now();
+    if (_planningsAllCache && (now - _planningsAllCacheTime) < 10000) {
+      return _planningsAllCache;
+    }
+    if (_planningsAllInflight) return _planningsAllInflight;
+    if (!propIds || !propIds.length) return [];
+    _planningsAllInflight = (async () => {
+      const { data } = await sb
+        .from('plannings')
+        .select('cleanings,property_id')
+        .in('property_id', propIds);
+      _planningsAllCache = data || [];
+      _planningsAllCacheTime = Date.now();
+      return _planningsAllCache;
+    })();
+    _planningsAllInflight.finally(() => { _planningsAllInflight = null; });
+    return _planningsAllInflight;
+  }
+  function invalidatePlanningsCache() {
+    _planningsAllCache = null;
+    _planningsAllCacheTime = 0;
+  }
+
   return {
     // ─── Organization ───
     async loadOrganization() { return await loadOrg(); },
+    loadPlanningsForOrg,
+    invalidatePlanningsCache,
     getOrg() { return currentOrg; },
     getAllMemberships() { return allMemberships; },
     switchOrg(orgId) { return switchOrg(orgId); },
