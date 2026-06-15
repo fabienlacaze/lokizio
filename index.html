@@ -9,7 +9,7 @@
   window.__isPasswordRecovery = h.indexOf('type=recovery') !== -1;
   window.__recoveryHash = h;
 })();
-window.APP_VERSION = '9.92';
+window.APP_VERSION = '9.93';
 // v9.90 fix: rendre les badges de version DYNAMIQUES depuis window.APP_VERSION
 // pour ne plus jamais avoir le bug "popup version persistante" quand j'oublie
 // de bumper les badges hardcodes en HTML (workflow wp5sc40pn). Si tout vient
@@ -170,7 +170,7 @@ async function loadPDF() {
 </script>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v9.92</div>
+<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v9.93</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -180,7 +180,7 @@ async function loadPDF() {
     <!-- Broom that sweeps -->
     <div id="splashBroom" style="position:absolute;top:50%;left:-60px;font-size:48px;transform:translateY(-50%) rotate(-30deg);opacity:0;transition:all 0.8s cubic-bezier(0.25,0.46,0.45,0.94);">✨</div>
   </div>
-  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span id="splashVersion" style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v9.92</span></div>
+  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span id="splashVersion" style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v9.93</span></div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie pour locations</div>
   <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou</div>
   <!-- Loading bar -->
@@ -1726,6 +1726,12 @@ function getStatusLabel(s) { return (STATUS_CONFIG[s] || {}).label || s || ''; }
 // ── Splash Changelog (update this with each significant version) ──
 // Full versioned changelog — add new entries at TOP
 const VERSION_CHANGELOG = [
+  { v: '9.93', changes: [
+    'Instrumentation perf boot path — ajout performance.now() aux points cles pour mesurer ou sont les secondes restantes (>5s percues malgre les 6 fixes v9.90).',
+    'Usage: hard refresh 2-3 fois pour stabiliser le SW, puis dans la console F12: window.printBootTimings()',
+    'Points mesures: script eval start, init() enter, load_plan start/done, load_config start/done, loadActiveProperty start/done, init() end (UI usable).',
+    'Avec ces logs on saura precisement quel call prend les secondes restantes (load_plan ? load_config ? loadActiveProperty ?) et on pourra cibler le fix prochain.'
+  ] },
   { v: '9.92', changes: [
     'HOTFIX CRITIQUE — ecran noir cause par SyntaxError JS ligne 1731/1732.',
     'Cause: dans le changelog v9.90 j ai utilise \\\\\\\' (double backslash + apostrophe) au lieu de \\\\\\\' (single backslash + apostrophe) pour echapper les apostrophes dans 2 strings single-quoted. JS parse \\\\ comme un backslash litteral + termine la string a l apostrophe -> identifier inattendu "une" / "etait" -> Uncaught SyntaxError -> tout le script bloque -> ecran noir.',
@@ -3088,7 +3094,30 @@ function cancelPasswordRecovery() {
   window.location.reload();
 }
 
+// v9.93 perf instrumentation — pour identifier les bottlenecks restants.
+// Usage: hard refresh 2-3 fois pour stabiliser le SW, puis taper dans la console:
+//   window.printBootTimings()
+window.__bootMarks = [];
+window.__bootT0 = performance.now();
+window.__T = function(label) {
+  const t = performance.now() - window.__bootT0;
+  window.__bootMarks.push({ t: Math.round(t), label });
+  console.log('[BOOT] +' + Math.round(t) + 'ms ' + label);
+};
+window.printBootTimings = function() {
+  console.log('=== BOOT TIMINGS (cumul depuis t0) ===');
+  let prev = 0;
+  for (const m of window.__bootMarks) {
+    const delta = m.t - prev;
+    console.log('+' + m.t + 'ms  (Δ' + delta + 'ms)  ' + m.label);
+    prev = m.t;
+  }
+  console.log('=== TOTAL: ' + window.__bootMarks[window.__bootMarks.length-1]?.t + 'ms ===');
+};
+window.__T('script eval start');
+
 async function init() {
+  window.__T('init() enter');
   // Init theme button icon
   if(document.documentElement.getAttribute('data-theme')==='light'&&document.getElementById('themeBtn'))document.getElementById('themeBtn').innerHTML='&#9790;';
 
@@ -3099,7 +3128,9 @@ async function init() {
   }
 
   // Load plan (also loads org + member)
+  window.__T('load_plan start');
   await API.load_plan();
+  window.__T('load_plan done');
   updatePlanUI();
 
   // Handle Stripe checkout success — refresh subscription from server
@@ -3184,10 +3215,15 @@ async function init() {
   document.querySelector('.content').style.display = '';
   setupBottomNav('concierge');
 
+  window.__T('load_config start');
   fullConfig = await API.load_config();
+  window.__T('load_config done');
   renderPropertySelector();
+  window.__T('loadActiveProperty start');
   await loadActiveProperty();
+  window.__T('loadActiveProperty done');
   updateLangButton();
+  window.__T('init() end (UI usable)');
   if ('Notification' in window && Notification.permission === 'default') Notification.requestPermission();
   subscribePushNotifications();
   checkRentalNotifications();
