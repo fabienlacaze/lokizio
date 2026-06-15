@@ -9,7 +9,20 @@
   window.__isPasswordRecovery = h.indexOf('type=recovery') !== -1;
   window.__recoveryHash = h;
 })();
-window.APP_VERSION = '9.85';
+window.APP_VERSION = '9.86';
+// v9.86 fix: rendre les badges de version DYNAMIQUES depuis window.APP_VERSION
+// pour ne plus jamais avoir le bug "popup version persistante" quand j'oublie
+// de bumper les badges hardcodes en HTML (workflow wp5sc40pn). Si tout vient
+// du meme HTML, badge + window.APP_VERSION sont toujours coherents.
+window.addEventListener('DOMContentLoaded', function() {
+  try {
+    const v = 'v' + window.APP_VERSION;
+    const badge = document.getElementById('versionBadge');
+    if (badge) badge.textContent = v;
+    const splash = document.getElementById('splashVersion');
+    if (splash) splash.textContent = v;
+  } catch (_) { /* best-effort */ }
+});
 </script>
 <script src="sentry-init.min.js?v=759d31d"></script>
 <script
@@ -157,7 +170,7 @@ async function loadPDF() {
 </script>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v9.84</div>
+<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v9.86</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -167,7 +180,7 @@ async function loadPDF() {
     <!-- Broom that sweeps -->
     <div id="splashBroom" style="position:absolute;top:50%;left:-60px;font-size:48px;transform:translateY(-50%) rotate(-30deg);opacity:0;transition:all 0.8s cubic-bezier(0.25,0.46,0.45,0.94);">✨</div>
   </div>
-  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v9.84</span></div>
+  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span id="splashVersion" style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v9.86</span></div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie pour locations</div>
   <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou</div>
   <!-- Loading bar -->
@@ -1713,6 +1726,14 @@ function getStatusLabel(s) { return (STATUS_CONFIG[s] || {}).label || s || ''; }
 // ── Splash Changelog (update this with each significant version) ──
 // Full versioned changelog — add new entries at TOP
 const VERSION_CHANGELOG = [
+  { v: '9.86', changes: [
+    'Fix BUG CRITIQUE: la popup "v9.85 disponible — Rafraichir" reapparaissait en boucle apres chaque clic.',
+    'Cause racine (workflow wp5sc40pn): mes 2 commits v9.85 + v9.84 avaient OUBLIE de bumper les badges HTML hardcodes lignes 160 + 170. Le HTML servi par CDN GitHub Pages avait window.APP_VERSION="9.85" MAIS versionBadge.textContent="v9.84". _checkUpdate() comparait remote(9.85) > badge(9.84) -> banner. Reload -> meme HTML -> meme banner. Boucle infinie.',
+    'Fix 1: badges versionBadge + splashVersion deviennent DYNAMIQUES au DOMContentLoaded depuis window.APP_VERSION. Si je rate un bump a l\'avenir, badge et APP_VERSION restent coherents (les 2 viennent du meme HTML).',
+    'Fix 2: _checkUpdate compare contre window.APP_VERSION (source de verite) au lieu du DOM badge.textContent. Plus robuste.',
+    'Fix 3: anti-loop CDN. Si lokizio_last_refresh_at < 11min, on n\'affiche PAS le banner "Rafraichir" (pour eviter le spam dans la fenetre de cache CDN max-age 600s). Affichage d\'un banner alternatif orange/rouge "v9.X disponible mais cache CDN persiste encore ~X min".',
+    'Fix 4: au click "Rafraichir", fetch(url, cache:"reload") AVANT location.href pour forcer le browser a envoyer Cache-Control: no-cache au CDN (peut declencher revalidation cote Fastly).'
+  ] },
   { v: '9.85', changes: [
     'Fix BUG CRITIQUE: contacts ajoutes manuellement ("+ Ajouter manuellement") n\'apparaissaient nulle part (ni dans Mon Equipe, ni dans le selecteur de prestataire).',
     'Cause: la RPC add_manual_contact hardcodait accepted=false en SQL. Les filtres v9.64 (.eq("accepted", true)) excluaient donc TOUS les contacts manuels.',
@@ -11058,6 +11079,9 @@ function showUpdateBanner(version) {
     btn.textContent = 'Mise a jour...';
     btn.disabled = true;
     localStorage.setItem('lokizio_seen_version', v);
+    // v9.86 fix: trace le timestamp pour eviter la boucle banner quand le
+    // CDN GitHub Pages cache encore l'ancien HTML pendant 10 min.
+    localStorage.setItem('lokizio_last_refresh_at', Date.now().toString());
     // Clear SW + caches
     try {
       const regs = await navigator.serviceWorker.getRegistrations();
@@ -11065,6 +11089,13 @@ function showUpdateBanner(version) {
       const keys = await caches.keys();
       await Promise.all(keys.map(k => caches.delete(k)));
     } catch(e) { console.warn('update banner: SW/cache cleanup failed:', e); }
+    // v9.86 fix: force revalidation cote CDN via fetch cache: 'reload'
+    // AVANT la navigation. Le browser envoie Cache-Control: no-cache au CDN,
+    // qui peut respecter et nous renvoyer la version a jour. Si le CDN
+    // n'honore pas, on est protege contre la boucle par le timestamp ci-dessus.
+    try {
+      await fetch(window.location.pathname, { cache: 'reload', credentials: 'same-origin' });
+    } catch(e) { console.warn('pre-reload fetch failed:', e); }
     // Force hard reload
     window.location.href = window.location.pathname + '?_v=' + Date.now();
   });
@@ -11074,7 +11105,14 @@ function showUpdateBanner(version) {
   banner.style.cssText = 'position:fixed;top:68px;left:0;right:0;padding:12px 16px;background:linear-gradient(135deg,#6c63ff,#5a54e0);color:#fff;font-size:13px;font-weight:600;text-align:center;z-index:99999;box-shadow:0 4px 20px rgba(108,99,255,0.4);';
   document.body.appendChild(banner);
 }
-// Update check: 5s after load, then every 60s
+// Update check: 5s after load, then every 30s.
+// v9.86 fix bug "popup version persistante" (workflow wp5sc40pn):
+//  - Source of truth = window.APP_VERSION (pas le badge HTML qui est seul re-rendu)
+//  - Anti-loop CDN: si l'user a clique Rafraichir il y a <11min, on n'affiche
+//    PAS de banner (le CDN GitHub Pages cache l'HTML 10min et ignore les
+//    query strings, donc le banner reapparaitrait en boucle). On affiche
+//    plutot un message d'aide a la place.
+const CDN_CACHE_GRACE_MS = 11 * 60 * 1000; // 11 min (CDN max-age 600s + marge)
 async function _checkUpdate() {
   try {
     const resp = await fetch('sw.js?_t=' + Date.now(), { cache: 'no-store' });
@@ -11082,19 +11120,38 @@ async function _checkUpdate() {
     const match = text.match(/APP_VERSION\s*=\s*'([^']+)'/);
     if (!match || !match[1]) return;
     const remoteVersion = match[1];
-    const currentVersion = (document.querySelector('#versionBadge')?.textContent || '').trim().replace(/^v/,'');
+    // Lire la version locale depuis window.APP_VERSION (source de verite, dans
+    // le meme HTML que le badge — cohrent), pas depuis le DOM badge.
+    const currentVersion = (window.APP_VERSION || '').toString().trim();
     if (remoteVersion === currentVersion) {
-      // Hide any stale banner still showing
-      const staleBanners = document.querySelectorAll('[data-update-banner]');
+      const staleBanners = document.querySelectorAll('[data-update-banner], [data-cdn-stuck]');
       staleBanners.forEach(b => b.remove());
       _updateBannerShown = false;
       return;
     }
     const toNum = v => { const p = v.split('.'); return (parseInt(p[0])||0) * 1000 + (parseInt(p[1])||0); };
     if (toNum(remoteVersion) <= toNum(currentVersion)) return;
-    // Always show banner when remote is newer (no "seen" gate)
+    // Anti-loop CDN: si l'utilisateur vient de cliquer Rafraichir, le HTML
+    // qu'il voit est peut-etre encore l'ancien servi par le CDN GitHub Pages
+    // (max-age 600s). Pas la peine de spammer le banner.
+    const lastRefreshAt = parseInt(localStorage.getItem('lokizio_last_refresh_at') || '0', 10);
+    const sinceRefreshMs = Date.now() - lastRefreshAt;
+    if (lastRefreshAt > 0 && sinceRefreshMs < CDN_CACHE_GRACE_MS) {
+      showCdnStuckBanner(remoteVersion, Math.ceil((CDN_CACHE_GRACE_MS - sinceRefreshMs) / 60000));
+      return;
+    }
     showUpdateBanner(remoteVersion);
   } catch(e) { console.warn('_checkUpdate failed:', e); }
+}
+
+// Banner alternatif quand on est dans la fenetre de cache CDN
+function showCdnStuckBanner(version, minutesLeft) {
+  if (document.querySelector('[data-cdn-stuck]')) return;
+  const banner = document.createElement('div');
+  banner.setAttribute('data-cdn-stuck', '1');
+  banner.style.cssText = 'position:fixed;top:0;left:0;right:0;background:linear-gradient(135deg,#f59e0b,#dc2626);color:#fff;padding:10px 14px;text-align:center;font-size:12px;z-index:99999;box-shadow:0 4px 8px rgba(0,0,0,0.2);';
+  banner.innerHTML = '&#9203; <b>v' + esc(version) + '</b> disponible mais le cache GitHub Pages persiste encore ~' + minutesLeft + ' min. <br><small>Tu peux soit attendre, soit ouvrir un onglet incognito (Ctrl+Shift+N) pour voir la nouvelle version maintenant.</small>';
+  document.body.appendChild(banner);
 }
 setTimeout(_checkUpdate, 5000);
 let _checkUpdateInterval = setInterval(_checkUpdate, 30000);
