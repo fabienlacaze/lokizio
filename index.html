@@ -9,8 +9,8 @@
   window.__isPasswordRecovery = h.indexOf('type=recovery') !== -1;
   window.__recoveryHash = h;
 })();
-window.APP_VERSION = '9.89';
-// v9.89 fix: rendre les badges de version DYNAMIQUES depuis window.APP_VERSION
+window.APP_VERSION = '9.90';
+// v9.90 fix: rendre les badges de version DYNAMIQUES depuis window.APP_VERSION
 // pour ne plus jamais avoir le bug "popup version persistante" quand j'oublie
 // de bumper les badges hardcodes en HTML (workflow wp5sc40pn). Si tout vient
 // du meme HTML, badge + window.APP_VERSION sont toujours coherents.
@@ -85,11 +85,11 @@ window.addEventListener('DOMContentLoaded', function() {
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.101.0/dist/umd/supabase.min.js" integrity="sha384-HS/sUFZexXk91zcjy7zGIBg3tNDxgxF8YbcifixByxxtxQoF2o8GBBT9p6DdGlAR" crossorigin="anonymous"></script>
 <script src="supabase_config.js?v=76fd30b"></script>
 <script src="i18n.min.js?v=e16c908"></script>
-<script src="ical_parser.min.js?v=2a790e6"></script>
+<script src="ical_parser.min.js?v=cf7ad71"></script>
 <script src="helpers.min.js?v=8bb5604"></script>
-<script src="api_bridge.min.js?v=4a3f3b8"></script>
+<script src="api_bridge.min.js?v=8991bea"></script>
 <script src="vacation.min.js?v=b2e3eb5"></script>
-<script src="push.min.js?v=c5f5981"></script>
+<script src="push.min.js?v=06e1ddc"></script>
 <script src="legal.min.js?v=81bb683"></script>
 <script src="quotes.min.js?v=1035b7b"></script>
 <script src="search.min.js?v=a7bd25c"></script>
@@ -97,13 +97,13 @@ window.addEventListener('DOMContentLoaded', function() {
 <script src="auto-billing.min.js?v=1ad593f"></script>
 <script src="invoices.min.js?v=621c07e"></script>
 <script src="invoice-create.min.js?v=d9a943d"></script>
-<script src="auth.min.js?v=e652953"></script>
+<script src="auth.min.js?v=466f0d4"></script>
 <script src="provider.min.js?v=1884be9"></script>
 <script src="owner.min.js?v=f805e62"></script>
 <script src="marketplace.min.js?v=34dcec7"></script>
 <script src="properties.min.js?v=26d7caf"></script>
 <script src="dashboard.min.js?v=786f765"></script>
-<script src="admin-prestations.min.js?v=1515de4"></script>
+<script src="admin-prestations.min.js?v=11df485"></script>
 <script src="account.min.js?v=5a51748"></script>
 <script src="admin-sentry.min.js?v=2302bea"></script>
 <script src="stripe-connect-embed.min.js?v=04d3580"></script>
@@ -170,7 +170,7 @@ async function loadPDF() {
 </script>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v9.89</div>
+<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v9.90</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -180,7 +180,7 @@ async function loadPDF() {
     <!-- Broom that sweeps -->
     <div id="splashBroom" style="position:absolute;top:50%;left:-60px;font-size:48px;transform:translateY(-50%) rotate(-30deg);opacity:0;transition:all 0.8s cubic-bezier(0.25,0.46,0.45,0.94);">✨</div>
   </div>
-  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span id="splashVersion" style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v9.89</span></div>
+  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span id="splashVersion" style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v9.90</span></div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie pour locations</div>
   <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou</div>
   <!-- Loading bar -->
@@ -1726,6 +1726,19 @@ function getStatusLabel(s) { return (STATUS_CONFIG[s] || {}).label || s || ''; }
 // ── Splash Changelog (update this with each significant version) ──
 // Full versioned changelog — add new entries at TOP
 const VERSION_CHANGELOG = [
+  { v: '9.90', changes: [
+    'PERF FIX MAJEUR boot path — workflow wxb6wnx3t a identifie 9 causes confirmees totalisant 22.8s.',
+    'Fix #1 ical_parser.js — cascade iCal sequentielle SANS timeout. Avant: for...await sur sources (Airbnb 3-6s + Booking 2-4s = 8-10s). Apres: Promise.allSettled (max ~6s) + AbortController timeout 8s pour eviter qu\\'une source qui hang sature la connexion pool. Gain ~5-8s.',
+    'Fix #2 index.html:2746 — setTimeout(generatePlanning, 500) supprime. C\\'etait redondant avec autoRefreshPlanning() (l.3187) et causait un DOUBLE-INIT iCal (4 fetches concurrents au lieu de 2). Gain ~1.5s.',
+    'Fix #3 api_bridge.js:386 — guard !currentOrg sur load_config. Avant: load_plan + load_config -> loadOrg() execute 2x (refait getUser + members + N+1 orgs). Apres: 2eme appel skip. Gain ~0.6s.',
+    'Fix #4 api_bridge.js:42-45 — N+1 sur organizations remplace par batch .in(). Avant: 1 query members + N queries orgs sequentielles. Apres: 1 + 1. Gain ~0.3s.',
+    'Fix #5 index.html loadKpiCards — Promise.all sur les 3 queries independantes apres properties (plannings + service_requests + invoices). Avant: 3 await sequentiels (~600-900ms). Apres: max(3) (~200-300ms). Gain ~0.5s.',
+    'Fix #6 admin-prestations.js loadAdminPrestations — meme pattern Promise.all (plannings + service_requests + cleaning_validations apres properties). Gain ~0.5s.',
+    'Fix #7 auth.js + api_bridge.js + push.js — getUser() remplace par getSession() sur les 3 sites cold-boot critiques. getSession() lit le JWT en localStorage (~0ms), getUser() fait un round-trip /auth/v1/user (~150-300ms). Sur cold boot avec ~6 appels = ~1s gagnees.',
+    'Total estime: 9-12s de gain. Boot devrait passer de ~10s a ~1-2s.',
+    'NON applique pour eviter le risque: defer sur les 30 scripts head (gain 3s mais risque casser ordre). A faire en sprint perf v2 avec test exhaustif.',
+    'Instrumentation suggeree par le workflow (etape 0): ajouter performance.now() au init() pour mesurer les gains reels.'
+  ] },
   { v: '9.89', changes: [
     'Fix BUG CRITIQUE — click prestataire dans modal detail mission ne faisait rien (cleaning iCal Airbnb).',
     'Diagnostic via workflow w21x75q30 + capture console user: warn "[assignToOrgProvider] cannot determine target" a admin-prestations.js:618.',
@@ -1738,7 +1751,7 @@ const VERSION_CHANGELOG = [
     'PERF FIX MAJEUR — regression boot v9.87 (~5s -> <1s).',
     'Root cause identifie par workflow w21x75q30: cascade SW double-reload a CHAQUE bump de version.',
     'Mecanisme: 1) kill-switch index.html unregister+wipe+reload (~1.5s) sur tout mismatch de version. 2) sw.js activate handler wipe ALL caches + postMessage SW_FORCE_RELOAD = 2eme reload (~1.5s). 3) cache.addAll(30 fichiers) bloquant pendant ce temps (~1.5-2s de bande volee).',
-    'Hier (v9.86 stable depuis X temps) aucun mecanisme ne se declenchait au refresh. Au bump v9.89 les 3 ont feu simultanement = +5s.',
+    'Hier (v9.86 stable depuis X temps) aucun mecanisme ne se declenchait au refresh. Au bump v9.90 les 3 ont feu simultanement = +5s.',
     'Fix #1 sw.js activate: ne supprime QUE les caches d\'anciennes versions (pattern standard) + plus de postMessage SW_FORCE_RELOAD. Gain ~1.5s.',
     'Fix #2 sw.js install: split APP_SHELL en CRITICAL_SHELL (8 fichiers bloquants) + LAZY_SHELL (le reste en fire-and-forget hors waitUntil). Install passe de 1.5-2s a 300-500ms. Gain ~1.2s.',
     'Fix #3 index.html: retire listener SW_FORCE_RELOAD (dead code), remplace par no-op defensif pour absorber anciens SW.',
@@ -2699,7 +2712,7 @@ async function loadActiveProperty() {
     property: prop.name || '',
     readonlyToken: prop.readonlyToken || '',
   };
-  // v9.89 perf fix (workflow wbaypk7ll): paralleliser les 5 queries qui
+  // v9.90 perf fix (workflow wbaypk7ll): paralleliser les 5 queries qui
   // etaient sequentielles au boot. Toutes sont independantes. Gain ~5x sur
   // cette phase de loadActiveProperty.
   const [_td, _ch, _li, saved, _res] = await Promise.all([
@@ -2739,12 +2752,10 @@ async function loadActiveProperty() {
   calMonth = now.getMonth();
   restorePanelStates();
   renderDashboardContent();
-  // Auto-generate if URLs configured but no planning
-  const hasUrls = config.airbnbIcalUrl || config.bookingIcalUrl || (prop && prop.icals && prop.icals.some(i => i.url));
-  const hasProviders = (config.providers || []).length > 0;
-  if (hasUrls && hasProviders && (!saved || saved.length === 0)) {
-    setTimeout(() => generatePlanning(), 500);
-  }
+  // v9.90: setTimeout(generatePlanning, 500) RETIRE — autoRefreshPlanning() (l.3187)
+  // couvre deja ce cas. La gate 2h ne court-circuite pas si lastRefresh est null,
+  // donc la 1ere generation se fait via autoRefresh. Avant: 2 cascades iCal parallel
+  // contendant la connexion pool, ~1.5s gaspilles. Voir workflow wxb6wnx3t.
   // Load service requests + unified prestations
   loadServiceRequests();
   loadAdminPrestations().then(() => { renderDashboardContent(); renderRevenueContent(); });
@@ -3213,16 +3224,26 @@ async function loadKpiCards() {
     if (!org) { el.style.display = 'none'; return; }
     const { data: properties } = await sb.from('properties').select('id').eq('org_id', org.id);
     const propIds = (properties || []).map(p => p.id);
-    const { data: plannings } = propIds.length ? await sb.from('plannings').select('cleanings').in('property_id', propIds) : { data: [] };
-    const { data: svcReqs } = await sb.from('service_requests').select('id,requested_date,status').eq('org_id', org.id).in('status', ['pending','assigned','accepted','in_progress']);
+    // v9.90 perf fix: paralleliser les 3 queries independantes apres properties.
+    // Avant: 3 await sequentiels (~600-900ms). Apres: max(3) (~200-300ms).
+    const [planRes, svcRes, invRes] = await Promise.all([
+      propIds.length
+        ? sb.from('plannings').select('cleanings').in('property_id', propIds)
+        : Promise.resolve({ data: [] }),
+      sb.from('service_requests').select('id,requested_date,status').eq('org_id', org.id).in('status', ['pending','assigned','accepted','in_progress']),
+      sb.from('invoices').select('status,total_ttc,due_date,created_at,is_quote').eq('org_id', org.id).or('is_quote.is.null,is_quote.eq.false'),
+    ]);
+    const plannings = planRes.data || [];
+    const svcReqs = svcRes.data || [];
+    const invs = invRes.data || [];
     const now = new Date();
     const todayStr = now.toISOString().split('T')[0];
     const weekEnd = new Date(now); weekEnd.setDate(weekEnd.getDate() + 7);
     const weekEndStr = weekEnd.toISOString().split('T')[0];
     let allCleanings = [];
-    (plannings || []).forEach(p => { if (p.cleanings) allCleanings = allCleanings.concat(p.cleanings); });
+    plannings.forEach(p => { if (p.cleanings) allCleanings = allCleanings.concat(p.cleanings); });
     const futureCl = allCleanings.filter(c => (c.cleaningDate || c.date || '') >= todayStr);
-    const futureSvc = (svcReqs || []).filter(r => (r.requested_date || '') >= todayStr);
+    const futureSvc = svcReqs.filter(r => (r.requested_date || '') >= todayStr);
     const future = futureCl.length + futureSvc.length;
     const weekCl = futureCl.filter(c => (c.cleaningDate || c.date || '') <= weekEndStr);
     const weekSvc = futureSvc.filter(r => (r.requested_date || '') <= weekEndStr);
@@ -3230,8 +3251,7 @@ async function loadKpiCards() {
     const provCount = new Set(allCleanings.map(c => c.provider).filter(Boolean)).size;
     // Finance KPIs
     const monthStart = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0') + '-01';
-    const { data: invs } = await sb.from('invoices').select('status,total_ttc,due_date,created_at,is_quote').eq('org_id', org.id).or('is_quote.is.null,is_quote.eq.false');
-    const invList = invs || [];
+    const invList = invs;
     const monthCA = invList.filter(i => (i.created_at || '').substring(0,10) >= monthStart).reduce((s,i) => s + (i.total_ttc||0), 0);
     const overdue = invList.filter(i => i.status === 'sent' && i.due_date && i.due_date < todayStr);
     const overdueCount = overdue.length;
@@ -10555,7 +10575,7 @@ function showPrestationDetail(payload, event) {
   // CRITICAL: if no provider assigned, surface the assignment popup directly
   if (_detailNoProv && typeof showAssignProviderPopup === 'function') {
     const _propJsEsc = esc(u.propertyName || '').replace(/'/g, "\\'");
-    // v9.89 fix: pass _source + propertyId aussi (oubli v9.87 pour cleaning iCal).
+    // v9.90 fix: pass _source + propertyId aussi (oubli v9.87 pour cleaning iCal).
     // Sans ca, assignToOrgProvider tombe dans la branche "cannot determine target"
     // et l'assignation silently fail (console.warn admin-prestations.js:618).
     html += `<button class="prestSendBtn" onclick="closeMsg();setTimeout(()=>showAssignProviderPopup('${u._id || ''}','${u.date || ''}','${u.type || ''}','${_propJsEsc}','${u._source || ''}','${u.propertyId || ''}'),200)" style="padding:10px 18px;font-size:13px;border:none;border-radius:8px;cursor:pointer;font-weight:700;">&#128100; Selectionner prestataire</button>`;
@@ -11119,7 +11139,7 @@ function showUpdateBanner(version) {
     btn.textContent = 'Mise a jour...';
     btn.disabled = true;
     localStorage.setItem('lokizio_seen_version', v);
-    // v9.89 fix: trace le timestamp pour eviter la boucle banner quand le
+    // v9.90 fix: trace le timestamp pour eviter la boucle banner quand le
     // CDN GitHub Pages cache encore l'ancien HTML pendant 10 min.
     localStorage.setItem('lokizio_last_refresh_at', Date.now().toString());
     // Clear SW + caches
@@ -11129,7 +11149,7 @@ function showUpdateBanner(version) {
       const keys = await caches.keys();
       await Promise.all(keys.map(k => caches.delete(k)));
     } catch(e) { console.warn('update banner: SW/cache cleanup failed:', e); }
-    // v9.89 fix: force revalidation cote CDN via fetch cache: 'reload'
+    // v9.90 fix: force revalidation cote CDN via fetch cache: 'reload'
     // AVANT la navigation. Le browser envoie Cache-Control: no-cache au CDN,
     // qui peut respecter et nous renvoyer la version a jour. Si le CDN
     // n'honore pas, on est protege contre la boucle par le timestamp ci-dessus.
@@ -11146,7 +11166,7 @@ function showUpdateBanner(version) {
   document.body.appendChild(banner);
 }
 // Update check: 5s after load, then every 30s.
-// v9.89 fix bug "popup version persistante" (workflow wp5sc40pn):
+// v9.90 fix bug "popup version persistante" (workflow wp5sc40pn):
 //  - Source of truth = window.APP_VERSION (pas le badge HTML qui est seul re-rendu)
 //  - Anti-loop CDN: si l'user a clique Rafraichir il y a <11min, on n'affiche
 //    PAS de banner (le CDN GitHub Pages cache l'HTML 10min et ignore les
@@ -11205,12 +11225,12 @@ window.addEventListener('beforeunload', () => {
 });
 
 if('serviceWorker' in navigator){
-  // v9.89: listener SW_FORCE_RELOAD retire. Le sw.js ne poste plus ce message,
+  // v9.90: listener SW_FORCE_RELOAD retire. Le sw.js ne poste plus ce message,
   // mais on garde un no-op defensif pour absorber les anciens SW encore en cache
   // chez les users qui n'ont pas refresh depuis longtemps. Voir workflow w21x75q30.
   navigator.serviceWorker.addEventListener('message', () => { /* no-op */ });
 
-  // ── Kill-switch (v9.89: gate sur version MAJEURE uniquement).
+  // ── Kill-switch (v9.90: gate sur version MAJEURE uniquement).
   // Avant: declenchait unregister+wipe+reload a CHAQUE mismatch (meme un bump patch
   // mineur 9.86 -> 9.87), causant ~1.5s de latence boot a chaque release. Le flux
   // normal update -> install -> waiting -> banner _checkUpdate suffit largement pour

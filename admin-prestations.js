@@ -24,28 +24,28 @@ async function loadAdminPrestations(forceReload) {
     validations = _adminPrestCache.validations;
     propMap = _adminPrestCache.propMap;
   } else {
-    // Load all properties
+    // v9.90 perf fix: properties d'abord (besoin de propIds), puis 3 queries
+    // independantes en parallele. Avant: 4 await sequentiels (~800ms-1.5s).
+    // Apres: 1 + max(3 parallel) (~300-500ms).
     const { data: properties } = await sb.from('properties').select('*').eq('org_id', org.id);
     props = properties || [];
     propMap = {};
     props.forEach(p => { propMap[p.id] = p; });
-
-    // Load all plannings (cleanings)
     const propIds = props.map(p => p.id);
-    const { data: planData } = propIds.length ? await sb.from('plannings').select('cleanings,property_id').in('property_id', propIds) : { data: [] };
-    plannings = planData;
-    const today = new Date().toISOString().split('T')[0];
 
-    // Load service requests
-    const { data: svcData } = await sb.from('service_requests').select('*').eq('org_id', org.id).order('created_at', { ascending: false }).limit(100);
-    svcRequests = svcData || [];
-
-    // Load all validations in a single query instead of N+1
+    const [planRes, svcRes, valsRes] = await Promise.all([
+      propIds.length
+        ? sb.from('plannings').select('cleanings,property_id').in('property_id', propIds)
+        : Promise.resolve({ data: [] }),
+      sb.from('service_requests').select('*').eq('org_id', org.id).order('created_at', { ascending: false }).limit(100),
+      propIds.length
+        ? sb.from('cleaning_validations').select('*').in('property_id', propIds)
+        : Promise.resolve({ data: [] }),
+    ]);
+    plannings = planRes.data || [];
+    svcRequests = svcRes.data || [];
     validations = {};
-    if (propIds.length) {
-      const { data: vals } = await sb.from('cleaning_validations').select('*').in('property_id', propIds);
-      if (vals) vals.forEach(v => { validations[v.property_id + '_' + v.cleaning_date + '_' + v.provider_name] = v; });
-    }
+    (valsRes.data || []).forEach(v => { validations[v.property_id + '_' + v.cleaning_date + '_' + v.provider_name] = v; });
 
     _adminPrestCache = { props, plannings, svcRequests, validations, propMap };
     _adminPrestCacheTime = now;

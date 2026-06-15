@@ -29,10 +29,15 @@ async function fetchIcalDirect(url, source) {
   const log = typeof dbg === 'function' ? dbg : console.log;
   if (!url) return '';
 
+  // v9.90 perf fix: timeout 8s pour eviter qu'un Airbnb/Booking lent saturent
+  // la connexion pool toute la duree du boot. Voir workflow wxb6wnx3t.
+  const ctrl = new AbortController();
+  const tid = setTimeout(() => ctrl.abort(), 8000);
   try {
     log(`${source}: recuperation via Edge Function...`, 'info');
     const resp = await fetch(`${SUPABASE_URL}/functions/v1/ical-proxy`, {
       method: 'POST',
+      signal: ctrl.signal,
       headers: {
         'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
         'Content-Type': 'application/json',
@@ -48,7 +53,9 @@ async function fetchIcalDirect(url, source) {
     }
     log(`${source}: reponse invalide (HTTP ${resp.status})`, 'warn');
   } catch (e) {
-    log(`${source}: erreur: ${e.message}`, 'err');
+    log(`${source}: erreur: ${e.message === 'The user aborted a request.' || e.name === 'AbortError' ? 'timeout 8s' : e.message}`, 'err');
+  } finally {
+    clearTimeout(tid);
   }
   return '';
 }
@@ -123,21 +130,23 @@ async function generatePlanningFromICal(config, previousPlanning, transmittedDat
     if (config.airbnbIcalUrl) sources.push({ url: config.airbnbIcalUrl, name: 'Airbnb' });
     if (config.bookingIcalUrl) sources.push({ url: config.bookingIcalUrl, name: 'Booking' });
   }
-  for (const src of sources) {
-    if (!src.url) { log(src.name + ': pas d\'URL, skip', 'info'); continue; }
+  // v9.90 perf fix: paralleliser les fetch iCal (avant: for...await sequentiel
+  // = Airbnb 3-6s + Booking 2-4s = 8-10s. Apres: max(Airbnb, Booking) = 6s).
+  const results = await Promise.allSettled(sources.map(async src => {
+    if (!src.url) { log(src.name + ': pas d\'URL, skip', 'info'); return { src, text: '' }; }
     log('Lecture ' + src.name + '...', 'info');
-    try {
-      const text = await fetchIcalDirect(src.url, src.name);
-      if (text) {
-        const evts = parseIcalText(text, src.name);
-        log(src.name + ': ' + evts.length + ' evenement(s) trouves', 'ok');
-        allEvents = allEvents.concat(evts);
-      } else {
-        log(src.name + ': impossible de recuperer le calendrier.', 'warn');
-      }
-    } catch (e) {
-      log(src.name + ' ERREUR: ' + e.message, 'err');
-      errors.push(`${src.name}: ${e.message}`);
+    const text = await fetchIcalDirect(src.url, src.name);
+    return { src, text };
+  }));
+  for (const r of results) {
+    if (r.status === 'fulfilled' && r.value.text) {
+      const evts = parseIcalText(r.value.text, r.value.src.name);
+      log(r.value.src.name + ': ' + evts.length + ' evenement(s) trouves', 'ok');
+      allEvents = allEvents.concat(evts);
+    } else if (r.status === 'rejected') {
+      errors.push(r.reason?.message || 'unknown');
+    } else if (r.status === 'fulfilled' && r.value.src.url) {
+      log(r.value.src.name + ': impossible de recuperer le calendrier.', 'warn');
     }
   }
 

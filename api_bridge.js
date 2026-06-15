@@ -23,9 +23,12 @@ const API = (function() {
   const secureToken = (len) => { const a = new Uint8Array(len); crypto.getRandomValues(a); return Array.from(a, b => b.toString(16).padStart(2,'0')).join(''); };
 
   async function getUserId() {
-    const { data: { user } } = await sb.auth.getUser();
-    if (!user) throw new Error('Non authentifie');
-    return user.id;
+    // v9.90 perf fix: getSession() (localStorage sync, ~0ms) au lieu de getUser()
+    // (round-trip /auth/v1/user, ~150-300ms). getUserId est appele dans CHAQUE
+    // operation API (loadOrg, save_*, etc) — cold boot ~6+ appels = ~1-2s gagnees.
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session?.user) throw new Error('Non authentifie');
+    return session.user.id;
   }
 
   // Load user's organization(s) and role
@@ -38,11 +41,13 @@ const API = (function() {
         .select('*')
         .eq('user_id', userId);
       if (members && members.length) {
-        // Load organizations separately for each membership
-        for (const m of members) {
-          const { data: org } = await sb.from('organizations').select('*').eq('id', m.org_id).single();
-          m.organizations = org;
-        }
+        // v9.90 perf fix: batch query au lieu de N+1 sequentiel.
+        // Avant: N round-trips pour N memberships (N*~150ms).
+        // Apres: 1 round-trip (~150ms).
+        const orgIds = members.map(m => m.org_id);
+        const { data: orgs } = await sb.from('organizations').select('*').in('id', orgIds);
+        const orgById = Object.fromEntries((orgs || []).map(o => [o.id, o]));
+        members.forEach(m => { m.organizations = orgById[m.org_id] || null; });
       }
       if (error || !members || !members.length) {
         // Auto-create org + member + trial subscription
@@ -382,8 +387,9 @@ const API = (function() {
 
     // ─── Config (builds from properties table) ───
     async load_config() {
-      // Try new tables first
-      await loadOrg();
+      // v9.90 perf fix: garde !currentOrg pour eviter le 2eme loadOrg.
+      // Avant: load_plan + load_config -> 2x loadOrg (getUser + members + orgs).
+      if (!currentOrg) await loadOrg();
       if (currentOrg) {
         const dbProps = await loadProperties();
         if (dbProps.length > 0) {
