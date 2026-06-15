@@ -1489,7 +1489,10 @@ async function saveManualContact() {
   const org = (typeof API !== 'undefined' && API.getOrg) ? API.getOrg() : null;
   if (!org || !org.id) { tell('Organisation introuvable — recharge la page', 'error'); return; }
 
-  // Save as a member with accepted=false (manual contact, no auth user yet)
+  // Save as a member with accepted=true: a manual contact is an active team
+  // entry the concierge has explicitly added (not a pending invitation).
+  // Previously accepted=false caused it to be filtered out of Mon Équipe + the
+  // provider selector (v9.85 fix — also matches the SQL RPC after update).
   try {
     const payload = {
       org_id: org.id,
@@ -1498,7 +1501,7 @@ async function saveManualContact() {
       display_name: name,
       phone: phone || null,
       notes: notes || null,
-      accepted: false,
+      accepted: true,
     };
     // Use the SECURITY DEFINER RPC to bypass the RLS quirk on members.insert
     // (PostgREST evaluates auth.uid() differently in the policy WITH CHECK).

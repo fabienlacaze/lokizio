@@ -9,7 +9,7 @@
   window.__isPasswordRecovery = h.indexOf('type=recovery') !== -1;
   window.__recoveryHash = h;
 })();
-window.APP_VERSION = '9.84';
+window.APP_VERSION = '9.85';
 </script>
 <script src="sentry-init.min.js?v=759d31d"></script>
 <script
@@ -87,7 +87,7 @@ window.APP_VERSION = '9.84';
 <script src="auth.min.js?v=e652953"></script>
 <script src="provider.min.js?v=1884be9"></script>
 <script src="owner.min.js?v=f805e62"></script>
-<script src="marketplace.min.js?v=2b602a0"></script>
+<script src="marketplace.min.js?v=34dcec7"></script>
 <script src="properties.min.js?v=26d7caf"></script>
 <script src="dashboard.min.js?v=786f765"></script>
 <script src="admin-prestations.min.js?v=37fdf8b"></script>
@@ -1713,6 +1713,14 @@ function getStatusLabel(s) { return (STATUS_CONFIG[s] || {}).label || s || ''; }
 // ── Splash Changelog (update this with each significant version) ──
 // Full versioned changelog — add new entries at TOP
 const VERSION_CHANGELOG = [
+  { v: '9.85', changes: [
+    'Fix BUG CRITIQUE: contacts ajoutes manuellement ("+ Ajouter manuellement") n\'apparaissaient nulle part (ni dans Mon Equipe, ni dans le selecteur de prestataire).',
+    'Cause: la RPC add_manual_contact hardcodait accepted=false en SQL. Les filtres v9.64 (.eq("accepted", true)) excluaient donc TOUS les contacts manuels.',
+    'Fix 1 RPC SQL: add_manual_contact set maintenant accepted=true (un contact manuel est un membre actif explicitement ajoute par le concierge, pas une invitation en attente).',
+    'Fix 2 frontend: saveManualContact payload (fallback direct insert) aligne sur accepted=true.',
+    'Fix 3 migration retroactive: UPDATE members SET accepted=true WHERE user_id IS NULL AND accepted=false (5 contacts manuels rendus visibles dont fff, Fabien Lacaze, maxime).',
+    'Cleanup: dedupe 2 doublons "maxime" crees par les tentatives precedentes.'
+  ] },
   { v: '9.84', changes: [
     'Sprint 4 — hardening financier suite au workflow audit final whf6tcip3 (5 BLOCKERS identifies, 30 confirmes total).',
     'BLOCKER #1 Idempotency-Key Stripe sur tous les /refunds (client-dispute-invoice + stripe-invoice-refund). Cle derivee de invoice.id + day. Stripe deduplique pendant 24h. Plus de risque de double remboursement en cas de retry reseau.',
