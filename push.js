@@ -17,9 +17,8 @@ async function subscribePushNotifications() {
         applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
       });
     }
-    // v9.90 perf fix: getSession() au lieu de getUser() (push.js charge tot au boot)
-    const { data: { session } } = await sb.auth.getSession();
-    const user = session?.user;
+    // v9.91 REVERT du fix v9.90 getSession() — causait ecran noir si JWT stale.
+    const { data: { user } } = await sb.auth.getUser();
     if (!user) return false;
     const sj = sub.toJSON();
     await sb.from('push_subscriptions').upsert({

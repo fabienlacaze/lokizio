@@ -23,12 +23,11 @@ const API = (function() {
   const secureToken = (len) => { const a = new Uint8Array(len); crypto.getRandomValues(a); return Array.from(a, b => b.toString(16).padStart(2,'0')).join(''); };
 
   async function getUserId() {
-    // v9.90 perf fix: getSession() (localStorage sync, ~0ms) au lieu de getUser()
-    // (round-trip /auth/v1/user, ~150-300ms). getUserId est appele dans CHAQUE
-    // operation API (loadOrg, save_*, etc) — cold boot ~6+ appels = ~1-2s gagnees.
-    const { data: { session } } = await sb.auth.getSession();
-    if (!session?.user) throw new Error('Non authentifie');
-    return session.user.id;
+    // v9.91 REVERT du fix v9.90 getSession() — causait ecran noir si JWT stale.
+    // getUser() refresh le token si necessaire; getSession() retourne JWT expire.
+    const { data: { user } } = await sb.auth.getUser();
+    if (!user) throw new Error('Non authentifie');
+    return user.id;
   }
 
   // Load user's organization(s) and role

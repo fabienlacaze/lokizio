@@ -47,11 +47,10 @@ async function checkAuth() {
       if (typeof showPasswordRecoveryForm === 'function') showPasswordRecoveryForm();
       return;
     }
-    // v9.90 perf fix: getSession() (synchrone, localStorage) au lieu de getUser()
-    // (round-trip /auth/v1/user, ~150-300ms). Sur cold boot ca economise ~200ms
-    // par appel. checkAuth est le tout premier appel — direct impact sur first paint.
-    const { data: { session } } = await sb.auth.getSession();
-    const user = session?.user;
+    // v9.91 REVERT du fix v9.90 getSession() — causait ecran noir.
+    // getUser() refresh implicitement les JWT expires; getSession() retourne
+    // le JWT stale -> 401 sur 1ere query Supabase -> init() throw.
+    const { data: { user } } = await sb.auth.getUser();
     if (user) {
       document.getElementById('authScreen').style.display = 'none';
       // Don't show appMain yet — init() will decide (onboarding or app)
