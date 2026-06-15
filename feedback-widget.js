@@ -29,8 +29,11 @@
       btn.id = 'feedbackFloatBtn';
       btn.title = 'Donner mon avis sur Lokizio';
       btn.setAttribute('aria-label', 'Donner mon avis');
-      btn.innerHTML = '&#128172;';
-      btn.style.cssText = 'position:fixed;bottom:80px;left:14px;width:46px;height:46px;border-radius:50%;background:linear-gradient(135deg,#6c63ff,#5a54e0);color:#fff;border:none;font-size:22px;cursor:pointer;z-index:99997;box-shadow:0 4px 14px rgba(108,99,255,0.45);transition:transform 0.15s;';
+      // v9.95 fix: differencier le widget feedback du widget chat (#chatFab).
+      // Avant: meme emoji 💬 + meme violet -> user voyait "2 bulles widget feedback".
+      // Apres: 💡 (idee) + gradient orange/amber -> visuellement distinct du chat.
+      btn.innerHTML = '&#128161;';
+      btn.style.cssText = 'position:fixed;bottom:80px;left:14px;width:46px;height:46px;border-radius:50%;background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;border:none;font-size:22px;cursor:pointer;z-index:99997;box-shadow:0 4px 14px rgba(245,158,11,0.45);transition:transform 0.15s;';
       btn.onmouseover = () => btn.style.transform = 'scale(1.05)';
       btn.onmouseout = () => btn.style.transform = '';
       btn.onclick = openFeedbackWidget;

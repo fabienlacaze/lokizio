@@ -13,6 +13,15 @@ async function loadAdminPrestations(forceReload) {
   const listEl = document.getElementById('adminPrestList');
   if (!listEl) return;
 
+  // v9.95: skeleton immediat (3 placeholders animes) au lieu d'un simple
+  // "Chargement..." statique. Sur cold-load (>200ms), l'utilisateur voit
+  // immediatement la forme de la liste = perception de vitesse +++.
+  // Reuse du keyframe 'shimmer' deja defini dans app.css (lignes 48, 963).
+  if (forceReload || !_adminPrestCache) {
+    const sk = '<div style="margin:8px 0;height:64px;background:linear-gradient(90deg,var(--surface2) 0%,var(--surface) 50%,var(--surface2) 100%);background-size:200% 100%;animation:shimmer 1.4s infinite;border-radius:10px;"></div>';
+    listEl.innerHTML = sk + sk + sk;
+  }
+
   let props, plannings, svcRequests, validations, propMap;
   const now = Date.now();
 
@@ -24,23 +33,29 @@ async function loadAdminPrestations(forceReload) {
     validations = _adminPrestCache.validations;
     propMap = _adminPrestCache.propMap;
   } else {
-    // v9.90 perf fix: properties d'abord (besoin de propIds), puis 3 queries
-    // independantes en parallele. Avant: 4 await sequentiels (~800ms-1.5s).
-    // Apres: 1 + max(3 parallel) (~300-500ms).
-    const { data: properties } = await sb.from('properties').select('*').eq('org_id', org.id);
+    // v9.95 perf fix: service_requests filtre par org_id (PAS property_id), donc
+    // INDEPENDANT de properties. On le lance en parallele du await properties.
+    // Puis plannings + cleaning_validations en parallele (necessitent propIds).
+    // Avant: properties bloque, puis 3 queries en parallele.
+    // Apres: properties + svcReq en parallele, puis plannings + valids en parallele.
+    // Gain ~150-300ms en cold-load grace au multiplexing HTTP/2.
+    const propertiesPromise = sb.from('properties').select('*').eq('org_id', org.id);
+    const svcPromise = sb.from('service_requests').select('*').eq('org_id', org.id).order('created_at', { ascending: false }).limit(100);
+
+    const { data: properties } = await propertiesPromise;
     props = properties || [];
     propMap = {};
     props.forEach(p => { propMap[p.id] = p; });
     const propIds = props.map(p => p.id);
 
-    const [planRes, svcRes, valsRes] = await Promise.all([
+    const [planRes, valsRes, svcRes] = await Promise.all([
       propIds.length
         ? sb.from('plannings').select('cleanings,property_id').in('property_id', propIds)
         : Promise.resolve({ data: [] }),
-      sb.from('service_requests').select('*').eq('org_id', org.id).order('created_at', { ascending: false }).limit(100),
       propIds.length
         ? sb.from('cleaning_validations').select('*').in('property_id', propIds)
         : Promise.resolve({ data: [] }),
+      svcPromise, // deja en vol depuis le debut de la fonction
     ]);
     plannings = planRes.data || [];
     svcRequests = svcRes.data || [];
