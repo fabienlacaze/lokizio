@@ -6,28 +6,41 @@
 
 (function () {
   let _floatingMounted = false;
+  let _mountInProgress = false;
   let _screenshotDataUrl = null;
 
   // Render the floating button — once user is authenticated.
+  // v9.87 fix: race condition. 3 setTimeout (1500/4000/8000ms) appelaient
+  // mountFloatingButton() en parallele. Le check _floatingMounted ne suffit
+  // pas car il est avant un await sb.auth.getUser() asynchrone (2 calls
+  // pouvaient passer le check, creant 2 boutons). _mountInProgress lock
+  // protege toute la fonction pour eviter ca.
   async function mountFloatingButton() {
-    if (_floatingMounted) return;
-    if (typeof sb === 'undefined') return;
+    if (_floatingMounted || _mountInProgress) return;
+    _mountInProgress = true;
     try {
+      if (typeof sb === 'undefined') return;
       const { data: { user } } = await sb.auth.getUser();
       if (!user) return; // only authenticated users see the widget
-    } catch (_) { return; }
+      // Belt-and-suspenders: nuke any prior duplicate buttons before mounting.
+      document.querySelectorAll('#feedbackFloatBtn').forEach(el => el.remove());
 
-    const btn = document.createElement('button');
-    btn.id = 'feedbackFloatBtn';
-    btn.title = 'Donner mon avis sur Lokizio';
-    btn.setAttribute('aria-label', 'Donner mon avis');
-    btn.innerHTML = '&#128172;';
-    btn.style.cssText = 'position:fixed;bottom:80px;left:14px;width:46px;height:46px;border-radius:50%;background:linear-gradient(135deg,#6c63ff,#5a54e0);color:#fff;border:none;font-size:22px;cursor:pointer;z-index:99997;box-shadow:0 4px 14px rgba(108,99,255,0.45);transition:transform 0.15s;';
-    btn.onmouseover = () => btn.style.transform = 'scale(1.05)';
-    btn.onmouseout = () => btn.style.transform = '';
-    btn.onclick = openFeedbackWidget;
-    document.body.appendChild(btn);
-    _floatingMounted = true;
+      const btn = document.createElement('button');
+      btn.id = 'feedbackFloatBtn';
+      btn.title = 'Donner mon avis sur Lokizio';
+      btn.setAttribute('aria-label', 'Donner mon avis');
+      btn.innerHTML = '&#128172;';
+      btn.style.cssText = 'position:fixed;bottom:80px;left:14px;width:46px;height:46px;border-radius:50%;background:linear-gradient(135deg,#6c63ff,#5a54e0);color:#fff;border:none;font-size:22px;cursor:pointer;z-index:99997;box-shadow:0 4px 14px rgba(108,99,255,0.45);transition:transform 0.15s;';
+      btn.onmouseover = () => btn.style.transform = 'scale(1.05)';
+      btn.onmouseout = () => btn.style.transform = '';
+      btn.onclick = openFeedbackWidget;
+      document.body.appendChild(btn);
+      _floatingMounted = true;
+    } catch (_) {
+      /* best-effort, no toast */
+    } finally {
+      _mountInProgress = false;
+    }
   }
 
   function unmountFloatingButton() {

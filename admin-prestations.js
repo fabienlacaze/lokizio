@@ -252,7 +252,11 @@ async function loadAdminPrestations(forceReload) {
       const _date = (u.date || '').replace(/'/g, '');
       const _svc = (u.type || '').replace(/'/g, '');
       const _prop = esc(u.propertyName || '').replace(/'/g, "\\'");
-      html += '<button class="prestSendBtn" onclick="event.stopPropagation();showAssignProviderPopup(\'' + _id + '\',\'' + _date + '\',\'' + _svc + '\',\'' + _prop + '\')" style="padding:5px 11px;font-size:11px;border:none;border-radius:5px;cursor:pointer;">&#128100; Selectionner prestataire</button>';
+      // v9.87 fix: pass source + propertyId so assignToOrgProvider can handle
+      // cleaning iCal items (which have no service_request UUID).
+      const _source = u._source || '';
+      const _propId = u.propertyId || '';
+      html += '<button class="prestSendBtn" onclick="event.stopPropagation();showAssignProviderPopup(\'' + _id + '\',\'' + _date + '\',\'' + _svc + '\',\'' + _prop + '\',\'' + _source + '\',\'' + _propId + '\')" style="padding:5px 11px;font-size:11px;border:none;border-radius:5px;cursor:pointer;">&#128100; Selectionner prestataire</button>';
       // More actions menu
       html += '<div style="position:relative;display:inline-block;">';
       html += '<button onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display===\'block\'?\'none\':\'block\'" style="padding:3px 6px;font-size:12px;border:none;border-radius:4px;cursor:pointer;background:transparent;color:var(--text3);" title="Plus d\'actions">&#8942;</button>';
@@ -487,9 +491,13 @@ window.toggleAdminHidePast = toggleAdminHidePast;
 // Open a unified popup to either pick an existing provider OR broadcast
 // the request to the public marketplace. Replaces the old inline
 // 'Assigner...' select + separate broadcast button.
-async function showAssignProviderPopup(reqId, dateStr, svcType, propertyName) {
+async function showAssignProviderPopup(reqId, dateStr, svcType, propertyName, source, propertyId) {
   const org = (typeof API !== 'undefined' && API.getOrg) ? API.getOrg() : null;
   if (!org) { showToast('Organisation introuvable'); return; }
+  // v9.87: stash extra context for assignToOrgProvider so cleaning iCal items
+  // can be assigned in-place (no service_request UUID, but we have propertyId + date).
+  source = source || '';
+  propertyId = propertyId || '';
 
   // Fetch providers of the org (members table)
   const { data: members } = await sb.from('members')
@@ -549,7 +557,7 @@ async function showAssignProviderPopup(reqId, dateStr, svcType, propertyName) {
     orgProviders.forEach(p => {
       const name = esc(p.display_name || p.invited_email || 'Prestataire');
       const nameJsEsc = name.replace(/'/g, "\\'");
-      html += '<button onclick="assignToOrgProvider(\'' + reqId + '\',\'' + nameJsEsc + '\',\'' + (p.user_id || '') + '\',\'' + svcType + '\',\'' + dateStr + '\',\'' + propertyName + '\')" style="display:flex;align-items:center;gap:12px;padding:12px 14px;background:var(--surface2);border:1px solid var(--border2);border-radius:10px;font-size:13px;color:var(--text);cursor:pointer;text-align:left;transition:all 0.15s;" onmouseover="this.style.borderColor=\'#6c63ff\';this.style.background=\'rgba(108,99,255,0.05)\'" onmouseout="this.style.borderColor=\'var(--border2)\';this.style.background=\'var(--surface2)\'">';
+      html += '<button onclick="assignToOrgProvider(\'' + reqId + '\',\'' + nameJsEsc + '\',\'' + (p.user_id || '') + '\',\'' + svcType + '\',\'' + dateStr + '\',\'' + propertyName + '\',\'' + source + '\',\'' + propertyId + '\')" style="display:flex;align-items:center;gap:12px;padding:12px 14px;background:var(--surface2);border:1px solid var(--border2);border-radius:10px;font-size:13px;color:var(--text);cursor:pointer;text-align:left;transition:all 0.15s;" onmouseover="this.style.borderColor=\'#6c63ff\';this.style.background=\'rgba(108,99,255,0.05)\'" onmouseout="this.style.borderColor=\'var(--border2)\';this.style.background=\'var(--surface2)\'">';
       html += '<span style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#6c63ff,#5a54e0);display:inline-flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:14px;flex-shrink:0;">' + name.charAt(0).toUpperCase() + '</span>';
       html += '<div style="flex:1;min-width:0;"><div style="font-weight:600;font-size:13px;color:var(--text);">' + name + '</div>';
       if (p.invited_email) html += '<div style="font-size:11px;color:var(--text3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + esc(p.invited_email) + '</div>';
@@ -593,13 +601,27 @@ async function showAssignProviderPopup(reqId, dateStr, svcType, propertyName) {
 window.showAssignProviderPopup = showAssignProviderPopup;
 
 // Action: pick a specific provider from the org's team
-async function assignToOrgProvider(reqId, providerName, providerUserId, svcType, dateStr, propertyName) {
+async function assignToOrgProvider(reqId, providerName, providerUserId, svcType, dateStr, propertyName, source, propertyId) {
   document.getElementById('assignProviderOverlay')?.remove();
+  let assignedOk = false;
   if (reqId && reqId !== '') {
     // service_request: update DB row
     if (typeof updateServiceRequest === 'function') {
       await updateServiceRequest(reqId, 'assigned', providerName);
+      assignedOk = true;
     }
+  } else if (source === 'cleaning' && propertyId) {
+    // v9.87 fix: cleaning iCal item — update plannings.cleanings[N].provider in place
+    assignedOk = await assignProviderToCleaning(propertyId, dateStr, providerName);
+  } else {
+    // No way to assign — log + toast
+    console.warn('[assignToOrgProvider] cannot determine target', { reqId, source, propertyId, dateStr });
+    showToast('Impossible d\'assigner: source inconnue (recharge la page)');
+    return;
+  }
+  if (!assignedOk) {
+    showToast('Echec de l\'assignation — voir console');
+    return;
   }
   // Push notif to the assigned provider
   if (providerUserId && typeof sendPushToUser === 'function') {
@@ -612,6 +634,47 @@ async function assignToOrgProvider(reqId, providerName, providerUserId, svcType,
   setTimeout(() => loadAdminPrestations(true), 500);
 }
 window.assignToOrgProvider = assignToOrgProvider;
+
+// v9.87 fix: assign a provider to a cleaning iCal item (no service_request UUID).
+// Updates plannings.cleanings[N].provider for the matching (property_id, date)
+// directly in the JSONB array. Returns true on success.
+async function assignProviderToCleaning(propertyId, dateStr, providerName) {
+  if (!propertyId || !dateStr) return false;
+  try {
+    const { data: plan, error } = await sb.from('plannings')
+      .select('cleanings').eq('property_id', propertyId).maybeSingle();
+    if (error) { console.error('[assignProviderToCleaning] load:', error); return false; }
+    if (!plan || !Array.isArray(plan.cleanings)) {
+      console.warn('[assignProviderToCleaning] no cleanings for property', propertyId);
+      return false;
+    }
+    // Match the cleaning by date (cleaningDate or date field). Update provider in place.
+    let matched = 0;
+    const updated = plan.cleanings.map(c => {
+      const d = c.cleaningDate || c.date;
+      if (d === dateStr) { matched++; return { ...c, provider: providerName }; }
+      return c;
+    });
+    if (matched === 0) {
+      console.warn('[assignProviderToCleaning] no cleaning matches date', dateStr);
+      return false;
+    }
+    const { error: upErr } = await sb.from('plannings').update({
+      cleanings: updated,
+      updated_at: new Date().toISOString(),
+    }).eq('property_id', propertyId);
+    if (upErr) {
+      // Some setups still don't have updated_at — retry without it
+      const { error: upErr2 } = await sb.from('plannings').update({ cleanings: updated }).eq('property_id', propertyId);
+      if (upErr2) { console.error('[assignProviderToCleaning] save:', upErr2); return false; }
+    }
+    return true;
+  } catch (e) {
+    console.error('[assignProviderToCleaning] exception:', e);
+    return false;
+  }
+}
+window.assignProviderToCleaning = assignProviderToCleaning;
 
 // Action: broadcast push to all org providers (from inside the popup)
 async function broadcastToProvidersFromPopup(reqId, dateStr, svcType, propertyName) {

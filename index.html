@@ -9,8 +9,8 @@
   window.__isPasswordRecovery = h.indexOf('type=recovery') !== -1;
   window.__recoveryHash = h;
 })();
-window.APP_VERSION = '9.86';
-// v9.86 fix: rendre les badges de version DYNAMIQUES depuis window.APP_VERSION
+window.APP_VERSION = '9.87';
+// v9.87 fix: rendre les badges de version DYNAMIQUES depuis window.APP_VERSION
 // pour ne plus jamais avoir le bug "popup version persistante" quand j'oublie
 // de bumper les badges hardcodes en HTML (workflow wp5sc40pn). Si tout vient
 // du meme HTML, badge + window.APP_VERSION sont toujours coherents.
@@ -103,12 +103,12 @@ window.addEventListener('DOMContentLoaded', function() {
 <script src="marketplace.min.js?v=34dcec7"></script>
 <script src="properties.min.js?v=26d7caf"></script>
 <script src="dashboard.min.js?v=786f765"></script>
-<script src="admin-prestations.min.js?v=37fdf8b"></script>
+<script src="admin-prestations.min.js?v=1515de4"></script>
 <script src="account.min.js?v=5a51748"></script>
 <script src="admin-sentry.min.js?v=2302bea"></script>
 <script src="stripe-connect-embed.min.js?v=04d3580"></script>
 <script src="admin-stripe.min.js?v=de579c5"></script>
-<script src="feedback-widget.min.js?v=216011f"></script>
+<script src="feedback-widget.min.js?v=eaae6ed"></script>
 <script src="admin-dev-tools.min.js?v=a12579e"></script>
 <script src="admin-compliance.min.js?v=987282f"></script>
 <script src="photo-consent.min.js?v=1dc9f6d"></script>
@@ -170,7 +170,7 @@ async function loadPDF() {
 </script>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v9.86</div>
+<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v9.87</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -180,7 +180,7 @@ async function loadPDF() {
     <!-- Broom that sweeps -->
     <div id="splashBroom" style="position:absolute;top:50%;left:-60px;font-size:48px;transform:translateY(-50%) rotate(-30deg);opacity:0;transition:all 0.8s cubic-bezier(0.25,0.46,0.45,0.94);">✨</div>
   </div>
-  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span id="splashVersion" style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v9.86</span></div>
+  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span id="splashVersion" style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v9.87</span></div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie pour locations</div>
   <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou</div>
   <!-- Loading bar -->
@@ -1726,6 +1726,15 @@ function getStatusLabel(s) { return (STATUS_CONFIG[s] || {}).label || s || ''; }
 // ── Splash Changelog (update this with each significant version) ──
 // Full versioned changelog — add new entries at TOP
 const VERSION_CHANGELOG = [
+  { v: '9.87', changes: [
+    'Fix cleaning iCal assign — "Selectionner prestataire" sur une cleaning iCal Airbnb/Booking ne faisait rien.',
+    'Cause: les cleanings iCal viennent de plannings.cleanings (JSONB array) et n\'ont pas d\'UUID. reqId vide -> updateServiceRequest skip -> aucune assignation DB.',
+    'Fix: nouvelle fonction assignProviderToCleaning(propertyId, dateStr, providerName) qui update plannings.cleanings[N].provider en place. showAssignProviderPopup + assignToOrgProvider acceptent maintenant source + propertyId pour distinguer cleaning iCal vs service_request.',
+    'Fix bug doublon feedback widget — 2 bulles 💬 affichees au lieu d\'une.',
+    'Cause: race condition entre les 3 setTimeout (1500/4000/8000ms) qui appelaient mountFloatingButton(). Le check _floatingMounted etait AVANT un await asynchrone (sb.auth.getUser), donc 2 calls pouvaient passer le check en parallele et creer 2 boutons.',
+    'Fix: ajout d\'un lock _mountInProgress qui couvre toute la fonction. Plus de race possible. Nuke aussi les doublons existants au mount.',
+    'Perf boot loadActiveProperty (workflow wbaypk7ll): paralleliser 5 queries qui etaient sequentielles (load_transmitted, load_history, load_linens, load_planning, load_reservations). Promise.all -> gain ~5x sur cette phase data (de ~5×latence reseau a ~1×latence).'
+  ] },
   { v: '9.86', changes: [
     'Fix BUG CRITIQUE: la popup "v9.85 disponible — Rafraichir" reapparaissait en boucle apres chaque clic.',
     'Cause racine (workflow wp5sc40pn): mes 2 commits v9.85 + v9.84 avaient OUBLIE de bumper les badges HTML hardcodes lignes 160 + 170. Le HTML servi par CDN GitHub Pages avait window.APP_VERSION="9.85" MAIS versionBadge.textContent="v9.84". _checkUpdate() comparait remote(9.85) > badge(9.84) -> banner. Reload -> meme HTML -> meme banner. Boucle infinie.',
@@ -2671,9 +2680,20 @@ async function loadActiveProperty() {
     property: prop.name || '',
     readonlyToken: prop.readonlyToken || '',
   };
-  transmittedDates = await API.load_transmitted();
-  cleaningHistory = await API.load_history();
-  linens = await API.load_linens();
+  // v9.87 perf fix (workflow wbaypk7ll): paralleliser les 5 queries qui
+  // etaient sequentielles au boot. Toutes sont independantes. Gain ~5x sur
+  // cette phase de loadActiveProperty.
+  const [_td, _ch, _li, saved, _res] = await Promise.all([
+    API.load_transmitted(),
+    API.load_history(),
+    API.load_linens(),
+    API.load_planning(),
+    API.load_reservations(),
+  ]);
+  transmittedDates = _td;
+  cleaningHistory = _ch;
+  linens = _li;
+  reservations = _res;
   const nameInput = document.getElementById('propNameInput');
   if (nameInput) nameInput.value = prop.name || '';
   renderPropertySelector();
@@ -2684,8 +2704,6 @@ async function loadActiveProperty() {
   const tplEl = document.getElementById('propDetailTemplate');
   if (tplEl) { tplEl.value = (prop.messageTemplate) || getDefaultTemplate(); previewTemplate(); }
   renderProviders();
-  const saved = await API.load_planning();
-  reservations = await API.load_reservations();
   if (saved && saved.length > 0) {
     cleanings = saved;
     currentFilter = '';
@@ -11079,7 +11097,7 @@ function showUpdateBanner(version) {
     btn.textContent = 'Mise a jour...';
     btn.disabled = true;
     localStorage.setItem('lokizio_seen_version', v);
-    // v9.86 fix: trace le timestamp pour eviter la boucle banner quand le
+    // v9.87 fix: trace le timestamp pour eviter la boucle banner quand le
     // CDN GitHub Pages cache encore l'ancien HTML pendant 10 min.
     localStorage.setItem('lokizio_last_refresh_at', Date.now().toString());
     // Clear SW + caches
@@ -11089,7 +11107,7 @@ function showUpdateBanner(version) {
       const keys = await caches.keys();
       await Promise.all(keys.map(k => caches.delete(k)));
     } catch(e) { console.warn('update banner: SW/cache cleanup failed:', e); }
-    // v9.86 fix: force revalidation cote CDN via fetch cache: 'reload'
+    // v9.87 fix: force revalidation cote CDN via fetch cache: 'reload'
     // AVANT la navigation. Le browser envoie Cache-Control: no-cache au CDN,
     // qui peut respecter et nous renvoyer la version a jour. Si le CDN
     // n'honore pas, on est protege contre la boucle par le timestamp ci-dessus.
@@ -11106,7 +11124,7 @@ function showUpdateBanner(version) {
   document.body.appendChild(banner);
 }
 // Update check: 5s after load, then every 30s.
-// v9.86 fix bug "popup version persistante" (workflow wp5sc40pn):
+// v9.87 fix bug "popup version persistante" (workflow wp5sc40pn):
 //  - Source of truth = window.APP_VERSION (pas le badge HTML qui est seul re-rendu)
 //  - Anti-loop CDN: si l'user a clique Rafraichir il y a <11min, on n'affiche
 //    PAS de banner (le CDN GitHub Pages cache l'HTML 10min et ignore les
