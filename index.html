@@ -9,7 +9,7 @@
   window.__isPasswordRecovery = h.indexOf('type=recovery') !== -1;
   window.__recoveryHash = h;
 })();
-window.APP_VERSION = '9.97';
+window.APP_VERSION = '9.98';
 // v9.90 fix: rendre les badges de version DYNAMIQUES depuis window.APP_VERSION
 // pour ne plus jamais avoir le bug "popup version persistante" quand j'oublie
 // de bumper les badges hardcodes en HTML (workflow wp5sc40pn). Si tout vient
@@ -83,36 +83,12 @@ window.addEventListener('DOMContentLoaded', function() {
 }
 </script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.101.0/dist/umd/supabase.min.js" integrity="sha384-HS/sUFZexXk91zcjy7zGIBg3tNDxgxF8YbcifixByxxtxQoF2o8GBBT9p6DdGlAR" crossorigin="anonymous"></script>
-<script src="supabase_config.js?v=76fd30b"></script>
-<script src="i18n.min.js?v=e16c908"></script>
-<script src="ical_parser.min.js?v=cf7ad71"></script>
-<script src="helpers.min.js?v=8bb5604"></script>
-<script src="api_bridge.min.js?v=799e757"></script>
-<script src="vacation.min.js?v=b2e3eb5"></script>
-<script src="push.min.js?v=c5f5981"></script>
-<script src="legal.min.js?v=81bb683"></script>
-<script src="quotes.min.js?v=1035b7b"></script>
-<script src="search.min.js?v=a7bd25c"></script>
-<script src="tenant.min.js?v=efbc744"></script>
-<script src="auto-billing.min.js?v=1ad593f"></script>
-<script src="invoices.min.js?v=621c07e"></script>
-<script src="invoice-create.min.js?v=d9a943d"></script>
-<script src="auth.min.js?v=e652953"></script>
-<script src="provider.min.js?v=1884be9"></script>
-<script src="owner.min.js?v=f805e62"></script>
-<script src="marketplace.min.js?v=34dcec7"></script>
-<script src="properties.min.js?v=26d7caf"></script>
-<script src="dashboard.min.js?v=786f765"></script>
-<script src="admin-prestations.min.js?v=bc0dd4f"></script>
-<script src="account.min.js?v=5a51748"></script>
-<script src="admin-sentry.min.js?v=2302bea"></script>
-<script src="stripe-connect-embed.min.js?v=04d3580"></script>
-<script src="admin-stripe.min.js?v=de579c5"></script>
-<script src="feedback-widget.min.js?v=46d9ae6"></script>
-<script src="admin-dev-tools.min.js?v=a12579e"></script>
-<script src="admin-compliance.min.js?v=987282f"></script>
-<script src="photo-consent.min.js?v=1dc9f6d"></script>
-<script src="analytics-init.min.js?v=45f7d2a"></script>
+<!-- v9.98 perf: les 30 scripts same-origin du head sont concatenes en 1 seul
+     app.bundle.min.js (genere par scripts/build.js dans l'ordre exact ci-dessus).
+     1 requete au lieu de 30 (gros gain avec un AV qui scanne chaque requete).
+     L'ordre d'execution est strictement preserve. supabase_config est en 1er,
+     donc place APRES le SDK supabase jsdelivr ci-dessus. -->
+<script src="app.bundle.min.js?v=391c312"></script>
 <!-- Lazy-loaded: Leaflet, Chart.js, jsPDF (loaded on demand to improve startup) -->
 <script>
 function lazyLoad(url, type) {
@@ -148,7 +124,7 @@ async function loadPDF() {
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link href="app.css?v=5" rel="stylesheet">
+<link href="app.css?v=6" rel="stylesheet">
 </head>
 <body>
 
@@ -170,7 +146,7 @@ async function loadPDF() {
 </script>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v9.97</div>
+<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v9.98</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -180,7 +156,7 @@ async function loadPDF() {
     <!-- Broom that sweeps -->
     <div id="splashBroom" style="position:absolute;top:50%;left:-60px;font-size:48px;transform:translateY(-50%) rotate(-30deg);opacity:0;transition:all 0.8s cubic-bezier(0.25,0.46,0.45,0.94);">✨</div>
   </div>
-  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span id="splashVersion" style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v9.97</span></div>
+  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span id="splashVersion" style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v9.98</span></div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie pour locations</div>
   <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou</div>
   <!-- Loading bar -->
@@ -1726,6 +1702,10 @@ function getStatusLabel(s) { return (STATUS_CONFIG[s] || {}).label || s || ''; }
 // ── Splash Changelog (update this with each significant version) ──
 // Full versioned changelog — add new entries at TOP
 const VERSION_CHANGELOG = [
+  { v: '9.98', changes: [
+    'PERF BOOT MAJEUR: les 30 scripts du <head> charges un par un (30 requetes, scannees en serie par les antivirus type Kaspersky) sont desormais concatenes en 1 seul app.bundle.min.js. 1 requete au lieu de 30. Ordre d execution strictement preserve (sur-ensemble du defer, sans son risque d ecran noir). Gain estime ~6-8s sur le demarrage.',
+    'Fix UI: le texte "Aucun prestataire" du bouton n etait plus tronque (max-width retire, le libelle complet s affiche sur tablette/desktop).',
+  ] },
   { v: '9.97', changes: [
     'Fix: bouton "+ Ajouter manuellement" desormais visible dans le popup "Selectionner un prestataire" meme quand l equipe contient deja des prestataires (avant: visible uniquement si equipe vide).',
   ] },

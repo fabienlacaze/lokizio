@@ -1,4 +1,4 @@
-const APP_VERSION = '9.97';
+const APP_VERSION = '9.98';
 const CACHE_NAME = 'lokizio-v' + APP_VERSION;
 
 // App shell files to cache for offline support.
@@ -9,30 +9,9 @@ const APP_SHELL = [
   './index.html',
   './app.css',
   './sentry-init.min.js',
-  './supabase_config.js',
-  './helpers.min.js',
-  './i18n.min.js',
-  './ical_parser.min.js',
-  './api_bridge.min.js',
-  './auth.min.js',
-  './dashboard.min.js',
-  './account.min.js',
-  './admin-prestations.min.js',
-  './admin-sentry.min.js',
-  './auto-billing.min.js',
-  './invoice-create.min.js',
-  './invoices.min.js',
-  './legal.min.js',
-  './legal-fill.min.js',
-  './marketplace.min.js',
-  './owner.min.js',
-  './properties.min.js',
-  './provider.min.js',
-  './push.min.js',
-  './quotes.min.js',
-  './search.min.js',
-  './tenant.min.js',
-  './vacation.min.js',
+  // v9.98: les 30 modules du <head> sont desormais concatenes dans 1 seul
+  // bundle (voir scripts/build.js). 1 entree au lieu de ~24.
+  './app.bundle.min.js',
   './icons/icon-192.png',
   './icons/icon-512.png',
   './manifest.json',
@@ -50,11 +29,8 @@ const CRITICAL_SHELL = [
   './',
   './index.html',
   './app.css',
-  './supabase_config.js',
-  './helpers.min.js',
-  './i18n.min.js',
-  './api_bridge.min.js',
-  './auth.min.js',
+  './sentry-init.min.js',
+  './app.bundle.min.js',
 ];
 const LAZY_SHELL = APP_SHELL.filter(p => !CRITICAL_SHELL.includes(p));
 

@@ -124,6 +124,54 @@ for (const src of SOURCES) {
   console.log(`  ${src.padEnd(28)} ${(srcStat.size / 1024).toFixed(1).padStart(6)} KB → ${(minStat.size / 1024).toFixed(1).padStart(6)} KB  (-${ratio}%)`);
 }
 
+// ── v9.98 perf: bundle the <head>'s same-origin scripts into ONE file ──
+// index.html loaded 30 scripts one-by-one = 30 requests, each scanned in series
+// by AV (Kaspersky) → ~15s boot. We concatenate them in the EXACT <head> order
+// into a single app.bundle.min.js: 1 request, identical JS behaviour. These are
+// global-scope scripts (NOT ES modules) → plain ordered concatenation preserves
+// execution order (strict superset of `defer`, without its black-screen risk).
+// ASI-safe '\n;\n' separator. supabase_config.js is FIRST (it calls
+// supabase.createClient(); the bundle tag sits AFTER the jsdelivr supabase tag).
+// sentry-init.min.js stays a SEPARATE tag (must load before the Sentry CDN).
+const BUNDLE_FILE = 'app.bundle.min.js';
+const BUNDLE_ORDER = [
+  'supabase_config.js',
+  'i18n.min.js', 'ical_parser.min.js', 'helpers.min.js', 'api_bridge.min.js',
+  'vacation.min.js', 'push.min.js', 'legal.min.js', 'quotes.min.js',
+  'search.min.js', 'tenant.min.js', 'auto-billing.min.js', 'invoices.min.js',
+  'invoice-create.min.js', 'auth.min.js', 'provider.min.js', 'owner.min.js',
+  'marketplace.min.js', 'properties.min.js', 'dashboard.min.js',
+  'admin-prestations.min.js', 'account.min.js', 'admin-sentry.min.js',
+  'stripe-connect-embed.min.js', 'admin-stripe.min.js', 'feedback-widget.min.js',
+  'admin-dev-tools.min.js', 'admin-compliance.min.js', 'photo-consent.min.js',
+  'analytics-init.min.js',
+];
+const bundlePath = path.join(root, BUNDLE_FILE);
+if (checkOnly) {
+  // CI guard: bundle must exist and be newer than every input it concatenates.
+  if (!fs.existsSync(bundlePath)) { console.error(`STALE: ${BUNDLE_FILE} missing — run \`npm run build\``); stale++; }
+  else {
+    const bMtime = fs.statSync(bundlePath).mtimeMs;
+    for (const f of BUNDLE_ORDER) {
+      const p = path.join(root, f);
+      if (fs.existsSync(p) && fs.statSync(p).mtimeMs > bMtime) { console.error(`STALE: ${BUNDLE_FILE} older than ${f} — run \`npm run build\``); stale++; break; }
+    }
+  }
+} else {
+  let bundle = '';
+  let n = 0;
+  for (const f of BUNDLE_ORDER) {
+    const p = path.join(root, f);
+    if (!fs.existsSync(p)) { console.warn(`! bundle input missing, skipping: ${f}`); continue; }
+    let c = fs.readFileSync(p, 'utf8');
+    c = c.replace(/\r?\n?\/\/# sourceMappingURL=.*$/m, ''); // drop per-file sourcemap ref
+    bundle += c + '\n;\n';
+    n++;
+  }
+  fs.writeFileSync(bundlePath, bundle);
+  console.log(`  ${BUNDLE_FILE.padEnd(28)} ← ${n} scripts concatenated (${(bundle.length / 1024).toFixed(1)} KB)`);
+}
+
 if (checkOnly && stale > 0) {
   console.error(`\n${stale} stale .min.js file(s). Run \`npm run build\`.`);
   process.exit(1);
