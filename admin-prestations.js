@@ -542,7 +542,7 @@ async function showAssignProviderPopup(reqId, dateStr, svcType, propertyName, so
 
   // Fetch providers of the org (members table)
   const { data: members } = await sb.from('members')
-    .select('user_id, display_name, invited_email, role')
+    .select('user_id, display_name, invited_email, phone, role')
     .eq('org_id', org.id)
     .eq('role', 'provider')
     .eq('accepted', true);
@@ -602,6 +602,7 @@ async function showAssignProviderPopup(reqId, dateStr, svcType, propertyName, so
       html += '<span style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#6c63ff,#5a54e0);display:inline-flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:14px;flex-shrink:0;">' + name.charAt(0).toUpperCase() + '</span>';
       html += '<div style="flex:1;min-width:0;"><div style="font-weight:600;font-size:13px;color:var(--text);">' + name + '</div>';
       if (p.invited_email) html += '<div style="font-size:11px;color:var(--text3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + esc(p.invited_email) + '</div>';
+      if (p.phone) html += '<div style="font-size:11px;color:var(--text3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">&#128222; ' + esc(p.phone) + '</div>';
       html += '</div>';
       html += '<span style="color:#6c63ff;font-size:20px;flex-shrink:0;">&rsaquo;</span>';
       html += '</button>';
