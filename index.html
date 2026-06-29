@@ -9,7 +9,7 @@
   window.__isPasswordRecovery = h.indexOf('type=recovery') !== -1;
   window.__recoveryHash = h;
 })();
-window.APP_VERSION = '9.96';
+window.APP_VERSION = '9.97';
 // v9.90 fix: rendre les badges de version DYNAMIQUES depuis window.APP_VERSION
 // pour ne plus jamais avoir le bug "popup version persistante" quand j'oublie
 // de bumper les badges hardcodes en HTML (workflow wp5sc40pn). Si tout vient
@@ -103,7 +103,7 @@ window.addEventListener('DOMContentLoaded', function() {
 <script src="marketplace.min.js?v=34dcec7"></script>
 <script src="properties.min.js?v=26d7caf"></script>
 <script src="dashboard.min.js?v=786f765"></script>
-<script src="admin-prestations.min.js?v=ffb4473"></script>
+<script src="admin-prestations.min.js?v=bc0dd4f"></script>
 <script src="account.min.js?v=5a51748"></script>
 <script src="admin-sentry.min.js?v=2302bea"></script>
 <script src="stripe-connect-embed.min.js?v=04d3580"></script>
@@ -148,7 +148,7 @@ async function loadPDF() {
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link href="app.css?v=4" rel="stylesheet">
+<link href="app.css?v=5" rel="stylesheet">
 </head>
 <body>
 
@@ -170,7 +170,7 @@ async function loadPDF() {
 </script>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v9.96</div>
+<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v9.97</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -180,7 +180,7 @@ async function loadPDF() {
     <!-- Broom that sweeps -->
     <div id="splashBroom" style="position:absolute;top:50%;left:-60px;font-size:48px;transform:translateY(-50%) rotate(-30deg);opacity:0;transition:all 0.8s cubic-bezier(0.25,0.46,0.45,0.94);">✨</div>
   </div>
-  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span id="splashVersion" style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v9.96</span></div>
+  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span id="splashVersion" style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v9.97</span></div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie pour locations</div>
   <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou</div>
   <!-- Loading bar -->
@@ -1726,6 +1726,9 @@ function getStatusLabel(s) { return (STATUS_CONFIG[s] || {}).label || s || ''; }
 // ── Splash Changelog (update this with each significant version) ──
 // Full versioned changelog — add new entries at TOP
 const VERSION_CHANGELOG = [
+  { v: '9.97', changes: [
+    'Fix: bouton "+ Ajouter manuellement" desormais visible dans le popup "Selectionner un prestataire" meme quand l equipe contient deja des prestataires (avant: visible uniquement si equipe vide).',
+  ] },
   { v: '9.96', changes: [
     'PERF + IO — workflow wikzyz5ae verdict: Disk IO Supabase n est PAS la cause principale (82% confiance) MAIS le mail Supabase IO Budget est legitime (18 GB/mois projetes > free tier 10 GB).',
     'Cause #1 reelle: 31 scripts head sync sans defer (~3s). Cause #2: extension Kaspersky. Cause #3: IO Supabase (200-400ms).',

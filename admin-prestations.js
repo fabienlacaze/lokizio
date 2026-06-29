@@ -13,11 +13,16 @@ async function loadAdminPrestations(forceReload) {
   const listEl = document.getElementById('adminPrestList');
   if (!listEl) return;
 
-  // v9.95: skeleton immediat (3 placeholders animes) au lieu d'un simple
-  // "Chargement..." statique. Sur cold-load (>200ms), l'utilisateur voit
-  // immediatement la forme de la liste = perception de vitesse +++.
+  // v9.97 fix BUG "le listing disparait": ne montrer le skeleton qu'au COLD-LOAD
+  // (quand aucune carte n'est encore affichee), JAMAIS sur un forceReload qui
+  // ecraserait une liste deja rendue. Avant: "if (forceReload || !_adminPrestCache)"
+  // remettait le skeleton a chaque refresh (auto-refresh 30s inclus); si le fetch
+  // qui suit rejetait (offline/abort/reveil de veille), le catch laissait les 3
+  // boites skeleton figees. Desormais on teste le contenu reel du DOM: un refresh
+  // en arriere-plan garde les cartes en place jusqu'au nouveau rendu (ligne ~323).
   // Reuse du keyframe 'shimmer' deja defini dans app.css (lignes 48, 963).
-  if (forceReload || !_adminPrestCache) {
+  const _hasContent = listEl.querySelector('.adminPrestCard') || listEl.querySelector('details');
+  if (!_hasContent) {
     const sk = '<div style="margin:8px 0;height:64px;background:linear-gradient(90deg,var(--surface2) 0%,var(--surface) 50%,var(--surface2) 100%);background-size:200% 100%;animation:shimmer 1.4s infinite;border-radius:10px;"></div>';
     listEl.innerHTML = sk + sk + sk;
   }
@@ -203,8 +208,13 @@ async function loadAdminPrestations(forceReload) {
 
     // Pre-compute actions for pending status (inline in card).
     // Now also covers iCal-derived cleanings without a provider.
+    // v9.97: isPast remonte ici pour harmoniser le declencheur du bouton
+    // "Aucun prestataire / Assigner" avec la condition de la carte (.prestNoProvider)
+    // et ne JAMAIS proposer d'assigner sur une prestation passee.
+    const isPast = u.date && u.date < today;
     let pendingProviders = null;
-    const _isPendingNoProv = (!u.provider || u.provider.trim() === '')
+    const _isPendingNoProv = !isPast
+      && (!u.provider || u.provider.trim() === '')
       && ['pending', 'assigned'].includes(u.status);
     if (_isPendingNoProv) {
       pendingProviders = [];
@@ -219,7 +229,6 @@ async function loadAdminPrestations(forceReload) {
       priority: u.priority, description: u.description, cancel_reason: u.cancel_reason,
       cancel_penalty_amount: u.cancel_penalty_amount
     }));
-    const isPast = u.date && u.date < today;
     const pastStyle = isPast ? 'opacity:0.5;filter:grayscale(0.6);position:relative;' : '';
     // CRITICAL: prestation upcoming/today without any assigned provider.
     // Applies to BOTH iCal-derived cleanings (_source='cleaning') and
@@ -255,9 +264,8 @@ async function loadAdminPrestations(forceReload) {
     if (u.propertyName) metaParts.push('&#127968; ' + esc(u.propertyName));
     if (u.provider) metaParts.push('&#128100; ' + esc(u.provider));
     html += metaParts.join(' &middot; ');
-    if (noProvider) {
-      html += '<span class="prestNoProvider-badge">&#9888;&#65039; Aucun prestataire</span>';
-    }
+    // v9.97: badge "Aucun prestataire" supprime — fusionne dans le bouton segmente
+    // (.prestAssignSeg) du cote droit de la carte (rendu plus bas).
     html += '</div>';
     if (u.description) html += '<div style="font-size:10px;color:var(--text3);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + esc(u.description) + '</div>';
     html += '</div>';
@@ -272,7 +280,13 @@ async function loadAdminPrestations(forceReload) {
       // cleaning iCal items (which have no service_request UUID).
       const _source = u._source || '';
       const _propId = u.propertyId || '';
-      html += '<button class="prestSendBtn" onclick="event.stopPropagation();showAssignProviderPopup(\'' + _id + '\',\'' + _date + '\',\'' + _svc + '\',\'' + _prop + '\',\'' + _source + '\',\'' + _propId + '\')" style="padding:5px 11px;font-size:11px;border:none;border-radius:5px;cursor:pointer;">&#128100; Selectionner prestataire</button>';
+      // v9.97: bouton segmente fusionnant l'etat "Aucun prestataire" (zone gauche)
+      // et le CTA "Assigner" (zone droite) en un seul element cliquable. Meme appel
+      // showAssignProviderPopup + event.stopPropagation() qu'avant.
+      html += '<button class="prestAssignSeg" type="button" title="Aucun prestataire assigne - cliquer pour assigner" onclick="event.stopPropagation();showAssignProviderPopup(\'' + _id + '\',\'' + _date + '\',\'' + _svc + '\',\'' + _prop + '\',\'' + _source + '\',\'' + _propId + '\')">'
+        + '<span class="prestAssignSeg-status"><span class="prestAssignSeg-ico">&#9888;&#65039;</span><span class="prestAssignSeg-lbl">Aucun prestataire</span></span>'
+        + '<span class="prestAssignSeg-cta">Assigner <span class="prestAssignSeg-arr">&#8594;</span></span>'
+        + '</button>';
       // More actions menu
       html += '<div style="position:relative;display:inline-block;">';
       html += '<button onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display===\'block\'?\'none\':\'block\'" style="padding:3px 6px;font-size:12px;border:none;border-radius:4px;cursor:pointer;background:transparent;color:var(--text3);" title="Plus d\'actions">&#8942;</button>';
@@ -323,7 +337,18 @@ async function loadAdminPrestations(forceReload) {
   listEl.innerHTML = html;
   // Apply filters (hide past by default) after initial render
   applyAdminPrestFilters();
-  } catch(err) { console.error('loadAdminPrestations error:', err); showToast('Erreur chargement prestations: ' + (err.message || 'Probleme de connexion')); }
+  } catch(err) {
+    console.error('loadAdminPrestations error:', err);
+    showToast('Erreur chargement prestations: ' + (err.message || 'Probleme de connexion'));
+    // v9.97 fix: ne pas laisser le skeleton fige sur echec en cold-load. Si aucune
+    // carte valide n'est affichee, remplacer le skeleton par un etat "Reessayer"
+    // utilisable. Si des cartes sont deja la (refresh en arriere-plan echoue), on
+    // ne touche a rien: l'ancienne liste reste visible.
+    const _le = document.getElementById('adminPrestList');
+    if (_le && !_le.querySelector('.adminPrestCard') && !_le.querySelector('details')) {
+      _le.innerHTML = '<div style="text-align:center;padding:30px;color:var(--text3);font-size:13px;">&#9888;&#65039; Echec du chargement. <a href="#" onclick="loadAdminPrestations(true);return false;" style="color:var(--accent2);font-weight:600;">Reessayer</a></div>';
+    }
+  }
 }
 
 let _adminPrestFilterCat = 'all';
@@ -582,6 +607,7 @@ async function showAssignProviderPopup(reqId, dateStr, svcType, propertyName, so
       html += '</button>';
     });
     html += '<button onclick="pickProviderFromAnnuaire(\'' + reqId + '\',\'' + svcType + '\',\'' + dateStr + '\',\'' + esc(propertyName).replace(/\'/g, "\\\'") + '\')" style="margin-top:4px;padding:10px 12px;background:transparent;color:#a5a0ff;border:1px dashed rgba(108,99,255,0.45);border-radius:10px;font-size:12px;font-weight:600;cursor:pointer;text-align:center;">&#127760; Choisir un autre prestataire dans l\'annuaire</button>';
+    html += '<button onclick="document.getElementById(\'assignProviderOverlay\').remove();showAddManualContact(\'' + reqId + '\',\'' + svcType + '\',\'' + dateStr + '\',\'' + esc(propertyName).replace(/\'/g, "\\\'") + '\')" style="padding:8px 12px;background:rgba(108,99,255,0.10);color:#a5a0ff;border:1px solid rgba(108,99,255,0.30);border-radius:10px;font-size:12px;font-weight:600;cursor:pointer;text-align:center;">+ Ajouter manuellement</button>';
     html += '</div>';
   }
 
