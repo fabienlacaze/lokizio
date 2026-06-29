@@ -9,7 +9,7 @@
   window.__isPasswordRecovery = h.indexOf('type=recovery') !== -1;
   window.__recoveryHash = h;
 })();
-window.APP_VERSION = '9.102';
+window.APP_VERSION = '9.103';
 // v9.90 fix: rendre les badges de version DYNAMIQUES depuis window.APP_VERSION
 // pour ne plus jamais avoir le bug "popup version persistante" quand j'oublie
 // de bumper les badges hardcodes en HTML (workflow wp5sc40pn). Si tout vient
@@ -154,7 +154,7 @@ async function loadPDF() {
 </script>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v9.102</div>
+<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v9.103</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -164,7 +164,7 @@ async function loadPDF() {
     <!-- Broom that sweeps -->
     <div id="splashBroom" style="position:absolute;top:50%;left:-60px;font-size:48px;transform:translateY(-50%) rotate(-30deg);opacity:0;transition:all 0.8s cubic-bezier(0.25,0.46,0.45,0.94);">✨</div>
   </div>
-  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span id="splashVersion" style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v9.102</span></div>
+  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span id="splashVersion" style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v9.103</span></div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie pour locations</div>
   <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou</div>
   <!-- Loading bar -->
@@ -1710,6 +1710,9 @@ function getStatusLabel(s) { return (STATUS_CONFIG[s] || {}).label || s || ''; }
 // ── Splash Changelog (update this with each significant version) ──
 // Full versioned changelog — add new entries at TOP
 const VERSION_CHANGELOG = [
+  { v: '9.103', changes: [
+    'Fix UI: la popup de confirmation (ex: supprimer un contact) s affichait DERRIERE le popup de detail (z-index) -> impossible de valider. Elle passe desormais toujours au-dessus.',
+  ] },
   { v: '9.102', changes: [
     'PERF+IO MAJEUR: memoisation de getUser(). L app appelait sb.auth.getUser() des centaines de fois (chacun = round-trip /auth lent + ecriture en base qui consomme le Disk IO Budget Supabase). Desormais 1 seul appel auth par fenetre de 10s (dedup in-flight + cache), invalide au login/logout. Reduit fortement la conso IO ET le temps de boot quand le service auth est lent.',
   ] },
@@ -9587,13 +9590,26 @@ function customConfirm(msg, okText) {
     confirmResolve = resolve;
     document.getElementById('confirmMsg').innerHTML = msg;
     if (okText) document.getElementById('confirmOkBtn').textContent = okText;
-    document.getElementById('overlay').style.display = 'block';
-    document.getElementById('confirmModal').style.display = 'block';
+    const ov = document.getElementById('overlay');
+    const cm = document.getElementById('confirmModal');
+    ov.style.display = 'block';
+    cm.style.display = 'block';
+    // v9.103 fix: la confirmation doit passer AU-DESSUS des popups dynamiques
+    // (teamMemberDetail, assignProvider, etc. = z-index 99999), sinon elle
+    // s'affiche DERRIERE et on ne peut pas valider. setProperty('important')
+    // pour battre les regles CSS !important (ex: body.msgAboveStacked).
+    ov.style.setProperty('z-index', '100000', 'important');
+    cm.style.setProperty('z-index', '100001', 'important');
   });
 }
 function resolveConfirm(val) {
-  document.getElementById('overlay').style.display = 'none';
-  document.getElementById('confirmModal').style.display = 'none';
+  const ov = document.getElementById('overlay');
+  const cm = document.getElementById('confirmModal');
+  ov.style.display = 'none';
+  cm.style.display = 'none';
+  // v9.103: retirer l'override pour ne pas perturber les autres modals.
+  ov.style.removeProperty('z-index');
+  cm.style.removeProperty('z-index');
   if (confirmResolve) { confirmResolve(val); confirmResolve = null; }
 }
 
