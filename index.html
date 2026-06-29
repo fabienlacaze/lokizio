@@ -9,7 +9,7 @@
   window.__isPasswordRecovery = h.indexOf('type=recovery') !== -1;
   window.__recoveryHash = h;
 })();
-window.APP_VERSION = '9.99';
+window.APP_VERSION = '9.100';
 // v9.90 fix: rendre les badges de version DYNAMIQUES depuis window.APP_VERSION
 // pour ne plus jamais avoir le bug "popup version persistante" quand j'oublie
 // de bumper les badges hardcodes en HTML (workflow wp5sc40pn). Si tout vient
@@ -33,35 +33,14 @@ window.addEventListener('DOMContentLoaded', function() {
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://js.stripe.com https://connect-js.stripe.com https://unpkg.com https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://www.clarity.ms https://eu.posthog.com; connect-src 'self' https://cdn.jsdelivr.net https://*.supabase.co wss://*.supabase.co https://api.stripe.com https://connect-js.stripe.com https://nominatim.openstreetmap.org https://*.tile.openstreetmap.org https://*.ingest.de.sentry.io https://*.ingest.sentry.io https://www.clarity.ms https://*.clarity.ms https://eu.posthog.com https://eu-assets.posthog.com; img-src 'self' data: blob: https:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net https://unpkg.com; font-src 'self' data: https://fonts.gstatic.com; frame-src https://js.stripe.com https://hooks.stripe.com https://connect-js.stripe.com; object-src 'none'; base-uri 'self'; form-action 'self'; worker-src 'self' blob:;">
 <meta name="theme-color" content="#1a1a2e">
-<!-- v9.99 perf: ouvrir le handshake TLS vers Supabase DES le parsing du head,
-     EN PARALLELE du telechargement du SDK supabase + app.bundle ci-dessous.
-     Avec Kaspersky (MITM TLS) la 1ere connexion froide a *.supabase.co coute
-     ~12s ; payee ici en overlap, elle n'est plus sur le chemin critique du boot.
-     Host pris depuis supabase_config.js. crossorigin requis (fetch CORS + auth). -->
+<!-- v9.100 perf: ouvrir DNS + handshake TLS vers Supabase DES le parsing du head,
+     EN PARALLELE du telechargement du SDK supabase + app.bundle ci-dessous, pour
+     que la connexion soit chaude quand checkAuth/loadOrg appellent l'API (gain si
+     un AV type Kaspersky ralentit la 1ere connexion froide). Host pris depuis
+     supabase_config.js. crossorigin requis (fetch CORS). NB: pas de warmup fetch
+     actif (un GET /rest renvoie 401 -> bruit console capte par le smoke test E2E). -->
 <link rel="preconnect" href="https://mrvejwyvhuivmipfwlzz.supabase.co" crossorigin>
 <link rel="dns-prefetch" href="https://mrvejwyvhuivmipfwlzz.supabase.co">
-<script>
-// Warmup actif : preconnect ouvre le TLS mais pas toujours le 1er round-trip de
-// donnees (celui que Kaspersky bloque). On declenche un GET reel le plus tot
-// possible vers /auth/v1/health (endpoint public, pas d'auth requise, reponse
-// minuscule) pour forcer TLS + HTTP/2 + 1ere reponse data => connexion CHAUDE
-// avant que loadOrg()/load_plan() ne tape members. Best-effort, jamais bloquant,
-// n'affecte ni l'auth ni les sessions (aucun token lu/ecrit ici).
-(function(){
-  try {
-    var H = 'https://mrvejwyvhuivmipfwlzz.supabase.co';
-    // anon key publique (identique a supabase_config.js) : GoTrue exige apikey
-    // meme sur /health. Avec, on obtient un 200 = round-trip data complet.
-    var K = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1ydmVqd3l2aHVpdm1pcGZ3bHp6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQyNjU0NTksImV4cCI6MjA4OTg0MTQ1OX0.1pi-KN5N6sNG6hIu6N0wDsR_g_G1TTf-uPecmWQ2ovU';
-    // Chauffe les DEUX chemins: /auth (deja chauffe par checkAuth) ET surtout
-    // /rest/v1 (la requete members de loadOrg = 1er hit REST froid, suspect n.1).
-    ['/auth/v1/health', '/rest/v1/'].forEach(function(path){
-      fetch(H + path, { mode: 'cors', cache: 'no-store', credentials: 'omit', headers: { apikey: K } })
-        .catch(function(){ /* warmup best-effort : on ignore toute erreur */ });
-    });
-  } catch (_) { /* environnements sans fetch : no-op */ }
-})();
-</script>
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -175,7 +154,7 @@ async function loadPDF() {
 </script>
 
 <!-- Version badge (always visible) -->
-<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v9.99</div>
+<div id="versionBadge" onclick="showFullChangelog()" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(255,255,255,0.3);z-index:99998;cursor:pointer;">v9.100</div>
 
 <!-- Splash Screen -->
 <div id="splashScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0f1a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
@@ -185,7 +164,7 @@ async function loadPDF() {
     <!-- Broom that sweeps -->
     <div id="splashBroom" style="position:absolute;top:50%;left:-60px;font-size:48px;transform:translateY(-50%) rotate(-30deg);opacity:0;transition:all 0.8s cubic-bezier(0.25,0.46,0.45,0.94);">✨</div>
   </div>
-  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span id="splashVersion" style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v9.99</span></div>
+  <div style="font-size:22px;font-weight:800;color:#f0f0f5;letter-spacing:1px;">Lokizio <span id="splashVersion" style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);">v9.100</span></div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Services et conciergerie pour locations</div>
   <div style="position:fixed;bottom:16px;right:20px;font-size:10px;color:rgba(255,255,255,0.25);">Made with &#10084; by Fabidou</div>
   <!-- Loading bar -->
@@ -1731,6 +1710,10 @@ function getStatusLabel(s) { return (STATUS_CONFIG[s] || {}).label || s || ''; }
 // ── Splash Changelog (update this with each significant version) ──
 // Full versioned changelog — add new entries at TOP
 const VERSION_CHANGELOG = [
+  { v: '9.100', changes: [
+    'Fix CI: retrait du warmup fetch (un GET /rest renvoyait 401 -> erreur console captee par le smoke test E2E). Le preconnect + dns-prefetch vers Supabase sont conserves (chauffent le TLS sans bruit console).',
+    'PERF SERVEUR: 5 index SQL + colonne cleanings_count appliques sur la base Supabase (perf-indexes-v9.96.sql) -> requetes du boot plus rapides + consommation Disk IO reduite (~7 GB/mois).',
+  ] },
   { v: '9.99', changes: [
     'PERF BOOT (diagnostic): printBootTimings revele que 12.6s sur 15.5s sont dans load_plan/loadOrg (1er appel reseau Supabase). Ajout de marqueurs fins dans loadOrg pour isoler lequel des 3 appels (getUser/members/organizations) est lent.',
     'PERF BOOT (fix): preconnect + dns-prefetch + warmup precoce vers Supabase (/auth + /rest) des le parsing du head, pour chauffer la connexion TLS en parallele du chargement (gros gain si la lenteur vient de la 1ere connexion froide / antivirus).',
