@@ -21,8 +21,35 @@ function initSupabase() {
     const storageKey = sessionId === 'default' ? undefined : 'sb-' + sessionId + '-auth-token';
     const opts = storageKey ? { auth: { storageKey } } : {};
     sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, opts);
+    // v9.102 perf+IO: memoise sb.auth.getUser(). Chaque getUser() = un round-trip
+    // /auth/v1/user (lent quand le Disk IO Budget Supabase s'epuise, car GoTrue
+    // ecrit en base a chaque appel). L'app l'appelle des centaines de fois (dont
+    // plusieurs au boot). Memoisation ~10s + dedup in-flight: 1 seul round-trip
+    // auth par fenetre au lieu de N -> moins d'IO consommee + boot plus rapide.
+    // Le 1er appel rafraichit le token (anti ecran-noir conserve). getUser(jwt)
+    // explicite N'EST PAS memoise. Cache invalide sur SIGNED_IN/OUT/USER_UPDATED.
+    try {
+      const _origGetUser = sb.auth.getUser.bind(sb.auth);
+      let _guCache = null, _guAt = 0, _guInflight = null;
+      sb.auth.getUser = function(jwt) {
+        if (jwt !== undefined) return _origGetUser(jwt);
+        const now = Date.now();
+        if (_guAt && (now - _guAt) < 10000 && _guCache) return Promise.resolve(_guCache);
+        if (_guInflight) return _guInflight;
+        _guInflight = _origGetUser().then(function(r) { _guCache = r; _guAt = Date.now(); return r; });
+        _guInflight.finally(function () { _guInflight = null; });
+        return _guInflight;
+      };
+      sb.auth.__invalidateUserCache = function () { _guCache = null; _guAt = 0; _guInflight = null; };
+    } catch (_) { /* structure sb.auth inattendue -> on garde le getUser natif */ }
     // Also listen for PASSWORD_RECOVERY event (fires when Supabase detects recovery token)
     sb.auth.onAuthStateChange((event) => {
+      // v9.102: invalider le cache getUser quand l'identite change. Pas sur
+      // TOKEN_REFRESHED (eviterait une auto-invalidation en boucle, un getUser
+      // qui refresh declenche TOKEN_REFRESHED).
+      if (event === 'SIGNED_IN' || event === 'SIGNED_OUT' || event === 'USER_UPDATED') {
+        if (sb.auth.__invalidateUserCache) sb.auth.__invalidateUserCache();
+      }
       if (event === 'PASSWORD_RECOVERY') {
         window.__isPasswordRecovery = true;
         if (typeof showPasswordRecoveryForm === 'function') showPasswordRecoveryForm();
