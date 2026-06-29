@@ -30,21 +30,28 @@ const API = (function() {
     return user.id;
   }
 
+  // FIX A — instrumentation fine du boot. No-op si window.__T absent (zero risque fonctionnel).
+  const T = (label) => { try { if (typeof window !== 'undefined' && window.__T) window.__T(label); } catch (_) {} };
+
   // Load user's organization(s) and role
   async function loadOrg() {
     try {
+      T('loadOrg getUser start');
       const userId = await getUserId();
+      T('loadOrg getUser done');
       // Always use separate queries to avoid RLS join issues
       let { data: members, error } = await sb
         .from('members')
         .select('*')
         .eq('user_id', userId);
+      T('loadOrg members done');
       if (members && members.length) {
         // v9.90 perf fix: batch query au lieu de N+1 sequentiel.
         // Avant: N round-trips pour N memberships (N*~150ms).
         // Apres: 1 round-trip (~150ms).
         const orgIds = members.map(m => m.org_id);
         const { data: orgs } = await sb.from('organizations').select('*').in('id', orgIds);
+        T('loadOrg orgs done');
         const orgById = Object.fromEntries((orgs || []).map(o => [o.id, o]));
         members.forEach(m => { m.organizations = orgById[m.org_id] || null; });
       }

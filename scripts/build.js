@@ -147,27 +147,37 @@ const BUNDLE_ORDER = [
   'analytics-init.min.js',
 ];
 const bundlePath = path.join(root, BUNDLE_FILE);
-if (checkOnly) {
-  // CI guard: bundle must exist and be newer than every input it concatenates.
-  if (!fs.existsSync(bundlePath)) { console.error(`STALE: ${BUNDLE_FILE} missing — run \`npm run build\``); stale++; }
-  else {
-    const bMtime = fs.statSync(bundlePath).mtimeMs;
-    for (const f of BUNDLE_ORDER) {
-      const p = path.join(root, f);
-      if (fs.existsSync(p) && fs.statSync(p).mtimeMs > bMtime) { console.error(`STALE: ${BUNDLE_FILE} older than ${f} — run \`npm run build\``); stale++; break; }
-    }
-  }
-} else {
+
+// Single source of truth for the bundle bytes — used by BOTH build and --check
+// so the CI guard compares CONTENT (not mtime). Audit wniekj2xi: an mtime-based
+// check could greenlight a content-stale bundle (e.g. after a git clone sets
+// arbitrary mtimes, or a manual edit + touch) -> stale bundle to GitHub Pages.
+function buildBundleString() {
   let bundle = '';
   let n = 0;
   for (const f of BUNDLE_ORDER) {
     const p = path.join(root, f);
     if (!fs.existsSync(p)) { console.warn(`! bundle input missing, skipping: ${f}`); continue; }
     let c = fs.readFileSync(p, 'utf8');
-    c = c.replace(/\r?\n?\/\/# sourceMappingURL=.*$/m, ''); // drop per-file sourcemap ref
+    c = c.replace(/\r\n/g, '\n');                          // normalise CRLF->LF => bundle deterministe (cross-platform / autocrlf)
+    c = c.replace(/\n?\/\/# sourceMappingURL=.*$/m, '');   // drop per-file sourcemap ref
     bundle += c + '\n;\n';
     n++;
   }
+  return { bundle, n };
+}
+
+if (checkOnly) {
+  // CI guard: bundle must exist AND match a fresh re-concatenation byte-for-byte.
+  if (!fs.existsSync(bundlePath)) {
+    console.error(`STALE: ${BUNDLE_FILE} missing — run \`npm run build\``); stale++;
+  } else {
+    const { bundle } = buildBundleString();
+    const onDisk = fs.readFileSync(bundlePath, 'utf8');
+    if (bundle !== onDisk) { console.error(`STALE: ${BUNDLE_FILE} content does not match its inputs — run \`npm run build\``); stale++; }
+  }
+} else {
+  const { bundle, n } = buildBundleString();
   fs.writeFileSync(bundlePath, bundle);
   console.log(`  ${BUNDLE_FILE.padEnd(28)} ← ${n} scripts concatenated (${(bundle.length / 1024).toFixed(1)} KB)`);
 }
