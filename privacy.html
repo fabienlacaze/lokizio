@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Politique de confidentialité - Lokizio</title>
+<link rel="stylesheet" href="legal.css">
+<script src="legal-fill.js?v=1" defer></script>
+</head>
+<body>
+<div class="legalPage">
+<nav class="legalNav"><a href="index.html">&larr; Retour à l'app</a> &middot; <a href="mentions.html">Mentions légales</a> &middot; <a href="cgu.html">CGU</a> &middot; <a href="cgv.html">CGV</a></nav>
+<h1>Politique de confidentialité</h1>
+<p class="date">Dernière mise à jour : 19 avril 2026 &middot; Version 2.0</p>
+
+<h2>1. Qui sommes-nous ?</h2>
+<p><strong>Lokizio</strong> (ci-après "l'Application") est édité par <strong>[À COMPLÉTER — Nom complet ou raison sociale]</strong>, <strong>[À COMPLÉTER — statut juridique]</strong>, immatriculé au <strong>[À COMPLÉTER — RCS/SIRET]</strong>, dont le siège social est situé <strong>[À COMPLÉTER — adresse]</strong>.</p>
+<p>Contact RGPD : <strong>[À COMPLÉTER — email, ex. rgpd@lokizio.com]</strong></p>
+
+<h2>2. Responsable du traitement</h2>
+<p>Le responsable du traitement des données personnelles est l'éditeur ci-dessus.</p>
+
+<h2>3. Données collectées et finalités</h2>
+<table>
+  <thead><tr><th>Donnée</th><th>Finalité</th><th>Base légale</th><th>Durée</th></tr></thead>
+  <tbody>
+    <tr><td>Email, mot de passe (chiffré)</td><td>Authentification, création du compte</td><td>Exécution du contrat (art. 6.1.b RGPD)</td><td>Durée du compte + 1 an</td></tr>
+    <tr><td>Nom, téléphone, adresse</td><td>Facturation, identification</td><td>Exécution du contrat</td><td>Durée du compte + 10 ans (obligation comptable)</td></tr>
+    <tr><td>SIRET, TVA</td><td>Facturation professionnelle</td><td>Obligation légale (art. 6.1.c RGPD)</td><td>10 ans</td></tr>
+    <tr><td>Données de prestations, factures, devis</td><td>Gestion de la conciergerie</td><td>Exécution du contrat</td><td>10 ans (obligation comptable)</td></tr>
+    <tr><td>Géolocalisation (optionnelle)</td><td>Affichage sur l'annuaire</td><td>Consentement (art. 6.1.a RGPD)</td><td>Jusqu'au retrait du consentement</td></tr>
+    <tr><td>Photos, documents</td><td>Preuve de prestation, QC</td><td>Exécution du contrat</td><td>Durée du compte + 3 ans</td></tr>
+    <tr><td>Cookies techniques</td><td>Fonctionnement de l'app (session)</td><td>Intérêt légitime</td><td>Session uniquement</td></tr>
+  </tbody>
+</table>
+
+<h2>4. Hébergement et sous-traitants</h2>
+<p>Nous faisons appel aux sous-traitants suivants, chacun lié par un accord de traitement des données (DPA) :</p>
+<ul>
+  <li><strong>Base de données &amp; authentification</strong> : Supabase — projet hébergé en région Union européenne (Francfort) <em>[localisation à confirmer par l'éditeur selon la région réelle du projet Supabase]</em>. Supabase Inc. étant une société américaine, un accès de support depuis les États-Unis reste possible ; ce transfert est encadré par les Clauses Contractuelles Types (CCT) de l'UE et le DPA Supabase.</li>
+  <li><strong>Hébergement de l'application (fichiers statiques)</strong> : GitHub Pages — GitHub, Inc. / Microsoft Corporation (États-Unis).</li>
+  <li><strong>Envoi d'emails transactionnels</strong> : Resend, Inc. (États-Unis).</li>
+  <li><strong>Paiements</strong> : Stripe — facturation par Stripe Payments Europe, Ltd. (Irlande) ; certains traitements peuvent avoir lieu aux États-Unis. Activé uniquement pour les fonctionnalités payantes / la mise en relation marketplace.</li>
+  <li><strong>Supervision des erreurs</strong> : Sentry — Functional Software, Inc. (États-Unis), au titre de l'intérêt légitime (sécurité et bon fonctionnement du service), sans enregistrement de session (« session replay »).</li>
+</ul>
+<p>La liste à jour des sous-traitants, leur localisation et les DPA signés sont tenus à disposition sur demande via le contact RGPD ci-dessous. <em>[À valider par l'éditeur : conservation des DPA de chaque sous-traitant.]</em></p>
+
+<h2>5. Vos droits (RGPD)</h2>
+<p>Conformément aux articles 15 à 22 du RGPD, vous disposez des droits suivants :</p>
+<ul>
+  <li><strong>Accès</strong> : consulter les données vous concernant</li>
+  <li><strong>Rectification</strong> : corriger vos données directement dans l'app ou par email</li>
+  <li><strong>Effacement</strong> ("droit à l'oubli") : supprimer votre compte via <em>Mon compte → Supprimer mon compte</em></li>
+  <li><strong>Portabilité</strong> : exporter vos données au format JSON via <em>Mon compte → Exporter mes données</em></li>
+  <li><strong>Limitation</strong> : demander la limitation du traitement</li>
+  <li><strong>Opposition</strong> : vous opposer au traitement pour motif légitime</li>
+  <li><strong>Retrait du consentement</strong> : à tout moment, sans affecter la licéité du traitement antérieur</li>
+</ul>
+<p>Pour exercer ces droits : <strong>[À COMPLÉTER — email RGPD]</strong>. Réponse sous 1 mois maximum.</p>
+<p>Recours CNIL : <a href="https://www.cnil.fr/fr/plaintes" target="_blank">cnil.fr/fr/plaintes</a></p>
+
+<h2>6. Sécurité</h2>
+<ul>
+  <li>Mot de passe : hashage <code>bcrypt</code> par Supabase Auth</li>
+  <li>Transit : chiffrement TLS 1.3</li>
+  <li>Accès restreint : RLS (Row Level Security) au niveau base de données</li>
+  <li>CSP (Content Security Policy) pour prévenir les attaques XSS</li>
+</ul>
+
+<h2>7. Cookies</h2>
+<p>L'Application utilise des <strong>traceurs strictement techniques</strong> indispensables au fonctionnement (session d'authentification), ainsi qu'un outil de <strong>supervision des erreurs</strong> (Sentry) au titre de l'<strong>intérêt légitime</strong> (sécurité et bon fonctionnement du service), configuré <strong>sans enregistrement de session (« session replay »)</strong> ni cookie publicitaire ou de tracking marketing. <strong>Aucun traceur non essentiel n'est activé sans votre consentement préalable.</strong> Les traceurs strictement nécessaires et de sécurité sont exemptés de consentement (art. 82 loi Informatique et Libertés).</p>
+
+<h2>8. Transferts hors UE</h2>
+<p>Certains sous-traitants (GitHub/Microsoft, Resend, Sentry, et selon le cas Supabase et Stripe) peuvent traiter des données aux États-Unis. Chaque transfert est encadré par un mécanisme conforme au chapitre V du RGPD :</p>
+<ul>
+  <li>soit l'<em>EU-US Data Privacy Framework</em> lorsque le sous-traitant figure effectivement sur la liste active du DPF (<a href="https://www.dataprivacyframework.gov/list" target="_blank" rel="noopener">dataprivacyframework.gov</a>) — <em>[certification à vérifier individuellement par l'éditeur, sous-traitant par sous-traitant]</em> ;</li>
+  <li>soit, à défaut, les Clauses Contractuelles Types (CCT) de la Commission européenne complétées de mesures supplémentaires, prévues par le DPA du sous-traitant.</li>
+</ul>
+<p>La base de transfert applicable à chaque sous-traitant est documentée dans le registre des traitements (art. 30) et vérifiée lors de la signature du DPA. Aucune allégation de certification n'est faite ici sans vérification préalable de l'éditeur.</p>
+
+<h2>9. Modifications</h2>
+<p>Cette politique peut être modifiée. En cas de modification substantielle, vous serez notifié par email.</p>
+</div>
+</body>
+</html>
